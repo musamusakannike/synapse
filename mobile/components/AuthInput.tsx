@@ -1,4 +1,4 @@
-import { Text, TextInput, View } from "react-native";
+import { Text, TextInput, View, TextInputProps } from "react-native";
 import React, { useState } from "react";
 import { styles } from "@/styles";
 
@@ -8,13 +8,14 @@ const AuthInput = ({
   type = "default",
   value,
   onChangeText,
+  ...props
 }: {
   placeholder: string;
   label: string;
   type?: string;
   value: string;
   onChangeText: (text: string) => void;
-}) => {
+} & TextInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -35,6 +36,7 @@ const AuthInput = ({
           onBlur={() => setIsFocused(false)}
           value={value}
           onChangeText={onChangeText}
+          {...props}
         />
       </View>
     </View>

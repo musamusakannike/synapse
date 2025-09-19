@@ -6,28 +6,49 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "@/styles";
 import AuthInput from "@/components/AuthInput";
+import { signIn, signUp } from "../lib/appwrite";
+import { useRouter } from "expo-router";
 
 const AuthPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+
+  const handleAuth = async () => {
+    setIsSubmitting(true);
+    try {
+      if (authMode === "signup") {
+        await signUp(email, password, name);
+      } else {
+        await signIn(email, password);
+      }
+      router.replace("/");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.authContainer}
-          keyboardShouldPersistTaps="always"
-          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.authContent}>
             {/* Header Section with improved spacing and visual hierarchy */}
@@ -88,9 +109,16 @@ const AuthPage = () => {
             <TouchableOpacity
               style={styles.authButton}
               activeOpacity={0.9}
-              onPress={() => console.log("Continue")}
+              onPress={handleAuth}
+              disabled={isSubmitting}
             >
-              <Text style={styles.authButtonText}>Continue</Text>
+              <Text style={styles.authButtonText}>
+                {isSubmitting
+                  ? "Submitting..."
+                  : authMode === "signup"
+                  ? "Sign Up"
+                  : "Login"}
+              </Text>
             </TouchableOpacity>
 
             {/* Additional sign in option */}

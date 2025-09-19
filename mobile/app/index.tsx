@@ -17,6 +17,7 @@ import { useState, useEffect, useRef } from "react";
 import useGemini from "@/lib/useGemini";
 import Markdown from "react-native-markdown-display";
 import { useChats, IChat, IMessage } from "@/lib/useChats";
+import {Ionicons} from "@expo/vector-icons"
 
 const markdownStyles = {
   body: { fontSize: 16, lineHeight: 24, color: "#333" },
@@ -42,7 +43,7 @@ export default function Index() {
       duration: 250,
       useNativeDriver: true,
     }).start();
-  }, [sidebarVisible]);
+  }, [sidebarVisible, slideAnim]);
 
   // Gesture handler (swipe left/right)
   const panResponder = useRef(
@@ -103,6 +104,7 @@ export default function Index() {
   };
 
   const handleSelectChat = async (chat: IChat) => {
+    setSidebarVisible(false);
     setActiveChat(chat);
     await getMessages(chat.$id!);
   };
@@ -168,12 +170,11 @@ export default function Index() {
             style={{
               padding: 10,
               alignSelf: "flex-start",
-              backgroundColor: "#eee",
               borderRadius: 5,
               margin: 5,
             }}
           >
-            <Text>{sidebarVisible ? "Hide Menu" : "Show Menu"}</Text>
+            <Text>{sidebarVisible ? "Hide Menu" : <Ionicons name="menu-outline" size={24} color="white" />}</Text>
           </TouchableOpacity>
           <FlatList
             ref={flatListRef}

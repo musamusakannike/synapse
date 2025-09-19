@@ -19,10 +19,9 @@ interface IMessage {
   text: string;
   sender: "me" | "other";
 }
-
 const markdownStyles = {
   body: { fontSize: 16, lineHeight: 24, color: "#333" },
-  strong: { fontWeight: "700", color: "#111" },
+  strong: { fontWeight: "700" as const, color: "#111" }, // Fix: use "700" and assert with `as const`
   bullet_list: { marginVertical: 8 },
   list_item: { marginBottom: 6 },
 };

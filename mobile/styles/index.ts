@@ -3,10 +3,42 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F4F6F8",
+    backgroundColor: "#100A1F",
   },
   container: {
     flex: 1,
+  },
+  authContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+    paddingTop: 20,
+    paddingHorizontal: 10
+  },
+  authLogo: {
+    width: 50,
+    height: 50,
+    borderRadius: 30
+  },
+  authText: {
+    fontSize: 16,
+    fontFamily: "JetBrainsMono-Medium",
+    color: "#FFF"
+  },
+  authTitle: {
+    fontSize: 36,
+    fontFamily: "JetBrainsMono-Bold",
+    color: "#FFF",
+    paddingLeft: 8,
+    paddingTop: 12,
+  },
+  authSubTitle: {
+    fontSize: 16,
+    fontFamily: "JetBrainsMono-Medium",
+    color: "#AAA",
+    paddingLeft: 8
+  },
+  authInput: {
+    
   },
   chatContainer: {
     padding: 12,
@@ -43,8 +75,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    backgroundColor: "#FFFFFF",
+    borderTopColor: "#555555",
+    backgroundColor: "#100A1F",
   },
   input: {
     flex: 1,

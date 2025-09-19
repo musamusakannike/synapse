@@ -5,64 +5,113 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "@/styles";
 import AuthInput from "@/components/AuthInput";
 
 const AuthPage = () => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.authContainer}
+        style={styles.container}
       >
-        <View style={styles.authContent}>
-          {/* Header Section with improved spacing and visual hierarchy */}
-          <View style={styles.authHeader}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logoWrapper}>
-                <Image
-                  source={require("@/assets/images/logo.png")}
-                  width={50}
-                  height={50}
-                  style={styles.authLogo}
-                />
+        <ScrollView 
+          contentContainerStyle={styles.authContainer}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.authContent}>
+            {/* Header Section with improved spacing and visual hierarchy */}
+            <View style={styles.authHeader}>
+              <View style={styles.logoContainer}>
+                <View style={styles.logoWrapper}>
+                  <Image
+                    source={require("@/assets/images/logo.png")}
+                    width={50}
+                    height={50}
+                    style={styles.authLogo}
+                  />
+                </View>
+                <Text style={styles.brandText}>Synapse</Text>
               </View>
-              <Text style={styles.brandText}>Synapse</Text>
+
+              <View style={styles.titleSection}>
+                <Text style={styles.authTitle}>
+                  {authMode === "signup" ? "Get Started now" : "Welcome back"}
+                </Text>
+                <Text style={styles.authSubTitle}>
+                  {authMode === "signup"
+                    ? "Create an account or log in to explore about our app"
+                    : "Log in to your account"}
+                </Text>
+              </View>
             </View>
-            
-            <View style={styles.titleSection}>
-              <Text style={styles.authTitle}>Get Started now</Text>
-              <Text style={styles.authSubTitle}>
-                Create an account or log in to explore about our app
-              </Text>
+
+            {/* Form Section with improved layout */}
+            <View style={styles.formSection}>
+              {authMode === "signup" && (
+                <AuthInput
+                  label="Name"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChangeText={setName}
+                />
+              )}
+              <AuthInput
+                label="Email"
+                placeholder="Enter your email"
+                type="email"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <AuthInput
+                label="Password"
+                placeholder="Enter your password"
+                type="password"
+                value={password}
+                onChangeText={setPassword}
+              />
             </View>
           </View>
 
-          {/* Form Section with improved layout */}
-          <View style={styles.formSection}>
-            <AuthInput label="Name" placeholder="Enter your name" />
-            <AuthInput label="Email" placeholder="Enter your email" type="email" />
-            <AuthInput label="Password" placeholder="Enter your password" type="password" />
-          </View>
-        </View>
-
-        {/* Button Section */}
-        <View style={styles.buttonSection}>
-          <TouchableOpacity style={styles.authButton} activeOpacity={0.9}>
-            <Text style={styles.authButtonText}>Continue</Text>
-          </TouchableOpacity>
-          
-          {/* Additional sign in option */}
-          <View style={styles.signInSection}>
-            <Text style={styles.signInText}>Already have an account? </Text>
-            <TouchableOpacity>
-              <Text style={styles.signInLink}>Sign In</Text>
+          {/* Button Section */}
+          <View style={styles.buttonSection}>
+            <TouchableOpacity
+              style={styles.authButton}
+              activeOpacity={0.9}
+              onPress={() => console.log("Continue")}
+            >
+              <Text style={styles.authButtonText}>Continue</Text>
             </TouchableOpacity>
+
+            {/* Additional sign in option */}
+            <View style={styles.signInSection}>
+              <Text style={styles.signInText}>
+                {authMode === "signup"
+                  ? "Already have an account?"
+                  : "Don't have an account?"}{" "}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setAuthMode(authMode === "signup" ? "login" : "signup");
+                }}
+              >
+                <Text style={styles.signInLink}>
+                  {authMode === "signup" ? "Sign In" : "Sign Up"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

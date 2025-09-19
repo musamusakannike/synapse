@@ -139,6 +139,35 @@ export const styles = StyleSheet.create({
   },
   
   // Existing styles (unchanged)
+  sidebar: {
+    width: 250,
+    backgroundColor: "#201A2F",
+    padding: 10,
+    borderRightWidth: 1,
+    borderRightColor: "#302A4F",
+  },
+  newChatButton: {
+    backgroundColor: "#007AFF",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  newChatButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "JetBrainsMono-Bold",
+  },
+  chatItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#302A4F",
+  },
+  chatItemText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "JetBrainsMono-Medium",
+  },
   authText: {
     fontSize: 16,
     fontFamily: "JetBrainsMono-Medium",

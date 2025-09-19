@@ -11,8 +11,9 @@ export const styles = StyleSheet.create({
   authContainer: {
     flex: 1,
     justifyContent: "space-between",
-    paddingTop: 20,
-    paddingHorizontal: 10
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    paddingTop: 80,
   },
   authLogo: {
     width: 50,
@@ -38,7 +39,25 @@ export const styles = StyleSheet.create({
     paddingLeft: 8
   },
   authInput: {
-    
+    borderColor: "#AAA",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    color: "#FFF",
+    fontFamily: "JetBrainsMono-Medium",
+  },
+  authButton: {
+    backgroundColor: "#007AFF",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  authButtonText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontFamily: "JetBrainsMono-Bold",
   },
   chatContainer: {
     padding: 12,

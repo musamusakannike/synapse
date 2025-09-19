@@ -10,54 +10,139 @@ export const styles = StyleSheet.create({
   },
   authContainer: {
     flex: 1,
-    justifyContent: "space-between",
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    paddingTop: 80,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  authContent: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  
+  // Header Section Styles
+  authHeader: {
+    marginBottom: 48,
+  },
+  logoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoWrapper: {
+    padding: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 20,
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
   },
   authLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 30
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
-  authText: {
-    fontSize: 16,
-    fontFamily: "JetBrainsMono-Medium",
-    color: "#FFF"
-  },
-  authTitle: {
-    fontSize: 36,
+  brandText: {
+    fontSize: 28,
     fontFamily: "JetBrainsMono-Bold",
     color: "#FFF",
-    paddingLeft: 8,
-    paddingTop: 12,
+    letterSpacing: -0.5,
+  },
+  titleSection: {
+    gap: 8,
+  },
+  authTitle: {
+    fontSize: 32,
+    fontFamily: "JetBrainsMono-Bold",
+    color: "#FFF",
+    lineHeight: 38,
+    letterSpacing: -0.5,
   },
   authSubTitle: {
     fontSize: 16,
     fontFamily: "JetBrainsMono-Medium",
     color: "#AAA",
-    paddingLeft: 8
+    lineHeight: 22,
+    marginTop: 4,
+  },
+  
+  // Form Section Styles
+  formSection: {
+    gap: 24,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: "JetBrainsMono-Medium",
+    color: "#FFF",
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    borderWidth: 1.5,
+    borderColor: "rgba(170, 170, 170, 0.3)",
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.02)",
+  },
+  inputWrapperFocused: {
+    borderColor: "#007AFF",
+    backgroundColor: "rgba(0, 122, 255, 0.05)",
+    shadowColor: "#007AFF",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
   authInput: {
-    borderColor: "#AAA",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
+    padding: 16,
     fontSize: 16,
     color: "#FFF",
     fontFamily: "JetBrainsMono-Medium",
+    minHeight: 56,
+  },
+  
+  // Button Section Styles
+  buttonSection: {
+    paddingBottom: 32,
+    gap: 24,
   },
   authButton: {
     backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginBottom: 20,
+    paddingVertical: 18,
+    borderRadius: 16,
+    shadowColor: "#007AFF",
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
   authButtonText: {
     color: "#FFF",
     fontSize: 18,
     fontFamily: "JetBrainsMono-Bold",
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
+  signInSection: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  signInText: {
+    fontSize: 14,
+    fontFamily: "JetBrainsMono-Medium",
+    color: "#AAA",
+  },
+  signInLink: {
+    fontSize: 14,
+    fontFamily: "JetBrainsMono-Bold",
+    color: "#007AFF",
+  },
+  
+  // Existing styles (unchanged)
+  authText: {
+    fontSize: 16,
+    fontFamily: "JetBrainsMono-Medium",
+    color: "#FFF"
   },
   chatContainer: {
     padding: 12,
@@ -76,7 +161,7 @@ export const styles = StyleSheet.create({
   myMessage: {
     alignSelf: "flex-end",
     backgroundColor: "#DCF8C6",
-    borderBottomRightRadius: 4, // make it look like a bubble tail
+    borderBottomRightRadius: 4,
   },
   otherMessage: {
     alignSelf: "flex-start",

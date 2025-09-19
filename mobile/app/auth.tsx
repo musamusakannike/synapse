@@ -25,6 +25,24 @@ const AuthPage = () => {
 
   const handleAuth = async () => {
     setIsSubmitting(true);
+    const errors = [];
+
+    if (!name && authMode === "signup") {
+      errors.push("Name is required");
+    }
+    if (!email) {
+      errors.push("Email is required");
+    }
+    if (!password) {
+      errors.push("Password is required");
+    }
+
+    if (errors.length > 0) {
+      Alert.alert("Error", errors.join("\n"));
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       if (authMode === "signup") {
         await signUp(email, password, name);

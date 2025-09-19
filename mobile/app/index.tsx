@@ -42,7 +42,7 @@ export default function Index() {
       setMessages((prev) => [...prev, geminiMessage]);
       setReply(null);
     }
-  }, [reply]);
+  }, [reply, setReply]);
 
   useEffect(() => {
     if (flatListRef.current) {

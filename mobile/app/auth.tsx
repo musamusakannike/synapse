@@ -12,8 +12,9 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "@/styles";
 import AuthInput from "@/components/AuthInput";
-import { signIn, signUp } from "../lib/appwrite";
+import { signIn, signUp, getCurrentUser } from "../lib/appwrite";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
 
 const AuthPage = () => {
   const [name, setName] = useState("");
@@ -22,6 +23,7 @@ const AuthPage = () => {
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { setUser } = useAuth();
 
   const handleAuth = async () => {
     setIsSubmitting(true);
@@ -49,6 +51,8 @@ const AuthPage = () => {
       } else {
         await signIn(email, password);
       }
+      const user = await getCurrentUser();
+      setUser(user);
       router.replace("/");
     } catch (error: any) {
       Alert.alert("Error", error.message);

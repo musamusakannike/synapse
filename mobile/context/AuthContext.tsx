@@ -5,12 +5,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 interface IAuthContext {
     user: Models.Document | null;
     isLoading: boolean;
+    setUser: (user: Models.Document | null) => void;
     signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<IAuthContext>({
     user: null,
     isLoading: true,
+    setUser: () => {},
     signOut: async () => {},
 });
 
@@ -34,7 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, signOut }}>
+        <AuthContext.Provider value={{ user, isLoading, signOut, setUser }}>
             {children}
         </AuthContext.Provider>
     );

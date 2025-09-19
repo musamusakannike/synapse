@@ -204,4 +204,24 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  loadingContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#AAA",
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: "#FFD2D2",
+    alignItems: "center",
+  },
+  errorText: {
+    color: "#D8000C",
+    fontSize: 14,
+  },
 });

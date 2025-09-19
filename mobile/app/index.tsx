@@ -1,7 +1,17 @@
 import { styles } from "@/styles";
-import { KeyboardAvoidingView, Text, View, Platform, TextInput, TouchableOpacity, FlatList } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Text,
+  View,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import useGemini from "@/lib/useGemini";
 
 interface IMessage {
   id: string;
@@ -9,19 +19,42 @@ interface IMessage {
   sender: "me" | "other";
 }
 
-
-const mockMessages: IMessage[] = [
-  { id: "1", text: "Hey there!", sender: "other" },
-  { id: "2", text: "Hello! How are you?", sender: "me" },
-  { id: "3", text: "I’m doing well, thanks. How about you?", sender: "other" },
-  { id: "4", text: "I’m doing well, thanks. How about you?", sender: "other" },
-  { id: "5", text: "I’m great! Just working on a project.", sender: "me" },
-  { id: "6", text: "That’s awesome!", sender: "other" },
-];
-
 export default function Index() {
-
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const { loading, reply, error, fetchGeminiReply, setReply } = useGemini();
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (reply) {
+      const geminiMessage: IMessage = {
+        id: Date.now().toString() + "g",
+        text: reply,
+        sender: "other",
+      };
+      setMessages((prev) => [...prev, geminiMessage]);
+      setReply(null);
+    }
+  }, [reply]);
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (message.trim()) {
+      const newMessage: IMessage = {
+        id: Date.now().toString(),
+        text: message,
+        sender: "me",
+      };
+      setMessages((prev) => [...prev, newMessage]);
+      await fetchGeminiReply(message);
+      setMessage("");
+    }
+  };
 
   const renderItem = ({ item }: { item: IMessage }) => {
     const isMe = item.sender === "me";
@@ -42,17 +75,28 @@ export default function Index() {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        // keyboardVerticalOffset={0} // adjust for header height if needed
       >
-        {/* Messages List */}
         <FlatList
-          data={mockMessages}
+          ref={flatListRef}
+          data={messages}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.chatContainer}
         />
 
-        {/* Input Field */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#007AFF" />
+            <Text style={styles.loadingText}>Gemini is thinking...</Text>
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
         <View style={styles.inputContainer}>
           <TextInput
             placeholder="Type a message..."
@@ -60,15 +104,7 @@ export default function Index() {
             onChangeText={setMessage}
             style={styles.input}
           />
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => {
-              if (message.trim()) {
-                console.log("Send:", message);
-                setMessage(""); // clear input
-              }
-            }}
-          >
+          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
             <Text style={styles.sendText}>Send</Text>
           </TouchableOpacity>
         </View>

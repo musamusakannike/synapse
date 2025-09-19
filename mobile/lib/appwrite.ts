@@ -1,4 +1,4 @@
-import { Client, Account, Databases, ID } from "appwrite";
+import { Client, Account, Databases, ID, Query } from "appwrite";
 
 const client = new Client();
 
@@ -57,5 +57,55 @@ export async function signOut() {
     throw new Error(error.message);
   }
 }
+
+const APPWRITE_DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
+const APPWRITE_CHATS_COLLECTION_ID = process.env.EXPO_PUBLIC_APPWRITE_CHATS_COLLECTION_ID!;
+const APPWRITE_MESSAGES_COLLECTION_ID = process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_COLLECTION_ID!;
+
+// Delete Chat
+export const deleteChat = async (chatId: string) => {
+  try {
+    const messages = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_MESSAGES_COLLECTION_ID,
+      [Query.equal("chatId", chatId)]
+    );
+
+    for (const message of messages.documents) {
+      await databases.deleteDocument(
+        APPWRITE_DATABASE_ID,
+        APPWRITE_MESSAGES_COLLECTION_ID,
+        message.$id
+      );
+    }
+
+    await databases.deleteDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_CHATS_COLLECTION_ID,
+      chatId
+    );
+  } catch (error: any) {
+    console.error("Delete chat failed:", error);
+    throw new Error(error.message);
+  }
+};
+
+// Clear Chat History
+export const clearChatHistory = async (userId: string) => {
+  try {
+    const chats = await databases.listDocuments(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_CHATS_COLLECTION_ID,
+      [Query.equal("userId", userId)]
+    );
+
+    for (const chat of chats.documents) {
+      await deleteChat(chat.$id);
+    }
+  } catch (error: any) {
+    console.error("Clear chat history failed:", error);
+    throw new Error(error.message);
+  }
+};
 
 export default client;

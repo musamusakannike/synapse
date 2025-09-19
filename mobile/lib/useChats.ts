@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { databases } from "./appwrite";
+import { databases, deleteChat, clearChatHistory } from "./appwrite";
 import { ID, Query } from "appwrite";
 import { useAuth } from "@/context/AuthContext";
 
@@ -103,6 +103,27 @@ export function useChats() {
     }
   };
 
+  const handleDeleteChat = async (chatId: string) => {
+    try {
+      await deleteChat(chatId);
+      setChats((prev) => prev.filter((chat) => chat.$id !== chatId));
+      setMessages([]);
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+    }
+  };
+
+  const handleClearChatHistory = async () => {
+    if (!user) return;
+    try {
+      await clearChatHistory(user.$id);
+      setChats([]);
+      setMessages([]);
+    } catch (error) {
+      console.error("Failed to clear chat history:", error);
+    }
+  };
+
   return {
     chats,
     messages,
@@ -111,5 +132,7 @@ export function useChats() {
     getMessages,
     addMessage,
     setMessages,
+    deleteChat: handleDeleteChat,
+    clearChatHistory: handleClearChatHistory,
   };
 }

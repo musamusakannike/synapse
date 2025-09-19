@@ -162,6 +162,31 @@ export const styles = StyleSheet.create({
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#302A4F",
+    flex: 1,
+  },
+  chatItemContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingRight: 10,
+  },
+  sidebarButtons: {
+    marginTop: "auto",
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#302A4F",
+  },
+  sidebarButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+  sidebarButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    marginLeft: 10,
+    fontFamily: "JetBrainsMono-Medium",
   },
   chatItemText: {
     color: "#FFFFFF",

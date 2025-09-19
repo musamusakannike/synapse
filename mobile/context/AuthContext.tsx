@@ -1,15 +1,17 @@
-import { getCurrentUser } from "@/lib/appwrite";
+import { getCurrentUser, signOut as apiSignOut } from "@/lib/appwrite";
 import { Models } from "appwrite";
 import { createContext, useContext, useEffect, useState } from "react";
 
 interface IAuthContext {
     user: Models.Document | null;
     isLoading: boolean;
+    signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<IAuthContext>({
     user: null,
     isLoading: true,
+    signOut: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -26,8 +28,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         fetchUser();
     }, []);
 
+    const signOut = async () => {
+        await apiSignOut();
+        setUser(null);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading }}>
+        <AuthContext.Provider value={{ user, isLoading, signOut }}>
             {children}
         </AuthContext.Provider>
     );

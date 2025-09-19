@@ -11,12 +11,14 @@ import {
   ScrollView,
   PanResponder,
   Animated,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import useGemini from "@/lib/useGemini";
 import Markdown from "react-native-markdown-display";
 import { useChats, IChat, IMessage } from "@/lib/useChats";
+import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 
@@ -34,8 +36,17 @@ export default function Index() {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const { loading, reply, error, fetchGeminiReply, setReply } = useGemini();
-  const { chats, messages, createChat, getMessages, addMessage, setMessages } =
-    useChats();
+  const {
+    chats,
+    messages,
+    createChat,
+    getMessages,
+    addMessage,
+    setMessages,
+    deleteChat,
+    clearChatHistory,
+  } = useChats();
+  const { signOut } = useAuth();
   const flatListRef = useRef<FlatList>(null);
 
   // Animate sidebar in/out
@@ -171,15 +182,62 @@ export default function Index() {
           </TouchableOpacity>
           <ScrollView>
             {chats.map((chat) => (
-              <TouchableOpacity
-                key={chat.$id}
-                style={styles.chatItem}
-                onPress={() => handleSelectChat(chat)}
-              >
-                <Text style={styles.chatItemText}>{chat.title}</Text>
-              </TouchableOpacity>
+              <View key={chat.$id} style={styles.chatItemContainer}>
+                <TouchableOpacity
+                  style={styles.chatItem}
+                  onPress={() => handleSelectChat(chat)}
+                >
+                  <Text style={styles.chatItemText}>{chat.title}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Delete Chat",
+                      "Are you sure you want to delete this chat?",
+                      [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          onPress: () => deleteChat(chat.$id!),
+                          style: "destructive",
+                        },
+                      ]
+                    );
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
+
+          <View style={styles.sidebarButtons}>
+            <TouchableOpacity
+              style={styles.sidebarButton}
+              onPress={() => {
+                Alert.alert(
+                  "Clear History",
+                  "Are you sure you want to delete all chats?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    {
+                      text: "Delete",
+                      onPress: clearChatHistory,
+                      style: "destructive",
+                    },
+                  ]
+                );
+              }}
+            >
+              <Ionicons name="trash-bin-outline" size={20} color="white" />
+              <Text style={styles.sidebarButtonText}>Clear History</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.sidebarButton} onPress={signOut}>
+              <Ionicons name="log-out-outline" size={20} color="white" />
+              <Text style={styles.sidebarButtonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
         </Animated.View>
         <KeyboardAvoidingView
           style={[styles.container, { flex: 1 }]}

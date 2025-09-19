@@ -17,7 +17,8 @@ import { useState, useEffect, useRef } from "react";
 import useGemini from "@/lib/useGemini";
 import Markdown from "react-native-markdown-display";
 import { useChats, IChat, IMessage } from "@/lib/useChats";
-import {Ionicons} from "@expo/vector-icons"
+import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 
 const markdownStyles = {
   body: { fontSize: 16, lineHeight: 24, color: "#333" },
@@ -30,6 +31,7 @@ export default function Index() {
   const [message, setMessage] = useState("");
   const [activeChat, setActiveChat] = useState<IChat | null>(null);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const { loading, reply, error, fetchGeminiReply, setReply } = useGemini();
   const { chats, messages, createChat, getMessages, addMessage, setMessages } =
@@ -109,6 +111,12 @@ export default function Index() {
     await getMessages(chat.$id!);
   };
 
+  const handleCopy = async (text: string, id: string) => {
+    await Clipboard.setStringAsync(text);
+    setCopiedMessageId(id);
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  };
+
   const renderItem = ({ item }: { item: IMessage }) => {
     const isMe = item.sender === "me";
     return (
@@ -119,6 +127,18 @@ export default function Index() {
         ]}
       >
         <Markdown style={markdownStyles}>{item.text}</Markdown>
+        <TouchableOpacity
+          onPress={() => handleCopy(item.text, item.$id!)}
+          style={{ position: "absolute", top: 5, right: 5, padding: 8 }}
+        >
+          <Ionicons
+            name={
+              copiedMessageId === item.$id ? "checkmark-circle" : "copy-outline"
+            }
+            size={16}
+            color={copiedMessageId === item.$id ? "green" : "grey"}
+          />
+        </TouchableOpacity>
       </View>
     );
   };

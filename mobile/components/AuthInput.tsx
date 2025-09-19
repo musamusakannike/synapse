@@ -1,5 +1,5 @@
 import { Text, TextInput, View, TextInputProps } from "react-native";
-import React, { useState } from "react";
+import React from "react";
 import { styles } from "@/styles";
 
 const AuthInput = ({
@@ -16,14 +16,10 @@ const AuthInput = ({
   value: string;
   onChangeText: (text: string) => void;
 } & TextInputProps) => {
-  const [isFocused, setIsFocused] = useState(false);
-
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <View
-        style={[styles.inputWrapper, isFocused && styles.inputWrapperFocused]}
-      >
+      <View style={styles.inputWrapper}>
         <TextInput
           style={styles.authInput}
           placeholder={placeholder}
@@ -32,8 +28,6 @@ const AuthInput = ({
           secureTextEntry={type === "password"}
           autoCapitalize="none"
           autoCorrect={false}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           value={value}
           onChangeText={onChangeText}
           {...props}

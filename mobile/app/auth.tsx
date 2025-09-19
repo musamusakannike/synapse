@@ -42,13 +42,13 @@ const AuthPage = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.container}
       >
         <ScrollView
           contentContainerStyle={styles.authContainer}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="on-drag"
         >
           <View style={styles.authContent}>
             {/* Header Section with improved spacing and visual hierarchy */}

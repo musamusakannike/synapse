@@ -173,6 +173,7 @@ export const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     color: "#333",
+    fontFamily: "JetBrainsMono-Medium",
   },
   inputContainer: {
     flexDirection: "row",

@@ -95,7 +95,7 @@ export default function Index() {
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#007AFF" />
-            <Text style={styles.loadingText}>Gemini is thinking...</Text>
+            <Text style={styles.loadingText}>Synapse is thinking...</Text>
           </View>
         )}
 

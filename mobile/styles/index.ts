@@ -191,6 +191,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 15,
     fontSize: 16,
     backgroundColor: "#FAFAFA",
+    fontFamily: "JetBrainsMono-Medium",
   },
   sendButton: {
     marginLeft: 10,
@@ -201,8 +202,8 @@ export const styles = StyleSheet.create({
   },
   sendText: {
     color: "#FFF",
-    fontWeight: "bold",
     fontSize: 16,
+    fontFamily: "JetBrainsMono-Bold",
   },
   loadingContainer: {
     flexDirection: "row",
@@ -214,6 +215,7 @@ export const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     color: "#AAA",
+    fontFamily: "JetBrainsMono-Medium",
   },
   errorContainer: {
     padding: 10,
@@ -223,5 +225,6 @@ export const styles = StyleSheet.create({
   errorText: {
     color: "#D8000C",
     fontSize: 14,
+    fontFamily: "JetBrainsMono-Medium",
   },
 });

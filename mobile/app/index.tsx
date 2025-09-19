@@ -12,12 +12,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
 import useGemini from "@/lib/useGemini";
+import Markdown from "react-native-markdown-display";
 
 interface IMessage {
   id: string;
   text: string;
   sender: "me" | "other";
 }
+
+const markdownStyles = {
+  body: { fontSize: 16, lineHeight: 24, color: "#333" },
+  strong: { fontWeight: "700", color: "#111" },
+  bullet_list: { marginVertical: 8 },
+  list_item: { marginBottom: 6 },
+};
 
 export default function Index() {
   const [message, setMessage] = useState("");
@@ -65,7 +73,7 @@ export default function Index() {
           isMe ? styles.myMessage : styles.otherMessage,
         ]}
       >
-        <Text style={styles.messageText}>{item.text}</Text>
+        <Markdown style={markdownStyles} >{item.text}</Markdown>
       </View>
     );
   };

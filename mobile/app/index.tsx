@@ -9,6 +9,8 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
+  PanResponder,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useEffect, useRef } from "react";
@@ -26,9 +28,32 @@ const markdownStyles = {
 export default function Index() {
   const [message, setMessage] = useState("");
   const [activeChat, setActiveChat] = useState<IChat | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const { loading, reply, error, fetchGeminiReply, setReply } = useGemini();
-  const { chats, messages, createChat, getMessages, addMessage, setMessages } = useChats();
+  const { chats, messages, createChat, getMessages, addMessage, setMessages } =
+    useChats();
   const flatListRef = useRef<FlatList>(null);
+
+  // Animate sidebar in/out
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: sidebarVisible ? 0 : -250,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [sidebarVisible]);
+
+  // Gesture handler (swipe left/right)
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 20,
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dx < -50) setSidebarVisible(false); // swipe left
+        if (gesture.dx > 50) setSidebarVisible(true); // swipe right
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (reply && activeChat) {
@@ -98,8 +123,24 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ flex: 1, flexDirection: "row" }}>
-        <View style={styles.sidebar}>
+      <View
+        style={{ flex: 1, flexDirection: "row" }}
+        {...panResponder.panHandlers}
+      >
+        <Animated.View
+          style={[
+            styles.sidebar,
+            {
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 250,
+              transform: [{ translateX: slideAnim }],
+              zIndex: 10,
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.newChatButton}
             onPress={() => setActiveChat(null)}
@@ -117,11 +158,23 @@ export default function Index() {
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
+        </Animated.View>
         <KeyboardAvoidingView
-          style={styles.container}
+          style={[styles.container, { flex: 1 }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
+          <TouchableOpacity
+            onPress={() => setSidebarVisible((v) => !v)}
+            style={{
+              padding: 10,
+              alignSelf: "flex-start",
+              backgroundColor: "#eee",
+              borderRadius: 5,
+              margin: 5,
+            }}
+          >
+            <Text>{sidebarVisible ? "Hide Menu" : "Show Menu"}</Text>
+          </TouchableOpacity>
           <FlatList
             ref={flatListRef}
             data={messages}

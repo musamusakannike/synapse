@@ -424,33 +424,41 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
   let voiceName;
   switch (voiceGender.toUpperCase()) {
     case "MALE":
-      voiceName = "Puck";
+      voiceName = "Puck"; // A standard prebuilt voice
       break;
     case "FEMALE":
-      voiceName = "Kore";
+      voiceName = "Kore"; // A standard prebuilt voice
       break;
     default:
-      voiceName = "Zephyr";
+      voiceName = "Zephyr"; // A standard prebuilt voice
       break;
   }
 
   const ttsModel = genAI.getGenerativeModel({
     model: "gemini-2.5-flash-preview-tts",
   });
+
+  // Corrected modification based on Gemini API documentation for TTS
   const ttsResponse = await ttsModel.generateContent({
     contents: [{ parts: [{ text: script }] }],
     config: {
-      responseModalities: ["AUDIO"],
+      // Use 'config' as the top-level property
+      responseModalities: ["AUDIO"], // Specify that the response should be audio
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: voiceName },
+          // Nested voice configuration
+          prebuiltVoiceConfig: {
+            // Use prebuiltVoiceConfig for specifying voice by name
+            voiceName: voiceName, // The specific voice is identified by 'voiceName'
+          },
         },
       },
     },
   });
 
+  // Corrected data access from the generateContent result
   const data =
-    ttsResponse.response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!data) {
     throw new Error("TTS API did not return audio data.");
   }
@@ -485,8 +493,8 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
     fileSize: fileSizeInMB + " MB",
     voiceSettings: {
       gender: voiceGender,
-      speed: voiceSpeed, // Kept for client compatibility, but not used
-      pitch: voicePitch, // Kept for client compatibility, but not used
+      speed: voiceSpeed,
+      pitch: voicePitch,
       voiceName: voiceName,
     },
   };

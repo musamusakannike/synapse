@@ -94,7 +94,7 @@ Despite these challenges, the future of AI in healthcare looks promising, with c
 - ✅ MongoDB for podcast history storage
 
 ### Mobile Requirements
-- ✅ Expo SDK with expo-av for audio playback
+- ✅ Expo SDK with expo-audio for audio playback
 - ✅ React Native Community Slider for voice controls
 - ✅ Proper navigation setup
 - ✅ Authentication integration

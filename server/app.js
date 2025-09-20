@@ -1,16 +1,18 @@
+import { config } from "dotenv";
+
+// Load environment variables first
+config();
+
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import { config } from "dotenv";
 import connectDB from "./config/db.config.js";
 
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import geminiRoute from "./routes/gemini.route.js";
-
-config();
 
 const app = express();
 

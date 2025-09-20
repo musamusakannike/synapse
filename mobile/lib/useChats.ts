@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import api from "./api"; // Assuming default export from api.ts
+import { api } from "./api";
 
 export interface IMessage {
   _id?: string;
@@ -23,13 +23,7 @@ export function useChats() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      fetchChats();
-    }
-  }, [user]);
-
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -40,7 +34,13 @@ export function useChats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchChats();
+    }
+  }, [user, fetchChats]);
 
   const createChat = async (title: string) => {
     if (!user) return;

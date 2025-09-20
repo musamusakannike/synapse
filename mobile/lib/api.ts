@@ -1,16 +1,41 @@
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 
 const API_URL = "http://localhost:5000/api"; // Assuming the server runs on port 5000
 
-const api = axios.create({
+export const api = axios.create({
     baseURL: API_URL,
-    withCredentials: true, // This is important for sending cookies
+    withCredentials: true, // Keep for cookie support if needed
 });
+
+// Add request interceptor to include JWT token in headers
+api.interceptors.request.use(
+    async (config) => {
+        try {
+            const token = await SecureStore.getItemAsync("authToken");
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+        } catch (error) {
+            console.log("Error getting token:", error);
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 // Sign Up
 export const signUp = async (email: string, password: string, name: string) => {
     try {
         const response = await api.post("/auth/signup", { email, password, name });
+        
+        // Store the JWT token securely
+        if (response.data.token) {
+            await SecureStore.setItemAsync("authToken", response.data.token);
+        }
+        
         return response.data.user;
     } catch (error: any) {
         console.error("Sign up failed:", error);
@@ -22,6 +47,12 @@ export const signUp = async (email: string, password: string, name: string) => {
 export const signIn = async (email: string, password: string) => {
     try {
         const response = await api.post("/auth/signin", { email, password });
+        
+        // Store the JWT token securely
+        if (response.data.token) {
+            await SecureStore.setItemAsync("authToken", response.data.token);
+        }
+        
         return response.data.user;
     } catch (error: any) {
         console.error("Sign in failed:", error);
@@ -44,7 +75,12 @@ export async function getCurrentUser() {
 export async function signOut() {
     try {
         await api.post("/auth/signout");
+        
+        // Remove the stored token
+        await SecureStore.deleteItemAsync("authToken");
     } catch (error: any) {
+        // Always clear the token even if the server request fails
+        await SecureStore.deleteItemAsync("authToken");
         throw new Error(error.response?.data?.message || "Sign out failed");
     }
 }

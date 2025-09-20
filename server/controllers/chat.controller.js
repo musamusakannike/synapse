@@ -1,9 +1,9 @@
-const asyncHandler = require("express-async-handler");
-const Chat = require("../models/chats.model");
-const Message = require("../models/messages.model");
+import asyncHandler from "express-async-handler";
+import Chat from "../models/chats.model.js";
+import Message from "../models/messages.model.js";
 
 // Delete Chat
-const deleteChat = asyncHandler(async (req, res) => {
+export const deleteChat = asyncHandler(async (req, res) => {
     const { chatId } = req.params;
 
     await Message.deleteMany({ chatId });
@@ -13,7 +13,7 @@ const deleteChat = asyncHandler(async (req, res) => {
 });
 
 // Clear Chat History
-const clearChatHistory = asyncHandler(async (req, res) => {
+export const clearChatHistory = asyncHandler(async (req, res) => {
     const userId = res.locals.user._id;
 
     const chats = await Chat.find({ userId });
@@ -28,14 +28,14 @@ const clearChatHistory = asyncHandler(async (req, res) => {
 });
 
 // Get Chats
-const getChats = asyncHandler(async (req, res) => {
+export const getChats = asyncHandler(async (req, res) => {
     const userId = res.locals.user._id;
     const chats = await Chat.find({ userId });
     res.status(200).json({ chats });
 });
 
 // Create Chat
-const createChat = asyncHandler(async (req, res) => {
+export const createChat = asyncHandler(async (req, res) => {
     const { title } = req.body;
     const userId = res.locals.user._id;
 
@@ -53,14 +53,14 @@ const createChat = asyncHandler(async (req, res) => {
 });
 
 // Get Messages
-const getMessages = asyncHandler(async (req, res) => {
+export const getMessages = asyncHandler(async (req, res) => {
     const { chatId } = req.params;
     const messages = await Message.find({ chatId });
     res.status(200).json({ messages });
 });
 
 // Create Message
-const createMessage = asyncHandler(async (req, res) => {
+export const createMessage = asyncHandler(async (req, res) => {
     const { chatId } = req.params;
     const { text, sender } = req.body;
     const senderId = res.locals.user._id;
@@ -79,12 +79,3 @@ const createMessage = asyncHandler(async (req, res) => {
 
     res.status(201).json({ message });
 });
-
-module.exports = {
-    deleteChat,
-    clearChatHistory,
-    getChats,
-    createChat,
-    getMessages,
-    createMessage,
-};

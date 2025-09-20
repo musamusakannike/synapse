@@ -1,9 +1,9 @@
-const asyncHandler = require("express-async-handler");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import asyncHandler from "express-async-handler";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const getGeminiReply = asyncHandler(async (req, res) => {
+export const getGeminiReply = asyncHandler(async (req, res) => {
     const { prompt } = req.body;
 
     if (!prompt) {
@@ -18,7 +18,3 @@ const getGeminiReply = asyncHandler(async (req, res) => {
 
     res.status(200).json({ reply: text });
 });
-
-module.exports = {
-    getGeminiReply,
-};

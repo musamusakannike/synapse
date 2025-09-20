@@ -1,6 +1,6 @@
-const { lucia } = require("../config/lucia.config");
+import { lucia } from "../config/lucia.config.js";
 
-const authMiddleware = async (req, res, next) => {
+export const authMiddleware = async (req, res, next) => {
     const sessionId = lucia.readSessionCookie(req.headers.cookie ?? "");
     if (!sessionId) {
         res.locals.user = null;
@@ -21,8 +21,4 @@ const authMiddleware = async (req, res, next) => {
     res.locals.user = user;
     res.locals.session = session;
     return next();
-};
-
-module.exports = {
-    authMiddleware
 };

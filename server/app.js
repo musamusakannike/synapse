@@ -1,10 +1,16 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
-const helmet = require("helmet");
-const connectDB = require("./config/db.config");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import { config } from "dotenv";
+import connectDB from "./config/db.config.js";
+
+import authRoute from "./routes/auth.route.js";
+import chatRoute from "./routes/chat.route.js";
+import geminiRoute from "./routes/gemini.route.js";
+
+config();
 
 const app = express();
 
@@ -27,8 +33,8 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Routes
-app.use("/api/auth", require("./routes/auth.route"));
-app.use("/api/chats", require("./routes/chat.route"));
-app.use("/api/gemini", require("./routes/gemini.route"));
+app.use("/api/auth", authRoute);
+app.use("/api/chats", chatRoute);
+app.use("/api/gemini", geminiRoute);
 
-module.exports = app;
+export default app;

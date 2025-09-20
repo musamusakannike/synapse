@@ -33,12 +33,23 @@ const useWebsiteGen = () => {
     setError(null);
   };
 
+  const createPreview = async (htmlCode: string) => {
+    try {
+      const response = await api.post('/website/preview', { htmlCode });
+      return response.data.previewUrl;
+    } catch (err: any) {
+      console.error('Failed to create preview:', err);
+      throw new Error(err.response?.data?.message || err.message || 'Failed to create preview');
+    }
+  };
+
   return { 
     loading, 
     generatedWebsite, 
     error, 
     generateWebsite, 
     clearWebsite,
+    createPreview,
     setError
   };
 };

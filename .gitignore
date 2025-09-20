@@ -43,3 +43,4 @@ app-example
 /android
 
 .env
+synapse-service-credential.json

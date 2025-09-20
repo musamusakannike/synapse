@@ -14,6 +14,7 @@ import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import geminiRoute from "./routes/gemini.route.js";
 import websiteRoute from "./routes/website.route.js";
+import podcastRoute from "./routes/podcast.route.js";
 
 const app = express();
 
@@ -40,5 +41,6 @@ app.use("/api/auth", authRoute);
 app.use("/api/chats", chatRoute);
 app.use("/api/gemini", geminiRoute);
 app.use("/api/website", websiteRoute);
+app.use("/api/podcast", podcastRoute);
 
 export default app;

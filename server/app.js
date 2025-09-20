@@ -26,4 +26,9 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+// Routes
+app.use("/api/auth", require("./routes/auth.route"));
+app.use("/api/chats", require("./routes/chat.route"));
+app.use("/api/gemini", require("./routes/gemini.route"));
+
 module.exports = app;

@@ -488,7 +488,7 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
 
   return {
     audioId: audioId,
-    downloadUrl: `http://localhost:5000/api/podcast/download/${audioId}`,
+    downloadUrl: `https://synapse-tzlh.onrender.com/api/podcast/download/${audioId}`,
     fileName: fileName,
     fileSize: fileSizeInMB + " MB",
     voiceSettings: {

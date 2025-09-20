@@ -36,7 +36,7 @@ export default function Index() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const { loading, reply, error, fetchGeminiReply, setReply } = useGemini();
+  const { loading, reply, error, historyLength, usingFallback, fetchGeminiReply, setReply } = useGemini();
   const {
     chats,
     messages,
@@ -108,7 +108,7 @@ export default function Index() {
       }
 
       addMessage(String(currentChat._id!), message, "me");
-      await fetchGeminiReply(message);
+      await fetchGeminiReply(message, String(currentChat._id!));
       setMessage("");
     }
   };
@@ -270,13 +270,21 @@ export default function Index() {
           {loading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#007AFF" />
-              <Text style={styles.loadingText}>Synapse is thinking...</Text>
+              <Text style={styles.loadingText}>
+                Synapse is thinking{historyLength > 0 ? ` (using ${historyLength} messages context)` : ''}...
+              </Text>
             </View>
           )}
 
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+          
+          {usingFallback && (
+            <View style={[styles.errorContainer, { backgroundColor: "#FFF3CD", borderColor: "#FFC107" }]}>
+              <Text style={[styles.errorText, { color: "#856404" }]}>⚠️ Using simple mode (conversation history unavailable)</Text>
             </View>
           )}
 

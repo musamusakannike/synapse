@@ -21,7 +21,7 @@ import { useRouter } from "expo-router";
 export default function WebsiteGeneration() {
   const [prompt, setPrompt] = useState("");
   const [websiteType, setWebsiteType] = useState("simple");
-  const { loading, generatedWebsite, error, generateWebsite, clearWebsite } = useWebsiteGen();
+  const { loading, generatedWebsite, error, generateWebsite, clearWebsite, createPreview } = useWebsiteGen();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -41,18 +41,18 @@ export default function WebsiteGeneration() {
   const handlePreview = async () => {
     if (generatedWebsite?.htmlCode) {
       try {
-        // Create a data URL from the HTML code
-        const htmlBlob = `data:text/html;charset=utf-8,${encodeURIComponent(generatedWebsite.htmlCode)}`;
+        // Create preview URL using the hook method
+        const previewUrl = await createPreview(generatedWebsite.htmlCode);
         
-        // Open in web browser
-        await WebBrowser.openBrowserAsync(htmlBlob, {
+        // Open the served HTML in web browser
+        await WebBrowser.openBrowserAsync(previewUrl, {
           presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
           controlsColor: '#007AFF',
           toolbarColor: '#000000',
         });
       } catch (error) {
         console.error('Error opening website preview:', error);
-        Alert.alert('Error', 'Failed to open website preview');
+        Alert.alert('Error', 'Failed to open website preview. Please make sure the server is running.');
       }
     }
   };

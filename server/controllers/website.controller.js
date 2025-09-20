@@ -57,3 +57,60 @@ The output should be ONLY the HTML code, starting with <!DOCTYPE html> and endin
     timestamp: new Date().toISOString()
   });
 });
+
+// Store for temporary preview files
+const previewStore = new Map();
+
+// Clean up old preview files every 10 minutes
+setInterval(() => {
+  const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+  for (const [id, data] of previewStore.entries()) {
+    if (data.timestamp < tenMinutesAgo) {
+      previewStore.delete(id);
+    }
+  }
+}, 10 * 60 * 1000);
+
+export const createPreview = asyncHandler(async (req, res) => {
+  const { htmlCode } = req.body;
+
+  if (!htmlCode) {
+    res.status(400);
+    throw new Error("HTML code is required");
+  }
+
+  // Generate a unique ID for this preview
+  const previewId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+  
+  // Store the HTML code temporarily
+  previewStore.set(previewId, {
+    htmlCode: htmlCode,
+    timestamp: Date.now()
+  });
+
+  // Return the preview URL
+  res.status(200).json({
+    previewUrl: `http://localhost:5000/api/website/serve/${previewId}`,
+    previewId: previewId
+  });
+});
+
+export const servePreview = asyncHandler(async (req, res) => {
+  const { previewId } = req.params;
+  
+  const previewData = previewStore.get(previewId);
+  
+  if (!previewData) {
+    res.status(404);
+    throw new Error("Preview not found or expired");
+  }
+
+  // Set appropriate headers for HTML content
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  // Send the HTML code directly
+  res.send(previewData.htmlCode);
+});

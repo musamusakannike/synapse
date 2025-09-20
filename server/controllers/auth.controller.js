@@ -1,10 +1,10 @@
-const { lucia } = require("../config/lucia.config");
-const User = require("../models/user.model");
-const asyncHandler = require("express-async-handler");
-const bcrypt = require("bcryptjs");
+import { lucia } from "../config/lucia.config.js";
+import User from "../models/user.model.js";
+import asyncHandler from "express-async-handler";
+import bcrypt from "bcryptjs";
 
 // Sign Up
-const signUp = asyncHandler(async (req, res) => {
+export const signUp = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
@@ -36,7 +36,7 @@ const signUp = asyncHandler(async (req, res) => {
 });
 
 // Sign In
-const signIn = asyncHandler(async (req, res) => {
+export const signIn = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -66,7 +66,7 @@ const signIn = asyncHandler(async (req, res) => {
 });
 
 // Sign Out
-const signOut = asyncHandler(async (req, res) => {
+export const signOut = asyncHandler(async (req, res) => {
     if (!res.locals.session) {
 		res.status(401)
         throw new Error("Unauthorized");
@@ -79,17 +79,10 @@ const signOut = asyncHandler(async (req, res) => {
 });
 
 // Get Current User
-const getCurrentUser = asyncHandler(async (req, res) => {
+export const getCurrentUser = asyncHandler(async (req, res) => {
     if (!res.locals.user) {
         res.status(401)
         throw new Error("Unauthorized");
     }
     res.status(200).json({ user: res.locals.user });
 });
-
-module.exports = {
-    signUp,
-    signIn,
-    signOut,
-    getCurrentUser,
-};

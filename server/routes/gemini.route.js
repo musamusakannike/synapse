@@ -1,9 +1,9 @@
-const express = require('express');
-const { getGeminiReply } = require('../controllers/gemini.controller');
-const { authMiddleware } = require('../middlewares/auth.middleware');
+import express from 'express';
+import { getGeminiReply } from '../controllers/gemini.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
 router.post('/', authMiddleware, getGeminiReply);
 
-module.exports = router;
+export default router;

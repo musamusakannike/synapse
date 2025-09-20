@@ -1,10 +1,10 @@
-const { Lucia } = require("lucia");
-const mongooseAdapter = require("@lucia-auth/adapter-mongoose");
-const User = require("../models/user.model");
+import { Lucia } from "lucia";
+import {mongoose} from "@lucia-auth/adapter-mongoose";
+import User from "../models/user.model.js";
 
-const adapter = mongooseAdapter(User);
+const adapter = mongoose(User);
 
-const lucia = new Lucia(
+export const lucia = new Lucia(
   adapter,
   {
     sessionCookie: {
@@ -21,5 +21,3 @@ const lucia = new Lucia(
     }
   }
 );
-
-module.exports = { lucia };

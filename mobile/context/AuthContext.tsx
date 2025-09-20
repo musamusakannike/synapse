@@ -1,11 +1,16 @@
-import { getCurrentUser, signOut as apiSignOut } from "@/lib/appwrite";
-import { Models } from "appwrite";
+import { getCurrentUser, signOut as apiSignOut } from "@/lib/api";
 import { createContext, useContext, useEffect, useState } from "react";
 
+interface User {
+    _id: string;
+    name: string;
+    email: string;
+}
+
 interface IAuthContext {
-    user: Models.Document | null;
+    user: User | null;
     isLoading: boolean;
-    setUser: (user: Models.Document | null) => void;
+    setUser: (user: User | null) => void;
     signOut: () => Promise<void>;
 }
 
@@ -17,7 +22,7 @@ const AuthContext = createContext<IAuthContext>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<Models.Document | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {

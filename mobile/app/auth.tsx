@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { styles } from "@/styles";
 import AuthInput from "@/components/AuthInput";
-import { signIn, signUp, getCurrentUser } from "../lib/appwrite";
+import { signIn, signUp, getCurrentUser } from "../lib/api";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 

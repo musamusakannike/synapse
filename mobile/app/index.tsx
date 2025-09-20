@@ -21,6 +21,7 @@ import { useChats, IChat, IMessage } from "@/lib/useChats";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import { useRouter } from "expo-router";
 
 const markdownStyles = {
   body: { fontSize: 16, lineHeight: 24, color: "#333" },
@@ -47,6 +48,7 @@ export default function Index() {
     clearChatHistory,
   } = useChats();
   const { signOut } = useAuth();
+  const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
 
   // Animate sidebar in/out
@@ -174,6 +176,14 @@ export default function Index() {
             onPress={() => setActiveChat(null)}
           >
             <Text style={styles.newChatButtonText}>+ New Chat</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.newChatButton, { backgroundColor: "#34C759", marginBottom: 10, flexDirection: "row", justifyContent: "center" }]}
+            onPress={() => router.push('/website')}
+          >
+            <Ionicons name="code-outline" size={20} color="white" style={{ marginRight: 8 }} />
+            <Text style={styles.newChatButtonText}>Generate Website</Text>
           </TouchableOpacity>
           <ScrollView>
             {chats.map((chat) => (

@@ -90,7 +90,7 @@ export const createPreview = asyncHandler(async (req, res) => {
 
   // Return the preview URL
   res.status(200).json({
-    previewUrl: `http://localhost:5000/api/website/serve/${previewId}`,
+    previewUrl: `https://synapse-tzlh.onrender.com/api/website/serve/${previewId}`,
     previewId: previewId
   });
 });

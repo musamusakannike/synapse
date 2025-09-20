@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = "http://localhost:5000/api"; // Assuming the server runs on port 5000
+const API_URL = "https://synapse-tzlh.onrender.com/api"; // Assuming the server runs on port 5000
 
 export const api = axios.create({
     baseURL: API_URL,

@@ -13,6 +13,7 @@ import connectDB from "./config/db.config.js";
 import authRoute from "./routes/auth.route.js";
 import chatRoute from "./routes/chat.route.js";
 import geminiRoute from "./routes/gemini.route.js";
+import websiteRoute from "./routes/website.route.js";
 
 const app = express();
 
@@ -38,5 +39,6 @@ app.use(limiter);
 app.use("/api/auth", authRoute);
 app.use("/api/chats", chatRoute);
 app.use("/api/gemini", geminiRoute);
+app.use("/api/website", websiteRoute);
 
 export default app;

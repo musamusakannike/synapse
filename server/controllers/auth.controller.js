@@ -1,4 +1,4 @@
-import { lucia } from "../config/lucia.config.js";
+import { generateToken } from "../config/jwt.config.js";
 import User from "../models/user.model.js";
 import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
@@ -28,11 +28,25 @@ export const signUp = asyncHandler(async (req, res) => {
         password: hashedPassword,
     });
 
-    const session = await lucia.createSession(user._id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
+    const token = generateToken(user._id);
 
-    res.setHeader("Set-Cookie", sessionCookie.serialize());
-    res.status(201).json({ user });
+    // Set token as HTTP-only cookie
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Also return the token for mobile apps
+    res.status(201).json({ 
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email
+        },
+        token 
+    });
 });
 
 // Sign In
@@ -58,23 +72,36 @@ export const signIn = asyncHandler(async (req, res) => {
         throw new Error("Invalid credentials");
     }
 
-    const session = await lucia.createSession(user._id, {});
-    const sessionCookie = lucia.createSessionCookie(session.id);
+    const token = generateToken(user._id);
 
-    res.setHeader("Set-Cookie", sessionCookie.serialize());
-    res.status(200).json({ user });
+    // Set token as HTTP-only cookie
+    res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Also return the token for mobile apps
+    res.status(200).json({ 
+        user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email
+        },
+        token 
+    });
 });
 
 // Sign Out
 export const signOut = asyncHandler(async (req, res) => {
-    if (!res.locals.session) {
-		res.status(401)
-        throw new Error("Unauthorized");
-	}
-	await lucia.invalidateSession(res.locals.session.id);
-
-	const sessionCookie = lucia.createBlankSessionCookie();
-	res.setHeader("Set-Cookie", sessionCookie.serialize());
+    // Clear the token cookie
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    });
+    
     res.status(200).json({ message: "Signed out successfully" });
 });
 

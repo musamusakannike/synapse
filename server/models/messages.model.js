@@ -16,6 +16,11 @@ const MessageSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    sender: {
+      type: String,
+      enum: ["me", "other"],
+      required: true,
+    },
   },
   { timestamps: true }
 );

@@ -65,12 +65,19 @@ export function useChats() {
 
   const addMessage = async (chatId: string, text: string, sender: "me" | "other") => {
     if (!user) return;
+    
+    // Ensure all IDs are strings
+    const chatIdStr = String(chatId);
+    const senderIdStr = String(user._id);
+    
+    console.log('addMessage debug:', { chatIdStr, text, sender, senderIdStr });
+    
     try {
-      const response = await api.post(`/chats/${chatId}/messages`, {
+      const response = await api.post(`/chats/${chatIdStr}/messages`, {
         text,
         sender,
-        senderId: user._id,
-        chatId,
+        senderId: senderIdStr,
+        chatId: chatIdStr,
       });
       setMessages((prev) => [...prev, response.data.message]);
     } catch (error) {

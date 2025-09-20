@@ -70,13 +70,8 @@ export default function Index() {
   ).current;
 
   useEffect(() => {
-    if (reply && activeChat) {
-      const geminiMessage: IMessage = {
-        chatId: activeChat.$id!,
-        text: reply,
-        sender: "other",
-      };
-      addMessage(geminiMessage);
+    if (reply && activeChat && activeChat._id) {
+      addMessage(String(activeChat._id), reply, "other");
       setReply(null);
     }
   }, [reply, setReply, activeChat, addMessage]);
@@ -101,16 +96,16 @@ export default function Index() {
         if (newChat) {
           setActiveChat(newChat);
           currentChat = newChat;
-          newMessage.chatId = newChat.$id!;
+          newMessage.chatId = newChat._id!;
           setMessages([newMessage]);
         } else {
           return;
         }
       } else {
-        newMessage.chatId = currentChat.$id!;
+        newMessage.chatId = currentChat._id!;
       }
 
-      addMessage(newMessage);
+      addMessage(String(currentChat._id!), message, "me");
       await fetchGeminiReply(message);
       setMessage("");
     }
@@ -119,7 +114,7 @@ export default function Index() {
   const handleSelectChat = async (chat: IChat) => {
     setSidebarVisible(false);
     setActiveChat(chat);
-    await getMessages(chat.$id!);
+    await getMessages(chat._id!);
   };
 
   const handleCopy = async (text: string, id: string) => {
@@ -139,15 +134,15 @@ export default function Index() {
       >
         <Markdown style={markdownStyles}>{item.text}</Markdown>
         <TouchableOpacity
-          onPress={() => handleCopy(item.text, item.$id!)}
+          onPress={() => handleCopy(item.text, item._id!)}
           style={{ position: "absolute", top: 5, right: 5, padding: 8 }}
         >
           <Ionicons
             name={
-              copiedMessageId === item.$id ? "checkmark-circle" : "copy-outline"
+              copiedMessageId === item._id ? "checkmark-circle" : "copy-outline"
             }
             size={16}
-            color={copiedMessageId === item.$id ? "green" : "grey"}
+            color={copiedMessageId === item._id ? "green" : "grey"}
           />
         </TouchableOpacity>
       </View>
@@ -182,7 +177,7 @@ export default function Index() {
           </TouchableOpacity>
           <ScrollView>
             {chats.map((chat) => (
-              <View key={chat.$id} style={styles.chatItemContainer}>
+              <View key={chat._id} style={styles.chatItemContainer}>
                 <TouchableOpacity
                   style={styles.chatItem}
                   onPress={() => handleSelectChat(chat)}
@@ -198,7 +193,7 @@ export default function Index() {
                         { text: "Cancel", style: "cancel" },
                         {
                           text: "Delete",
-                          onPress: () => deleteChat(chat.$id!),
+                          onPress: () => deleteChat(chat._id!),
                           style: "destructive",
                         },
                       ]
@@ -258,7 +253,7 @@ export default function Index() {
             ref={flatListRef}
             data={messages}
             renderItem={renderItem}
-            keyExtractor={(item, index) => item.$id || index.toString()}
+            keyExtractor={(item, index) => item._id || index.toString()}
             contentContainerStyle={styles.chatContainer}
           />
 

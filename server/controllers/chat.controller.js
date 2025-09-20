@@ -65,6 +65,11 @@ export const createMessage = asyncHandler(async (req, res) => {
     const { text, sender } = req.body;
     const senderId = res.locals.user._id;
 
+    console.log("Create Message Debug:");
+    console.log("- chatId:", chatId, typeof chatId);
+    console.log("- body:", req.body);
+    console.log("- senderId:", senderId, typeof senderId);
+
     if (!text || !sender) {
         res.status(400);
         throw new Error("Text and sender are required");

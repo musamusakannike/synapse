@@ -36,9 +36,12 @@ setInterval(() => {
 }, 30 * 60 * 1000);
 
 export const generatePodcastScript = asyncHandler(async (req, res) => {
+  console.log('[PodcastController] generatePodcastScript - Starting script generation');
   const { articleTitle, articleContent, podcastStyle = "professional" } = req.body;
+  console.log(`[PodcastController] generatePodcastScript - Received request with title: "${articleTitle.substring(0, 50)}..." and style: ${podcastStyle}`);
 
   if (!articleTitle || !articleContent) {
+    console.error('[PodcastController] generatePodcastScript - Missing required fields');
     res.status(400);
     throw new Error("Article title and content are required");
   }
@@ -82,6 +85,7 @@ Generate only the podcast script text without any introductory text or formattin
   const response = await result.response;
   const scriptText = response.text();
 
+  console.log('[PodcastController] generatePodcastScript - Cleaning up script text');
   // Clean up the response to ensure it's pure text
   let cleanedScript = scriptText.trim();
   
@@ -90,6 +94,9 @@ Generate only the podcast script text without any introductory text or formattin
   cleanedScript = cleanedScript.replace(/\*(.*?)\*/g, '$1'); // Remove italic
   cleanedScript = cleanedScript.replace(/#{1,6}\s*(.*)/g, '$1'); // Remove headers
   cleanedScript = cleanedScript.replace(/`(.*?)`/g, '$1'); // Remove code formatting
+  
+  const wordCount = cleanedScript.split(' ').length;
+  console.log(`[PodcastController] generatePodcastScript - Generated script with ${wordCount} words`);
 
   res.status(200).json({ 
     script: cleanedScript,
@@ -102,9 +109,12 @@ Generate only the podcast script text without any introductory text or formattin
 });
 
 export const generatePodcastAudio = asyncHandler(async (req, res) => {
+  console.log('[PodcastController] generatePodcastAudio - Starting audio generation');
   const { script, voiceGender = "NEUTRAL", voiceSpeed = 1.0, voicePitch = 0.0 } = req.body;
+  console.log(`[PodcastController] generatePodcastAudio - Voice settings - Gender: ${voiceGender}, Speed: ${voiceSpeed}, Pitch: ${voicePitch}`);
 
   if (!script) {
+    console.error('[PodcastController] generatePodcastAudio - No script provided');
     res.status(400);
     throw new Error("Script text is required");
   }
@@ -124,18 +134,29 @@ export const generatePodcastAudio = asyncHandler(async (req, res) => {
         pitch: voicePitch
       },
     };
+    console.log('[PodcastController] generatePodcastAudio - Configured TTS request');
 
     // Generate the audio
-    const [ttsResponse] = await ttsClient.synthesizeSpeech(request);
+    console.log('[PodcastController] generatePodcastAudio - Sending request to Google TTS API');
+    let ttsResponse;
+    try {
+      [ttsResponse] = await ttsClient.synthesizeSpeech(request);
+      console.log('[PodcastController] generatePodcastAudio - Successfully received audio from TTS API');
+    } catch (error) {
+      console.error('[PodcastController] generatePodcastAudio - TTS API error:', error.message);
+      throw new Error(`Failed to generate audio: ${error.message}`);
+    }
     
     // Generate a unique filename
     const audioId = Date.now().toString(36) + Math.random().toString(36).substr(2);
     const fileName = `podcast_${audioId}.mp3`;
     const filePath = path.join(__dirname, '..', 'temp', fileName);
+    console.log(`[PodcastController] generatePodcastAudio - Generated audio ID: ${audioId}, File: ${fileName}`);
     
     // Ensure temp directory exists
     const tempDir = path.join(__dirname, '..', 'temp');
     if (!fs.existsSync(tempDir)) {
+      console.log('[PodcastController] generatePodcastAudio - Creating temp directory');
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
@@ -144,11 +165,13 @@ export const generatePodcastAudio = asyncHandler(async (req, res) => {
     await writeFile(filePath, ttsResponse.audioContent, 'binary');
     
     // Store the audio file info temporarily
-    audioStore.set(audioId, {
+    const audioInfo = {
       filePath: filePath,
       fileName: fileName,
       timestamp: Date.now()
-    });
+    };
+    audioStore.set(audioId, audioInfo);
+    console.log(`[PodcastController] generatePodcastAudio - Stored audio in memory cache with ID: ${audioId}`);
 
     // Calculate approximate file size
     const stats = fs.statSync(filePath);
@@ -169,13 +192,16 @@ export const generatePodcastAudio = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error('TTS Error:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[PodcastController] generatePodcastAudio - Error after ${duration}ms:`, error.message);
+    console.error('[PodcastController] generatePodcastAudio - Error details:', error);
     res.status(500);
-    throw new Error("Failed to generate audio. Please check your Google Cloud TTS configuration.");
+    throw new Error(`Failed to generate audio: ${error.message}`);
   }
 });
 
 export const generateFullPodcast = asyncHandler(async (req, res) => {
+  const startTime = Date.now();
   const { 
     articleTitle, 
     articleContent, 
@@ -185,20 +211,24 @@ export const generateFullPodcast = asyncHandler(async (req, res) => {
     voicePitch = 0.0
   } = req.body;
 
+  console.log('[PodcastController] generateFullPodcast - Starting full podcast generation');
+  console.log(`[PodcastController] generateFullPodcast - Article: "${articleTitle.substring(0, 50)}..."`);
+  console.log(`[PodcastController] generateFullPodcast - Style: ${podcastStyle}, Voice: ${voiceGender}`);
+
   if (!articleTitle || !articleContent) {
+    console.error('[PodcastController] generateFullPodcast - Missing required fields');
     res.status(400);
     throw new Error("Article title and content are required");
   }
 
-  const startTime = Date.now();
-
   try {
     // First generate the script
     const scriptResult = await generateScript(articleTitle, articleContent, podcastStyle);
+    console.log(`[PodcastController] generateFullPodcast - Generated script with ${scriptResult.wordCount} words`);
     
     // Then convert to audio
     const audioResult = await convertToAudio(scriptResult.script, voiceGender, voiceSpeed, voicePitch);
-
+    console.log(`[PodcastController] generateFullPodcast - Converted script to audio with ${audioResult.duration} seconds`);
     const generationTime = Date.now() - startTime;
 
     // Save to database
@@ -247,7 +277,7 @@ export const generateFullPodcast = asyncHandler(async (req, res) => {
   } catch (error) {
     // Save failed attempt to database
     const podcast = new Podcast({
-      user: req.user._id,
+      user: res.locals.user._id,
       articleTitle,
       articleContent,
       script: "Generation failed",
@@ -269,9 +299,15 @@ export const generateFullPodcast = asyncHandler(async (req, res) => {
 });
 
 export const downloadAudio = asyncHandler(async (req, res) => {
+  console.log(`[PodcastController] downloadAudio - Request to download audio ID: ${req.params.audioId}`);
   const { audioId } = req.params;
   
   const audioData = audioStore.get(audioId);
+  if (!audioData) {
+    console.error(`[PodcastController] downloadAudio - Audio not found for ID: ${audioId}`);
+    res.status(404).json({ error: 'Audio file not found or expired' });
+    return;
+  }
   
   if (!audioData || !fs.existsSync(audioData.filePath)) {
     res.status(404);
@@ -345,6 +381,7 @@ Generate only the podcast script text without any introductory text or formattin
 }
 
 async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
+  console.log("Converting to audio...")
   const request = {
     input: { text: script },
     voice: { 
@@ -359,8 +396,11 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
     },
   };
 
+  console.log("Request configured")
+
   const [ttsResponse] = await ttsClient.synthesizeSpeech(request);
-  
+  console.log("Audio generated")
+
   const audioId = Date.now().toString(36) + Math.random().toString(36).substr(2);
   const fileName = `podcast_${audioId}.mp3`;
   const filePath = path.join(__dirname, '..', 'temp', fileName);
@@ -372,6 +412,7 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
 
   const writeFile = promisify(fs.writeFile);
   await writeFile(filePath, ttsResponse.audioContent, 'binary');
+  console.log("Audio saved to file")
   
   audioStore.set(audioId, {
     filePath: filePath,
@@ -396,7 +437,9 @@ async function convertToAudio(script, voiceGender, voiceSpeed, voicePitch) {
 }
 
 export const getPodcastHistory = asyncHandler(async (req, res) => {
+  console.log('[PodcastController] getPodcastHistory - Fetching podcast history');
   const { page = 1, limit = 10 } = req.query;
+  console.log(`[PodcastController] getPodcastHistory - Page: ${page}, Limit: ${limit}`);
   
   const options = {
     page: parseInt(page),

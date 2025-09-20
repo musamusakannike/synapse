@@ -12,13 +12,11 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import usePodcast from "@/lib/usePodcast";
-import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Audio } from 'expo-av';
-import { Sound } from 'expo-av/build/Audio';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import Slider from '@react-native-community/slider';
 
 export default function PodcastGeneration() {
@@ -28,22 +26,24 @@ export default function PodcastGeneration() {
   const [voiceGender, setVoiceGender] = useState("NEUTRAL");
   const [voiceSpeed, setVoiceSpeed] = useState(1.0);
   const [voicePitch, setVoicePitch] = useState(0.0);
-  
-  // Audio player state
-  const [sound, setSound] = useState<Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
 
-  const { 
-    loading, 
-    generatedPodcast, 
-    error, 
-    generateFullPodcast, 
-    clearPodcast 
+  const {
+    loading,
+    generatedPodcast,
+    error,
+    generateFullPodcast,
+    clearPodcast
   } = usePodcast();
-  const { user } = useAuth();
   const router = useRouter();
+
+  const player = useAudioPlayer(null, { updateInterval: 500 });
+  const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    if (generatedPodcast?.downloadUrl) {
+      player.replace(generatedPodcast.downloadUrl);
+    }
+  }, [generatedPodcast?.downloadUrl, player]);
 
   const podcastStyles = [
     { id: "professional", name: "Professional", description: "Clear, engaging tone for news" },
@@ -75,45 +75,12 @@ export default function PodcastGeneration() {
     }
   };
 
-  const loadAudio = async (uri: string) => {
-    try {
-      if (sound) {
-        await sound.unloadAsync();
-      }
-
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri },
-        { shouldPlay: false }
-      );
-
-      setSound(newSound);
-
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          setPosition(status.positionMillis || 0);
-          setDuration(status.durationMillis || 0);
-          setIsPlaying(status.isPlaying || false);
-        }
-      });
-
-      return newSound;
-    } catch (error) {
-      console.error('Error loading audio:', error);
-      Alert.alert('Error', 'Failed to load audio file');
-    }
-  };
-
-  const playPause = async () => {
-    if (!sound && generatedPodcast?.downloadUrl) {
-      const newSound = await loadAudio(generatedPodcast.downloadUrl);
-      if (newSound) {
-        await newSound.playAsync();
-      }
-    } else if (sound) {
-      if (isPlaying) {
-        await sound.pauseAsync();
+  const playPause = () => {
+    if (status.isLoaded) {
+      if (status.playing) {
+        player.pause();
       } else {
-        await sound.playAsync();
+        player.play();
       }
     }
   };
@@ -129,10 +96,10 @@ export default function PodcastGeneration() {
     }
   };
 
-  const formatTime = (millis: number) => {
-    const minutes = Math.floor(millis / 60000);
-    const seconds = Math.floor((millis % 60000) / 1000);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
   const renderPodcastStyleSelector = () => (
@@ -163,7 +130,7 @@ export default function PodcastGeneration() {
   const renderVoiceSettings = () => (
     <View style={styles.voiceSettingsContainer}>
       <Text style={styles.sectionTitle}>Voice Settings</Text>
-      
+
       {/* Voice Gender */}
       <View style={styles.voiceSettingRow}>
         <Text style={styles.voiceSettingLabel}>Voice</Text>
@@ -229,32 +196,32 @@ export default function PodcastGeneration() {
   );
 
   const renderAudioPlayer = () => {
-    if (!generatedPodcast) return null;
+    if (!generatedPodcast || !status.isLoaded) return null;
 
     return (
       <View style={styles.audioPlayer}>
         <View style={styles.audioControls}>
-          <Text style={styles.audioTime}>{formatTime(position)}</Text>
-          
+          <Text style={styles.audioTime}>{formatTime(status.currentTime)}</Text>
+
           <TouchableOpacity style={styles.playButton} onPress={playPause}>
             <Ionicons
-              name={isPlaying ? "pause" : "play"}
+              name={status.playing ? "pause" : "play"}
               size={24}
               color="white"
             />
           </TouchableOpacity>
-          
-          <Text style={styles.audioTime}>{formatTime(duration)}</Text>
+
+          <Text style={styles.audioTime}>{formatTime(status.duration)}</Text>
         </View>
 
         {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
-            <View 
+            <View
               style={[
-                styles.progressFill, 
-                { width: duration > 0 ? `${(position / duration) * 100}%` : '0%' }
-              ]} 
+                styles.progressFill,
+                { width: status.duration > 0 ? `${(status.currentTime / status.duration) * 100}%` : '0%' }
+              ]}
             />
           </View>
         </View>

@@ -26,6 +26,7 @@ function InitialLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="auth" />
       <Stack.Screen name="website" />
+      <Stack.Screen name="podcast" />
     </Stack>
   );
 }

@@ -185,6 +185,14 @@ export default function Index() {
             <Ionicons name="code-outline" size={20} color="white" style={{ marginRight: 8 }} />
             <Text style={styles.newChatButtonText}>Generate Website</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.newChatButton, { backgroundColor: "#FF6B6B", marginBottom: 10, flexDirection: "row", justifyContent: "center" }]}
+            onPress={() => router.push('/podcast')}
+          >
+            <Ionicons name="mic-outline" size={20} color="white" style={{ marginRight: 8 }} />
+            <Text style={styles.newChatButtonText}>Generate Podcast</Text>
+          </TouchableOpacity>
           <ScrollView>
             {chats.map((chat) => (
               <View key={chat._id} style={styles.chatItemContainer}>

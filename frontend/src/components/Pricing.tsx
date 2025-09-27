@@ -81,7 +81,7 @@ const Pricing: React.FC = () => {
             <div
               key={plan.name}
               className={[
-                "rounded-2xl border bg-gray-50 border-gray-200 p-6 flex flex-col",
+                "rounded border bg-gray-50 border-gray-200 p-6 flex flex-col",
                 plan.featured
                   ? "ring-2 ring-blue-500 shadow-md bg-white"
                   : "shadow-sm",

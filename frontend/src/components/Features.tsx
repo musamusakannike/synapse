@@ -72,7 +72,7 @@ const Features: React.FC = () => {
             {features.map(({ title, description, image }) => (
               <div
                 key={title}
-                className="min-w-[260px] md:min-w-[330px] lg:min-w-[500px] snap-start bg-gray-100 border border-gray-200 rounded-xl p-5 transition-shadow"
+                className="min-w-[260px] md:min-w-[330px] lg:min-w-[500px] snap-start bg-gray-100 border border-gray-200 rounded p-5 transition-shadow"
               >
                 <h3 className="text-lg lg:text-xl font-semibold text-blue-800">
                   {title}

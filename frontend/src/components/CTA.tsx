@@ -1,7 +1,10 @@
+"use client";
 import React from "react";
 import Link from "next/link";
+import { useAuthModal } from "../contexts/AuthModalContext";
 
 const CTA: React.FC = () => {
+  const { openModal } = useAuthModal();
   return (
     <section id="cta" className="bg-white">
       <div className="max-w-7xl mx-auto px-6 py-16">
@@ -28,12 +31,12 @@ const CTA: React.FC = () => {
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
-              <Link
-                href="#"
+              <button
+                onClick={openModal}
                 className="inline-flex items-center justify-center px-6 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow"
               >
                 Start for Free
-              </Link>
+              </button>
               <Link
                 href="#pricing"
                 className="inline-flex items-center justify-center px-6 py-3 rounded bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-semibold transition-colors"

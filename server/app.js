@@ -6,6 +6,8 @@ const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
 const connectDB = require("./config/db.config");
+// Import routes
+const authRoutes = require("./routes/auth.route");
 
 const app = express();
 connectDB();
@@ -22,5 +24,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(limiter);
+
+app.get("/", (req, res) => {
+  return res.redirect(process.env.FRONTEND_URL);
+});
+
+app.use("/api/auth", authRoutes);
 
 module.exports = app;

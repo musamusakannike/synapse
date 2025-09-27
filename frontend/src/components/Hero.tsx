@@ -8,6 +8,7 @@ import {
   Atom,
   User,
 } from "lucide-react";
+import Link from "next/link";
 
 const SynapseHero = () => {
   return (
@@ -27,28 +28,30 @@ const SynapseHero = () => {
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between p-6 max-w-7xl mx-auto">
         <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold text-gray-800 font-mono">SYNAPSE</span>
+          <Link href="/" className="text-2xl font-bold text-gray-800 font-mono">
+            SYNAPSE
+          </Link>
         </div>
 
         <div className="hidden md:flex items-center space-x-8">
-          <a
-            href="#"
+          <Link
+            href="/blog"
             className="text-gray-600 hover:text-green-600 transition-colors flex items-center"
           >
             Blog <ArrowRight className="w-4 h-4 ml-1" />
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="#pricing"
             className="text-gray-600 hover:text-blue-600 transition-colors"
           >
             Pricing
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            href="#mission"
             className="text-gray-600 hover:text-blue-600 transition-colors"
           >
             Our Mission
-          </a>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -57,7 +60,7 @@ const SynapseHero = () => {
           </button>
           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
             <span className="text-gray-600 font-medium">
-                <User className="w-6 h-6"  />
+              <User className="w-6 h-6" />
             </span>
           </div>
         </div>

@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { X, Mail, Github, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { AuthAPI } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 type Props = {
   open: boolean;
@@ -14,6 +16,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
   const [sending, setSending] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
+  const router = useRouter();
 
   if (!open) return null;
 
@@ -36,11 +39,16 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
   };
 
   const sendVerification = async () => {
-    setSending(true);
-    // Placeholder: call backend to send code
-    await new Promise((r) => setTimeout(r, 1200));
-    setSending(false);
-    setStep("code");
+    try {
+      setSending(true);
+      setEmailError("");
+      await AuthAPI.requestCode(email);
+      setStep("code");
+    } catch (err: any) {
+      setEmailError(err?.message || "Failed to send verification code");
+    } finally {
+      setSending(false);
+    }
   };
 
   const verifyCode = async () => {
@@ -48,12 +56,22 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
       setCodeError("Please enter a valid 6-digit code");
       return;
     }
-    setCodeError("");
-    setSending(true);
-    // Placeholder: call backend to verify
-    await new Promise((r) => setTimeout(r, 1200));
-    setSending(false);
-    onClose();
+    try {
+      setCodeError("");
+      setSending(true);
+      const { data } = await AuthAPI.verifyCode(email, code);
+      const token = data?.accessToken;
+      if (!token) throw new Error("Invalid server response");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", token);
+      }
+      onClose();
+      router.push("/dashboard");
+    } catch (err: any) {
+      setCodeError(err?.message || "Verification failed");
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {

@@ -6,7 +6,7 @@ const features = [
     title: "AI Study Tutor",
     description:
       "Personalized explanations, examples, and step-by-step guidance for any topic.",
-    image: "/feature.png",
+    image: "https://placehold.co/600x400",
   },
   {
     title: "Context-Aware Chat",
@@ -86,7 +86,8 @@ const Features: React.FC = () => {
                     alt={title}
                     width={600}
                     height={400}
-                    className="w-full h-full mt-2 border border-gray-200 rounded-xl"
+                    className="w-full h-full mt-2 border border-gray-200 rounded-xs"
+                    unoptimized
                   />
                 </div>
               </div>

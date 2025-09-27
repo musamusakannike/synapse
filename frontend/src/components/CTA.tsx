@@ -30,13 +30,13 @@ const CTA: React.FC = () => {
             <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
               <Link
                 href="#"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow"
+                className="inline-flex items-center justify-center px-6 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow"
               >
                 Start for Free
               </Link>
               <Link
                 href="#pricing"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-md bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-semibold transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3 rounded bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-semibold transition-colors"
               >
                 See Pricing
               </Link>

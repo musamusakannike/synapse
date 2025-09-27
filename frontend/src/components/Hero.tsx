@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 import {
   Brain,
@@ -9,8 +10,10 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuthModal } from "../contexts/AuthModalContext";
 
 const SynapseHero = () => {
+  const { openModal } = useAuthModal();
   return (
     <div className="min-h-screen lg:min-h-[calc(100vh-64px)] bg-gray-50 relative overflow-hidden">
       {/* Grid Background */}
@@ -55,7 +58,7 @@ const SynapseHero = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors hidden md:block">
+          <button onClick={openModal} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors hidden md:block">
             Get Started
           </button>
           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
@@ -124,7 +127,7 @@ const SynapseHero = () => {
           context switching, no cognitive overload.
         </p>
 
-        <button className="bg-blue-600 text-white px-8 py-4 rounded text-xl font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2">
+        <button onClick={openModal} className="bg-blue-600 text-white px-8 py-4 rounded text-xl font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2">
           <span>Start learning for free</span>
         </button>
       </div>

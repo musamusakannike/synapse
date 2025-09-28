@@ -16,7 +16,7 @@ const authenticate = async (req, res, next) => {
         if (!user.isEmailVerified) {
             return res.status(403).json({ message: "Email not verified" });
         }
-        req.user = { id: user._id.toString(), email: user.email };
+        req.user = { _id: user._id, id: user._id.toString(), email: user.email };
         return next();
     } catch (error) {
         if (error && error.name === "TokenExpiredError") {

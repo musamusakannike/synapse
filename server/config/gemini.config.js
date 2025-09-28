@@ -147,12 +147,11 @@ class GeminiService {
 
       // Stateless call using full history + latest user message
       const contents = [...conversationHistory, latestMessage];
-      const result = await this.genAI.models.generateContent({
+      const response = await this.genAI.models.generateContent({
         model: "gemini-2.5-flash",
         contents,
         safetySettings: this.safetySettings,
       });
-      const response = await result.response;
       return response.text;
     } catch (error) {
       console.error("Error generating chat response:", error);

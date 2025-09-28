@@ -157,7 +157,7 @@ const sendMessage = async (req, res) => {
 
 const createNewChat = async (req, res) => {
   try {
-    const { title = "New Chat" } = req.body;
+    const { title = "New Chat" } = req.body || {};
 
     const chat = new Chat({
       userId: req.user._id,

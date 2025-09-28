@@ -1,320 +1,216 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import {
-  FileText,
-  Upload,
-  Trash2,
-  Eye,
-  RefreshCw,
-  Search,
-  Filter,
-  Calendar,
-  FileIcon,
-} from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import api from "@/lib/api";
 
-interface Document {
+import React, { useEffect, useState } from "react";
+import { DocumentAPI } from "@/lib/api";
+import { FileText, UploadCloud, Loader2, RefreshCw, Trash2 } from "lucide-react";
+
+type Doc = {
   _id: string;
-  filename: string;
   originalName: string;
+  mimeType: string;
   size: number;
-  uploadDate: string;
-  status: "processing" | "completed" | "failed";
-  content?: string;
-}
+  summary?: string;
+  processingStatus?: "pending" | "processing" | "completed" | "failed";
+  processingError?: string;
+  createdAt?: string;
+};
 
-const DocumentsPage = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+export default function DocumentsPage() {
+  const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [file, setFile] = useState<File | null>(null);
+  const [prompt, setPrompt] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
-
-  const fetchDocuments = async () => {
+  const load = async () => {
     try {
-      const response = await api.get("/documents");
-      setDocuments(response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch documents:", error);
+      setLoading(true);
+      const { data } = await DocumentAPI.list();
+      setDocs(data || []);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  useEffect(() => {
+    load();
+  }, []);
+
+  const onUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!file) return;
-
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      await api.post("/documents", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      setShowUploadModal(false);
-      fetchDocuments();
-    } catch (error) {
-      console.error("Failed to upload document:", error);
-      alert("Failed to upload document. Please try again.");
+      setUploading(true);
+      const fd = new FormData();
+      fd.append("file", file);
+      if (prompt.trim()) fd.append("prompt", prompt.trim());
+      await DocumentAPI.upload(fd);
+      setFile(null);
+      setPrompt("");
+      await load();
+    } catch (e) {
+      console.error(e);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDeleteDocument = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this document?")) return;
-
+  const reprocess = async (id: string) => {
     try {
-      await api.delete(`/documents/${id}`);
-      fetchDocuments();
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-      alert("Failed to delete document. Please try again.");
+      setActionId(id);
+      await DocumentAPI.reprocess(id);
+      await load();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionId(null);
     }
   };
 
-  const handleReprocessDocument = async (id: string) => {
+  const remove = async (id: string) => {
+    if (!confirm("Delete this document?")) return;
     try {
-      await api.post(`/documents/${id}/reprocess`);
-      fetchDocuments();
-    } catch (error) {
-      console.error("Failed to reprocess document:", error);
-      alert("Failed to reprocess document. Please try again.");
+      setActionId(id);
+      await DocumentAPI.delete(id);
+      setDocs((prev) => prev.filter((d) => d._id !== id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActionId(null);
     }
-  };
-
-  const filteredDocuments = documents.filter((doc) =>
-    doc.originalName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   return (
-    <div className="min-h-screen flex overflow-x-hidden w-full py-2 lg:py-4">
-      <Sidebar />
-      <main className="flex-1 mx-auto overflow-y-auto bg-white border border-gray-200 lg:rounded-lg p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
-            <p className="text-gray-600 mt-1">
-              Upload and manage your study materials
-            </p>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+        <p className="text-gray-600">Upload and summarize your study materials</p>
+      </div>
+
+      {/* Upload Card */}
+      <form onSubmit={onUpload} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+            <UploadCloud className="w-6 h-6 text-blue-600" />
           </div>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center space-x-2 font-semibold transition-colors shadow-lg hover:shadow-xl"
-          >
-            <Upload size={20} />
-            <span>Upload Document</span>
+          <div className="flex-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-1">
+                <input
+                  type="file"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="w-full border border-gray-200 rounded px-3 py-2"
+                  accept=".pdf,.docx,.txt,.md,.csv,.json,.pptx"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Optional: custom summary prompt"
+                  className="w-full border border-gray-200 rounded px-3 py-2"
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <button
+                disabled={!file || uploading}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+              >
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                Upload & summarize
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {/* List */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Your documents</h2>
+          <button onClick={load} className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
+            <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search documents..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <button className="flex items-center space-x-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Filter size={20} />
-            <span>Filter</span>
-          </button>
-        </div>
-
-        {/* Documents Grid */}
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
-        ) : filteredDocuments.length === 0 ? (
-          <div className="text-center py-16">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No documents yet</h3>
-            <p className="text-gray-600 mb-6">Upload your first document to get started</p>
-            <button
-              onClick={() => setShowUploadModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-            >
-              Upload Document
-            </button>
-          </div>
+        ) : docs.length === 0 ? (
+          <p className="text-gray-600">No documents yet. Upload one above.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDocuments.map((document) => (
-              <div
-                key={document._id}
-                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <FileIcon className="w-5 h-5 text-blue-600" />
+            {docs.map((d) => (
+              <div key={d._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 truncate">
-                        {document.originalName}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {formatFileSize(document.size)}
+                    <div>
+                      <p className="font-medium text-gray-900 truncate max-w-[220px]">
+                        {d.originalName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {d.mimeType} • {(d.size / 1024).toFixed(1)} KB
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <button
-                      onClick={() => setSelectedDocument(document)}
-                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                    >
-                      <Eye size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleReprocessDocument(document._id)}
-                      className="p-2 text-gray-400 hover:text-green-600 transition-colors"
-                    >
-                      <RefreshCw size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteDocument(document._id)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full border ${
+                      d.processingStatus === "completed"
+                        ? "text-green-700 bg-green-50 border-green-200"
+                        : d.processingStatus === "failed"
+                        ? "text-red-700 bg-red-50 border-red-200"
+                        : "text-amber-700 bg-amber-50 border-amber-200"
+                    }`}
+                  >
+                    {d.processingStatus}
+                  </span>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <Calendar size={14} />
-                    <span>{formatDate(document.uploadDate)}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        document.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : document.status === "processing"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {document.status}
-                    </div>
-                  </div>
+                {d.summary && (
+                  <p className="text-sm text-gray-700 mt-3 line-clamp-5 whitespace-pre-wrap">
+                    {d.summary}
+                  </p>
+                )}
+
+                {d.processingError && (
+                  <p className="text-sm text-red-600 mt-3">{d.processingError}</p>
+                )}
+
+                <div className="mt-4 flex items-center gap-2">
+                  <button
+                    onClick={() => reprocess(d._id)}
+                    disabled={actionId === d._id}
+                    className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
+                  >
+                    {actionId === d._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    Reprocess
+                  </button>
+                  <button
+                    onClick={() => remove(d._id)}
+                    disabled={actionId === d._id}
+                    className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-red-200 text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         )}
-
-        {/* Upload Modal */}
-        {showUploadModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Upload Document</h2>
-              
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-4">
-                  Choose a PDF, Word document, or text file to upload
-                </p>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className={`inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                    uploading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                  } transition-colors`}
-                >
-                  {uploading ? "Uploading..." : "Choose File"}
-                </label>
-              </div>
-
-              <div className="flex justify-end space-x-4 mt-6">
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  disabled={uploading}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Document Preview Modal */}
-        {selectedDocument && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedDocument.originalName}
-                </h2>
-                <button
-                  onClick={() => setSelectedDocument(null)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="prose max-w-none">
-                {selectedDocument.content ? (
-                  <div className="whitespace-pre-wrap text-gray-700">
-                    {selectedDocument.content}
-                  </div>
-                ) : (
-                  <p className="text-gray-600">
-                    Document content is not available or still processing.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   );
-};
-
-export default DocumentsPage;
+}

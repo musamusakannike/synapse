@@ -45,7 +45,7 @@ const DashboardOverview = () => {
 
         setStats({
           documents: documentsRes.data?.length || 0,
-          chats: chatsRes.data?.length || 0,
+          chats: (chatsRes.data?.chats?.length as number) || 0,
           topics: topicsRes.data?.length || 0,
           quizzes: quizzesRes.data?.length || 0,
           websites: websitesRes.data?.length || 0,

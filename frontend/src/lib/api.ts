@@ -61,23 +61,44 @@ export const ChatAPI = {
   delete: (id: string) => api.delete(`/chats/${id}`),
 };
 
-// Topic endpoints
+// Topic endpoints (align with server: { title, description?, content?, customizations? })
 export const TopicAPI = {
   list: () => api.get("/topics"),
   get: (id: string) => api.get(`/topics/${id}`),
-  create: (data: { title: string; description: string; difficulty: string }) => api.post("/topics", data),
-  update: (id: string, data: { title: string; description: string; difficulty: string }) => api.put(`/topics/${id}`, data),
+  create: (data: { title: string; description?: string; content?: string; customizations?: Record<string, any> }) =>
+    api.post("/topics", data),
+  update: (
+    id: string,
+    data: { title?: string; description?: string; content?: string; customizations?: Record<string, any> }
+  ) => api.put(`/topics/${id}`, data),
   delete: (id: string) => api.delete(`/topics/${id}`),
-  regenerate: (id: string) => api.post(`/topics/${id}/generate`),
+  regenerate: (id: string, customizations?: Record<string, any>) =>
+    api.post(`/topics/${id}/generate`, customizations ? { customizations } : {}),
 };
 
-// Quiz endpoints
+// Quiz endpoints (align with server contracts)
 export const QuizAPI = {
   list: () => api.get("/quizzes"),
   get: (id: string) => api.get(`/quizzes/${id}`),
-  create: (data: { title: string; description: string; difficulty: string; topic: string }) => api.post("/quizzes", data),
+  create: (data: {
+    title: string;
+    description?: string;
+    sourceType?: "topic" | "document" | "website";
+    sourceId?: string;
+    sourceModel?: string;
+    content?: string;
+    settings?: {
+      numberOfQuestions?: number;
+      difficulty?: string;
+      includeCalculations?: boolean;
+      timeLimit?: number;
+    };
+  }) => api.post("/quizzes", data),
   delete: (id: string) => api.delete(`/quizzes/${id}`),
-  submitAttempt: (id: string, answers: number[]) => api.post(`/quizzes/${id}/attempt`, { answers }),
+  submitAttempt: (
+    id: string,
+    answers: { questionIndex: number; selectedOption: number; timeSpent?: number }[]
+  ) => api.post(`/quizzes/${id}/attempt`, { answers }),
 };
 
 // Website endpoints

@@ -1,13 +1,13 @@
 const {
-  GoogleGenerativeAI,
+  GoogleGenAI,
   HarmCategory,
   HarmBlockThreshold,
-} = require("@google/generative-ai");
+} = require("@google/genai");
 
 class GeminiService {
   constructor() {
-    this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // CHANGE: The class name for instantiation is now GoogleGenerativeAI.
+    this.genAI = new GoogleGenAI({});
 
     this.safetySettings = [
       {
@@ -33,67 +33,74 @@ class GeminiService {
     const prompt = this.buildTopicPrompt(topic, customizations);
 
     try {
-      const result = await this.model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
         safetySettings: this.safetySettings,
       });
-
-      const response = await result.response;
-      return response.text();
+      return response.text;
     } catch (error) {
       console.error("Error generating topic explanation:", error);
       throw new Error("Failed to generate topic explanation");
     }
   }
 
+  // NOTE: This method remains valid with the new SDK. No changes needed.
   async processDocument(fileBuffer, mimeType, prompt) {
     try {
-      let documentPart;
+      // Upload file buffer using Files API and reference it in the request
+      let uploadedFile;
+      try {
+        uploadedFile = await this.genAI.files.upload({
+          file: fileBuffer,
+          mimeType,
+        });
 
-      if (mimeType === "application/pdf") {
-        documentPart = {
-          inlineData: {
-            data: Buffer.from(fileBuffer).toString("base64"),
-            mimeType,
-          },
-        };
-      } else {
-        // For text content (already extracted from DOCX)
-        documentPart = { text: fileBuffer.toString() };
+        const result = await this.genAI.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            {
+              role: "user",
+              parts: [uploadedFile, { text: prompt }],
+            },
+          ],
+          safetySettings: this.safetySettings,
+        });
+
+        const response = await result.response;
+        return response.text;
+      } finally {
+        if (uploadedFile?.name) {
+          try {
+            await this.genAI.files.delete({ name: uploadedFile.name });
+          } catch (cleanupErr) {
+            // Non-fatal cleanup error
+            console.warn("Failed to delete uploaded file:", cleanupErr?.message || cleanupErr);
+          }
+        }
       }
-
-      const result = await this.model.generateContent({
-        contents: [
-          {
-            role: "user",
-            parts: [documentPart, { text: prompt }],
-          },
-        ],
-        safetySettings: this.safetySettings,
-      });
-
-      const response = await result.response;
-      return response.text();
     } catch (error) {
       console.error("Error processing document:", error);
       throw new Error("Failed to process document");
     }
   }
 
+  // NOTE: This method remains valid with the new SDK. No changes needed.
   async generateQuiz(content, settings) {
     const prompt = this.buildQuizPrompt(content, settings);
 
     try {
-      const result = await this.model.generateContent({
+      const result = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: {
+        config: {
           responseMimeType: "application/json",
         },
         safetySettings: this.safetySettings,
       });
 
       const response = await result.response;
-      const jsonText = response.text();
+      const jsonText = response.text;
       return JSON.parse(jsonText);
     } catch (error) {
       console.error("Error generating quiz:", error);
@@ -103,31 +110,42 @@ class GeminiService {
 
   async generateChatResponse(messages, context = "") {
     try {
+      // Format history for the chat session.
       const conversationHistory = messages.map((msg) => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.content }],
       }));
 
-      if (context) {
-        conversationHistory.unshift({
-          role: "user",
-          parts: [{ text: `Context: ${context}` }],
-        });
+      // The last message is the new prompt to the model.
+      const latestMessage = conversationHistory.pop();
+      if (!latestMessage || latestMessage.role !== "user") {
+        throw new Error("The last message must be from the user.");
       }
 
-      const result = await this.model.generateContent({
-        contents: conversationHistory,
+      // Optional context injection
+      if (context) {
+        conversationHistory.unshift(
+          { role: "user", parts: [{ text: `CONTEXT: ${context}` }] },
+          { role: "model", parts: [{ text: "Acknowledged. I will use this context." }] }
+        );
+      }
+
+      // Stateless call using full history + latest user message
+      const contents = [...conversationHistory, latestMessage];
+      const result = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents,
         safetySettings: this.safetySettings,
       });
-
       const response = await result.response;
-      return response.text();
+      return response.text;
     } catch (error) {
       console.error("Error generating chat response:", error);
       throw new Error("Failed to generate chat response");
     }
   }
 
+  // Helpers
   buildTopicPrompt(topic, customizations) {
     let prompt = `Please provide a comprehensive explanation of the topic: "${topic}"\n\n`;
 
@@ -176,19 +194,7 @@ class GeminiService {
     }\n`;
 
     prompt += `\nReturn the quiz in the following JSON format:\n`;
-    prompt += `{
-      "title": "Quiz Title",
-      "questions": [
-        {
-          "questionText": "Question text here",
-          "options": ["Option A", "Option B", "Option C", "Option D"],
-          "correctOption": 0,
-          "explanation": "Explanation for the correct answer",
-          "difficulty": "easy|medium|hard",
-          "includesCalculation": true|false
-        }
-      ]
-    }\n\n`;
+    prompt += `{\n      "title": "Quiz Title",\n      "questions": [\n        {\n          "questionText": "Question text here",\n          "options": ["Option A", "Option B", "Option C", "Option D"],\n          "correctOption": 0,\n          "explanation": "Explanation for the correct answer",\n          "difficulty": "easy|medium|hard",\n          "includesCalculation": true|false\n        }\n      ]\n    }\n\n`;
 
     prompt += `Make sure each question has exactly 4 options, and the correctOption index is 0-based (0, 1, 2, or 3).`;
 

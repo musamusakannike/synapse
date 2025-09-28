@@ -13,6 +13,7 @@ const navItems = [
   { href: "/dashboard/topics", label: "Topics" },
   { href: "/dashboard/quizzes", label: "Quizzes" },
   { href: "/dashboard/websites", label: "Websites" },
+  { href: "/dashboard/wikipedia", label: "Wikipedia" },
 ];
 
 export default function DashboardLayout({

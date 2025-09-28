@@ -10,6 +10,7 @@ import {
   Loader2,
   Pencil,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 // Server list returns shape: { chats, pagination }
 interface ChatListItem {
@@ -36,6 +37,7 @@ interface ChatFull {
 }
 
 export default function ChatPage() {
+  const searchParams = useSearchParams();
   const [chats, setChats] = useState<ChatListItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -80,6 +82,14 @@ export default function ChatPage() {
   useEffect(() => {
     loadChats();
   }, []);
+
+  // Open a chat if ?open=<id>
+  useEffect(() => {
+    const toOpen = searchParams.get("open");
+    if (toOpen) {
+      openChat(toOpen);
+    }
+  }, [searchParams]);
 
   const createChat = async () => {
     try {

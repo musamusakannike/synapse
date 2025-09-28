@@ -8,6 +8,7 @@ const morgan = require("morgan");
 const connectDB = require("./config/db.config");
 // Import routes
 const authRoutes = require("./routes/auth.route");
+const chatRoutes = require("./routes/chat.route");
 
 const app = express();
 connectDB();
@@ -30,5 +31,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/chats", chatRoutes);
 
 module.exports = app;

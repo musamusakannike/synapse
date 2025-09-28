@@ -16,6 +16,8 @@ const websiteRoutes = require("./routes/website.route");
 const wikipediaRoutes = require("./routes/wikipedia.route");
 
 const app = express();
+// Behind a proxy (Render/NGINX), trust X-Forwarded-* headers for correct IP detection
+app.set("trust proxy", 1);
 connectDB();
 
 const limiter = rateLimit({

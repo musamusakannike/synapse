@@ -12,6 +12,7 @@ const chatRoutes = require("./routes/chat.route");
 const documentRoutes = require("./routes/document.route");
 const quizRoutes = require("./routes/quiz.route");
 const topicRoutes = require("./routes/topic.route");
+const websiteRoutes = require("./routes/website.route");
 
 const app = express();
 connectDB();
@@ -38,5 +39,7 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/topics", topicRoutes);
+app.use("/api/websites", websiteRoutes);
+
 
 module.exports = app;

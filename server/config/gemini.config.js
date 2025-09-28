@@ -48,7 +48,24 @@ class GeminiService {
   // NOTE: This method remains valid with the new SDK. No changes needed.
   async processDocument(fileBuffer, mimeType, prompt) {
     try {
-      // Upload file buffer using Files API and reference it in the request
+      // If we already have plain text, avoid Files API and send as text parts directly.
+      if (mimeType === "text/plain") {
+        const textContent = Buffer.isBuffer(fileBuffer)
+          ? fileBuffer.toString("utf8")
+          : String(fileBuffer || "");
+
+        const response = await this.genAI.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: [
+            { role: "user", parts: [{ text: prompt }] },
+            { role: "user", parts: [{ text: textContent }] },
+          ],
+          safetySettings: this.safetySettings,
+        });
+        return response.text;
+      }
+
+      // Otherwise, upload binary content using Files API and reference it in the request
       let uploadedFile;
       try {
         uploadedFile = await this.genAI.files.upload({

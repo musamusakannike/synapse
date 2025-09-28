@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base API URL
-export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "https://synapse-tzlh.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({

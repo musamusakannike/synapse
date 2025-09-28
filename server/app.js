@@ -9,6 +9,7 @@ const connectDB = require("./config/db.config");
 // Import routes
 const authRoutes = require("./routes/auth.route");
 const chatRoutes = require("./routes/chat.route");
+const documentRoutes = require("./routes/document.route");
 
 const app = express();
 connectDB();
@@ -32,5 +33,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/documents", documentRoutes);
 
 module.exports = app;

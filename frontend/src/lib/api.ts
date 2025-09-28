@@ -55,7 +55,7 @@ export const DocumentAPI = {
 export const ChatAPI = {
   list: () => api.get("/chats"),
   get: (id: string) => api.get(`/chats/${id}`),
-  create: () => api.post("/chats/new"),
+  create: (data?: any) => api.post("/chats/new", data || {}),
   sendMessage: (id: string, content: string) => api.post(`/chats/${id}/message`, { content }),
   updateTitle: (id: string, title: string) => api.put(`/chats/${id}/title`, { title }),
   delete: (id: string) => api.delete(`/chats/${id}`),
@@ -108,6 +108,16 @@ export const WebsiteAPI = {
   create: (url: string) => api.post("/websites", { url }),
   delete: (id: string) => api.delete(`/websites/${id}`),
   rescrape: (id: string) => api.post(`/websites/${id}/rescrape`),
+};
+
+// Wikipedia endpoints
+export const WikipediaAPI = {
+  search: (q: string, lang: string = "en", limit: number = 20) =>
+    api.get(`/wikipedia/search`, { params: { q, lang, limit } }),
+  page: (title: string, lang: string = "en") =>
+    api.get(`/wikipedia/page/${encodeURIComponent(title)}`, { params: { lang } }),
+  import: (title: string, lang: string = "en") =>
+    api.post(`/wikipedia/import`, { title, lang }),
 };
 
 export default api;

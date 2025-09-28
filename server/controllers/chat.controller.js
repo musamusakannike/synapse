@@ -1,6 +1,9 @@
 const User = require("../models/user.model");
 const Chat = require("../models/chat.model");
 const geminiService = require("../config/gemini.config");
+const Topic = require("../models/topic.model");
+const Document = require("../models/document.model");
+const Website = require("../models/website.model");
 const { validationResult } = require("express-validator");
 
 const getUserChats = async (req, res) => {
@@ -157,12 +160,48 @@ const sendMessage = async (req, res) => {
 
 const createNewChat = async (req, res) => {
   try {
-    const { title = "New Chat" } = req.body || {};
+    const { title, type = "general", sourceId } = req.body || {};
+
+    let chatTitle = title || "New Chat";
+    let chatType = type;
+    let sourceModel = undefined;
+    let sourceRef = undefined;
+
+    // If creating a chat tied to a source, validate and set defaults
+    if (chatType !== "general") {
+      if (!sourceId) {
+        return res.status(400).json({ error: "sourceId is required for non-general chats" });
+      }
+
+      if (chatType === "topic") {
+        const topic = await Topic.findOne({ _id: sourceId, userId: req.user._id });
+        if (!topic) return res.status(404).json({ error: "Topic not found" });
+        sourceModel = "Topic";
+        sourceRef = topic._id;
+        if (!title) chatTitle = `${topic.title} - Chat`;
+      } else if (chatType === "document") {
+        const doc = await Document.findOne({ _id: sourceId, userId: req.user._id });
+        if (!doc) return res.status(404).json({ error: "Document not found" });
+        sourceModel = "Document";
+        sourceRef = doc._id;
+        if (!title) chatTitle = `${doc.originalName} - Chat`;
+      } else if (chatType === "website") {
+        const site = await Website.findOne({ _id: sourceId, userId: req.user._id });
+        if (!site) return res.status(404).json({ error: "Website not found" });
+        sourceModel = "Website";
+        sourceRef = site._id;
+        if (!title) chatTitle = `${site.title || site.url} - Chat`;
+      } else if (chatType !== "general") {
+        return res.status(400).json({ error: "Invalid chat type" });
+      }
+    }
 
     const chat = new Chat({
       userId: req.user._id,
-      title,
-      type: "general",
+      title: chatTitle,
+      type: chatType,
+      sourceId: sourceRef,
+      sourceModel,
       messages: [],
     });
 
@@ -174,6 +213,8 @@ const createNewChat = async (req, res) => {
         id: chat._id,
         title: chat.title,
         type: chat.type,
+        sourceId: chat.sourceId,
+        sourceModel: chat.sourceModel,
         messages: chat.messages,
         createdAt: chat.createdAt,
       },

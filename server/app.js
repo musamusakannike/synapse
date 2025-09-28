@@ -13,6 +13,7 @@ const documentRoutes = require("./routes/document.route");
 const quizRoutes = require("./routes/quiz.route");
 const topicRoutes = require("./routes/topic.route");
 const websiteRoutes = require("./routes/website.route");
+const wikipediaRoutes = require("./routes/wikipedia.route");
 
 const app = express();
 connectDB();
@@ -40,6 +41,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/topics", topicRoutes);
 app.use("/api/websites", websiteRoutes);
+app.use("/api/wikipedia", wikipediaRoutes);
 
 
 module.exports = app;

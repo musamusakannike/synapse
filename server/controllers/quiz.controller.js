@@ -1,5 +1,6 @@
 const Quiz = require("../models/quiz.model");
 const Document = require("../models/document.model");
+const Website = require("../models/website.model");
 const GeminiService = require("../config/gemini.config");
 
 // POST /api/quizzes
@@ -31,6 +32,13 @@ async function createQuiz(req, res) {
         if (!generationContent) {
           return res.status(400).json({ message: "Document has no content to generate quiz from" });
         }
+      } else if (sourceType === "website" && sourceId) {
+        const site = await Website.findOne({ _id: sourceId, userId });
+        if (!site) return res.status(404).json({ message: "Source website not found" });
+        generationContent = site.extractedContent || site.summary || "";
+        if (!generationContent) {
+          return res.status(400).json({ message: "Website has no content to generate quiz from" });
+        }
       } else if (sourceType === "topic") {
         generationContent = description || title;
       }
@@ -45,7 +53,13 @@ async function createQuiz(req, res) {
       description: description || undefined,
       sourceType,
       sourceId: sourceId || undefined,
-      sourceModel: sourceModel || (sourceType === "document" ? "Document" : undefined),
+      sourceModel:
+        sourceModel ||
+        (sourceType === "document"
+          ? "Document"
+          : sourceType === "website"
+          ? "Website"
+          : undefined),
       questions: quizJSON.questions || [],
       settings: {
         numberOfQuestions: settings.numberOfQuestions ?? (quizJSON.questions?.length || 10),

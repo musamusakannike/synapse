@@ -107,7 +107,7 @@ class GeminiService {
     const prompt = this.buildQuizPrompt(content, settings);
 
     try {
-      const result = await this.genAI.models.generateContent({
+      const response = await this.genAI.models.generateContent({
         model: "gemini-2.5-flash",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
@@ -115,8 +115,6 @@ class GeminiService {
         },
         safetySettings: this.safetySettings,
       });
-
-      const response = await result.response;
       const jsonText = response.text;
       return JSON.parse(jsonText);
     } catch (error) {

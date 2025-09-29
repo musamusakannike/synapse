@@ -397,9 +397,9 @@ export const screenThemes = {
     accent: colors.primary[100],
   },
   chat: {
-    primary: colors.success[600],
-    background: colors.success[50],
-    accent: colors.success[100],
+    primary: colors.primary[600],
+    background: colors.primary[50],
+    accent: colors.primary[100],
   },
   topics: {
     primary: colors.secondary[600],

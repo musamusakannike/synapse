@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { isAuthenticated, logout } from '../../lib/auth';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, Alert } from 'react-native';
+import { colors, spacing, borderRadius, shadows } from '../../styles/theme';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -14,21 +15,66 @@ export default function TabsLayout() {
     })();
   }, [router]);
 
+  const handleLogout = async () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/sign-in');
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: { backgroundColor: '#fff' },
+        tabBarActiveTintColor: colors.primary[600],
+        tabBarInactiveTintColor: colors.text.tertiary,
+        tabBarStyle: {
+          backgroundColor: colors.background,
+          borderTopWidth: 1,
+          borderTopColor: colors.neutral[200],
+          paddingTop: spacing[1],
+          paddingBottom: spacing[2],
+          height: 85,
+          ...shadows.sm,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: spacing[1],
+        },
+        headerStyle: {
+          backgroundColor: colors.background,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.neutral[200],
+          ...shadows.sm,
+        },
+        headerTitleStyle: {
+          fontSize: 18,
+          fontWeight: '600',
+          color: colors.text.primary,
+        },
         headerRight: () => (
           <TouchableOpacity
-            onPress={async () => {
-              await logout();
-              router.replace('/(auth)/sign-in');
+            onPress={handleLogout}
+            style={{
+              paddingHorizontal: spacing[3],
+              paddingVertical: spacing[2],
+              marginRight: spacing[2],
+              borderRadius: borderRadius.base,
+              backgroundColor: colors.neutral[100],
             }}
-            style={{ paddingHorizontal: 12 }}
           >
-            <Ionicons name="log-out-outline" size={22} color="#111827" />
+            <Ionicons name="log-out-outline" size={20} color={colors.text.secondary} />
           </TouchableOpacity>
         ),
       }}
@@ -37,8 +83,13 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Overview',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          headerTitle: 'Dashboard',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? "home" : "home-outline"} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />

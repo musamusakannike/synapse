@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 import { useRouter } from 'expo-router';
 import { AuthAPI } from '../../lib/api';
 import { saveToken } from '../../lib/auth';
+import { colors, commonStyles, spacing, borderRadius, shadows, typography } from '../../styles/theme';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -52,10 +53,13 @@ export default function SignInScreen() {
   return (
     <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>{step === 'email' ? 'Welcome' : 'Enter verification code'}</Text>
-        <Text style={styles.subtitle}>
-          {step === 'email' ? 'Sign in with your email' : `We sent a code to ${email}`}
-        </Text>
+        <View style={styles.header}>
+          <Text style={styles.brandTitle}>SYNAPSE</Text>
+          <Text style={styles.title}>{step === 'email' ? 'Welcome back' : 'Verify your email'}</Text>
+          <Text style={styles.subtitle}>
+            {step === 'email' ? 'Sign in to continue your learning journey' : `We sent a 6-digit code to ${email}`}
+          </Text>
+        </View>
 
         {step === 'email' ? (
           <View style={styles.formGroup}>
@@ -69,17 +73,26 @@ export default function SignInScreen() {
               placeholder="you@example.com"
               keyboardType="email-address"
               autoCapitalize="none"
-              style={[styles.input, !!error && styles.inputError]}
+              style={[commonStyles.input, styles.input, !!error && commonStyles.inputError]}
+              placeholderTextColor={colors.text.tertiary}
             />
-            {!!error && <Text style={styles.error}>{error}</Text>}
+            {!!error && <Text style={commonStyles.error}>{error}</Text>}
 
-            <TouchableOpacity disabled={loading} style={styles.primaryBtn} onPress={sendCode}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Continue</Text>}
+            <TouchableOpacity 
+              disabled={loading} 
+              style={[commonStyles.primaryButton, styles.primaryButton, loading && styles.buttonDisabled]} 
+              onPress={sendCode}
+            >
+              {loading ? (
+                <ActivityIndicator color={colors.text.inverse} size="small" />
+              ) : (
+                <Text style={commonStyles.primaryButtonText}>Continue</Text>
+              )}
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.formGroup}>
-            <Text style={styles.label}>6-digit code</Text>
+            <Text style={styles.label}>Verification code</Text>
             <TextInput
               value={code}
               onChangeText={(t) => {
@@ -89,25 +102,45 @@ export default function SignInScreen() {
               }}
               placeholder="000000"
               keyboardType="number-pad"
-              style={[styles.input, styles.codeInput, !!error && styles.inputError]}
+              style={[commonStyles.input, styles.input, styles.codeInput, !!error && commonStyles.inputError]}
               maxLength={6}
+              placeholderTextColor={colors.text.tertiary}
             />
-            {!!error && <Text style={styles.error}>{error}</Text>}
+            {!!error && <Text style={commonStyles.error}>{error}</Text>}
 
-            <View style={styles.row}>
-              <TouchableOpacity disabled={loading} style={styles.secondaryBtn} onPress={() => setStep('email')}>
-                <Text style={styles.secondaryText}>Back</Text>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity 
+                disabled={loading} 
+                style={[commonStyles.secondaryButton, styles.backButton, loading && styles.buttonDisabled]} 
+                onPress={() => setStep('email')}
+              >
+                <Text style={commonStyles.secondaryButtonText}>Back</Text>
               </TouchableOpacity>
-              <TouchableOpacity disabled={loading || code.length < 6} style={styles.primaryBtn} onPress={verify}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Verify & Continue</Text>}
+              <TouchableOpacity 
+                disabled={loading || code.length < 6} 
+                style={[
+                  commonStyles.primaryButton, 
+                  styles.primaryButton, 
+                  styles.verifyButton,
+                  (loading || code.length < 6) && styles.buttonDisabled
+                ]} 
+                onPress={verify}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.text.inverse} size="small" />
+                ) : (
+                  <Text style={commonStyles.primaryButtonText}>Verify & Continue</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        <TouchableOpacity onPress={() => Alert.alert('Tip', 'You can also sign in on the web to manage your account.')}>
-          <Text style={styles.tip}>Need help? Contact support.</Text>
-        </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity onPress={() => Alert.alert('Help', 'You can also sign in on the web to manage your account or contact support for assistance.')}>
+            <Text style={styles.helpText}>Need help? Contact support</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -116,58 +149,106 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: spacing[5],
   },
+  
   card: {
     width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    maxWidth: 400,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing[6],
+    ...shadows.lg,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginTop: 6 },
-  formGroup: { marginTop: 20 },
-  label: { fontSize: 12, color: '#374151', marginBottom: 8 },
+  
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing[6],
+  },
+  
+  brandTitle: {
+    fontSize: typography.fontSize['2xl'],
+    fontWeight: typography.fontWeight.extrabold,
+    color: colors.primary[600],
+    letterSpacing: 1,
+    marginBottom: spacing[2],
+  },
+  
+  title: {
+    fontSize: typography.fontSize['2xl'],
+    fontWeight: typography.fontWeight.bold,
+    color: colors.text.primary,
+    textAlign: 'center',
+    marginBottom: spacing[2],
+  },
+  
+  subtitle: {
+    fontSize: typography.fontSize.base,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    lineHeight: typography.lineHeight.relaxed * typography.fontSize.base,
+  },
+  
+  formGroup: {
+    marginBottom: spacing[4],
+  },
+  
+  label: {
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
+  },
+  
   input: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#111827',
-    backgroundColor: '#fff',
+    fontSize: typography.fontSize.base,
+    marginBottom: spacing[3],
   },
-  codeInput: { textAlign: 'center', letterSpacing: 4, fontVariant: ['tabular-nums'] },
-  inputError: { borderColor: '#fca5a5', backgroundColor: '#fef2f2' },
-  error: { color: '#dc2626', marginTop: 6, fontSize: 12 },
-  primaryBtn: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 12,
-    borderRadius: 8,
+  
+  codeInput: {
+    textAlign: 'center',
+    letterSpacing: 8,
+    fontVariant: ['tabular-nums'],
+    fontSize: typography.fontSize.xl,
+    fontWeight: typography.fontWeight.semibold,
+  },
+  
+  primaryButton: {
+    marginTop: spacing[2],
+  },
+  
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    marginTop: spacing[4],
+  },
+  
+  backButton: {
+    flex: 1,
+  },
+  
+  verifyButton: {
+    flex: 2,
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  
+  footer: {
     alignItems: 'center',
-    marginTop: 14,
+    marginTop: spacing[6],
+    paddingTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[200],
   },
-  primaryText: { color: '#fff', fontWeight: '600' },
-  secondaryBtn: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+  
+  helpText: {
+    fontSize: typography.fontSize.sm,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
-  secondaryText: { color: '#111827', fontWeight: '500' },
-  row: { flexDirection: 'row', gap: 12, marginTop: 12 },
-  tip: { textAlign: 'center', color: '#6b7280', marginTop: 16, fontSize: 12 },
 });

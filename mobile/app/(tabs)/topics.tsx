@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import { TopicAPI } from '../../lib/api';
+import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
 
 type Topic = { _id: string; title: string; description?: string; content?: string; generatedContent?: string };
 
@@ -59,61 +60,148 @@ export default function TopicsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Topics</Text>
-      <Text style={styles.subtitle}>Generate and manage study topics</Text>
+    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+      <View style={styles.header}>
+        <Text style={commonStyles.title}>Topics</Text>
+        <Text style={commonStyles.subtitle}>Generate and manage study topics</Text>
+      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Create</Text>
-        <View style={{ gap: 8 }}>
-          <TextInput value={title} onChangeText={setTitle} placeholder="Title (required)" style={styles.input} />
-          <TextInput value={description} onChangeText={setDescription} placeholder="Optional description" style={styles.input} />
-          <TextInput value={content} onChangeText={setContent} placeholder="Optional content (otherwise AI generates)" style={styles.input} />
-          <TouchableOpacity disabled={!title.trim() || creating} onPress={create} style={styles.primaryBtn}>
-            {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Create Topic</Text>}
+      <View style={[commonStyles.card, { backgroundColor: screenThemes.topics.background }]}>
+        <Text style={commonStyles.cardTitle}>Create New Topic</Text>
+        <View style={styles.formContainer}>
+          <TextInput 
+            value={title} 
+            onChangeText={setTitle} 
+            placeholder="Topic title (required)" 
+            style={[commonStyles.input, styles.input]} 
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <TextInput 
+            value={description} 
+            onChangeText={setDescription} 
+            placeholder="Optional description" 
+            style={[commonStyles.input, styles.input]} 
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <TextInput 
+            value={content} 
+            onChangeText={setContent} 
+            placeholder="Optional content (otherwise AI generates)" 
+            style={[commonStyles.input, styles.input, styles.textArea]} 
+            placeholderTextColor={colors.text.tertiary}
+            multiline
+            numberOfLines={3}
+          />
+          <TouchableOpacity 
+            disabled={!title.trim() || creating} 
+            onPress={create} 
+            style={[
+              commonStyles.primaryButton, 
+              styles.createButton,
+              (!title.trim() || creating) && styles.buttonDisabled
+            ]}
+          >
+            {creating ? (
+              <ActivityIndicator color={colors.text.inverse} size="small" />
+            ) : (
+              <Text style={commonStyles.primaryButtonText}>Create Topic</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.rowBetween}>
-          <Text style={styles.cardTitle}>Your topics</Text>
-          <TouchableOpacity onPress={load}><Text style={styles.link}>Refresh</Text></TouchableOpacity>
+      <View style={commonStyles.card}>
+        <View style={commonStyles.rowBetween}>
+          <Text style={commonStyles.cardTitle}>Your Topics</Text>
+          <TouchableOpacity onPress={load} style={styles.refreshButton}>
+            <Text style={commonStyles.link}>Refresh</Text>
+          </TouchableOpacity>
         </View>
         {loading ? (
-          <View style={styles.centerBox}><ActivityIndicator color="#7C3AED" /></View>
+          <View style={commonStyles.centerBox}>
+            <ActivityIndicator color={screenThemes.topics.primary} size="large" />
+          </View>
         ) : topics.length === 0 ? (
-          <Text style={styles.muted}>No topics yet. Create one above.</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No topics yet</Text>
+            <Text style={commonStyles.muted}>Create your first topic above to get started</Text>
+          </View>
         ) : (
           topics.map((t) => (
-            <View key={t._id} style={styles.listItem}>
+            <View key={t._id} style={[commonStyles.listItem, styles.topicItem]}>
               {editId === t._id ? (
-                <View style={{ gap: 6 }}>
-                  <TextInput value={edit.title || ''} onChangeText={(v) => setEdit((p) => ({ ...p, title: v }))} style={styles.input} />
-                  <TextInput value={edit.description || ''} onChangeText={(v) => setEdit((p) => ({ ...p, description: v }))} style={styles.input} placeholder="Description" />
-                  <TextInput value={edit.content || ''} onChangeText={(v) => setEdit((p) => ({ ...p, content: v }))} style={[styles.input, { minHeight: 80 }]} placeholder="Content" multiline />
+                <View style={styles.editForm}>
+                  <TextInput 
+                    value={edit.title || ''} 
+                    onChangeText={(v) => setEdit((p) => ({ ...p, title: v }))} 
+                    style={[commonStyles.input, styles.editInput]} 
+                    placeholder="Title"
+                    placeholderTextColor={colors.text.tertiary}
+                  />
+                  <TextInput 
+                    value={edit.description || ''} 
+                    onChangeText={(v) => setEdit((p) => ({ ...p, description: v }))} 
+                    style={[commonStyles.input, styles.editInput]} 
+                    placeholder="Description"
+                    placeholderTextColor={colors.text.tertiary}
+                  />
+                  <TextInput 
+                    value={edit.content || ''} 
+                    onChangeText={(v) => setEdit((p) => ({ ...p, content: v }))} 
+                    style={[commonStyles.input, styles.editInput, styles.editTextArea]} 
+                    placeholder="Content" 
+                    placeholderTextColor={colors.text.tertiary}
+                    multiline 
+                    numberOfLines={4}
+                  />
                 </View>
               ) : (
-                <View>
-                  <Text style={styles.itemTitle}>{t.title}</Text>
-                  {t.description ? <Text style={styles.itemMeta}>{t.description}</Text> : null}
-                  <Text numberOfLines={4} style={styles.itemSummary}>{t.content || t.generatedContent}</Text>
+                <View style={styles.topicContent}>
+                  <Text style={commonStyles.itemTitle}>{t.title}</Text>
+                  {t.description ? (
+                    <Text style={commonStyles.itemMeta}>{t.description}</Text>
+                  ) : null}
+                  <Text numberOfLines={4} style={commonStyles.itemSummary}>
+                    {t.content || t.generatedContent}
+                  </Text>
                 </View>
               )}
 
-              <View style={styles.actionsRow}>
+              <View style={commonStyles.actionsRow}>
                 {editId === t._id ? (
-                  <TouchableOpacity onPress={saveEdit} disabled={actionId === t._id} style={styles.secondaryBtn}>
-                    {actionId === t._id ? <ActivityIndicator /> : <Text>Save</Text>}
+                  <TouchableOpacity 
+                    onPress={saveEdit} 
+                    disabled={actionId === t._id} 
+                    style={[commonStyles.secondaryButton, actionId === t._id && styles.buttonDisabled]}
+                  >
+                    {actionId === t._id ? (
+                      <ActivityIndicator size="small" color={colors.text.secondary} />
+                    ) : (
+                      <Text style={commonStyles.secondaryButtonText}>Save</Text>
+                    )}
                   </TouchableOpacity>
                 ) : (
-                  <TouchableOpacity onPress={() => startEdit(t)} style={styles.secondaryBtn}><Text>Edit</Text></TouchableOpacity>
+                  <TouchableOpacity onPress={() => startEdit(t)} style={commonStyles.secondaryButton}>
+                    <Text style={commonStyles.secondaryButtonText}>Edit</Text>
+                  </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={() => regenerate(t._id)} disabled={actionId === t._id} style={styles.secondaryBtn}>
-                  {actionId === t._id ? <ActivityIndicator /> : <Text>Regenerate</Text>}
+                <TouchableOpacity 
+                  onPress={() => regenerate(t._id)} 
+                  disabled={actionId === t._id} 
+                  style={[commonStyles.secondaryButton, actionId === t._id && styles.buttonDisabled]}
+                >
+                  {actionId === t._id ? (
+                    <ActivityIndicator size="small" color={colors.text.secondary} />
+                  ) : (
+                    <Text style={commonStyles.secondaryButtonText}>Regenerate</Text>
+                  )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => remove(t._id)} disabled={actionId === t._id} style={[styles.secondaryBtn, { borderColor: '#fecaca' }]}>
-                  <Text style={{ color: '#b91c1c' }}>Delete</Text>
+                <TouchableOpacity 
+                  onPress={() => remove(t._id)} 
+                  disabled={actionId === t._id} 
+                  style={[commonStyles.secondaryButton, styles.deleteButton, actionId === t._id && styles.buttonDisabled]}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -125,22 +213,84 @@ export default function TopicsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  content: { padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  subtitle: { color: '#6B7280', marginBottom: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginTop: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff' },
-  primaryBtn: { backgroundColor: '#7C3AED', paddingVertical: 12, borderRadius: 8, alignItems: 'center', marginTop: 8 },
-  primaryText: { color: '#fff', fontWeight: '600' },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  centerBox: { height: 80, alignItems: 'center', justifyContent: 'center' },
-  muted: { color: '#6B7280' },
-  listItem: { borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingVertical: 10 },
-  itemTitle: { fontWeight: '600', color: '#111827' },
-  itemMeta: { color: '#6B7280', fontSize: 12, marginTop: 2 },
-  itemSummary: { color: '#374151', marginTop: 6 },
-  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  secondaryBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
+  header: {
+    marginBottom: spacing[2],
+  },
+  
+  formContainer: {
+    gap: spacing[3],
+  },
+  
+  input: {
+    marginBottom: 0,
+  },
+  
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  
+  createButton: {
+    backgroundColor: screenThemes.topics.primary,
+    marginTop: spacing[2],
+  },
+  
+  refreshButton: {
+    padding: spacing[1],
+  },
+  
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing[8],
+  },
+  
+  emptyStateText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  },
+  
+  topicItem: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.base,
+    padding: spacing[3],
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
+  },
+  
+  topicContent: {
+    flex: 1,
+  },
+  
+  editForm: {
+    gap: spacing[2],
+    marginBottom: spacing[3],
+  },
+  
+  editInput: {
+    marginBottom: 0,
+  },
+  
+  editTextArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  
+  deleteButton: {
+    borderColor: colors.error[200],
+    backgroundColor: colors.error[50],
+  },
+  
+  deleteButtonText: {
+    color: colors.error[600],
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });

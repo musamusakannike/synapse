@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/user.model');
 const sendMail = require('../config/mail.config');
+const admin = require('../config/firebaseAdmin');
 
 const generateCode = () => {
 	return Math.floor(100000 + Math.random() * 900000).toString();
@@ -77,5 +78,42 @@ const verifyCode = async (req, res) => {
 module.exports = {
 	sendVerificationCode,
 	verifyCode,
+	// Verify Firebase ID token (Google) and issue our JWT
+	googleAuth: async (req, res) => {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: 'idToken is required' });
+
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+      const email = decoded.email;
+      const name = decoded.name;
+      const picture = decoded.picture;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email not present in token' });
+      }
+
+      let user = await User.findOne({ $or: [{ googleId: uid }, { email }] });
+      if (!user) {
+        user = new User({ email });
+      }
+
+      // Update fields from Google profile
+      user.googleId = uid;
+      if (name) user.name = name;
+      if (picture) user.profilePicture = picture;
+      user.isEmailVerified = true;
+      user.lastLogin = Date.now();
+      await user.save();
+
+      const payload = { id: user._id, email: user.email };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      return res.json({ accessToken: token });
+    } catch (err) {
+      console.error(err);
+      return res.status(401).json({ message: 'Invalid Firebase token' });
+    }
+  }
 };
 

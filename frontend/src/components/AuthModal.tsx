@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { X, Mail, Github, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { AuthAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 
 type Props = {
   open: boolean;
@@ -14,8 +16,10 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [sending, setSending] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [codeError, setCodeError] = useState("");
+  const [socialError, setSocialError] = useState("");
   const router = useRouter();
 
   if (!open) return null;
@@ -48,6 +52,27 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
       setEmailError(err?.message || "Failed to send verification code");
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    try {
+      setSocialError("");
+      setOauthLoading(true);
+      const cred = await signInWithPopup(auth, googleProvider);
+      const idToken = await cred.user.getIdToken();
+      const { data } = await AuthAPI.googleSignIn(idToken);
+      const token = data?.accessToken;
+      if (!token) throw new Error("Invalid server response");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", token);
+      }
+      onClose();
+      router.push("/dashboard");
+    } catch (err: any) {
+      setSocialError(err?.message || "Google sign-in failed");
+    } finally {
+      setOauthLoading(false);
     }
   };
 
@@ -110,7 +135,11 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
 
               {/* Social Auth Buttons */}
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group">
+                <button
+                  onClick={handleGoogle}
+                  disabled={oauthLoading}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group disabled:opacity-60"
+                >
                   <div className="w-5 h-5 flex items-center justify-center text-white text-xs font-bold">
                     <svg
                       className="icon"
@@ -136,7 +165,14 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                     </svg>
                   </div>
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">
-                    Continue with Google
+                    {oauthLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="animate-spin" size={18} />
+                        Connecting...
+                      </span>
+                    ) : (
+                      "Continue with Google"
+                    )}
                   </span>
                 </button>
 
@@ -147,6 +183,10 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   </span>
                 </button>
               </div>
+
+              {socialError && (
+                <p className="mt-2 text-sm text-red-600 text-center">{socialError}</p>
+              )}
 
               {/* Divider */}
               <div className="flex items-center gap-4 py-2">

@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { sendVerificationCode, verifyCode } = require('../controllers/auth.controller');
+const { sendVerificationCode, verifyCode, googleAuth } = require('../controllers/auth.controller');
 
 const router = express.Router();
 
@@ -25,6 +25,16 @@ router.post(
 		if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 		return verifyCode(req, res);
 	}
+);
+
+router.post(
+  '/google',
+  [body('idToken').isString().withMessage('idToken is required')],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    return googleAuth(req, res);
+  }
 );
 
 module.exports = router;

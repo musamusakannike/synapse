@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { isAuthenticated, logout } from "@/lib/auth";
-import { Menu, X, LogOut, Brain } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Overview" },
@@ -51,9 +51,6 @@ export default function DashboardLayout({
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-blue-600" />
-              </div>
               <span className="font-bold text-gray-900">SYNAPSE</span>
               <span className="hidden md:inline text-gray-300">|</span>
               <nav className="hidden md:flex items-center gap-4">

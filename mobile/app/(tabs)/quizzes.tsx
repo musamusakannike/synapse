@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { QuizAPI, TopicAPI, DocumentAPI, WebsiteAPI } from '../../lib/api';
+import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
 
 type Quiz = {
   _id: string;
@@ -90,62 +91,129 @@ export default function QuizzesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Quizzes</Text>
-      <Text style={styles.subtitle}>Generate and take quizzes to test your knowledge</Text>
+    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+      <View style={styles.header}>
+        <Text style={commonStyles.title}>Quizzes</Text>
+        <Text style={commonStyles.subtitle}>Generate and take quizzes to test your knowledge</Text>
+      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Create</Text>
-        <View style={{ gap: 8 }}>
-          <TextInput value={title} onChangeText={setTitle} placeholder="Quiz title (required)" style={styles.input} />
-          <TextInput value={description} onChangeText={setDescription} placeholder="Optional description" style={styles.input} />
-          <View style={styles.row}>
-            <TextInput value={String(numberOfQuestions)} onChangeText={(v) => setNumberOfQuestions(parseInt(v || '10'))} keyboardType="number-pad" placeholder="# Questions" style={[styles.input, { flex: 1 }]} />
-            <TouchableOpacity onPress={() => setDifficulty((d) => (d === 'mixed' ? 'easy' : d === 'easy' ? 'medium' : d === 'medium' ? 'hard' : 'mixed'))} style={styles.secondaryBtn}>
-              <Text>Difficulty: {difficulty}</Text>
+      <View style={[commonStyles.card, { backgroundColor: screenThemes.quizzes.background }]}>
+        <Text style={commonStyles.cardTitle}>Create Quiz</Text>
+        <View style={styles.formContainer}>
+          <TextInput 
+            value={title} 
+            onChangeText={setTitle} 
+            placeholder="Quiz title (required)" 
+            style={[commonStyles.input, styles.input]} 
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <TextInput 
+            value={description} 
+            onChangeText={setDescription} 
+            placeholder="Optional description" 
+            style={[commonStyles.input, styles.input]} 
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <View style={commonStyles.row}>
+            <TextInput 
+              value={String(numberOfQuestions)} 
+              onChangeText={(v) => setNumberOfQuestions(parseInt(v || '10'))} 
+              keyboardType="number-pad" 
+              placeholder="# Questions" 
+              style={[commonStyles.input, styles.input, { flex: 1 }]} 
+              placeholderTextColor={colors.text.tertiary}
+            />
+            <TouchableOpacity 
+              onPress={() => setDifficulty((d) => (d === 'mixed' ? 'easy' : d === 'easy' ? 'medium' : d === 'medium' ? 'hard' : 'mixed'))} 
+              style={[commonStyles.secondaryButton, styles.settingButton]}
+            >
+              <Text style={commonStyles.secondaryButtonText}>Difficulty: {difficulty}</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setIncludeCalculations((v) => !v)} style={styles.secondaryBtn}>
-              <Text>Calc: {includeCalculations ? 'On' : 'Off'}</Text>
+            <TouchableOpacity 
+              onPress={() => setIncludeCalculations((v) => !v)} 
+              style={[commonStyles.secondaryButton, styles.settingButton]}
+            >
+              <Text style={commonStyles.secondaryButtonText}>Calc: {includeCalculations ? 'On' : 'Off'}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.row}>
-            <TouchableOpacity onPress={() => setSourceType('topic')} style={[styles.chip, sourceType === 'topic' && styles.chipActive]}><Text>Topic</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => setSourceType('document')} style={[styles.chip, sourceType === 'document' && styles.chipActive]}><Text>Document</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => setSourceType('website')} style={[styles.chip, sourceType === 'website' && styles.chipActive]}><Text>Website</Text></TouchableOpacity>
+          <View style={commonStyles.row}>
+            <TouchableOpacity onPress={() => setSourceType('topic')} style={[styles.chip, sourceType === 'topic' && styles.chipActive]}>
+              <Text style={commonStyles.secondaryButtonText}>Topic</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setSourceType('document')} style={[styles.chip, sourceType === 'document' && styles.chipActive]}>
+              <Text style={commonStyles.secondaryButtonText}>Document</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setSourceType('website')} style={[styles.chip, sourceType === 'website' && styles.chipActive]}>
+              <Text style={commonStyles.secondaryButtonText}>Website</Text>
+            </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing[2] }}>
             {sourceOptions.map((o) => (
               <TouchableOpacity key={o._id} onPress={() => setSourceId(o._id)} style={[styles.pill, sourceId === o._id && styles.pillActive]}>
                 <Text numberOfLines={1} style={{ maxWidth: 160 }}>{o.label}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
-          <TextInput value={content} onChangeText={setContent} placeholder="Optional custom content to generate from" style={styles.input} />
-          <TouchableOpacity disabled={!title.trim() || creating} onPress={create} style={styles.primaryBtn}>
-            {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Create Quiz</Text>}
+          <TextInput 
+            value={content} 
+            onChangeText={setContent} 
+            placeholder="Optional custom content to generate from" 
+            style={[commonStyles.input, styles.input]} 
+            placeholderTextColor={colors.text.tertiary}
+          />
+          <TouchableOpacity 
+            disabled={!title.trim() || creating} 
+            onPress={create} 
+            style={[
+              commonStyles.primaryButton, 
+              styles.createButton,
+              (!title.trim() || creating) && styles.buttonDisabled
+            ]}
+          >
+            {creating ? (
+              <ActivityIndicator color={colors.text.inverse} size="small" />
+            ) : (
+              <Text style={commonStyles.primaryButtonText}>Create Quiz</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.rowBetween}>
-          <Text style={styles.cardTitle}>Your quizzes</Text>
-          <TouchableOpacity onPress={load}><Text style={styles.link}>Refresh</Text></TouchableOpacity>
+      <View style={commonStyles.card}>
+        <View style={commonStyles.rowBetween}>
+          <Text style={commonStyles.cardTitle}>Your Quizzes</Text>
+          <TouchableOpacity onPress={load} style={styles.refreshButton}>
+            <Text style={commonStyles.link}>Refresh</Text>
+          </TouchableOpacity>
         </View>
         {loading ? (
-          <View style={styles.centerBox}><ActivityIndicator color="#EA580C" /></View>
+          <View style={commonStyles.centerBox}>
+            <ActivityIndicator color={screenThemes.quizzes.primary} size="large" />
+          </View>
         ) : quizzes.length === 0 ? (
-          <Text style={styles.muted}>No quizzes yet. Create one above.</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No quizzes yet</Text>
+            <Text style={commonStyles.muted}>Create your first quiz above to get started</Text>
+          </View>
         ) : (
           quizzes.map((q) => (
-            <View key={q._id} style={styles.listItem}>
-              <View style={styles.rowBetween}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemTitle} numberOfLines={1}>{q.title}</Text>
-                  {q.description ? <Text style={styles.itemMeta} numberOfLines={1}>{q.description}</Text> : null}
-                  <Text style={styles.itemMeta}>{q.questions?.length || 0} questions • Difficulty: {q.settings?.difficulty || 'mixed'}</Text>
+            <View key={q._id} style={[commonStyles.listItem, styles.quizItem]}>
+              <View style={commonStyles.rowBetween}>
+                <View style={styles.quizContent}>
+                  <Text style={commonStyles.itemTitle} numberOfLines={1}>{q.title}</Text>
+                  {q.description ? (
+                    <Text style={commonStyles.itemMeta} numberOfLines={1}>{q.description}</Text>
+                  ) : null}
+                  <Text style={commonStyles.itemMeta}>
+                    {q.questions?.length || 0} questions • Difficulty: {q.settings?.difficulty || 'mixed'}
+                  </Text>
                 </View>
-                <TouchableOpacity onPress={() => take(q._id)} style={styles.secondaryBtn}><Text>Take</Text></TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={() => take(q._id)} 
+                  style={[commonStyles.secondaryButton, styles.takeButton]}
+                >
+                  <Text style={commonStyles.secondaryButtonText}>Take Quiz</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))
@@ -153,31 +221,51 @@ export default function QuizzesScreen() {
       </View>
 
       {currentQuiz && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>{currentQuiz.title}</Text>
+        <View style={commonStyles.card}>
+          <Text style={commonStyles.cardTitle}>{currentQuiz.title}</Text>
           {currentQuiz.questions.map((qs, idx) => (
             <View key={idx} style={styles.question}>
               <Text style={styles.questionTitle}>Q{idx + 1}. {qs.questionText}</Text>
               {qs.options.map((opt, oi) => (
-                <TouchableOpacity key={oi} style={[styles.option, selected[idx] === oi && styles.optionActive]} onPress={() => setSelected((p) => ({ ...p, [idx]: oi }))}>
-                  <Text>{opt}</Text>
+                <TouchableOpacity 
+                  key={oi} 
+                  style={[styles.option, selected[idx] === oi && styles.optionActive]} 
+                  onPress={() => setSelected((p) => ({ ...p, [idx]: oi }))}
+                >
+                  <Text style={commonStyles.secondaryButtonText}>{opt}</Text>
                 </TouchableOpacity>
               ))}
               {result && (
-                <Text style={{ marginTop: 4 }}>
+                <Text style={styles.resultText}>
                   {typeof selected[idx] === 'number' && selected[idx] === currentQuiz.questions[idx].correctOption ? (
-                    <Text style={{ color: '#15803D' }}>Correct ✓</Text>
+                    <Text style={styles.correctAnswer}>Correct ✓</Text>
                   ) : (
-                    <Text style={{ color: '#B91C1C' }}>Incorrect ✗</Text>
+                    <Text style={styles.incorrectAnswer}>Incorrect ✗</Text>
                   )}
                 </Text>
               )}
             </View>
           ))}
-          <TouchableOpacity onPress={submit} disabled={submitting} style={styles.primaryBtn}>
-            {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Submit answers</Text>}
+          <TouchableOpacity 
+            onPress={submit} 
+            disabled={submitting} 
+            style={[
+              commonStyles.primaryButton, 
+              styles.submitButton,
+              submitting && styles.buttonDisabled
+            ]}
+          >
+            {submitting ? (
+              <ActivityIndicator color={colors.text.inverse} size="small" />
+            ) : (
+              <Text style={commonStyles.primaryButtonText}>Submit Answers</Text>
+            )}
           </TouchableOpacity>
-          {result && <Text style={{ marginTop: 8 }}>Result: {result.score}/{result.total}</Text>}
+          {result && (
+            <Text style={styles.resultSummary}>
+              Result: {result.score}/{result.total} ({Math.round((result.score / result.total) * 100)}%)
+            </Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -185,29 +273,148 @@ export default function QuizzesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  content: { padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  subtitle: { color: '#6B7280', marginBottom: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginTop: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff' },
-  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  primaryBtn: { backgroundColor: '#EA580C', paddingVertical: 12, borderRadius: 8, alignItems: 'center', marginTop: 8 },
-  primaryText: { color: '#fff', fontWeight: '600' },
-  link: { color: '#111827' },
-  centerBox: { height: 80, alignItems: 'center', justifyContent: 'center' },
-  muted: { color: '#6B7280' },
-  listItem: { borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingVertical: 10 },
-  itemTitle: { fontWeight: '600', color: '#111827' },
-  itemMeta: { color: '#6B7280', fontSize: 12, marginTop: 2 },
-  question: { borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 10, marginTop: 10 },
-  questionTitle: { fontWeight: '600', color: '#111827', marginBottom: 6 },
-  option: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginTop: 6 },
-  optionActive: { backgroundColor: '#FFEDD5', borderColor: '#FED7AA' },
-  chip: { borderWidth: 1, borderColor: '#E5E7EB', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: '#fff' },
-  chipActive: { borderColor: '#EA580C', backgroundColor: '#FFF7ED' },
-  pill: { borderWidth: 1, borderColor: '#E5E7EB', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 999, backgroundColor: '#fff' },
-  pillActive: { borderColor: '#EA580C', backgroundColor: '#FFF7ED' },
+  header: {
+    marginBottom: spacing[2],
+  },
+  
+  formContainer: {
+    gap: spacing[3],
+  },
+  
+  input: {
+    marginBottom: 0,
+  },
+  
+  settingButton: {
+    marginLeft: spacing[2],
+  },
+  
+  createButton: {
+    backgroundColor: screenThemes.quizzes.primary,
+    marginTop: spacing[2],
+  },
+  
+  refreshButton: {
+    padding: spacing[1],
+  },
+  
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing[8],
+  },
+  
+  emptyStateText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  },
+  
+  quizItem: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.base,
+    padding: spacing[3],
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
+  },
+  
+  quizContent: {
+    flex: 1,
+    marginRight: spacing[3],
+  },
+  
+  takeButton: {
+    backgroundColor: screenThemes.quizzes.background,
+    borderColor: screenThemes.quizzes.primary,
+  },
+  
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background,
+  },
+  
+  chipActive: {
+    borderColor: screenThemes.quizzes.primary,
+    backgroundColor: screenThemes.quizzes.background,
+  },
+  
+  pill: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.background,
+  },
+  
+  pillActive: {
+    borderColor: screenThemes.quizzes.primary,
+    backgroundColor: screenThemes.quizzes.background,
+  },
+  
+  question: {
+    borderTopWidth: 1,
+    borderTopColor: colors.neutral[100],
+    paddingTop: spacing[3],
+    marginTop: spacing[3],
+  },
+  
+  questionTitle: {
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing[2],
+    fontSize: typography.fontSize.base,
+  },
+  
+  option: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.base,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    marginTop: spacing[2],
+    backgroundColor: colors.background,
+  },
+  
+  optionActive: {
+    backgroundColor: screenThemes.quizzes.background,
+    borderColor: screenThemes.quizzes.primary,
+  },
+  
+  submitButton: {
+    backgroundColor: screenThemes.quizzes.primary,
+    marginTop: spacing[4],
+  },
+  
+  resultText: {
+    marginTop: spacing[2],
+  },
+  
+  correctAnswer: {
+    color: colors.success[600],
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  incorrectAnswer: {
+    color: colors.error[600],
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  resultSummary: {
+    marginTop: spacing[3],
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.text.primary,
+    textAlign: 'center',
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });

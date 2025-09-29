@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { ChatAPI } from '../../lib/api';
 import { useLocalSearchParams } from 'expo-router';
+import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
 
 interface ChatListItem {
   id: string;
@@ -108,65 +109,152 @@ export default function ChatScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.rowBetween}>
-        <View>
-          <Text style={styles.title}>Chat</Text>
-          <Text style={styles.subtitle}>Ask questions and get AI answers</Text>
+    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <Text style={commonStyles.title}>Chat</Text>
+          <Text style={commonStyles.subtitle}>Ask questions and get AI answers</Text>
         </View>
-        <TouchableOpacity onPress={createChat} disabled={creating} style={styles.primaryBtn}>
-          {creating ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>New Chat</Text>}
+        <TouchableOpacity 
+          onPress={createChat} 
+          disabled={creating} 
+          style={[commonStyles.primaryButton, styles.newChatButton, creating && styles.buttonDisabled]}
+        >
+          {creating ? (
+            <ActivityIndicator color={colors.text.inverse} size="small" />
+          ) : (
+            <Text style={commonStyles.primaryButtonText}>New Chat</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Your chats</Text>
+      <View style={commonStyles.card}>
+        <Text style={commonStyles.cardTitle}>Your Chats</Text>
         {loadingList ? (
-          <View style={styles.centerBox}><ActivityIndicator color="#2563EB" /></View>
+          <View style={commonStyles.centerBox}>
+            <ActivityIndicator color={screenThemes.chat.primary} size="large" />
+          </View>
         ) : chats.length === 0 ? (
-          <Text style={styles.muted}>No chats yet.</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No chats yet</Text>
+            <Text style={commonStyles.muted}>Start a new conversation above</Text>
+          </View>
         ) : (
           chats.map((c) => (
-            <TouchableOpacity key={c.id} style={[styles.listItem, selectedId === c.id && { backgroundColor: '#EFF6FF' }]} onPress={() => openChat(c.id)}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle} numberOfLines={1}>{c.title}</Text>
-                {c.lastMessage && <Text style={styles.itemMeta} numberOfLines={1}>{c.lastMessage.content}</Text>}
+            <TouchableOpacity 
+              key={c.id} 
+              style={[
+                commonStyles.listItem, 
+                styles.chatItem,
+                selectedId === c.id && styles.chatItemSelected
+              ]} 
+              onPress={() => openChat(c.id)}
+            >
+              <View style={styles.chatContent}>
+                <Text style={commonStyles.itemTitle} numberOfLines={1}>{c.title}</Text>
+                {c.lastMessage && (
+                  <Text style={commonStyles.itemMeta} numberOfLines={2}>
+                    {c.lastMessage.content}
+                  </Text>
+                )}
+                <Text style={styles.chatMeta}>
+                  {c.messageCount} messages • {new Date(c.lastActivity).toLocaleDateString()}
+                </Text>
               </View>
-              <TouchableOpacity onPress={() => removeChat(c.id)} style={styles.secondaryBtn}><Text>Delete</Text></TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  removeChat(c.id);
+                }} 
+                style={[commonStyles.secondaryButton, styles.deleteButton]}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           ))
         )}
       </View>
 
-      <View style={styles.card}>
+      <View style={[commonStyles.card, styles.chatContainer]}>
         {!chat ? (
-          <View style={styles.centerBox}><Text style={styles.muted}>Select a chat to begin</Text></View>
+          <View style={styles.selectChatState}>
+            <Text style={styles.selectChatText}>Select a chat to begin</Text>
+            <Text style={commonStyles.muted}>Choose from your existing chats or create a new one</Text>
+          </View>
         ) : (
           <>
-            <View style={styles.row}>
-              <TextInput value={newTitle} onChangeText={setNewTitle} style={[styles.input, { flex: 1 }]} />
-              <TouchableOpacity onPress={saveTitle} disabled={renaming} style={styles.secondaryBtn}>
-                {renaming ? <ActivityIndicator /> : <Text>Save</Text>}
+            <View style={styles.chatHeader}>
+              <TextInput 
+                value={newTitle} 
+                onChangeText={setNewTitle} 
+                style={[commonStyles.input, styles.titleInput]} 
+                placeholder="Chat title"
+                placeholderTextColor={colors.text.tertiary}
+              />
+              <TouchableOpacity 
+                onPress={saveTitle} 
+                disabled={renaming} 
+                style={[commonStyles.secondaryButton, renaming && styles.buttonDisabled]}
+              >
+                {renaming ? (
+                  <ActivityIndicator size="small" color={colors.text.secondary} />
+                ) : (
+                  <Text style={commonStyles.secondaryButtonText}>Save</Text>
+                )}
               </TouchableOpacity>
             </View>
-            <View style={{ maxHeight: 400 }}>
-              <ScrollView contentContainerStyle={{ gap: 8 }}>
+            
+            <View style={styles.messagesContainer}>
+              <ScrollView 
+                contentContainerStyle={styles.messagesContent}
+                showsVerticalScrollIndicator={false}
+              >
                 {chat.messages.length === 0 ? (
-                  <Text style={styles.muted}>No messages yet. Ask a question below.</Text>
+                  <View style={styles.noMessagesState}>
+                    <Text style={commonStyles.muted}>No messages yet. Ask a question below.</Text>
+                  </View>
                 ) : (
                   chat.messages.map((m, idx) => (
-                    <View key={idx} style={[styles.bubble, m.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-                      <Text style={{ color: '#111827' }}>{m.content}</Text>
-                      {m.timestamp ? <Text style={styles.timestamp}>{new Date(m.timestamp).toLocaleString()}</Text> : null}
+                    <View key={idx} style={[
+                      styles.messageBubble, 
+                      m.role === 'user' ? styles.userBubble : styles.aiBubble
+                    ]}>
+                      <Text style={styles.messageText}>{m.content}</Text>
+                      {m.timestamp && (
+                        <Text style={styles.timestamp}>
+                          {new Date(m.timestamp).toLocaleString()}
+                        </Text>
+                      )}
                     </View>
                   ))
                 )}
               </ScrollView>
             </View>
-            <View style={[styles.row, { marginTop: 8 }]}>
-              <TextInput value={message} onChangeText={setMessage} placeholder="Type your question..." style={[styles.input, { flex: 1 }]} />
-              <TouchableOpacity disabled={!message.trim() || sending} onPress={doSend} style={styles.primaryBtn}>
-                {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Send</Text>}
+            
+            <View style={styles.inputContainer}>
+              <TextInput 
+                value={message} 
+                onChangeText={setMessage} 
+                placeholder="Type your question..." 
+                style={[commonStyles.input, styles.messageInput]}
+                placeholderTextColor={colors.text.tertiary}
+                multiline
+                maxLength={1000}
+              />
+              <TouchableOpacity 
+                disabled={!message.trim() || sending} 
+                onPress={doSend} 
+                style={[
+                  commonStyles.primaryButton, 
+                  styles.sendButton,
+                  (!message.trim() || sending) && styles.buttonDisabled
+                ]}
+              >
+                {sending ? (
+                  <ActivityIndicator color={colors.text.inverse} size="small" />
+                ) : (
+                  <Text style={commonStyles.primaryButtonText}>Send</Text>
+                )}
               </TouchableOpacity>
             </View>
           </>
@@ -177,25 +265,164 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  content: { padding: 16 },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  subtitle: { color: '#6B7280', marginBottom: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginTop: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 8 },
-  primaryBtn: { backgroundColor: '#2563EB', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignItems: 'center' },
-  primaryText: { color: '#fff', fontWeight: '600' },
-  secondaryBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginLeft: 8 },
-  centerBox: { height: 80, alignItems: 'center', justifyContent: 'center' },
-  muted: { color: '#6B7280' },
-  listItem: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingVertical: 10 },
-  itemTitle: { fontWeight: '600', color: '#111827' },
-  itemMeta: { color: '#6B7280', fontSize: 12, marginTop: 2 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#fff' },
-  bubble: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 10, maxWidth: '90%' },
-  userBubble: { alignSelf: 'flex-end', backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' },
-  aiBubble: { alignSelf: 'flex-start', backgroundColor: '#F9FAFB' },
-  timestamp: { color: '#9CA3AF', fontSize: 10, marginTop: 4 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: spacing[4],
+  },
+  
+  headerContent: {
+    flex: 1,
+    marginRight: spacing[4],
+  },
+  
+  newChatButton: {
+    backgroundColor: screenThemes.chat.primary,
+    paddingHorizontal: spacing[4],
+  },
+  
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing[8],
+  },
+  
+  emptyStateText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  },
+  
+  chatItem: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.base,
+    padding: spacing[3],
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
+  },
+  
+  chatItemSelected: {
+    backgroundColor: screenThemes.chat.background,
+    borderColor: screenThemes.chat.primary,
+  },
+  
+  chatContent: {
+    flex: 1,
+    marginRight: spacing[3],
+  },
+  
+  chatMeta: {
+    fontSize: typography.fontSize.xs,
+    color: colors.text.tertiary,
+    marginTop: spacing[1],
+  },
+  
+  deleteButton: {
+    borderColor: colors.error[200],
+    backgroundColor: colors.error[50],
+    marginLeft: 0,
+  },
+  
+  deleteButtonText: {
+    color: colors.error[600],
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  chatContainer: {
+    minHeight: 400,
+  },
+  
+  selectChatState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing[12],
+  },
+  
+  selectChatText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  },
+  
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[4],
+  },
+  
+  titleInput: {
+    flex: 1,
+  },
+  
+  messagesContainer: {
+    maxHeight: 300,
+    marginBottom: spacing[4],
+  },
+  
+  messagesContent: {
+    gap: spacing[3],
+    paddingVertical: spacing[2],
+  },
+  
+  noMessagesState: {
+    alignItems: 'center',
+    paddingVertical: spacing[8],
+  },
+  
+  messageBubble: {
+    borderRadius: borderRadius.md,
+    padding: spacing[3],
+    maxWidth: '85%',
+    ...shadows.sm,
+  },
+  
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: screenThemes.chat.primary,
+    borderBottomRightRadius: borderRadius.sm,
+  },
+  
+  aiBubble: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.neutral[100],
+    borderBottomLeftRadius: borderRadius.sm,
+  },
+  
+  messageText: {
+    fontSize: typography.fontSize.base,
+    lineHeight: typography.lineHeight.relaxed * typography.fontSize.base,
+    color: colors.text.primary,
+  },
+  
+  timestamp: {
+    fontSize: typography.fontSize.xs,
+    color: colors.text.tertiary,
+    marginTop: spacing[2],
+  },
+  
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing[2],
+  },
+  
+  messageInput: {
+    flex: 1,
+    maxHeight: 100,
+  },
+  
+  sendButton: {
+    backgroundColor: screenThemes.chat.primary,
+    paddingHorizontal: spacing[4],
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });

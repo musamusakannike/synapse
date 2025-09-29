@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { DocumentAPI } from '../../lib/api';
+import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
 
 interface Doc {
   _id: string;
@@ -88,47 +89,88 @@ export default function DocumentsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Documents</Text>
-      <Text style={styles.subtitle}>Upload and summarize your study materials</Text>
+    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+      <View style={styles.header}>
+        <Text style={commonStyles.title}>Documents</Text>
+        <Text style={commonStyles.subtitle}>Upload and summarize your study materials</Text>
+      </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Upload</Text>
+      <View style={[commonStyles.card, { backgroundColor: screenThemes.documents.background }]}>
+        <Text style={commonStyles.cardTitle}>Upload Document</Text>
         <TextInput
           value={prompt}
           onChangeText={setPrompt}
           placeholder="Optional: custom summary prompt"
-          style={styles.input}
+          style={[commonStyles.input, styles.input]}
+          placeholderTextColor={colors.text.tertiary}
         />
-        <TouchableOpacity onPress={pickAndUpload} style={styles.primaryBtn} disabled={uploading}>
-          {uploading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Pick & Upload</Text>}
+        <TouchableOpacity 
+          onPress={pickAndUpload} 
+          style={[commonStyles.primaryButton, styles.uploadButton, uploading && styles.buttonDisabled]} 
+          disabled={uploading}
+        >
+          {uploading ? (
+            <ActivityIndicator color={colors.text.inverse} size="small" />
+          ) : (
+            <Text style={commonStyles.primaryButtonText}>Pick & Upload Document</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.rowBetween}>
-          <Text style={styles.cardTitle}>Your documents</Text>
-          <TouchableOpacity onPress={load}><Text style={styles.link}>Refresh</Text></TouchableOpacity>
+      <View style={commonStyles.card}>
+        <View style={commonStyles.rowBetween}>
+          <Text style={commonStyles.cardTitle}>Your Documents</Text>
+          <TouchableOpacity onPress={load} style={styles.refreshButton}>
+            <Text style={commonStyles.link}>Refresh</Text>
+          </TouchableOpacity>
         </View>
         {loading ? (
-          <View style={styles.centerBox}><ActivityIndicator color="#2563EB" /></View>
+          <View style={commonStyles.centerBox}>
+            <ActivityIndicator color={screenThemes.documents.primary} size="large" />
+          </View>
         ) : docs.length === 0 ? (
-          <Text style={styles.muted}>No documents yet. Upload one above.</Text>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No documents yet</Text>
+            <Text style={commonStyles.muted}>Upload your first document above to get started</Text>
+          </View>
         ) : (
           docs.map((d) => (
-            <View key={d._id} style={styles.listItem}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle} numberOfLines={1}>{d.originalName}</Text>
-                <Text style={styles.itemMeta}>{d.mimeType} • {(d.size / 1024).toFixed(1)} KB</Text>
-                {d.summary ? <Text style={styles.itemSummary} numberOfLines={3}>{d.summary}</Text> : null}
-                {d.processingError ? <Text style={styles.error}>{d.processingError}</Text> : null}
+            <View key={d._id} style={[commonStyles.listItem, styles.documentItem]}>
+              <View style={styles.documentContent}>
+                <Text style={commonStyles.itemTitle} numberOfLines={1}>{d.originalName}</Text>
+                <Text style={commonStyles.itemMeta}>
+                  {d.mimeType} • {(d.size / 1024).toFixed(1)} KB
+                  {d.processingStatus && (
+                    <Text style={[styles.statusBadge, styles[`status_${d.processingStatus}`]]}>
+                      {' • '}{d.processingStatus.toUpperCase()}
+                    </Text>
+                  )}
+                </Text>
+                {d.summary ? (
+                  <Text style={commonStyles.itemSummary} numberOfLines={3}>{d.summary}</Text>
+                ) : null}
+                {d.processingError ? (
+                  <Text style={commonStyles.error}>{d.processingError}</Text>
+                ) : null}
               </View>
-              <View style={styles.actionsRow}>
-                <TouchableOpacity onPress={() => reprocess(d._id)} disabled={actionId === d._id} style={styles.secondaryBtn}>
-                  {actionId === d._id ? <ActivityIndicator /> : <Text>Reprocess</Text>}
+              <View style={commonStyles.actionsRow}>
+                <TouchableOpacity 
+                  onPress={() => reprocess(d._id)} 
+                  disabled={actionId === d._id} 
+                  style={[commonStyles.secondaryButton, actionId === d._id && styles.buttonDisabled]}
+                >
+                  {actionId === d._id ? (
+                    <ActivityIndicator size="small" color={colors.text.secondary} />
+                  ) : (
+                    <Text style={commonStyles.secondaryButtonText}>Reprocess</Text>
+                  )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => remove(d._id)} disabled={actionId === d._id} style={[styles.secondaryBtn, { borderColor: '#fecaca' }]}>
-                  <Text style={{ color: '#b91c1c' }}>Delete</Text>
+                <TouchableOpacity 
+                  onPress={() => remove(d._id)} 
+                  disabled={actionId === d._id} 
+                  style={[commonStyles.secondaryButton, styles.deleteButton, actionId === d._id && styles.buttonDisabled]}
+                >
+                  <Text style={styles.deleteButtonText}>Delete</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -140,23 +182,82 @@ export default function DocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
-  content: { padding: 16 },
-  title: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  subtitle: { color: '#6B7280', marginBottom: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E5E7EB', marginTop: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10 },
-  primaryBtn: { backgroundColor: '#2563EB', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-  primaryText: { color: '#fff', fontWeight: '600' },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  centerBox: { height: 80, alignItems: 'center', justifyContent: 'center' },
-  muted: { color: '#6B7280' },
-  listItem: { borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingVertical: 12 },
-  itemTitle: { fontWeight: '600', color: '#111827' },
-  itemMeta: { color: '#6B7280', fontSize: 12, marginTop: 2 },
-  itemSummary: { color: '#374151', marginTop: 6 },
-  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  secondaryBtn: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
-  error: { color: '#dc2626', marginTop: 6, fontSize: 12 },
+  header: {
+    marginBottom: spacing[2],
+  },
+  
+  input: {
+    marginBottom: spacing[3],
+  },
+  
+  uploadButton: {
+    backgroundColor: screenThemes.documents.primary,
+    marginTop: spacing[2],
+  },
+  
+  refreshButton: {
+    padding: spacing[1],
+  },
+  
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: spacing[8],
+  },
+  
+  emptyStateText: {
+    fontSize: typography.fontSize.lg,
+    fontWeight: typography.fontWeight.medium,
+    color: colors.text.secondary,
+    marginBottom: spacing[1],
+  },
+  
+  documentItem: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.base,
+    padding: spacing[3],
+    marginTop: spacing[2],
+    borderWidth: 1,
+    borderColor: colors.neutral[200],
+    ...shadows.sm,
+  },
+  
+  documentContent: {
+    flex: 1,
+  },
+  
+  statusBadge: {
+    fontSize: typography.fontSize.xs,
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  status_pending: {
+    color: colors.warning[600],
+  },
+  
+  status_processing: {
+    color: colors.primary[600],
+  },
+  
+  status_completed: {
+    color: colors.success[600],
+  },
+  
+  status_failed: {
+    color: colors.error[600],
+  },
+  
+  deleteButton: {
+    borderColor: colors.error[200],
+    backgroundColor: colors.error[50],
+  },
+  
+  deleteButtonText: {
+    color: colors.error[600],
+    fontSize: typography.fontSize.sm,
+    fontWeight: typography.fontWeight.medium,
+  },
+  
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });

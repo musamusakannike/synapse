@@ -57,7 +57,7 @@ export default function DashboardLayout({
               <div className="flex items-center gap-3">
                 <span className="font-bold text-gray-900">SYNAPSE</span>
                 <span className="hidden md:inline text-gray-300">|</span>
-                <nav className="hidden md:flex items-center gap-4">
+                <nav className="hidden lg:flex items-center gap-4">
                   {navItems.map((item) => (
                     <Link
                       key={item.href}
@@ -83,7 +83,7 @@ export default function DashboardLayout({
                   Logout
                 </button>
                 <button
-                  className="md:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100"
+                  className="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100"
                   onClick={() => setOpen((o) => !o)}
                   aria-label="Toggle menu"
                 >
@@ -95,7 +95,7 @@ export default function DashboardLayout({
 
           {/* Mobile menu */}
           {open && (
-            <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="lg:hidden border-t border-gray-200 bg-white">
               <div className="px-4 py-3 space-y-1">
                 {navItems.map((item) => (
                   <Link

@@ -249,8 +249,8 @@ export default function QuizzesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={sourceType}
               onChange={(e) => setSourceType(e.target.value as any)}
@@ -263,7 +263,7 @@ export default function QuizzesPage() {
             <select
               value={sourceId}
               onChange={(e) => setSourceId(e.target.value)}
-              className="flex-1 border border-gray-200 rounded px-3 py-2"
+              className="flex-1 border border-gray-200 rounded px-3 py-2 max-w-[80vw]"
             >
               <option value="">Select source (optional)</option>
               {sourceOptions.map((o) => (

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import Loader from "./Loader";
+import HelpButton from "./HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 interface DashboardStats {
   documents: number;
@@ -172,7 +174,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Quick Actions */}
-      <div>
+      <div data-help="quick-actions">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {quickActions.map((action) => (
@@ -192,7 +194,7 @@ const DashboardOverview = () => {
       </div>
 
       {/* Learning Progress Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 border border-gray-200">
+      <div data-help="progress" className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 border border-gray-200">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Your Learning Journey</h2>
@@ -277,6 +279,8 @@ const DashboardOverview = () => {
           </div>
         </div>
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.dashboard} />
     </div>
   );
 };

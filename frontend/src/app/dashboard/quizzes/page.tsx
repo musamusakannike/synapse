@@ -12,6 +12,8 @@ import {
   ListChecks,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 type Quiz = {
   _id: string;
@@ -198,6 +200,7 @@ export default function QuizzesPage() {
 
       {/* Create */}
       <form
+        data-help="create-quiz"
         onSubmit={create}
         className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
       >
@@ -290,7 +293,7 @@ export default function QuizzesPage() {
       </form>
 
       {/* List */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div data-help="quiz-list" className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your quizzes</h2>
           <button
@@ -434,6 +437,8 @@ export default function QuizzesPage() {
           </div>
         </div>
       )}
+      
+      <HelpButton helpConfig={helpConfigs.quizzes} />
     </div>
   );
 }

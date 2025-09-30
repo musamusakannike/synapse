@@ -17,6 +17,8 @@ import {
   Settings,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 type FlashcardItem = {
   front: string;
@@ -214,7 +216,7 @@ export default function FlashcardsPage() {
       </div>
 
       {/* Generate Form */}
-      <form onSubmit={generate} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <form data-help="create-flashcards" onSubmit={generate} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
             value={title}
@@ -381,7 +383,7 @@ export default function FlashcardsPage() {
 
       {/* Study Mode */}
       {currentSet && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div data-help="study-mode" className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded bg-purple-50 flex items-center justify-center">
@@ -528,6 +530,8 @@ export default function FlashcardsPage() {
           ) : null}
         </div>
       )}
+      
+      <HelpButton helpConfig={helpConfigs.flashcards} />
     </div>
   );
 }

@@ -11,6 +11,8 @@ import {
   Save,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 type Topic = {
   _id: string;
@@ -128,6 +130,7 @@ export default function TopicsPage() {
 
       {/* Create */}
       <form
+        data-help="create-topic"
         onSubmit={create}
         className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
       >
@@ -161,7 +164,7 @@ export default function TopicsPage() {
       </form>
 
       {/* List */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div data-help="topic-list" className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your topics</h2>
           <button
@@ -284,6 +287,8 @@ export default function TopicsPage() {
           </div>
         )}
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.topics} />
     </div>
   );
 }

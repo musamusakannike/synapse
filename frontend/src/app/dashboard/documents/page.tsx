@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { DocumentAPI } from "@/lib/api";
 import { FileText, UploadCloud, RefreshCw, Trash2 } from "lucide-react";
 import Loader from "@/components/Loader";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 type Doc = {
   _id: string;
@@ -136,7 +138,7 @@ export default function DocumentsPage() {
       </form>
 
       {/* List */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div data-help="document-list" className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
             Your documents
@@ -227,6 +229,8 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.documents} />
     </div>
   );
 }

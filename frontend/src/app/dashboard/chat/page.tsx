@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import { useSearchParams } from "next/navigation";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 // Server list returns shape: { chats, pagination }
 interface ChatListItem {
@@ -202,7 +204,7 @@ export default function ChatPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chat list */}
-        <div className="lg:col-span-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div data-help="chat-list" className="lg:col-span-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Your chats</h2>
             <span className="text-sm text-gray-500">{chats.length}</span>
@@ -280,7 +282,7 @@ export default function ChatPage() {
                 </button>
               </div>
 
-              <div className="flex-1 overflow-auto p-4 space-y-3">
+              <div data-help="messages" className="flex-1 overflow-auto p-4 space-y-3">
                 {chat.messages.length === 0 ? (
                   <p className="text-gray-600">
                     No messages yet. Ask a question below.
@@ -334,6 +336,8 @@ export default function ChatPage() {
           )}
         </div>
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.chat} />
     </div>
   );
 }

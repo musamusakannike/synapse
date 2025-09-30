@@ -285,7 +285,7 @@ export default function QuizzesPage() {
 
         <button
           disabled={!title.trim() || creating}
-          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           Create Quiz
@@ -316,7 +316,7 @@ export default function QuizzesPage() {
               <div
                 key={q._id}
                 className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white ${
-                  takingId === q._id ? "ring-2 ring-orange-200" : ""
+                  takingId === q._id ? "ring-2 ring-blue-200" : ""
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -363,8 +363,8 @@ export default function QuizzesPage() {
       {currentQuiz && (
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded bg-orange-50 flex items-center justify-center">
-              <ListChecks className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
+              <ListChecks className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
@@ -394,7 +394,7 @@ export default function QuizzesPage() {
                       key={oi}
                       className={`flex items-center gap-2 border rounded px-3 py-2 cursor-pointer ${
                         selected[idx] === oi
-                          ? "border-orange-300 bg-orange-50"
+                          ? "border-blue-300 bg-blue-50"
                           : "border-gray-200 hover:bg-gray-50"
                       }`}
                     >
@@ -429,7 +429,7 @@ export default function QuizzesPage() {
             <button
               onClick={submit}
               disabled={submitting}
-              className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
             >
               {submitting ? <Loader /> : <Save className="w-4 h-4" />}
               Submit answers

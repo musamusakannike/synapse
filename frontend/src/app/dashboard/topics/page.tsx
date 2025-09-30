@@ -156,7 +156,7 @@ export default function TopicsPage() {
         </div>
         <button
           disabled={!title.trim() || creating}
-          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           Create Topic
@@ -189,8 +189,8 @@ export default function TopicsPage() {
                 className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded bg-purple-50 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-purple-600" />
+                  <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
                     {editId === t._id ? (

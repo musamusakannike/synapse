@@ -98,8 +98,8 @@ export default function WebsitesPage() {
         className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-            <Globe className="w-6 h-6 text-indigo-600" />
+          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+            <Globe className="w-6 h-6 text-blue-600" />
           </div>
           <input
             value={url}
@@ -109,7 +109,7 @@ export default function WebsitesPage() {
           />
           <button
             disabled={!url.trim() || creating}
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
           >
             {creating ? <Loader /> : <Link2 className="w-4 h-4" />}
             Add

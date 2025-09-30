@@ -150,21 +150,21 @@ const DashboardOverview = () => {
       title: "Start Chat",
       description: "Ask questions about your materials",
       icon: MessageCircle,
-      color: "bg-green-100 text-green-600",
+      color: "bg-blue-100 text-blue-600",
       href: "/dashboard/chat",
     },
     {
       title: "Create Topic",
       description: "Generate study materials on any subject",
       icon: BookOpen,
-      color: "bg-purple-100 text-purple-600",
+      color: "bg-blue-100 text-blue-600",
       href: "/dashboard/topics",
     },
     {
       title: "Take Quiz",
       description: "Test your knowledge with AI-generated quizzes",
       icon: HelpCircle,
-      color: "bg-orange-100 text-orange-600",
+      color: "bg-blue-100 text-blue-600",
       href: "/dashboard/quizzes",
     },
   ];
@@ -181,29 +181,29 @@ const DashboardOverview = () => {
       title: "Chats",
       value: stats.chats,
       icon: MessageCircle,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
       title: "Topics",
       value: stats.topics,
       icon: BookOpen,
-      color: "text-purple-600",
-      bgColor: "bg-purple-50",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
       title: "Quizzes",
       value: stats.quizzes,
       icon: HelpCircle,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
       title: "Websites",
       value: stats.websites,
       icon: Globe,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
   ];
 
@@ -293,24 +293,24 @@ const DashboardOverview = () => {
           
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="font-medium text-gray-900">Time Studied</p>
-                <p className="text-2xl font-bold text-green-600">{userProgress.studyTime.formatted}</p>
+                <p className="text-2xl font-bold text-blue-600">{userProgress.studyTime.formatted}</p>
               </div>
             </div>
           </div>
           
           <div className="bg-white rounded-lg p-4 border border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Brain className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <p className="font-medium text-gray-900">Topics Mastered</p>
-                <p className="text-2xl font-bold text-purple-600">{userProgress.topicsMastered}</p>
+                <p className="text-2xl font-bold text-blue-600">{userProgress.topicsMastered}</p>
               </div>
             </div>
           </div>

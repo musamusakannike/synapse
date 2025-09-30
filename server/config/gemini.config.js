@@ -123,6 +123,26 @@ class GeminiService {
     }
   }
 
+  async generateFlashcards(content, settings) {
+    const prompt = this.buildFlashcardPrompt(content, settings);
+
+    try {
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: "application/json",
+        },
+        safetySettings: this.safetySettings,
+      });
+      const jsonText = response.text;
+      return JSON.parse(jsonText);
+    } catch (error) {
+      console.error("Error generating flashcards:", error);
+      throw new Error("Failed to generate flashcards");
+    }
+  }
+
   async generateChatResponse(messages, context = "") {
     try {
       // Format history for the chat session.
@@ -211,6 +231,44 @@ class GeminiService {
     prompt += `{\n      "title": "Quiz Title",\n      "questions": [\n        {\n          "questionText": "Question text here",\n          "options": ["Option A", "Option B", "Option C", "Option D"],\n          "correctOption": 0,\n          "explanation": "Explanation for the correct answer",\n          "difficulty": "easy|medium|hard",\n          "includesCalculation": true|false\n        }\n      ]\n    }\n\n`;
 
     prompt += `Make sure each question has exactly 4 options, and the correctOption index is 0-based (0, 1, 2, or 3).`;
+
+    return prompt;
+  }
+
+  buildFlashcardPrompt(content, settings) {
+    let prompt = `Based on the following content, generate exactly ${settings.numberOfCards} flashcards for studying.\n\n`;
+    prompt += `Content: ${content}\n\n`;
+
+    prompt += `Flashcard Requirements:\n`;
+    prompt += `- Difficulty: ${settings.difficulty}\n`;
+    prompt += `- Include definitions: ${settings.includeDefinitions ? "Yes" : "No"}\n`;
+    prompt += `- Include examples: ${settings.includeExamples ? "Yes" : "No"}\n`;
+
+    if (settings.focusAreas && settings.focusAreas.length > 0) {
+      prompt += `- Focus specifically on these areas: ${settings.focusAreas.join(", ")}\n`;
+    }
+
+    prompt += `\nReturn the flashcards in the following JSON format:\n`;
+    prompt += `{\n`;
+    prompt += `  "title": "Flashcard Set Title",\n`;
+    prompt += `  "description": "Brief description of the flashcard set",\n`;
+    prompt += `  "flashcards": [\n`;
+    prompt += `    {\n`;
+    prompt += `      "front": "Question or term on the front of the card",\n`;
+    prompt += `      "back": "Answer or definition on the back of the card",\n`;
+    prompt += `      "difficulty": "easy|medium|hard",\n`;
+    prompt += `      "tags": ["tag1", "tag2"]\n`;
+    prompt += `    }\n`;
+    prompt += `  ]\n`;
+    prompt += `}\n\n`;
+
+    prompt += `Guidelines:\n`;
+    prompt += `- Make the front side concise (question, term, or concept)\n`;
+    prompt += `- Make the back side comprehensive but clear (answer, definition, or explanation)\n`;
+    prompt += `- Use appropriate difficulty levels based on content complexity\n`;
+    prompt += `- Add relevant tags for categorization\n`;
+    prompt += `- Ensure each flashcard tests a single concept\n`;
+    prompt += `- Make flashcards that promote active recall and understanding`;
 
     return prompt;
   }

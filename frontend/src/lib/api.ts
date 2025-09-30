@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // Base API URL
-// export const API_BASE_URL = "http://localhost:5000/api";
-export const API_BASE_URL = "https://synapse-tzlh.onrender.com/api";
+export const API_BASE_URL = "http://localhost:5000/api";
+// export const API_BASE_URL = "https://synapse-tzlh.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({
@@ -110,6 +110,41 @@ export const WebsiteAPI = {
   create: (url: string) => api.post("/websites", { url }),
   delete: (id: string) => api.delete(`/websites/${id}`),
   rescrape: (id: string) => api.post(`/websites/${id}/rescrape`),
+};
+
+// Flashcard endpoints
+export const FlashcardAPI = {
+  list: () => api.get("/flashcards"),
+  get: (id: string) => api.get(`/flashcards/${id}`),
+  generate: (data: {
+    title?: string;
+    description?: string;
+    sourceType: "topic" | "document" | "website" | "manual";
+    sourceId?: string;
+    settings?: {
+      numberOfCards?: number;
+      difficulty?: "easy" | "medium" | "hard" | "mixed";
+      includeDefinitions?: boolean;
+      includeExamples?: boolean;
+      focusAreas?: string[];
+    };
+  }) => api.post("/flashcards/generate", data),
+  update: (
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      flashcards?: Array<{
+        front: string;
+        back: string;
+        difficulty?: "easy" | "medium" | "hard";
+        tags?: string[];
+      }>;
+    }
+  ) => api.put(`/flashcards/${id}`, data),
+  delete: (id: string) => api.delete(`/flashcards/${id}`),
+  updateStudyStats: (id: string, score: number, sessionDuration?: number) =>
+    api.post(`/flashcards/${id}/study-stats`, { score, sessionDuration }),
 };
 
 // Wikipedia endpoints

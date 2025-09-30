@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { X, Mail, Github, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
+import { X, Mail, Github, ArrowLeft, CheckCircle } from "lucide-react";
+import Loader from "@/components/Loader";
 import { AuthAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
@@ -167,7 +168,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">
                     {oauthLoading ? (
                       <span className="flex items-center gap-2">
-                        <Loader2 className="animate-spin" size={18} />
+                        <Loader size="18" />
                         Connecting...
                       </span>
                     ) : (
@@ -271,7 +272,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 >
                   {sending ? (
                     <>
-                      <Loader2 className="animate-spin" size={18} />
+                      <Loader size="18" />
                       Sending...
                     </>
                   ) : (
@@ -338,7 +339,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   >
                     {sending ? (
                       <>
-                        <Loader2 className="animate-spin" size={18} />
+                      <Loader size="18" />
                         Verifying...
                       </>
                     ) : (

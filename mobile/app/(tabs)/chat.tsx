@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChatAPI } from '../../lib/api';
 import { useRouter } from 'expo-router';
 import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
+import { confirmations } from '../../components/ConfirmationDialog';
 
 interface ChatListItem {
   id: string;
@@ -52,15 +54,20 @@ export default function ChatScreen() {
   };
 
   const removeChat = async (id: string) => {
-    try {
-      await ChatAPI.delete(id);
-      setChats((prev) => prev.filter((c) => c.id !== id));
-    } catch (e) { console.error(e); }
+    confirmations.deleteChat(async () => {
+      try {
+        await ChatAPI.delete(id);
+        setChats((prev) => prev.filter((c) => c.id !== id));
+      } catch (e) { 
+        console.error(e); 
+      }
+    });
   };
 
 
   return (
-    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+    <SafeAreaView style={commonStyles.container}>
+      <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Text style={commonStyles.title}>Chat</Text>
@@ -123,6 +130,7 @@ export default function ChatScreen() {
       </View>
 
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

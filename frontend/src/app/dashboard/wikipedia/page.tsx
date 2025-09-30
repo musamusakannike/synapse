@@ -165,8 +165,8 @@ export default function WikipediaPage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
           <div className="md:col-span-5 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
-              <Search className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+              <Search className="w-6 h-6 text-blue-600" />
             </div>
             <input
               value={query}
@@ -192,7 +192,7 @@ export default function WikipediaPage() {
         </div>
         <button
           disabled={!query.trim() || loading}
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading ? <Loader /> : <Search className="w-4 h-4" />}
           Search
@@ -222,7 +222,7 @@ export default function WikipediaPage() {
                   key={(r.key || r.title || idx.toString()) + idx}
                   onClick={() => loadDetail(r.title)}
                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
-                    selectedTitle === r.title ? "bg-indigo-50/60" : ""
+                    selectedTitle === r.title ? "bg-blue-50/60" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">

@@ -114,6 +114,43 @@ module.exports = {
       console.error(err);
       return res.status(401).json({ message: 'Invalid Firebase token' });
     }
+  },
+  // Verify Firebase ID token (GitHub) and issue our JWT
+  githubAuth: async (req, res) => {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: 'idToken is required' });
+
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      const uid = decoded.uid;
+      const email = decoded.email;
+      const name = decoded.name;
+      const picture = decoded.picture;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email not present in token' });
+      }
+
+      let user = await User.findOne({ $or: [{ githubId: uid }, { email }] });
+      if (!user) {
+        user = new User({ email });
+      }
+
+      // Update fields from GitHub profile
+      user.githubId = uid;
+      if (name) user.name = name;
+      if (picture) user.profilePicture = picture;
+      user.isEmailVerified = true;
+      user.lastLogin = Date.now();
+      await user.save();
+
+      const payload = { id: user._id, email: user.email };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      return res.json({ accessToken: token });
+    } catch (err) {
+      console.error(err);
+      return res.status(401).json({ message: 'Invalid Firebase token' });
+    }
   }
 };
 

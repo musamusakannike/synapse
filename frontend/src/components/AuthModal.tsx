@@ -5,7 +5,7 @@ import Loader from "@/components/Loader";
 import { AuthAPI } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, githubProvider } from "@/lib/firebase";
 
 type Props = {
   open: boolean;
@@ -72,6 +72,27 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
       router.push("/dashboard");
     } catch (err: any) {
       setSocialError(err?.message || "Google sign-in failed");
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
+  const handleGithub = async () => {
+    try {
+      setSocialError("");
+      setOauthLoading(true);
+      const cred = await signInWithPopup(auth, githubProvider);
+      const idToken = await cred.user.getIdToken();
+      const { data } = await AuthAPI.githubSignIn(idToken);
+      const token = data?.accessToken;
+      if (!token) throw new Error("Invalid server response");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", token);
+      }
+      onClose();
+      router.push("/dashboard");
+    } catch (err: any) {
+      setSocialError(err?.message || "GitHub sign-in failed");
     } finally {
       setOauthLoading(false);
     }
@@ -177,10 +198,21 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   </span>
                 </button>
 
-                <button className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group">
+                <button
+                  onClick={handleGithub}
+                  disabled={oauthLoading}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group disabled:opacity-60"
+                >
                   <Github size={20} className="text-gray-700" />
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">
-                    Continue with GitHub
+                    {oauthLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Loader size="18" />
+                        Connecting...
+                      </span>
+                    ) : (
+                      "Continue with GitHub"
+                    )}
                   </span>
                 </button>
               </div>

@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // Base API URL
-export const API_BASE_URL = "http://localhost:5000/api";
-// export const API_BASE_URL = "https://synapse-tzlh.onrender.com/api";
+// export const API_BASE_URL = "http://localhost:5000/api";
+export const API_BASE_URL = "https://synapse-tzlh.onrender.com/api";
 
 // Create axios instance
 const api = axios.create({
@@ -40,6 +40,7 @@ export const AuthAPI = {
   requestCode: (email: string) => api.post("/auth", { email }),
   verifyCode: (email: string, code: string) => api.post("/auth/verify", { email, code }),
   googleSignIn: (idToken: string) => api.post("/auth/google", { idToken }),
+  githubSignIn: (idToken: string) => api.post("/auth/github", { idToken }),
 };
 
 // Document endpoints

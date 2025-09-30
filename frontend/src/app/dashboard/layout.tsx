@@ -12,6 +12,7 @@ const navItems = [
   { href: "/dashboard/chat", label: "Chat" },
   { href: "/dashboard/topics", label: "Topics" },
   { href: "/dashboard/quizzes", label: "Quizzes" },
+  { href: "/dashboard/flashcards", label: "Flashcards" },
   { href: "/dashboard/websites", label: "Websites" },
   { href: "/dashboard/wikipedia", label: "Wikipedia" },
 ];

@@ -2,7 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { WikipediaAPI, ChatAPI, QuizAPI } from "@/lib/api";
-import { Loader2, Search, BookOpen, ExternalLink, MessageCircle, PlusCircle } from "lucide-react";
+import {
+  Search,
+  BookOpen,
+  ExternalLink,
+  MessageCircle,
+  PlusCircle,
+} from "lucide-react";
+import Loader from "@/components/Loader";
 import { useRouter } from "next/navigation";
 
 interface WikiSearchItem {
@@ -90,7 +97,11 @@ export default function WikipediaPage() {
     if (!site?._id) return;
     try {
       setCreatingChat(true);
-      const { data } = await ChatAPI.create({ type: "website", sourceId: site._id, title: `${detail?.title} - Chat` });
+      const { data } = await ChatAPI.create({
+        type: "website",
+        sourceId: site._id,
+        title: `${detail?.title} - Chat`,
+      });
       const chatId = data?.chat?.id;
       if (chatId) {
         router.push(`/dashboard/chat?open=${chatId}`);
@@ -112,7 +123,11 @@ export default function WikipediaPage() {
         description: detail?.description || undefined,
         sourceType: "website",
         sourceId: site._id,
-        settings: { numberOfQuestions: 10, difficulty: "mixed", includeCalculations: false },
+        settings: {
+          numberOfQuestions: 10,
+          difficulty: "mixed",
+          includeCalculations: false,
+        },
       });
       router.push("/dashboard/quizzes");
     } catch (err) {
@@ -135,11 +150,16 @@ export default function WikipediaPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Wikipedia</h1>
-        <p className="text-gray-600">Search Wikipedia and act on the results with AI</p>
+        <p className="text-gray-600">
+          Search Wikipedia and act on the results with AI
+        </p>
       </div>
 
       {/* Search */}
-      <form onSubmit={doSearch} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <form
+        onSubmit={doSearch}
+        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
+      >
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
           <div className="md:col-span-5 flex items-center gap-2">
             <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
@@ -171,7 +191,7 @@ export default function WikipediaPage() {
           disabled={!query.trim() || loading}
           className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          {loading ? <Loader /> : <Search className="w-4 h-4" />}
           Search
         </button>
       </form>
@@ -187,10 +207,12 @@ export default function WikipediaPage() {
           <div className="max-h-[520px] overflow-auto divide-y divide-gray-100">
             {loading ? (
               <div className="p-6 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
+                <Loader size="25" />
               </div>
             ) : results.length === 0 ? (
-              <div className="p-6 text-gray-600">No results yet. Try a search above.</div>
+              <div className="p-6 text-gray-600">
+                No results yet. Try a search above.
+              </div>
             ) : (
               results.map((r, idx) => (
                 <button
@@ -202,15 +224,28 @@ export default function WikipediaPage() {
                 >
                   <div className="flex items-start gap-3">
                     {r.thumbnail?.url ? (
-                      <img src={r.thumbnail.url} alt="" className="w-10 h-10 rounded object-cover" />
+                      <img
+                        src={r.thumbnail.url}
+                        alt=""
+                        className="w-10 h-10 rounded object-cover"
+                      />
                     ) : (
                       <div className="w-10 h-10 rounded bg-gray-100" />
                     )}
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{r.title}</p>
-                      {r.description && <p className="text-xs text-gray-500 truncate">{r.description}</p>}
+                      <p className="font-medium text-gray-900 truncate">
+                        {r.title}
+                      </p>
+                      {r.description && (
+                        <p className="text-xs text-gray-500 truncate">
+                          {r.description}
+                        </p>
+                      )}
                       {r.excerpt && (
-                        <p className="text-xs text-gray-500 truncate" dangerouslySetInnerHTML={{ __html: r.excerpt }} />
+                        <p
+                          className="text-xs text-gray-500 truncate"
+                          dangerouslySetInnerHTML={{ __html: r.excerpt }}
+                        />
                       )}
                     </div>
                   </div>
@@ -231,15 +266,25 @@ export default function WikipediaPage() {
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
               {heroImage && (
                 <div className="w-full h-56 bg-gray-100 overflow-hidden">
-                  <img src={heroImage} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={heroImage}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               )}
 
               <div className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900">{detail.title}</h3>
-                    {detail.description && <p className="text-sm text-gray-600">{detail.description}</p>}
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {detail.title}
+                    </h3>
+                    {detail.description && (
+                      <p className="text-sm text-gray-600">
+                        {detail.description}
+                      </p>
+                    )}
                   </div>
                   <a
                     href={detail.url}
@@ -253,19 +298,25 @@ export default function WikipediaPage() {
 
                 {loadingDetail ? (
                   <div className="flex items-center justify-center h-24">
-                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+                    <Loader size="30" />
                   </div>
                 ) : (
                   <>
                     {detail.extract && (
-                      <p className="text-gray-800 mt-3 whitespace-pre-wrap">{detail.extract}</p>
+                      <p className="text-gray-800 mt-3 whitespace-pre-wrap">
+                        {detail.extract}
+                      </p>
                     )}
                     {detail.contentHtml && (
                       <div className="mt-6 border-t border-gray-200 pt-4">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-2">Article</h4>
+                        <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                          Article
+                        </h4>
                         <div
                           className="max-h-[480px] overflow-auto text-sm text-gray-800"
-                          dangerouslySetInnerHTML={{ __html: detail.contentHtml }}
+                          dangerouslySetInnerHTML={{
+                            __html: detail.contentHtml,
+                          }}
                         />
                       </div>
                     )}
@@ -276,7 +327,11 @@ export default function WikipediaPage() {
                         disabled={importing}
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
-                        {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                        {importing ? (
+                          <Loader />
+                        ) : (
+                          <PlusCircle className="w-4 h-4" />
+                        )}
                         Import to My Websites
                       </button>
                       <button
@@ -285,7 +340,7 @@ export default function WikipediaPage() {
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
                         {creatingChat ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <Loader />
                         ) : (
                           <MessageCircle className="w-4 h-4" />
                         )}
@@ -296,7 +351,11 @@ export default function WikipediaPage() {
                         disabled={importing || creatingQuiz}
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
-                        {creatingQuiz ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />}
+                        {creatingQuiz ? (
+                          <Loader />
+                        ) : (
+                          <BookOpen className="w-4 h-4" />
+                        )}
                         Import & Create Quiz
                       </button>
                     </div>

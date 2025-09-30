@@ -7,9 +7,9 @@ import {
   Plus,
   Trash2,
   SendHorizontal,
-  Loader2,
   Pencil,
 } from "lucide-react";
+import Loader from "@/components/Loader";
 import { useSearchParams } from "next/navigation";
 
 // Server list returns shape: { chats, pagination }
@@ -127,7 +127,10 @@ export default function ChatPage() {
     try {
       setSending(true);
       const { data } = await ChatAPI.sendMessage(selectedId, message.trim());
-      const userMessage = data?.userMessage || { role: "user", content: message.trim() };
+      const userMessage = data?.userMessage || {
+        role: "user",
+        content: message.trim(),
+      };
       const aiResponse = data?.aiResponse || { role: "assistant", content: "" };
       setChat((prev) =>
         prev
@@ -151,7 +154,9 @@ export default function ChatPage() {
       await ChatAPI.updateTitle(selectedId, newTitle.trim());
       setChat((prev) => (prev ? { ...prev, title: newTitle.trim() } : prev));
       setChats((prev) =>
-        prev.map((c) => (c.id === selectedId ? { ...c, title: newTitle.trim() } : c))
+        prev.map((c) =>
+          c.id === selectedId ? { ...c, title: newTitle.trim() } : c
+        )
       );
     } catch (e) {
       console.error(e);
@@ -170,7 +175,7 @@ export default function ChatPage() {
           disabled={creating}
           className="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           New Chat
         </button>
       </div>
@@ -190,7 +195,7 @@ export default function ChatPage() {
           disabled={creating}
           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           New Chat
         </button>
       </div>
@@ -205,7 +210,7 @@ export default function ChatPage() {
           <div className="max-h-[520px] overflow-auto divide-y divide-gray-100">
             {loadingList ? (
               <div className="p-6 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                <Loader />
               </div>
             ) : chats.length === 0 ? (
               <div className="p-6 text-gray-600">No chats yet.</div>
@@ -220,13 +225,19 @@ export default function ChatPage() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{c.title}</p>
+                      <p className="font-medium text-gray-900 truncate">
+                        {c.title}
+                      </p>
                       {c.lastMessage && (
-                        <p className="text-xs text-gray-500 truncate">{c.lastMessage.content}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {c.lastMessage.content}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">{c.messageCount}</span>
+                      <span className="text-xs text-gray-500">
+                        {c.messageCount}
+                      </span>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -262,14 +273,16 @@ export default function ChatPage() {
                   disabled={renaming}
                   className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 text-sm"
                 >
-                  {renaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                  {renaming ? <Loader /> : <Pencil className="w-4 h-4" />}
                   Save
                 </button>
               </div>
 
               <div className="flex-1 overflow-auto p-4 space-y-3">
                 {chat.messages.length === 0 ? (
-                  <p className="text-gray-600">No messages yet. Ask a question below.</p>
+                  <p className="text-gray-600">
+                    No messages yet. Ask a question below.
+                  </p>
                 ) : (
                   chat.messages.map((m, idx) => (
                     <div
@@ -280,16 +293,23 @@ export default function ChatPage() {
                           : "bg-gray-50 border-gray-200"
                       }`}
                     >
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {m.content}
+                      </p>
                       {m.timestamp && (
-                        <p className="text-[10px] text-gray-400 mt-1">{new Date(m.timestamp).toLocaleString()}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">
+                          {new Date(m.timestamp).toLocaleString()}
+                        </p>
                       )}
                     </div>
                   ))
                 )}
               </div>
 
-              <form onSubmit={doSend} className="p-3 border-t border-gray-200 flex items-center gap-2">
+              <form
+                onSubmit={doSend}
+                className="p-3 border-t border-gray-200 flex items-center gap-2"
+              >
                 <input
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -300,7 +320,11 @@ export default function ChatPage() {
                   disabled={!message.trim() || sending}
                   className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
                 >
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <SendHorizontal className="w-4 h-4" />}
+                  {sending ? (
+                    <Loader />
+                  ) : (
+                    <SendHorizontal className="w-4 h-4" />
+                  )}
                   Send
                 </button>
               </form>

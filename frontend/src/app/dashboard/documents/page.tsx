@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { DocumentAPI } from "@/lib/api";
-import { FileText, UploadCloud, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { FileText, UploadCloud, RefreshCw, Trash2 } from "lucide-react";
+import Loader from "@/components/Loader";
 
 type Doc = {
   _id: string;
@@ -87,11 +88,16 @@ export default function DocumentsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-        <p className="text-gray-600">Upload and summarize your study materials</p>
+        <p className="text-gray-600">
+          Upload and summarize your study materials
+        </p>
       </div>
 
       {/* Upload Card */}
-      <form onSubmit={onUpload} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <form
+        onSubmit={onUpload}
+        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
+      >
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
             <UploadCloud className="w-6 h-6 text-blue-600" />
@@ -121,7 +127,7 @@ export default function DocumentsPage() {
                 disabled={!file || uploading}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
               >
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                {uploading ? <Loader /> : <UploadCloud className="w-4 h-4" />}
                 Upload & summarize
               </button>
             </div>
@@ -132,22 +138,30 @@ export default function DocumentsPage() {
       {/* List */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Your documents</h2>
-          <button onClick={load} className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Your documents
+          </h2>
+          <button
+            onClick={load}
+            className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2"
+          >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <Loader size="30" />
           </div>
         ) : docs.length === 0 ? (
           <p className="text-gray-600">No documents yet. Upload one above.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {docs.map((d) => (
-              <div key={d._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white">
+              <div
+                key={d._id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
@@ -182,7 +196,9 @@ export default function DocumentsPage() {
                 )}
 
                 {d.processingError && (
-                  <p className="text-sm text-red-600 mt-3">{d.processingError}</p>
+                  <p className="text-sm text-red-600 mt-3">
+                    {d.processingError}
+                  </p>
                 )}
 
                 <div className="mt-4 flex items-center gap-2">
@@ -192,7 +208,7 @@ export default function DocumentsPage() {
                     className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                   >
                     {actionId === d._id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader />
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}

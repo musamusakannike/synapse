@@ -2,7 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import { TopicAPI } from "@/lib/api";
-import { BookOpen, Plus, Loader2, RefreshCw, Trash2, RotateCcw, Save } from "lucide-react";
+import {
+  BookOpen,
+  Plus,
+  RefreshCw,
+  Trash2,
+  RotateCcw,
+  Save,
+} from "lucide-react";
+import Loader from "@/components/Loader";
 
 type Topic = {
   _id: string;
@@ -46,7 +54,11 @@ export default function TopicsPage() {
     if (!title.trim()) return;
     try {
       setCreating(true);
-      await TopicAPI.create({ title: title.trim(), description: description.trim() || undefined, content: content.trim() || undefined });
+      await TopicAPI.create({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        content: content.trim() || undefined,
+      });
       setTitle("");
       setDescription("");
       setContent("");
@@ -115,7 +127,10 @@ export default function TopicsPage() {
       </div>
 
       {/* Create */}
-      <form onSubmit={create} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <form
+        onSubmit={create}
+        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
             value={title}
@@ -140,7 +155,7 @@ export default function TopicsPage() {
           disabled={!title.trim() || creating}
           className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           Create Topic
         </button>
       </form>
@@ -149,21 +164,27 @@ export default function TopicsPage() {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your topics</h2>
-          <button onClick={load} className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
+          <button
+            onClick={load}
+            className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2"
+          >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+            <Loader size="30" />
           </div>
         ) : topics.length === 0 ? (
           <p className="text-gray-600">No topics yet. Create one above.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {topics.map((t) => (
-              <div key={t._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white">
+              <div
+                key={t._id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded bg-purple-50 flex items-center justify-center">
                     <BookOpen className="w-5 h-5 text-purple-600" />
@@ -173,27 +194,40 @@ export default function TopicsPage() {
                       <div className="space-y-2">
                         <input
                           value={edit.title || ""}
-                          onChange={(e) => setEdit((p) => ({ ...p, title: e.target.value }))}
+                          onChange={(e) =>
+                            setEdit((p) => ({ ...p, title: e.target.value }))
+                          }
                           className="w-full border border-gray-200 rounded px-3 py-2"
                         />
                         <input
                           value={edit.description || ""}
-                          onChange={(e) => setEdit((p) => ({ ...p, description: e.target.value }))}
+                          onChange={(e) =>
+                            setEdit((p) => ({
+                              ...p,
+                              description: e.target.value,
+                            }))
+                          }
                           className="w-full border border-gray-200 rounded px-3 py-2"
                           placeholder="Description"
                         />
                         <textarea
                           value={edit.content || ""}
-                          onChange={(e) => setEdit((p) => ({ ...p, content: e.target.value }))}
+                          onChange={(e) =>
+                            setEdit((p) => ({ ...p, content: e.target.value }))
+                          }
                           className="w-full border border-gray-200 rounded px-3 py-2 min-h-[100px]"
                           placeholder="Content"
                         />
                       </div>
                     ) : (
                       <div>
-                        <p className="font-medium text-gray-900 truncate">{t.title}</p>
+                        <p className="font-medium text-gray-900 truncate">
+                          {t.title}
+                        </p>
                         {t.description && (
-                          <p className="text-sm text-gray-600 truncate">{t.description}</p>
+                          <p className="text-sm text-gray-600 truncate">
+                            {t.description}
+                          </p>
                         )}
                         <div className="mt-2 text-sm text-gray-800 line-clamp-5 whitespace-pre-wrap">
                           {t.content || t.generatedContent}
@@ -210,7 +244,11 @@ export default function TopicsPage() {
                       disabled={actionId === t._id}
                       className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                     >
-                      {actionId === t._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      {actionId === t._id ? (
+                        <Loader />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
                       Save
                     </button>
                   ) : (
@@ -226,7 +264,11 @@ export default function TopicsPage() {
                     disabled={actionId === t._id}
                     className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                   >
-                    {actionId === t._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                    {actionId === t._id ? (
+                      <Loader />
+                    ) : (
+                      <RotateCcw className="w-4 h-4" />
+                    )}
                     Regenerate
                   </button>
                   <button

@@ -2,7 +2,16 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { QuizAPI, TopicAPI, DocumentAPI, WebsiteAPI } from "@/lib/api";
-import { HelpCircle, Plus, Loader2, RefreshCw, Trash2, Play, Save, ListChecks } from "lucide-react";
+import {
+  HelpCircle,
+  Plus,
+  RefreshCw,
+  Trash2,
+  Play,
+  Save,
+  ListChecks,
+} from "lucide-react";
+import Loader from "@/components/Loader";
 
 type Quiz = {
   _id: string;
@@ -41,7 +50,9 @@ export default function QuizzesPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [sourceType, setSourceType] = useState<"topic" | "document" | "website">("topic");
+  const [sourceType, setSourceType] = useState<
+    "topic" | "document" | "website"
+  >("topic");
   const [sourceId, setSourceId] = useState<string>("");
   const [content, setContent] = useState("");
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
@@ -55,21 +66,31 @@ export default function QuizzesPage() {
   const [takingId, setTakingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score: number; total: number } | null>(null);
+  const [result, setResult] = useState<{ score: number; total: number } | null>(
+    null
+  );
 
   const load = async () => {
     try {
       setLoading(true);
-      const [{ data: q }, { data: t }, { data: d }, { data: w }] = await Promise.all([
-        QuizAPI.list(),
-        TopicAPI.list(),
-        DocumentAPI.list(),
-        WebsiteAPI.list(),
-      ]);
+      const [{ data: q }, { data: t }, { data: d }, { data: w }] =
+        await Promise.all([
+          QuizAPI.list(),
+          TopicAPI.list(),
+          DocumentAPI.list(),
+          WebsiteAPI.list(),
+        ]);
       setQuizzes(q || []);
       setTopics((t || []).map((x: any) => ({ _id: x._id, title: x.title })));
-      setDocs((d || []).map((x: any) => ({ _id: x._id, originalName: x.originalName })));
-      setSites((w || []).map((x: any) => ({ _id: x._id, url: x.url, title: x.title })));
+      setDocs(
+        (d || []).map((x: any) => ({
+          _id: x._id,
+          originalName: x.originalName,
+        }))
+      );
+      setSites(
+        (w || []).map((x: any) => ({ _id: x._id, url: x.url, title: x.title }))
+      );
     } catch (e) {
       console.error(e);
     } finally {
@@ -157,8 +178,10 @@ export default function QuizzesPage() {
   };
 
   const sourceOptions = useMemo(() => {
-    if (sourceType === "topic") return topics.map((t) => ({ value: t._id, label: t.title }));
-    if (sourceType === "document") return docs.map((d) => ({ value: d._id, label: d.originalName }));
+    if (sourceType === "topic")
+      return topics.map((t) => ({ value: t._id, label: t.title }));
+    if (sourceType === "document")
+      return docs.map((d) => ({ value: d._id, label: d.originalName }));
     return sites.map((s) => ({ value: s._id, label: s.title || s.url }));
   }, [sourceType, topics, docs, sites]);
 
@@ -168,11 +191,16 @@ export default function QuizzesPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
-        <p className="text-gray-600">Generate and take quizzes to test your knowledge</p>
+        <p className="text-gray-600">
+          Generate and take quizzes to test your knowledge
+        </p>
       </div>
 
       {/* Create */}
-      <form onSubmit={create} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+      <form
+        onSubmit={create}
+        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <input
             value={title}
@@ -191,7 +219,9 @@ export default function QuizzesPage() {
               type="number"
               min={1}
               value={numberOfQuestions}
-              onChange={(e) => setNumberOfQuestions(parseInt(e.target.value || "10"))}
+              onChange={(e) =>
+                setNumberOfQuestions(parseInt(e.target.value || "10"))
+              }
               className="border border-gray-200 rounded px-3 py-2"
               placeholder="# Questions"
             />
@@ -254,7 +284,7 @@ export default function QuizzesPage() {
           disabled={!title.trim() || creating}
           className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
           Create Quiz
         </button>
       </form>
@@ -263,27 +293,42 @@ export default function QuizzesPage() {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your quizzes</h2>
-          <button onClick={load} className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
+          <button
+            onClick={load}
+            className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2"
+          >
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+            <Loader size="30" />
           </div>
         ) : quizzes.length === 0 ? (
           <p className="text-gray-600">No quizzes yet. Create one above.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {quizzes.map((q) => (
-              <div key={q._id} className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white ${takingId === q._id ? "ring-2 ring-orange-200" : ""}`}>
+              <div
+                key={q._id}
+                className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white ${
+                  takingId === q._id ? "ring-2 ring-orange-200" : ""
+                }`}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{q.title}</p>
-                    {q.description && <p className="text-sm text-gray-600 truncate">{q.description}</p>}
+                    <p className="font-medium text-gray-900 truncate">
+                      {q.title}
+                    </p>
+                    {q.description && (
+                      <p className="text-sm text-gray-600 truncate">
+                        {q.description}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-500 mt-1">
-                      {q.questions?.length || 0} questions • Difficulty: {q.settings?.difficulty || "mixed"}
+                      {q.questions?.length || 0} questions • Difficulty:{" "}
+                      {q.settings?.difficulty || "mixed"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -319,11 +364,17 @@ export default function QuizzesPage() {
               <ListChecks className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">{currentQuiz.title}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {currentQuiz.title}
+              </h3>
               {result ? (
-                <p className="text-sm text-gray-700">Result: {result.score}/{result.total}</p>
+                <p className="text-sm text-gray-700">
+                  Result: {result.score}/{result.total}
+                </p>
               ) : (
-                <p className="text-sm text-gray-600">Answer the questions below and submit</p>
+                <p className="text-sm text-gray-600">
+                  Answer the questions below and submit
+                </p>
               )}
             </div>
           </div>
@@ -331,15 +382,26 @@ export default function QuizzesPage() {
           <div className="space-y-4">
             {currentQuiz.questions.map((qs, idx) => (
               <div key={idx} className="border border-gray-200 rounded p-3">
-                <p className="font-medium text-gray-900">Q{idx + 1}. {qs.questionText}</p>
+                <p className="font-medium text-gray-900">
+                  Q{idx + 1}. {qs.questionText}
+                </p>
                 <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
                   {qs.options.map((opt, oi) => (
-                    <label key={oi} className={`flex items-center gap-2 border rounded px-3 py-2 cursor-pointer ${selected[idx] === oi ? "border-orange-300 bg-orange-50" : "border-gray-200 hover:bg-gray-50"}`}>
+                    <label
+                      key={oi}
+                      className={`flex items-center gap-2 border rounded px-3 py-2 cursor-pointer ${
+                        selected[idx] === oi
+                          ? "border-orange-300 bg-orange-50"
+                          : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
                       <input
                         type="radio"
                         name={`q-${idx}`}
                         checked={selected[idx] === oi}
-                        onChange={() => setSelected((p) => ({ ...p, [idx]: oi }))}
+                        onChange={() =>
+                          setSelected((p) => ({ ...p, [idx]: oi }))
+                        }
                       />
                       <span className="text-sm text-gray-800">{opt}</span>
                     </label>
@@ -347,7 +409,9 @@ export default function QuizzesPage() {
                 </div>
                 {result && (
                   <p className="text-sm mt-2">
-                    {typeof selected[idx] === "number" && selected[idx] === currentQuiz.questions[idx].correctOption ? (
+                    {typeof selected[idx] === "number" &&
+                    selected[idx] ===
+                      currentQuiz.questions[idx].correctOption ? (
                       <span className="text-green-700">Correct ✓</span>
                     ) : (
                       <span className="text-red-700">Incorrect ✗</span>
@@ -364,7 +428,7 @@ export default function QuizzesPage() {
               disabled={submitting}
               className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded disabled:opacity-50"
             >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {submitting ? <Loader /> : <Save className="w-4 h-4" />}
               Submit answers
             </button>
           </div>

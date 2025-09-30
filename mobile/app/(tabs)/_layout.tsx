@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { isAuthenticated, logout } from '../../lib/auth';
-import { TouchableOpacity, Alert } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { colors, spacing, borderRadius, shadows } from '../../styles/theme';
+import { confirmations } from '../../components/ConfirmationDialog';
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -16,21 +17,10 @@ export default function TabsLayout() {
   }, [router]);
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/sign-in');
-          },
-        },
-      ]
-    );
+    confirmations.signOut(async () => {
+      await logout();
+      router.replace('/(auth)/sign-in');
+    });
   };
 
   return (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { AuthAPI } from '../../lib/api';
 import { saveToken } from '../../lib/auth';
@@ -51,7 +52,8 @@ export default function SignInScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.select({ ios: 'padding', android: undefined })} style={styles.container}>
       <View style={styles.card}>
         <View style={styles.header}>
           <Text style={styles.brandTitle}>SYNAPSE</Text>
@@ -142,7 +144,8 @@ export default function SignInScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

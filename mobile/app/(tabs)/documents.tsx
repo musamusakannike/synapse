@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import { DocumentAPI } from '../../lib/api';
 import { colors, commonStyles, spacing, borderRadius, shadows, typography, screenThemes } from '../../styles/theme';
+import { confirmations } from '../../components/ConfirmationDialog';
 
 interface Doc {
   _id: string;
@@ -73,23 +75,21 @@ export default function DocumentsScreen() {
   };
 
   const remove = async (id: string) => {
-    try {
-      Alert.alert('Confirm', 'Delete this document?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: async () => {
-          setActionId(id);
-          await DocumentAPI.delete(id);
-          setDocs((prev) => prev.filter((d) => d._id !== id));
-          setActionId(null);
-        }}
-      ]);
-    } catch (e) {
-      console.error(e);
-    }
+    confirmations.deleteDocument(async () => {
+      try {
+        setActionId(id);
+        await DocumentAPI.delete(id);
+        setDocs((prev) => prev.filter((d) => d._id !== id));
+        setActionId(null);
+      } catch (e) {
+        console.error(e);
+      }
+    });
   };
 
   return (
-    <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
+    <SafeAreaView style={commonStyles.container}>
+      <ScrollView style={commonStyles.container} contentContainerStyle={commonStyles.content}>
       <View style={styles.header}>
         <Text style={commonStyles.title}>Documents</Text>
         <Text style={commonStyles.subtitle}>Upload and summarize your study materials</Text>
@@ -177,7 +177,8 @@ export default function DocumentsScreen() {
           ))
         )}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

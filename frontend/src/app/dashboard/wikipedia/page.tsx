@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import { useRouter } from "next/navigation";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 interface WikiSearchItem {
   id?: number;
@@ -157,6 +159,7 @@ export default function WikipediaPage() {
 
       {/* Search */}
       <form
+        data-help="wikipedia-search"
         onSubmit={doSearch}
         className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
       >
@@ -197,7 +200,7 @@ export default function WikipediaPage() {
       </form>
 
       {/* Results + Detail */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div data-help="wikipedia-results" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Results list */}
         <div className="lg:col-span-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
@@ -366,6 +369,8 @@ export default function WikipediaPage() {
           )}
         </div>
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.wikipedia} />
     </div>
   );
 }

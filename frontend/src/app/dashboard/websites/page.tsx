@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { WebsiteAPI } from "@/lib/api";
 import { Globe, Link2, RefreshCw, Trash2, RotateCcw } from "lucide-react";
 import Loader from "@/components/Loader";
+import HelpButton from "@/components/HelpButton";
+import { helpConfigs } from "@/config/helpConfigs";
 
 type Site = {
   _id: string;
@@ -91,6 +93,7 @@ export default function WebsitesPage() {
 
       {/* Create */}
       <form
+        data-help="add-website"
         onSubmit={create}
         className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
       >
@@ -115,7 +118,7 @@ export default function WebsitesPage() {
       </form>
 
       {/* List */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
+      <div data-help="website-list" className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your websites</h2>
           <button
@@ -197,6 +200,8 @@ export default function WebsitesPage() {
           </div>
         )}
       </div>
+      
+      <HelpButton helpConfig={helpConfigs.websites} />
     </div>
   );
 }

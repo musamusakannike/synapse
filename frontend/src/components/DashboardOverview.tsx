@@ -25,6 +25,52 @@ interface DashboardStats {
   websites: number;
 }
 
+interface UserProgress {
+  studyStreak: number;
+  studyTime: {
+    hours: number;
+    minutes: number;
+    formatted: string;
+  };
+  topicsMastered: number;
+  totalActivities: number;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  icon: string;
+  color: string;
+}
+
+// Helper function to get icon component based on icon name
+const getIconComponent = (iconName: string) => {
+  const icons: { [key: string]: any } = {
+    FileText,
+    MessageCircle,
+    BookOpen,
+    HelpCircle,
+    Globe,
+  };
+  return icons[iconName] || FileText;
+};
+
+// Helper function to get relative time
+const getRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  return date.toLocaleDateString();
+};
+
 const DashboardOverview = () => {
   const [stats, setStats] = useState<DashboardStats>({
     documents: 0,
@@ -33,34 +79,63 @@ const DashboardOverview = () => {
     quizzes: 0,
     websites: 0,
   });
+  const [userProgress, setUserProgress] = useState<UserProgress>({
+    studyStreak: 0,
+    studyTime: { hours: 0, minutes: 0, formatted: '0h 0m' },
+    topicsMastered: 0,
+    totalActivities: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const [documentsRes, chatsRes, topicsRes, quizzesRes, websitesRes] = await Promise.all([
-          api.get("/documents"),
-          api.get("/chats"),
-          api.get("/topics"),
-          api.get("/quizzes"),
-          api.get("/websites"),
+        const [statsRes, progressRes, activityRes] = await Promise.all([
+          api.get("/dashboard/stats"),
+          api.get("/dashboard/progress"),
+          api.get("/dashboard/activity?limit=5"),
         ]);
 
-        setStats({
-          documents: documentsRes.data?.length || 0,
-          chats: (chatsRes.data?.chats?.length as number) || 0,
-          topics: topicsRes.data?.length || 0,
-          quizzes: quizzesRes.data?.length || 0,
-          websites: websitesRes.data?.length || 0,
-        });
+        if (statsRes.data?.success) {
+          setStats(statsRes.data.data);
+        }
+
+        if (progressRes.data?.success) {
+          setUserProgress(progressRes.data.data);
+        }
+
+        if (activityRes.data?.success) {
+          setRecentActivity(activityRes.data.data);
+        }
       } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
+        console.error("Failed to fetch dashboard data:", error);
+        // Fallback to individual endpoints if dashboard endpoints fail
+        try {
+          const [documentsRes, chatsRes, topicsRes, quizzesRes, websitesRes] = await Promise.all([
+            api.get("/documents"),
+            api.get("/chats"),
+            api.get("/topics"),
+            api.get("/quizzes"),
+            api.get("/websites"),
+          ]);
+
+          setStats({
+            documents: documentsRes.data?.length || 0,
+            chats: (chatsRes.data?.chats?.length as number) || 0,
+            topics: topicsRes.data?.length || 0,
+            quizzes: quizzesRes.data?.length || 0,
+            websites: websitesRes.data?.length || 0,
+          });
+        } catch (fallbackError) {
+          console.error("Failed to fetch fallback data:", fallbackError);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStats();
+    fetchDashboardData();
   }, []);
 
   const quickActions = [
@@ -211,7 +286,7 @@ const DashboardOverview = () => {
               </div>
               <div>
                 <p className="font-medium text-gray-900">Study Streak</p>
-                <p className="text-2xl font-bold text-blue-600">7 days</p>
+                <p className="text-2xl font-bold text-blue-600">{userProgress.studyStreak} days</p>
               </div>
             </div>
           </div>
@@ -223,7 +298,7 @@ const DashboardOverview = () => {
               </div>
               <div>
                 <p className="font-medium text-gray-900">Time Studied</p>
-                <p className="text-2xl font-bold text-green-600">12h 30m</p>
+                <p className="text-2xl font-bold text-green-600">{userProgress.studyTime.formatted}</p>
               </div>
             </div>
           </div>
@@ -235,7 +310,7 @@ const DashboardOverview = () => {
               </div>
               <div>
                 <p className="font-medium text-gray-900">Topics Mastered</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.topics}</p>
+                <p className="text-2xl font-bold text-purple-600">{userProgress.topicsMastered}</p>
               </div>
             </div>
           </div>
@@ -247,35 +322,36 @@ const DashboardOverview = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="space-y-4">
-            <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <FileText className="w-4 h-4 text-blue-600" />
+            {recentActivity.length > 0 ? (
+              recentActivity.map((activity) => {
+                const IconComponent = getIconComponent(activity.icon);
+                const colorClasses = {
+                  blue: 'bg-blue-100 text-blue-600',
+                  green: 'bg-green-100 text-green-600',
+                  purple: 'bg-purple-100 text-purple-600',
+                  orange: 'bg-orange-100 text-orange-600',
+                  indigo: 'bg-indigo-100 text-indigo-600',
+                };
+                const colorClass = colorClasses[activity.color as keyof typeof colorClasses] || 'bg-gray-100 text-gray-600';
+
+                return (
+                  <div key={activity.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                    <div className={`w-8 h-8 ${colorClass} rounded-full flex items-center justify-center`}>
+                      <IconComponent className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{activity.description}</p>
+                      <p className="text-sm text-gray-600">{getRelativeTime(activity.createdAt)}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400 mt-1">Start using Synapse to see your activity here</p>
               </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Document uploaded</p>
-                <p className="text-sm text-gray-600">2 hours ago</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Chat session completed</p>
-                <p className="text-sm text-gray-600">4 hours ago</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <HelpCircle className="w-4 h-4 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">Quiz completed with 85% score</p>
-                <p className="text-sm text-gray-600">Yesterday</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

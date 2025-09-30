@@ -6,37 +6,37 @@ const features = [
     title: "AI Study Tutor",
     description:
       "Personalized explanations, examples, and step-by-step guidance for any topic.",
-    image: "https://placehold.co/600x400",
+    image: "/feature1.png",
   },
   {
     title: "Context-Aware Chat",
     description:
       "Chat with memory that understands your goals and adapts to your learning pace.",
-    image: "https://placehold.co/600x400",
+    image: "/feature2.png",
   },
   {
     title: "Smart Notes",
     description:
       "Summarize lectures, extract key points, and generate flashcards instantly.",
-    image: "https://placehold.co/600x400",
+    image: "/feature3.png",
   },
   {
     title: "Quiz Generator",
     description:
       "Auto-generate quizzes from your materials with answers and explanations.",
-    image: "https://placehold.co/600x400",
+    image: "/feature4.png",
   },
   {
     title: "Multi-Format Docs",
     description:
       "Upload PDFs, slides, or text and get structured insights and outlines.",
-    image: "https://placehold.co/600x400",
+    image: "/feature5.png",
   },
   {
     title: "Progress Tracking",
     description:
       "Visualize mastery and focus on the next best concept to learn.",
-    image: "https://placehold.co/600x400",
+    image: "/feature6.png",
   },
   {
     title: "Privacy First",

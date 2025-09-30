@@ -9,6 +9,7 @@ const connectDB = require("./config/db.config");
 // Import routes
 const authRoutes = require("./routes/auth.route");
 const chatRoutes = require("./routes/chat.route");
+const dashboardRoutes = require("./routes/dashboard.route");
 const documentRoutes = require("./routes/document.route");
 const flashcardRoutes = require("./routes/flashcard.route");
 const quizRoutes = require("./routes/quiz.route");
@@ -40,6 +41,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/quizzes", quizRoutes);

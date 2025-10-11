@@ -25,6 +25,7 @@ export default function WebsitesPage() {
   const [url, setUrl] = useState("");
   const [creating, setCreating] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     try {
@@ -163,9 +164,23 @@ export default function WebsitesPage() {
                 </div>
 
                 {s.summary && (
-                  <p className="text-sm text-gray-700 mt-3 line-clamp-5 whitespace-pre-wrap">
-                    {s.summary}
-                  </p>
+                  <>
+                    <p
+                      className={`text-sm text-gray-700 mt-3 whitespace-pre-wrap ${
+                        !showMore[s._id] && "line-clamp-5"
+                      }`}
+                    >
+                      {s.summary}
+                    </p>
+                    <button
+                      onClick={() =>
+                        setShowMore((p) => ({ ...p, [s._id]: !p[s._id] }))
+                      }
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {showMore[s._id] ? "Show Less" : "Read More"}
+                    </button>
+                  </>
                 )}
 
                 {s.processingError && (

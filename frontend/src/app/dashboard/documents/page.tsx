@@ -25,6 +25,7 @@ export default function DocumentsPage() {
   const [prompt, setPrompt] = useState("");
   const [uploading, setUploading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     try {
@@ -192,9 +193,23 @@ export default function DocumentsPage() {
                 </div>
 
                 {d.summary && (
-                  <p className="text-sm text-gray-700 mt-3 line-clamp-5 whitespace-pre-wrap">
-                    {d.summary}
-                  </p>
+                  <>
+                    <p
+                      className={`text-sm text-gray-700 mt-3 whitespace-pre-wrap ${
+                        !showMore[d._id] && "line-clamp-5"
+                      }`}
+                    >
+                      {d.summary}
+                    </p>
+                    <button
+                      onClick={() =>
+                        setShowMore((p) => ({ ...p, [d._id]: !p[d._id] }))
+                      }
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {showMore[d._id] ? "Show Less" : "Read More"}
+                    </button>
+                  </>
                 )}
 
                 {d.processingError && (

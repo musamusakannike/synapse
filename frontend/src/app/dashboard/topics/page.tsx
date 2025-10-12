@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { TopicAPI } from "@/lib/api";
 import {
   BookOpen,
@@ -234,11 +236,13 @@ export default function TopicsPage() {
                           </p>
                         )}
                         <div
-                          className={`mt-2 text-sm text-gray-800 whitespace-pre-wrap ${
+                          className={`mt-2 text-sm text-gray-800 prose max-w-none ${
                             !showMore[t._id] && "line-clamp-5"
                           }`}
                         >
-                          {t.content || t.generatedContent}
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {t.content || t.generatedContent || ""}
+                          </ReactMarkdown>
                         </div>
                         <button
                           onClick={() =>

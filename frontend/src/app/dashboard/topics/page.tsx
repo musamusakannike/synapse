@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import HelpButton from "@/components/HelpButton";
+import TTSButton from "@/components/TTSButton";
 import { helpConfigs } from "@/config/helpConfigs";
 
 type Topic = {
@@ -244,14 +245,19 @@ export default function TopicsPage() {
                             {t.content || t.generatedContent || ""}
                           </ReactMarkdown>
                         </div>
-                        <button
-                          onClick={() =>
-                            setShowMore((p) => ({ ...p, [t._id]: !p[t._id] }))
-                          }
-                          className="text-sm text-blue-600 hover:underline"
-                        >
-                          {showMore[t._id] ? "Show Less" : "Read More"}
-                        </button>
+                        <div className="flex items-center gap-4 mt-2">
+                          <button
+                            onClick={() =>
+                              setShowMore((p) => ({ ...p, [t._id]: !p[t._id] }))
+                            }
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {showMore[t._id] ? "Show Less" : "Read More"}
+                          </button>
+                          <TTSButton
+                            text={t.content || t.generatedContent || ""}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

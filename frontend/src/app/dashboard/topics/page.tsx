@@ -34,6 +34,7 @@ export default function TopicsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [edit, setEdit] = useState<Partial<Topic>>({});
   const [actionId, setActionId] = useState<string | null>(null);
+  const [showMore, setShowMore] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     try {
@@ -232,9 +233,21 @@ export default function TopicsPage() {
                             {t.description}
                           </p>
                         )}
-                        <div className="mt-2 text-sm text-gray-800 line-clamp-5 whitespace-pre-wrap">
+                        <div
+                          className={`mt-2 text-sm text-gray-800 whitespace-pre-wrap ${
+                            !showMore[t._id] && "line-clamp-5"
+                          }`}
+                        >
                           {t.content || t.generatedContent}
                         </div>
+                        <button
+                          onClick={() =>
+                            setShowMore((p) => ({ ...p, [t._id]: !p[t._id] }))
+                          }
+                          className="text-sm text-blue-600 hover:underline"
+                        >
+                          {showMore[t._id] ? "Show Less" : "Read More"}
+                        </button>
                       </div>
                     )}
                   </div>

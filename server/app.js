@@ -16,6 +16,7 @@ const quizRoutes = require("./routes/quiz.route");
 const topicRoutes = require("./routes/topic.route");
 const websiteRoutes = require("./routes/website.route");
 const wikipediaRoutes = require("./routes/wikipedia.route");
+const ttsRoutes = require("./routes/tts.route");
 
 const app = express();
 // Behind a proxy (Render/NGINX), trust X-Forwarded-* headers for correct IP detection
@@ -48,6 +49,7 @@ app.use("/api/quizzes", quizRoutes);
 app.use("/api/topics", topicRoutes);
 app.use("/api/websites", websiteRoutes);
 app.use("/api/wikipedia", wikipediaRoutes);
+app.use("/api/tts", ttsRoutes);
 
 
 module.exports = app;

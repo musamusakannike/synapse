@@ -3,6 +3,70 @@ const {
   HarmCategory,
   HarmBlockThreshold,
 } = require("@google/genai");
+const mime = require("mime");
+
+// Helper functions for WAV conversion
+function createWavHeader(dataLength, options) {
+  const {
+    numChannels,
+    sampleRate,
+    bitsPerSample,
+  } = options;
+
+  const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+  const blockAlign = numChannels * bitsPerSample / 8;
+  const buffer = Buffer.alloc(44);
+
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + dataLength, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(numChannels, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(byteRate, 28);
+  buffer.writeUInt16LE(blockAlign, 32);
+  buffer.writeUInt16LE(bitsPerSample, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataLength, 40);
+
+  return buffer;
+}
+
+function parseMimeType(mimeType) {
+  const [fileType, ...params] = mimeType.split(';').map(s => s.trim());
+  const [_, format] = fileType.split('/');
+
+  const options = {
+    numChannels: 1,
+  };
+
+  if (format && format.startsWith('L')) {
+    const bits = parseInt(format.slice(1), 10);
+    if (!isNaN(bits)) {
+      options.bitsPerSample = bits;
+    }
+  }
+
+  for (const param of params) {
+    const [key, value] = param.split('=').map(s => s.trim());
+    if (key === 'rate') {
+      options.sampleRate = parseInt(value, 10);
+    }
+  }
+
+  return options;
+}
+
+function convertToWav(rawData, mimeType) {
+  const options = parseMimeType(mimeType)
+  const wavHeader = createWavHeader(rawData.length, options);
+  const buffer = Buffer.from(rawData, 'base64');
+
+  return Buffer.concat([wavHeader, buffer]);
+}
+
 
 class GeminiService {
   constructor() {
@@ -27,6 +91,62 @@ class GeminiService {
         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       },
     ];
+  }
+
+  async generateTTS(text) {
+    const config = {
+      temperature: 1,
+      responseModalities: [
+          'audio',
+      ],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: 'Zephyr',
+          }
+        }
+      },
+    };
+    const model = 'gemini-2.5-pro-preview-tts';
+    const contents = [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: text,
+          },
+        ],
+      },
+    ];
+
+    try {
+        const response = await this.genAI.models.generateContentStream({
+            model,
+            config,
+            contents,
+        });
+
+        let audioBuffer = Buffer.alloc(0);
+
+        for await (const chunk of response) {
+            if (!chunk.candidates || !chunk.candidates[0].content || !chunk.candidates[0].content.parts) {
+                continue;
+            }
+            if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
+                const inlineData = chunk.candidates[0].content.parts[0].inlineData;
+                let bufferChunk = Buffer.from(inlineData.data || '', 'base64');
+                const fileExtension = mime.getExtension(inlineData.mimeType || '');
+                if (!fileExtension) {
+                    bufferChunk = convertToWav(inlineData.data || '', inlineData.mimeType || '');
+                }
+                audioBuffer = Buffer.concat([audioBuffer, bufferChunk]);
+            }
+        }
+        return audioBuffer;
+    } catch (error) {
+        console.error("Error generating TTS:", error);
+        throw new Error("Failed to generate TTS audio");
+    }
   }
 
   async generateTopicExplanation(topic, customizations) {

@@ -40,6 +40,10 @@ app.get("/", (req, res) => {
   return res.redirect(process.env.FRONTEND_URL);
 });
 
+app.get("/health", (req, res) => {
+  return res.json({ message: "OK" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);

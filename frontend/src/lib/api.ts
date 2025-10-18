@@ -59,7 +59,7 @@ export const ChatAPI = {
   list: () => api.get("/chats"),
   get: (id: string) => api.get(`/chats/${id}`),
   create: (data?: any) => api.post("/chats/new", data || {}),
-  sendMessage: (id: string, content: string) => api.post(`/chats/${id}/message`, { content }),
+  sendMessage: (id: string, content: string) => api.post(`/chats/${id}/send`, { content }),
   updateTitle: (id: string, title: string) => api.put(`/chats/${id}/title`, { title }),
   delete: (id: string) => api.delete(`/chats/${id}`),
 };

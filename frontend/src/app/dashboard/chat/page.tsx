@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ChatAPI } from "@/lib/api";
+import { ChatAPI, DocumentAPI } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   SendHorizontal,
   FileUp,
@@ -47,7 +49,15 @@ export default function ChatPage() {
   const [chat, setChat] = useState<ChatFull | null>(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
+  };
 
   const loadChats = async () => {
     try {
@@ -97,11 +107,13 @@ export default function ChatPage() {
 
   const doSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() && !file) return;
+
     try {
       setSending(true);
-      const content = message.trim();
+      let content = message.trim();
       setMessage("");
+      setFile(null);
 
       // Ensure we have a chat ID
       let chatId = selectedId;
@@ -110,6 +122,13 @@ export default function ChatPage() {
         chatId = data?.chat?.id;
         if (!chatId) throw new Error("Failed to create chat");
         setSelectedId(chatId);
+      }
+
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const { data: docData } = await DocumentAPI.upload(formData);
+        content = `${content}\n\nDocument content:\n${docData.document.extractedText}`;
       }
 
       // Optimistically add user message and a typing placeholder
@@ -138,7 +157,9 @@ export default function ChatPage() {
       setChat((prev) => {
         if (!prev) return prev;
         const msgs = [...prev.messages];
-        const idx = msgs.findIndex((m) => m.role === "assistant" && m.content === "typing__placeholder__");
+        const idx = msgs.findIndex(
+          (m) => m.role === "assistant" && m.content === "typing__placeholder__"
+        );
         if (idx !== -1) {
           msgs[idx] = aiResponse;
         } else {
@@ -156,21 +177,6 @@ export default function ChatPage() {
     }
   };
 
-  const emptyState = useMemo(
-    () => (
-      <div className="w-full max-w-3xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FeatureCard href="/dashboard/documents" icon={<FileUp className="w-5 h-5" />} title="Upload document" desc="Import PDFs or notes to chat with." />
-          <FeatureCard href="/dashboard/topics" icon={<BookOpen className="w-5 h-5" />} title="Explain a Topic" desc="Get a clear explanation with examples." />
-          <FeatureCard href="/dashboard/wikipedia" icon={<Globe2 className="w-5 h-5" />} title="Research Wikipedia" desc="Search summaries and deep dives." />
-          <FeatureCard href="/dashboard/quizzes" icon={<PenTool className="w-5 h-5" />} title="Take Quiz" desc="Test your knowledge instantly." />
-          <FeatureCard href="/dashboard/websites" icon={<FileSearch className="w-5 h-5" />} title="Research Website" desc="Analyze any webpage content." />
-        </div>
-      </div>
-    ),
-    []
-  );
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat?.messages?.length, sending]);
@@ -182,8 +188,7 @@ export default function ChatPage() {
         {!chat || chat.messages.length === 0 ? (
           <div className="mt-10 md:mt-16 text-center text-gray-700">
             <h1 className="text-2xl font-semibold mb-3">How can I help today?</h1>
-            <p className="text-gray-500 mb-6">Choose a feature below or ask a question.</p>
-            {emptyState}
+            <p className="text-gray-500 mb-6">Ask me anything to get started.</p>
           </div>
         ) : (
           <div data-help="messages" className="p-2 md:p-0 space-y-3">
@@ -197,7 +202,12 @@ export default function ChatPage() {
                 {m.content === "typing__placeholder__" ? (
                   <TypingDots />
                 ) : (
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    className="prose prose-sm max-w-none"
+                  >
+                    {m.content}
+                  </ReactMarkdown>
                 )}
               </div>
             ))}
@@ -210,6 +220,20 @@ export default function ChatPage() {
       <div className="fixed left-0 right-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
         <div className="max-w-4xl mx-auto px-3 py-3">
           <form onSubmit={doSend} className="flex items-end gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100"
+              aria-label="Upload document"
+            >
+              <FileUp className="w-4 h-4" />
+            </button>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -218,7 +242,7 @@ export default function ChatPage() {
               rows={1}
             />
             <button
-              disabled={!message.trim() || sending}
+              disabled={(!message.trim() && !file) || sending}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
               aria-label="Send message"
             >
@@ -226,6 +250,11 @@ export default function ChatPage() {
               <span className="hidden sm:inline">Send</span>
             </button>
           </form>
+          {file && (
+            <div className="text-sm text-gray-600 mt-2">
+              Selected file: {file.name}
+            </div>
+          )}
           <p className="text-[11px] text-gray-500 mt-2">AI may make mistakes. Verify important information.</p>
         </div>
       </div>
@@ -245,14 +274,3 @@ function TypingDots() {
   );
 }
 
-function FeatureCard({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <a href={href} className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-200 hover:bg-blue-50/40 transition-colors">
-      <div className="mt-0.5 text-blue-600">{icon}</div>
-      <div>
-        <p className="font-medium text-gray-900">{title}</p>
-        <p className="text-sm text-gray-600">{desc}</p>
-      </div>
-    </a>
-  );
-}

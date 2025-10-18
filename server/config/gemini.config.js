@@ -2,6 +2,7 @@ const {
   GoogleGenAI,
   HarmCategory,
   HarmBlockThreshold,
+  Type
 } = require("@google/genai");
 
 let mime;
@@ -101,6 +102,130 @@ class GeminiService {
         threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
       },
     ];
+
+    this.tools = [
+      {
+        functionDeclarations: [
+          {
+            name: "explain_topic",
+            description: "Explains a given topic in detail, with customizations.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                topic: {
+                  type: Type.STRING,
+                  description: "The topic to be explained.",
+                },
+                level: {
+                  type: Type.STRING,
+                  description: "The desired level of the explanation (e.g., beginner, intermediate, advanced).",
+                },
+              },
+              required: ["topic", "level"],
+            },
+          },
+          {
+            name: "generate_quiz",
+            description: "Generates a quiz based on provided content.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                content: {
+                  type: Type.STRING,
+                  description: "The content to base the quiz on.",
+                },
+                numberOfQuestions: {
+                  type: Type.NUMBER,
+                  description: "The number of questions in the quiz.",
+                },
+                difficulty: {
+                  type: Type.STRING,
+                  description: "The difficulty level of the quiz (e.g., easy, medium, hard).",
+                },
+              },
+              required: ["content", "numberOfQuestions", "difficulty"],
+            },
+          },
+          {
+            name: "summarize_document",
+            description: "Summarizes the content of a document.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                document_text: {
+                  type: Type.STRING,
+                  description: "The extracted text from the document to be summarized.",
+                },
+                prompt: {
+                  type: Type.STRING,
+                  description: "An optional prompt to guide the summarization.",
+                },
+              },
+              required: ["document_text"],
+            },
+          },
+          {
+            name: "analyze_website",
+            description: "Analyzes the content of a website from a given URL.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                url: {
+                  type: Type.STRING,
+                  description: "The URL of the website to analyze.",
+                },
+              },
+              required: ["url"],
+            },
+          },
+          {
+            name: "research_wikipedia_topic",
+            description: "Researches a topic on Wikipedia and provides a summary.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                topic: {
+                  type: Type.STRING,
+                  description: "The topic to research on Wikipedia.",
+                },
+              },
+              required: ["topic"],
+            },
+          },
+          {
+            name: "generate_flashcards",
+            description: "Generates flashcards based on provided content.",
+            parameters: {
+              type: Type.OBJECT,
+              properties: {
+                content: {
+                  type: Type.STRING,
+                  description: "The content to base the flashcards on.",
+                },
+                numberOfCards: {
+                  type: Type.NUMBER,
+                  description: "The number of flashcards to generate.",
+                },
+                difficulty: {
+                  type: Type.STRING,
+                  description: "The difficulty level of the flashcards (e.g., easy, medium, hard).",
+                },
+              },
+              required: ["content", "numberOfCards", "difficulty"],
+            },
+          },
+        ],
+      },
+    ];
+
+    this.toolFunctions = {
+      explain_topic: (args) => this.generateTopicExplanation(args.topic, { level: args.level }),
+      generate_quiz: (args) => this.generateQuiz(args.content, { numberOfQuestions: args.numberOfQuestions, difficulty: args.difficulty }),
+      generate_flashcards: (args) => this.generateFlashcards(args.content, { numberOfCards: args.numberOfCards, difficulty: args.difficulty }),
+      summarize_document: (args) => this.processDocument(Buffer.from(args.document_text, "utf8"), "text/plain", args.prompt || "Summarize this document."),
+      analyze_website: this.analyzeWebsite.bind(this),
+      research_wikipedia_topic: this.researchWikipediaTopic.bind(this),
+    };
   }
 
   async generateTTS(text) {
@@ -401,6 +526,82 @@ class GeminiService {
     prompt += `- Make flashcards that promote active recall and understanding`;
 
     return prompt;
+  }
+  async analyzeWebsite({ url }) {
+    try {
+      const axios = require("axios");
+      const cheerio = require("cheerio");
+      const { data } = await axios.get(url);
+      const $ = cheerio.load(data);
+      const textContent = $("body").text();
+      return this.processDocument(Buffer.from(textContent, "utf8"), "text/plain", "Summarize this website content.");
+    } catch (error) {
+      console.error("Error analyzing website:", error);
+      throw new Error("Failed to analyze website");
+    }
+  }
+
+  async researchWikipediaTopic({ topic }) {
+    try {
+      const wikipedia = require("wikipedia");
+      const summary = await wikipedia.summary(topic);
+      return summary.extract;
+    } catch (error) {
+      console.error("Error researching Wikipedia topic:", error);
+      throw new Error("Failed to research Wikipedia topic");
+    }
+  }
+
+  async generateChatResponseWithFunctionCalling(messages) {
+    const contents = messages.map((msg) => ({
+      role: msg.role === "user" ? "user" : "model",
+      parts: [{ text: msg.content }],
+    }));
+
+    while (true) {
+      const result = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents,
+        config: { tools: this.tools },
+      });
+
+      if (result.functionCalls && result.functionCalls.length > 0) {
+        const functionCall = result.functionCalls[0];
+        const { name, args } = functionCall;
+
+        if (!this.toolFunctions[name]) {
+          throw new Error(`Unknown function call: ${name}`);
+        }
+
+        const toolResponse = await this.toolFunctions[name](args);
+
+        const functionResponsePart = {
+          name: functionCall.name,
+          response: {
+            result: toolResponse,
+          },
+        };
+
+        contents.push({
+          role: "model",
+          parts: [
+            {
+              functionCall: functionCall,
+            },
+          ],
+        });
+        contents.push({
+          role: "user",
+          parts: [
+            {
+              functionResponse: functionResponsePart,
+            },
+          ],
+        });
+      } else {
+        return result.text;
+      }
+    }
   }
 }
 

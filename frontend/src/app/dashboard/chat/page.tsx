@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ChatAPI } from "@/lib/api";
 import {
-  MessageCircle,
-  Plus,
-  Trash2,
   SendHorizontal,
-  Pencil,
+  FileUp,
+  BookOpen,
+  Globe2,
+  PenTool,
+  FileSearch,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import { useSearchParams } from "next/navigation";
@@ -48,9 +47,7 @@ export default function ChatPage() {
   const [chat, setChat] = useState<ChatFull | null>(null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const loadChats = async () => {
     try {
@@ -64,25 +61,6 @@ export default function ChatPage() {
     }
   };
 
-  const openChat = async (id: string) => {
-    try {
-      setSelectedId(id);
-      const { data } = await ChatAPI.get(id);
-      const c = data?.chat;
-      if (c) {
-        setChat({
-          _id: c._id,
-          title: c.title,
-          type: c.type,
-          messages: c.messages || [],
-        });
-        setNewTitle(c.title);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
     loadChats();
   }, []);
@@ -91,57 +69,84 @@ export default function ChatPage() {
   useEffect(() => {
     const toOpen = searchParams.get("open");
     if (toOpen) {
-      openChat(toOpen);
+      setSelectedId(toOpen);
     }
   }, [searchParams]);
 
-  const createChat = async () => {
-    try {
-      setCreating(true);
-      const { data } = await ChatAPI.create();
-      const id = data?.chat?.id;
-      if (id) {
-        await loadChats();
-        await openChat(id);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setCreating(false);
+  // Load chat data when selectedId changes
+  useEffect(() => {
+    if (selectedId) {
+      (async () => {
+        try {
+          const { data } = await ChatAPI.get(selectedId);
+          const c = data?.chat;
+          if (c) {
+            setChat({
+              _id: c._id,
+              title: c.title,
+              type: c.type,
+              messages: c.messages || [],
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      })();
     }
-  };
-
-  const removeChat = async (id: string) => {
-    if (!confirm("Delete this chat?")) return;
-    try {
-      await ChatAPI.delete(id);
-      setChats((prev) => prev.filter((c) => c.id !== id));
-      if (selectedId === id) {
-        setSelectedId(null);
-        setChat(null);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  }, [selectedId]);
 
   const doSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedId || !message.trim()) return;
+    if (!message.trim()) return;
     try {
       setSending(true);
-      const { data } = await ChatAPI.sendMessage(selectedId, message.trim());
-      const userMessage = data?.userMessage || {
-        role: "user",
-        content: message.trim(),
-      };
-      const aiResponse = data?.aiResponse || { role: "assistant", content: "" };
-      setChat((prev) =>
-        prev
-          ? { ...prev, messages: [...prev.messages, userMessage, aiResponse] }
-          : prev
-      );
+      const content = message.trim();
       setMessage("");
+
+      // Ensure we have a chat ID
+      let chatId = selectedId;
+      if (!chatId) {
+        const { data } = await ChatAPI.create();
+        chatId = data?.chat?.id;
+        if (!chatId) throw new Error("Failed to create chat");
+        setSelectedId(chatId);
+      }
+
+      // Optimistically add user message and a typing placeholder
+      setChat((prev) => {
+        const base: ChatFull = prev ?? {
+          _id: chatId!,
+          title: "New Chat",
+          type: "general",
+          messages: [],
+        };
+        return {
+          ...base,
+          messages: [
+            ...base.messages,
+            { role: "user", content },
+            { role: "assistant", content: "typing__placeholder__" },
+          ],
+        };
+      });
+
+      // Send to server
+      const { data } = await ChatAPI.sendMessage(chatId!, content);
+      const aiResponse = data?.aiResponse || { role: "assistant", content: "" };
+
+      // Replace typing placeholder with real content
+      setChat((prev) => {
+        if (!prev) return prev;
+        const msgs = [...prev.messages];
+        const idx = msgs.findIndex((m) => m.role === "assistant" && m.content === "typing__placeholder__");
+        if (idx !== -1) {
+          msgs[idx] = aiResponse;
+        } else {
+          msgs.push(aiResponse);
+        }
+        return { ...prev, messages: msgs };
+      });
+
       // refresh list for last activity
       loadChats();
     } catch (e) {
@@ -151,197 +156,103 @@ export default function ChatPage() {
     }
   };
 
-  const saveTitle = async () => {
-    if (!selectedId || !newTitle.trim()) return;
-    try {
-      setRenaming(true);
-      await ChatAPI.updateTitle(selectedId, newTitle.trim());
-      setChat((prev) => (prev ? { ...prev, title: newTitle.trim() } : prev));
-      setChats((prev) =>
-        prev.map((c) =>
-          c.id === selectedId ? { ...c, title: newTitle.trim() } : c
-        )
-      );
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setRenaming(false);
-    }
-  };
-
   const emptyState = useMemo(
     () => (
-      <div className="h-64 flex flex-col items-center justify-center text-center border border-dashed border-gray-300 rounded-lg bg-white">
-        <MessageCircle className="w-10 h-10 text-gray-400" />
-        <p className="mt-2 text-gray-600">Start a new conversation to begin</p>
-        <button
-          onClick={createChat}
-          disabled={creating}
-          className="mt-4 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
-          New Chat
-        </button>
+      <div className="w-full max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FeatureCard href="/dashboard/documents" icon={<FileUp className="w-5 h-5" />} title="Upload document" desc="Import PDFs or notes to chat with." />
+          <FeatureCard href="/dashboard/topics" icon={<BookOpen className="w-5 h-5" />} title="Explain a Topic" desc="Get a clear explanation with examples." />
+          <FeatureCard href="/dashboard/wikipedia" icon={<Globe2 className="w-5 h-5" />} title="Research Wikipedia" desc="Search summaries and deep dives." />
+          <FeatureCard href="/dashboard/quizzes" icon={<PenTool className="w-5 h-5" />} title="Take Quiz" desc="Test your knowledge instantly." />
+          <FeatureCard href="/dashboard/websites" icon={<FileSearch className="w-5 h-5" />} title="Research Website" desc="Analyze any webpage content." />
+        </div>
       </div>
     ),
-    [creating]
+    []
   );
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat?.messages?.length, sending]);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Chat</h1>
-          <p className="text-gray-600">Ask questions and get AI answers</p>
-        </div>
-        <button
-          onClick={createChat}
-          disabled={creating}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
-          New Chat
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chat list */}
-        <div data-help="chat-list" className="lg:col-span-1 bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900">Your chats</h2>
-            <span className="text-sm text-gray-500">{chats.length}</span>
+    <div className="relative">
+      {/* Messages viewport */}
+      <div className="max-w-4xl mx-auto pt-2 md:pt-4 pb-28">
+        {!chat || chat.messages.length === 0 ? (
+          <div className="mt-10 md:mt-16 text-center text-gray-700">
+            <h1 className="text-2xl font-semibold mb-3">How can I help today?</h1>
+            <p className="text-gray-500 mb-6">Choose a feature below or ask a question.</p>
+            {emptyState}
           </div>
-          <div className="max-h-[520px] overflow-auto divide-y divide-gray-100">
-            {loadingList ? (
-              <div className="p-6 flex items-center justify-center">
-                <Loader />
-              </div>
-            ) : chats.length === 0 ? (
-              <div className="p-6 text-gray-600">No chats yet.</div>
-            ) : (
-              chats.map((c) => (
-                <div
-                  key={c.id}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    selectedId === c.id ? "bg-blue-50/60" : ""
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div 
-                      className="min-w-0 flex-1"
-                      onClick={() => openChat(c.id)}
-                    >
-                      <p className="font-medium text-gray-900 truncate">
-                        {c.title}
-                      </p>
-                      {c.lastMessage && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {c.lastMessage.content}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">
-                        {c.messageCount}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeChat(c.id);
-                        }}
-                        className="text-gray-400 hover:text-red-600"
-                        aria-label="Delete chat"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Messages panel */}
-        <div className="lg:col-span-2">
-          {!chat ? (
-            emptyState
-          ) : (
-            <div className="bg-white border border-gray-200 rounded-lg flex flex-col h-[640px]">
-              <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-3">
-                <input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="flex-1 border border-gray-200 rounded px-3 py-2"
-                />
-                <button
-                  onClick={saveTitle}
-                  disabled={renaming}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 text-sm"
-                >
-                  {renaming ? <Loader /> : <Pencil className="w-4 h-4" />}
-                  Save
-                </button>
-              </div>
-
-              <div data-help="messages" className="flex-1 overflow-auto p-4 space-y-3">
-                {chat.messages.length === 0 ? (
-                  <p className="text-gray-600">
-                    No messages yet. Ask a question below.
-                  </p>
+        ) : (
+          <div data-help="messages" className="p-2 md:p-0 space-y-3">
+            {chat.messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`max-w-[92%] md:max-w-[78%] p-3 rounded-lg border ${
+                  m.role === "user" ? "ml-auto bg-blue-50 border-blue-100" : "bg-gray-50 border-gray-200"
+                }`}
+              >
+                {m.content === "typing__placeholder__" ? (
+                  <TypingDots />
                 ) : (
-                  chat.messages.map((m, idx) => (
-                    <div
-                      key={idx}
-                      className={`max-w-[90%] md:max-w-[75%] p-3 rounded-lg border ${
-                        m.role === "user"
-                          ? "ml-auto bg-blue-50 border-blue-100"
-                          : "bg-gray-50 border-gray-200"
-                      }`}
-                    >
-                      <div className="prose prose-sm max-w-none text-gray-800">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {m.content}
-                        </ReactMarkdown>
-                      </div>
-                      {m.timestamp && (
-                        <p className="text-[10px] text-gray-400 mt-1">
-                          {new Date(m.timestamp).toLocaleString()}
-                        </p>
-                      )}
-                    </div>
-                  ))
+                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
                 )}
               </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
 
-              <form
-                onSubmit={doSend}
-                className="p-3 border-t border-gray-200 flex items-center gap-2"
-              >
-                <input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type your question..."
-                  className="flex-1 border border-gray-200 rounded px-3 py-2"
-                />
-                <button
-                  disabled={!message.trim() || sending}
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-                >
-                  {sending ? (
-                    <Loader />
-                  ) : (
-                    <SendHorizontal className="w-4 h-4" />
-                  )}
-                  Send
-                </button>
-              </form>
-            </div>
-          )}
+      {/* Fixed bottom input */}
+      <div className="fixed left-0 right-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="max-w-4xl mx-auto px-3 py-3">
+          <form onSubmit={doSend} className="flex items-end gap-2">
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Ask anything..."
+              className="flex-1 resize-none border border-gray-200 rounded-md px-3 py-2 max-h-40 min-h-10 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              rows={1}
+            />
+            <button
+              disabled={!message.trim() || sending}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
+              aria-label="Send message"
+            >
+              {sending ? <Loader /> : <SendHorizontal className="w-4 h-4" />}
+              <span className="hidden sm:inline">Send</span>
+            </button>
+          </form>
+          <p className="text-[11px] text-gray-500 mt-2">AI may make mistakes. Verify important information.</p>
         </div>
       </div>
-      
+
       <HelpButton helpConfig={helpConfigs.chat} />
     </div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.2s]"></span>
+      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.1s]"></span>
+      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></span>
+    </div>
+  );
+}
+
+function FeatureCard({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <a href={href} className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 hover:border-blue-200 hover:bg-blue-50/40 transition-colors">
+      <div className="mt-0.5 text-blue-600">{icon}</div>
+      <div>
+        <p className="font-medium text-gray-900">{title}</p>
+        <p className="text-sm text-gray-600">{desc}</p>
+      </div>
+    </a>
   );
 }

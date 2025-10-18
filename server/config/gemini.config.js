@@ -548,7 +548,7 @@ class GeminiService {
       return summary.extract;
     } catch (error) {
       console.error("Error researching Wikipedia topic:", error);
-      throw new Error("Failed to research Wikipedia topic");
+      return "I am sorry, but I encountered an error while trying to research the topic on Wikipedia. Please try again later.";
     }
   }
 
@@ -558,11 +558,23 @@ class GeminiService {
       parts: [{ text: msg.content }],
     }));
 
+    const lastUserMessage = messages[messages.length - 1].content.toLowerCase();
+    const isFlashcardRequest = lastUserMessage.includes("flashcard");
+
+    let tools = this.tools;
+    if (isFlashcardRequest) {
+      tools = this.tools.map(tool => {
+        const newTool = { ...tool };
+        newTool.functionDeclarations = newTool.functionDeclarations.filter(func => func.name !== "research_wikipedia_topic");
+        return newTool;
+      });
+    }
+
     while (true) {
       const result = await this.genAI.models.generateContent({
         model: "gemini-2.5-flash",
         contents,
-        config: { tools: this.tools },
+        config: { tools },
       });
 
       if (result.functionCalls && result.functionCalls.length > 0) {

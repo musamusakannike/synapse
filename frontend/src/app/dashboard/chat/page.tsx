@@ -202,12 +202,11 @@ export default function ChatPage() {
                 {m.content === "typing__placeholder__" ? (
                   <TypingDots />
                 ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    className="prose prose-sm max-w-none"
-                  >
-                    {m.content}
-                  </ReactMarkdown>
+                  <div className="prose prose-sm max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
                 )}
               </div>
             ))}

@@ -38,7 +38,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
         ${sizeClasses[size]}
         bg-blue-600 hover:bg-blue-700 
         text-white rounded-full shadow-lg 
-        flex items-center justify-center
+        hidden lg:flex items-center justify-center
         transition-all duration-200 
         hover:scale-110 hover:shadow-xl
         disabled:opacity-50 disabled:cursor-not-allowed

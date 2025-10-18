@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { ChatAPI } from "@/lib/api";
 import {
   MessageCircle,
@@ -297,9 +299,11 @@ export default function ChatPage() {
                           : "bg-gray-50 border-gray-200"
                       }`}
                     >
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
-                        {m.content}
-                      </p>
+                      <div className="prose prose-sm max-w-none text-gray-800">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
                       {m.timestamp && (
                         <p className="text-[10px] text-gray-400 mt-1">
                           {new Date(m.timestamp).toLocaleString()}

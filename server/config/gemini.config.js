@@ -3,7 +3,17 @@ const {
   HarmCategory,
   HarmBlockThreshold,
 } = require("@google/genai");
-const mime = require("mime");
+
+let mime;
+(async () => {
+  const importedMime = await import('mime');
+  mime = importedMime.default;
+})();
+
+function getMimeExtension(type) {
+  if (!mime) throw new Error('MIME module not yet loaded.');
+  return mime.getExtension(type);
+}
 
 // Helper functions for WAV conversion
 function createWavHeader(dataLength, options) {
@@ -135,7 +145,7 @@ class GeminiService {
             if (chunk.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
                 const inlineData = chunk.candidates[0].content.parts[0].inlineData;
                 let bufferChunk = Buffer.from(inlineData.data || '', 'base64');
-                const fileExtension = mime.getExtension(inlineData.mimeType || '');
+                const fileExtension = getMimeExtension(inlineData.mimeType || '');
                 if (!fileExtension) {
                     bufferChunk = convertToWav(inlineData.data || '', inlineData.mimeType || '');
                 }

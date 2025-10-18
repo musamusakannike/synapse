@@ -10,7 +10,6 @@ import HelpSystem from "@/components/HelpSystem";
 import Sidebar from "@/components/Sidebar";
 
 const navItems = [
-  { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/documents", label: "Documents" },
   { href: "/dashboard/chat", label: "Chat" },
   { href: "/dashboard/topics", label: "Topics" },

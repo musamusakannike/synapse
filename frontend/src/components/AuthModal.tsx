@@ -69,7 +69,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         localStorage.setItem("accessToken", token);
       }
       onClose();
-      router.push("/dashboard");
+      router.push("/dashboard/chat");
     } catch (err: any) {
       setSocialError(err?.message || "Google sign-in failed");
     } finally {
@@ -90,7 +90,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         localStorage.setItem("accessToken", token);
       }
       onClose();
-      router.push("/dashboard");
+      router.push("/dashboard/chat");
     } catch (err: any) {
       setSocialError(err?.message || "GitHub sign-in failed");
     } finally {
@@ -113,7 +113,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         localStorage.setItem("accessToken", token);
       }
       onClose();
-      router.push("/dashboard");
+      router.push("/dashboard/chat");
     } catch (err: any) {
       setCodeError(err?.message || "Verification failed");
     } finally {

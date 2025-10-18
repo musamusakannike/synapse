@@ -83,81 +83,6 @@ const getChatWithMessages = async (req, res) => {
   }
 };
 
-const sendMessage = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { content } = req.body;
-
-    const chat = await Chat.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    }).populate("sourceId");
-
-    if (!chat) {
-      return res.status(404).json({ error: "Chat not found" });
-    }
-
-    // Add user message
-    chat.messages.push({
-      role: "user",
-      content,
-    });
-
-    // Prepare context based on chat type
-    let context = "";
-    if (chat.sourceId) {
-      switch (chat.type) {
-        case "topic":
-          context = `Topic: ${chat.sourceId.title}\nContent: ${
-            chat.sourceId.generatedContent || chat.sourceId.content
-          }`;
-          break;
-        case "document":
-          context = `Document: ${chat.sourceId.originalName}\nContent: ${chat.sourceId.extractedText}`;
-          break;
-        case "website":
-          context = `Website: ${chat.sourceId.url}\nContent: ${chat.sourceId.extractedContent}`;
-          break;
-      }
-    }
-
-    // Generate AI response
-    const aiResponse = await geminiService.generateChatResponse(
-      chat.messages.slice(-10), // Last 10 messages for context
-      context
-    );
-
-    // Add AI response
-    chat.messages.push({
-      role: "assistant",
-      content: aiResponse,
-    });
-
-    await chat.save();
-
-    res.json({
-      message: "Message sent successfully",
-      userMessage: {
-        role: "user",
-        content,
-        timestamp: chat.messages[chat.messages.length - 2].timestamp,
-      },
-      aiResponse: {
-        role: "assistant",
-        content: aiResponse,
-        timestamp: chat.messages[chat.messages.length - 1].timestamp,
-      },
-    });
-  } catch (error) {
-    console.error("Send message error:", error);
-    res.status(500).json({ error: "Failed to send message" });
-  }
-};
-
 const createNewChat = async (req, res) => {
   try {
     const { title, type = "general", sourceId } = req.body || {};
@@ -278,11 +203,62 @@ const deleteChat = async (req, res) => {
   }
 };
 
+const sendMessageWithFunctionCalling = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { content } = req.body;
+
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Add user message
+    chat.messages.push({
+      role: "user",
+      content,
+    });
+
+    // Generate AI response
+    const aiResponse = await geminiService.generateChatResponseWithFunctionCalling(
+      chat.messages.slice(-10) // Last 10 messages for context
+    );
+
+    // Add AI response
+    chat.messages.push({
+      role: "assistant",
+      content: aiResponse,
+    });
+
+    await chat.save();
+
+    res.json({
+      message: "Message sent successfully",
+      aiResponse: {
+        role: "assistant",
+        content: aiResponse,
+        timestamp: chat.messages[chat.messages.length - 1].timestamp,
+      },
+    });
+  } catch (error) {
+    console.error("Send message error:", error);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+};
+
 module.exports = {
   getUserChats,
   getChatWithMessages,
-  sendMessage,
   createNewChat,
   updateChatTitle,
   deleteChat,
+  sendMessageWithFunctionCalling,
 };

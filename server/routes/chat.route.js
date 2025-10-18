@@ -3,10 +3,10 @@ const { authenticate } = require("../middlewares/auth.middleware");
 const {
   getUserChats,
   getChatWithMessages,
-  sendMessage,
   createNewChat,
   updateChatTitle,
   deleteChat,
+  sendMessageWithFunctionCalling,
 } = require("../controllers/chat.controller");
 const { body } = require("express-validator");
 const router = express.Router();
@@ -27,10 +27,10 @@ const updateChatTitleValidation = [
 
 router.get("/", authenticate, getUserChats);
 router.get("/:id", authenticate, getChatWithMessages);
-router.post("/:id/message", authenticate, sendMessageValidation, sendMessage);
 router.post("/new", authenticate, createNewChat);
 router.put("/:id/title", authenticate, updateChatTitleValidation, updateChatTitle);
 router.delete("/:id", authenticate, deleteChat);
 
+router.post("/:id/send", authenticate, sendMessageValidation, sendMessageWithFunctionCalling);
 
 module.exports = router;

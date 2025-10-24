@@ -20,8 +20,10 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
     <div className="space-y-3">
       {summary && (
         <div className="p-3 rounded-lg border border-blue-100 bg-blue-50/50">
-          <p className="text-xs font-semibold text-blue-700 mb-1">Document summary</p>
-          <p className="text-sm text-gray-800">{summary}</p>
+          <p className="text-xs font-semibold text-blue-700 mb-2">Document summary</p>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {summary}
+          </ReactMarkdown>
         </div>
       )}
       {messages.map((m, idx) => (

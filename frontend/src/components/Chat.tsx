@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -19,12 +19,7 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
   return (
     <div className="space-y-3">
       {summary && (
-        <div className="p-3 rounded-lg border border-blue-100 bg-blue-50/50">
-          <p className="text-xs font-semibold text-blue-700 mb-2">Document summary</p>
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {summary}
-          </ReactMarkdown>
-        </div>
+        <SummaryBlock text={summary} />
       )}
       {messages.map((m, idx) => (
         <div
@@ -55,6 +50,47 @@ function TypingDots() {
       <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.2s]"></span>
       <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.1s]"></span>
       <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></span>
+    </div>
+  );
+}
+
+function SummaryBlock({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const limit = 280;
+  const isLong = text.length > limit;
+  const display = expanded || !isLong ? text : text.slice(0, limit) + "…";
+  return (
+    <div className="p-3 rounded-lg border border-gray-200 bg-gray-50/50">
+      <p className="text-[11px] font-semibold text-gray-700 mb-1">Document summary</p>
+      <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-a:text-gray-800">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ node, href, children, ...props }) => (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="underline hover:no-underline"
+                {...props}
+              >
+                {children}
+              </a>
+            ),
+          }}
+        >
+          {display}
+        </ReactMarkdown>
+      </div>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-2 text-xs text-gray-600 hover:text-gray-900 underline"
+        >
+          {expanded ? "Show less" : "Show more"}
+        </button>
+      )}
     </div>
   );
 }

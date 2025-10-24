@@ -11,12 +11,19 @@ type Props = {
   messages: Message[];
   sending: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  summary?: string;
 };
 
-export default function Chat({ messages, sending, messagesEndRef }: Props) {
+export default function Chat({ messages, sending, messagesEndRef, summary }: Props) {
     console.log("Rendering Chat with messages:", messages);
   return (
     <div className="space-y-3">
+      {summary && (
+        <div className="p-3 rounded-lg border border-blue-100 bg-blue-50/50">
+          <p className="text-xs font-semibold text-blue-700 mb-1">Document summary</p>
+          <p className="text-sm text-gray-800">{summary}</p>
+        </div>
+      )}
       {messages.map((m, idx) => (
         <div
           key={idx}
@@ -49,3 +56,4 @@ function TypingDots() {
     </div>
   );
 }
+

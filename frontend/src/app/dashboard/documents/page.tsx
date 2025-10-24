@@ -169,7 +169,7 @@ export default function DocumentsPage() {
             <div>
               <h1 className="text-2xl font-bold">{selectedDoc.originalName}</h1>
               <div className="mt-4">
-                <Chat messages={messages} sending={sending} messagesEndRef={messagesEndRef} />
+                <Chat summary={selectedDoc.summary} messages={messages} sending={sending} messagesEndRef={messagesEndRef} />
               </div>
             </div>
           ) : (

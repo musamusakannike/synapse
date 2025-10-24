@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { DocumentAPI } from "@/lib/api";
-import { FileText, UploadCloud, RefreshCw, Trash2 } from "lucide-react";
+import { UploadCloud, RefreshCw, Trash2, SendHorizontal } from "lucide-react";
 import Loader from "@/components/Loader";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
+import Chat from "@/components/Chat";
 
 type Doc = {
   _id: string;
@@ -16,6 +17,12 @@ type Doc = {
   processingStatus?: "pending" | "processing" | "completed" | "failed";
   processingError?: string;
   createdAt?: string;
+  content?: string; 
+};
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
 };
 
 export default function DocumentsPage() {
@@ -25,7 +32,11 @@ export default function DocumentsPage() {
   const [prompt, setPrompt] = useState("");
   const [uploading, setUploading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [showMore, setShowMore] = useState<Record<string, boolean>>({});
+  const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null!);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const load = async () => {
     try {
@@ -43,17 +54,24 @@ export default function DocumentsPage() {
     load();
   }, []);
 
-  const onUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, sending]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const onUpload = async () => {
     if (!file) return;
     try {
       setUploading(true);
       const fd = new FormData();
       fd.append("file", file);
-      if (prompt.trim()) fd.append("prompt", prompt.trim());
       await DocumentAPI.upload(fd);
       setFile(null);
-      setPrompt("");
       await load();
     } catch (e) {
       console.error(e);
@@ -62,24 +80,42 @@ export default function DocumentsPage() {
     }
   };
 
-  const reprocess = async (id: string) => {
+  const doSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prompt.trim() || !selectedDoc) return;
     try {
-      setActionId(id);
-      await DocumentAPI.reprocess(id);
-      await load();
+      setSending(true);
+      const content = prompt.trim();
+      setMessages((prev) => [...prev, { role: "user", content }]);
+      setPrompt("");
+
+      setMessages((prev) => [...prev, { role: "assistant", content: "typing__placeholder__" }]);
+
+      const { data } = await DocumentAPI.chat(selectedDoc._id, content);
+      const aiResponse = data?.aiResponse || { role: "assistant", content: "Sorry, I couldn't process that." };
+
+      setMessages((prev) => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = aiResponse;
+        return newMessages;
+      });
+
     } catch (e) {
       console.error(e);
-    } finally {
-      setActionId(null);
+      setSending(false);
     }
   };
-
+  
   const remove = async (id: string) => {
     if (!confirm("Delete this document?")) return;
     try {
       setActionId(id);
       await DocumentAPI.delete(id);
       setDocs((prev) => prev.filter((d) => d._id !== id));
+      if (selectedDoc?._id === id) {
+        setSelectedDoc(null);
+        setMessages([]);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -88,161 +124,106 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-        <p className="text-gray-600">
-          Upload and summarize your study materials
-        </p>
-      </div>
-
-      {/* Upload Card */}
-      <form
-        onSubmit={onUpload}
-        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
-      >
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-            <UploadCloud className="w-6 h-6 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1">
-                <input
-                  type="file"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  className="w-full border border-gray-200 rounded px-3 py-2"
-                  accept=".pdf,.docx,.txt,.md,.csv,.json,.pptx"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <input
-                  type="text"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Optional: custom summary prompt"
-                  className="w-full border border-gray-200 rounded px-3 py-2"
-                />
-              </div>
-            </div>
-            <div className="mt-4">
-              <button
-                disabled={!file || uploading}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-              >
-                {uploading ? <Loader /> : <UploadCloud className="w-4 h-4" />}
-                Upload & summarize
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-
-      {/* List */}
-      <div data-help="document-list" className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Your documents
-          </h2>
-          <button
-            onClick={load}
-            className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
-        </div>
-
+    <div className="flex h-full">
+      {/* Left panel for document list */}
+      <div className="w-1/4 border-r border-gray-200 p-4 space-y-4">
+        <h2 className="text-lg font-semibold">Your Documents</h2>
+        <button
+          onClick={load}
+          className="w-full text-sm text-gray-600 hover:text-gray-900 inline-flex items-center justify-center gap-2 p-2 border rounded"
+        >
+          <RefreshCw className="w-4 h-4" /> Refresh
+        </button>
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader size="30" />
-          </div>
-        ) : docs.length === 0 ? (
-          <p className="text-gray-600">No documents yet. Upload one above.</p>
+          <Loader />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {docs.map((d) => (
+          <div className="space-y-2">
+            {docs.map((doc) => (
               <div
-                key={d._id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
+                key={doc._id}
+                onClick={() => setSelectedDoc(doc)}
+                className={`p-2 rounded cursor-pointer ${selectedDoc?._id === doc._id ? "bg-blue-100" : "hover:bg-gray-50"}`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 truncate max-w-[220px]">
-                        {d.originalName}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {d.mimeType} • {(d.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full border ${
-                      d.processingStatus === "completed"
-                        ? "text-green-700 bg-green-50 border-green-200"
-                        : d.processingStatus === "failed"
-                        ? "text-red-700 bg-red-50 border-red-200"
-                        : "text-amber-700 bg-amber-50 border-amber-200"
-                    }`}
-                  >
-                    {d.processingStatus}
-                  </span>
-                </div>
-
-                {d.summary && (
-                  <>
-                    <p
-                      className={`text-sm text-gray-700 mt-3 whitespace-pre-wrap ${
-                        !showMore[d._id] && "line-clamp-5"
-                      }`}
-                    >
-                      {d.summary}
-                    </p>
-                    <button
-                      onClick={() =>
-                        setShowMore((p) => ({ ...p, [d._id]: !p[d._id] }))
-                      }
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {showMore[d._id] ? "Show Less" : "Read More"}
-                    </button>
-                  </>
-                )}
-
-                {d.processingError && (
-                  <p className="text-sm text-red-600 mt-3">
-                    {d.processingError}
-                  </p>
-                )}
-
-                <div className="mt-4 flex items-center gap-2">
-                  <button
-                    onClick={() => reprocess(d._id)}
-                    disabled={actionId === d._id}
-                    className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    {actionId === d._id ? (
-                      <Loader />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    Reprocess
-                  </button>
-                  <button
-                    onClick={() => remove(d._id)}
-                    disabled={actionId === d._id}
-                    className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-red-200 text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" /> Delete
-                  </button>
-                </div>
+                <p className="font-medium truncate">{doc.originalName}</p>
+                <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB</p>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        remove(doc._id);
+                    }}
+                    disabled={actionId === doc._id}
+                    className="text-xs text-red-500 hover:text-red-700 mt-1"
+                >
+                    <Trash2 className="w-3 h-3 inline-block" /> Delete
+                </button>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Right panel for chat and document view */}
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 p-4 overflow-y-auto pb-28">
+          {selectedDoc ? (
+            <div>
+              <h1 className="text-2xl font-bold">{selectedDoc.originalName}</h1>
+              <div className="mt-4">
+                <Chat messages={messages} sending={sending} messagesEndRef={messagesEndRef} />
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-gray-500 mt-10">
+              <p>Select a document to start chatting.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Fixed bottom input */}
+        <div className="fixed left-0 right-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+          <div className="max-w-4xl mx-auto px-3 py-3">
+            <form onSubmit={doSend} className="flex items-end gap-2">
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
+                >
+                    <UploadCloud className="w-4 h-4" />
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept=".pdf,.docx,.txt,.md,.csv,.json,.pptx"
+                />
+                <button
+                    type="button"
+                    onClick={onUpload}
+                    disabled={!file || uploading}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
+                >
+                    {uploading ? <Loader /> : 'Upload'}
+                </button>
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Ask a question about the document..."
+                className="flex-1 resize-none border border-gray-200 rounded-md px-3 py-2 max-h-40 min-h-10 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                rows={1}
+                disabled={!selectedDoc}
+              />
+              <button
+                disabled={!prompt.trim() || sending || !selectedDoc}
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
+                aria-label="Send message"
+              >
+                {sending ? <Loader /> : <SendHorizontal className="w-4 h-4" />}
+                <span className="hidden sm:inline">Send</span>
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
       
       <HelpButton helpConfig={helpConfigs.documents} />

@@ -52,7 +52,18 @@ export const DocumentAPI = {
   get: (id: string) => api.get(`/documents/${id}`),
   delete: (id: string) => api.delete(`/documents/${id}`),
   reprocess: (id: string) => api.post(`/documents/${id}/reprocess`),
-  chat: (id: string, message: string) => api.post(`/documents/${id}/chat`, { message }),
+  // Convenience: start or reuse a chat bound to this document and send a message.
+  // Creates a chat (type: 'document') then posts the message and returns the send response.
+  chat: async (id: string, content: string) => {
+    // create a chat tied to the document
+    const createRes = await api.post(`/chats/new`, { type: "document", sourceId: id });
+    const chatId = createRes?.data?.chat?.id;
+    if (!chatId) {
+      throw new Error("Failed to create or locate chat for document");
+    }
+    // send the message to the chat
+    return api.post(`/chats/${chatId}/message`, { content });
+  },
 };
 
 // Chat endpoints

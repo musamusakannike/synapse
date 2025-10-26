@@ -15,12 +15,14 @@ type Props = {
 };
 
 export default function Chat({ messages, sending, messagesEndRef, summary }: Props) {
-    console.log("Rendering Chat with messages:", messages);
   return (
     <div className="space-y-3">
-      {summary && (
-        <SummaryBlock text={summary} />
+      {summary && <SummaryBlock text={summary} />}
+
+      {messages.length === 0 && !sending && (
+        <div className="text-center text-xs text-gray-500">Ask a question to get started.</div>
       )}
+
       {messages.map((m, idx) => (
         <div
           key={idx}
@@ -33,7 +35,33 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
           {m.content === "typing__placeholder__" ? (
             <TypingDots />
           ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ node, href, children, ...props }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="underline hover:no-underline"
+                    {...props}
+                  >
+                    {children}
+                  </a>
+                ),
+                code: ({ inline, className, children, ..._props }: any) => {
+                  const text = String(children ?? "");
+                  if (inline) {
+                    return (
+                      <code className={`px-1 py-0.5 rounded bg-gray-100 ${className ?? ""}`}>
+                        {text}
+                      </code>
+                    );
+                  }
+                  return <CodeBlock text={text} className={className} />;
+                },
+              }}
+            >
               {m.content}
             </ReactMarkdown>
           )}
@@ -91,6 +119,35 @@ function SummaryBlock({ text }: { text: string }) {
           {expanded ? "Show less" : "Show more"}
         </button>
       )}
+    </div>
+  );
+}
+
+
+function CodeBlock({ text, className }: { text: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (e) {
+      // ignore
+    }
+  };
+  return (
+    <div className="relative group">
+      <pre className={`overflow-x-auto p-3 rounded bg-gray-900 text-gray-100 ${className ?? ""}`}>
+        <code>{text}</code>
+      </pre>
+      <button
+        type="button"
+        className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-800 text-gray-200 border border-gray-700 opacity-0 group-hover:opacity-100 transition"
+        onClick={onCopy}
+        aria-label="Copy code"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import StyledMarkdown from "@/components/StyledMarkdown";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { WebsiteAPI } from "@/lib/api";
@@ -149,8 +148,8 @@ export default function WebsiteDetailPage() {
           {site.summary && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Summary</h3>
-              <div className={`prose prose-sm sm:prose max-w-none text-gray-800 ${!showMore.summary ? "line-clamp-8" : ""}`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{site.summary}</ReactMarkdown>
+              <div className={!showMore.summary ? "line-clamp-8" : ""}>
+                <StyledMarkdown>{site.summary}</StyledMarkdown>
               </div>
               <button
                 onClick={() => setShowMore((p) => ({ ...p, summary: !p.summary }))}
@@ -164,8 +163,8 @@ export default function WebsiteDetailPage() {
           {site.extractedContent && (
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Extracted Content</h3>
-              <div className={`prose prose-sm sm:prose max-w-none text-gray-800 ${!showMore.content ? "line-clamp-8" : ""}`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{site.extractedContent}</ReactMarkdown>
+              <div className={!showMore.content ? "line-clamp-8" : ""}>
+                <StyledMarkdown>{site.extractedContent}</StyledMarkdown>
               </div>
               <button
                 onClick={() => setShowMore((p) => ({ ...p, content: !p.content }))}

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import StyledMarkdown from "@/components/StyledMarkdown";
 import { CourseAPI } from "@/lib/api";
 import {
   GraduationCap,
@@ -394,10 +393,8 @@ export default function CoursesPage() {
                             {sectionIndex + 1}. {section.section}
                           </h3>
                           {sectionContent && (
-                            <div className="prose prose-sm max-w-none mb-4">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {sectionContent.explanation}
-                              </ReactMarkdown>
+                            <div className="mb-4">
+                              <StyledMarkdown>{sectionContent.explanation}</StyledMarkdown>
                             </div>
                           )}
                           {section.subsections && section.subsections.length > 0 && (
@@ -412,11 +409,7 @@ export default function CoursesPage() {
                                       {sectionIndex + 1}.{subIndex + 1}. {subsection}
                                     </h4>
                                     {subsectionContent && (
-                                      <div className="prose prose-sm max-w-none">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                          {subsectionContent.explanation}
-                                        </ReactMarkdown>
-                                      </div>
+                                      <StyledMarkdown>{subsectionContent.explanation}</StyledMarkdown>
                                     )}
                                   </div>
                                 );

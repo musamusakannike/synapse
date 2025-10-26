@@ -15,8 +15,7 @@ import OptimisticLoader from "@/components/OptimisticLoader";
 import { useSearchParams } from "next/navigation";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import StyledMarkdown from "@/components/StyledMarkdown";
 
 // Server list returns shape: { chats, pagination }
 interface ChatListItem {
@@ -200,9 +199,7 @@ export default function ChatPage() {
                 {m.content === "typing__placeholder__" ? (
                   <TypingDots />
                 ) : m.role === "assistant" ? (
-                  <div className="text-sm text-gray-800 prose prose-sm max-w-none prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                  </div>
+                  <StyledMarkdown>{m.content}</StyledMarkdown>
                 ) : (
                   <p className="text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
                 )}

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import StyledMarkdown from "@/components/StyledMarkdown";
 import { TopicAPI } from "@/lib/api";
 import {
   BookOpen,
@@ -303,10 +302,10 @@ export default function TopicsPage() {
                           />
                         </div>
                       ) : (
-                        <div className="mt-4 prose prose-sm sm:prose max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        <div className="mt-4">
+                          <StyledMarkdown>
                             {selected.content || selected.generatedContent || ""}
-                          </ReactMarkdown>
+                          </StyledMarkdown>
                         </div>
                       )}
                       <div className="flex items-center gap-4 mt-3">

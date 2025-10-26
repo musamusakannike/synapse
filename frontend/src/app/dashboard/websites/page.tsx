@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { WebsiteAPI } from "@/lib/api";
 import { Globe, Link2, RefreshCw, Trash2, RotateCcw } from "lucide-react";
 import Loader from "@/components/Loader";
@@ -26,6 +27,7 @@ export default function WebsitesPage() {
   const [creating, setCreating] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [showMore, setShowMore] = useState<Record<string, boolean>>({});
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const load = async () => {
     try {
@@ -85,47 +87,67 @@ export default function WebsitesPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Websites</h1>
-        <p className="text-gray-600">
-          Summarize website content into study notes
-        </p>
-      </div>
-
-      {/* Create */}
-      <form
-        data-help="add-website"
-        onSubmit={create}
-        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-            <Globe className="w-6 h-6 text-blue-600" />
-          </div>
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Enter URL (https://...)"
-            className="flex-1 border border-gray-200 rounded px-3 py-2"
-          />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Websites</h1>
+          <p className="text-gray-600">Summarize website content into study notes</p>
+        </div>
+        <div className="flex items-center gap-2">
           <button
-            disabled={!url.trim() || creating}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
           >
-            {creating ? <Loader /> : <Link2 className="w-4 h-4" />}
-            Add
+            <Link2 className="w-4 h-4" /> Add Website
+          </button>
+          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
-      </form>
+      </div>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCreateModal(false)} />
+          <div className="absolute inset-x-0 top-10 mx-auto max-w-2xl w-[92%] bg-white rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Add Website</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-sm text-gray-600 hover:text-gray-900">Close</button>
+            </div>
+            <div className="p-5">
+              <form data-help="add-website" onSubmit={create} className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Globe className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="Enter URL (https://...)"
+                    className="flex-1 border border-gray-200 rounded px-3 py-2"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">Cancel</button>
+                  <button
+                    disabled={!url.trim() || creating}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+                  >
+                    {creating ? <Loader /> : <Link2 className="w-4 h-4" />}
+                    Add
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div data-help="website-list" className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Your websites</h2>
-          <button
-            onClick={load}
-            className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2"
-          >
+          <button onClick={load} className="text-sm text-gray-600 hover:text-gray-900 inline-flex items-center gap-2">
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
@@ -190,6 +212,9 @@ export default function WebsitesPage() {
                 )}
 
                 <div className="mt-4 flex items-center gap-2">
+                  <Link href={`/dashboard/websites/${s._id}`} className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50">
+                    Open
+                  </Link>
                   <button
                     onClick={() => rescrape(s._id)}
                     disabled={actionId === s._id}

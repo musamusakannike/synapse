@@ -212,4 +212,45 @@ export const WikipediaAPI = {
     api.post(`/wikipedia/import`, { title, lang }),
 };
 
+// Course endpoints
+export const CourseAPI = {
+  list: () => api.get("/courses"),
+  get: (id: string) => api.get(`/courses/${id}`),
+  create: (data: {
+    title: string;
+    description?: string;
+    settings?: {
+      level?: "beginner" | "intermediate" | "advanced";
+      includeExamples?: boolean;
+      includePracticeQuestions?: boolean;
+      detailLevel?: "brief" | "moderate" | "comprehensive";
+    };
+  }) => api.post("/courses", data),
+  delete: (id: string) => api.delete(`/courses/${id}`),
+  regenerate: (id: string, settings?: any) =>
+    api.post(`/courses/${id}/regenerate`, settings ? { settings } : {}),
+  downloadPDF: (id: string) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+    const url = `${API_BASE_URL}/courses/${id}/pdf`;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    
+    return fetch(url, { headers })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to download PDF");
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `course_${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      });
+  },
+};
+
 export default api;

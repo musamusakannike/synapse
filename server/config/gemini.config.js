@@ -402,6 +402,88 @@ class GeminiService {
 
     return prompt;
   }
+
+  async generateCourseOutline(title, description, settings) {
+    let prompt = `Generate a comprehensive, well-structured course outline for the following topic:\n\n`;
+    prompt += `Title: ${title}\n`;
+    if (description) {
+      prompt += `Description: ${description}\n`;
+    }
+    prompt += `\nCourse Settings:\n`;
+    prompt += `- Level: ${settings.level || "intermediate"}\n`;
+    prompt += `- Detail Level: ${settings.detailLevel || "moderate"}\n`;
+
+    prompt += `\nCreate a structured outline with main sections and subsections. `;
+    prompt += `The outline should be logical, progressive, and cover all essential aspects of the topic.\n\n`;
+
+    prompt += `Return the outline in the following JSON format:\n`;
+    prompt += `{\n`;
+    prompt += `  "outline": [\n`;
+    prompt += `    {\n`;
+    prompt += `      "section": "Main Section Title",\n`;
+    prompt += `      "subsections": ["Subsection 1", "Subsection 2", "Subsection 3"]\n`;
+    prompt += `    }\n`;
+    prompt += `  ]\n`;
+    prompt += `}\n\n`;
+
+    prompt += `Guidelines:\n`;
+    prompt += `- Create 5-10 main sections depending on topic complexity\n`;
+    prompt += `- Each section should have 2-5 subsections\n`;
+    prompt += `- Progress from foundational concepts to advanced topics\n`;
+    prompt += `- Ensure logical flow and coherence\n`;
+    prompt += `- Make sections comprehensive but focused`;
+
+    try {
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseMimeType: "application/json",
+        },
+        safetySettings: this.safetySettings,
+      });
+      const jsonText = response.text;
+      return JSON.parse(jsonText);
+    } catch (error) {
+      console.error("Error generating course outline:", error);
+      throw new Error("Failed to generate course outline");
+    }
+  }
+
+  async generateSectionContent(courseTitle, section, subsection, settings) {
+    let prompt = `You are creating content for a course titled: "${courseTitle}"\n\n`;
+    prompt += `Generate a comprehensive and simple explanation for the following:\n`;
+    prompt += `Section: ${section}\n`;
+    if (subsection) {
+      prompt += `Subsection: ${subsection}\n`;
+    }
+
+    prompt += `\nContent Requirements:\n`;
+    prompt += `- Level: ${settings.level || "intermediate"}\n`;
+    prompt += `- Detail Level: ${settings.detailLevel || "moderate"}\n`;
+    prompt += `- Include Examples: ${settings.includeExamples ? "Yes" : "No"}\n`;
+    prompt += `- Include Practice Questions: ${settings.includePracticeQuestions ? "Yes" : "No"}\n`;
+
+    prompt += `\nGuidelines:\n`;
+    prompt += `- Write clear, simple explanations suitable for the specified level\n`;
+    prompt += `- Use proper formatting with headings, bullet points, and paragraphs\n`;
+    prompt += `- Make the content engaging and educational\n`;
+    prompt += `- Include relevant examples if requested\n`;
+    prompt += `- Add practice questions at the end if requested\n`;
+    prompt += `- Ensure the content is comprehensive yet easy to understand\n`;
+
+    try {
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        safetySettings: this.safetySettings,
+      });
+      return response.text;
+    } catch (error) {
+      console.error("Error generating section content:", error);
+      throw new Error("Failed to generate section content");
+    }
+  }
 }
 
 module.exports = new GeminiService();

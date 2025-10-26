@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChatAPI } from "@/lib/api";
-import { X, MessageSquare, FileUp, BookOpen, Globe2, FileSearch, PenTool } from "lucide-react";
+import { X, MessageSquare, FileUp, BookOpen, Globe2, FileSearch, PenTool, GraduationCap } from "lucide-react";
 
 interface SidebarProps {
   open: boolean;
@@ -19,6 +19,7 @@ interface ChatListItem {
 
 const features = [
   { href: "/dashboard/documents", label: "Upload document", icon: FileUp },
+  { href: "/dashboard/courses", label: "Generate Course", icon: GraduationCap },
   { href: "/dashboard/topics", label: "Explain a Topic", icon: BookOpen },
   { href: "/dashboard/wikipedia", label: "Research Wikipedia", icon: Globe2 },
   { href: "/dashboard/quizzes", label: "Take Quiz", icon: PenTool },

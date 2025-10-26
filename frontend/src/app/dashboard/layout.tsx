@@ -12,6 +12,7 @@ import Sidebar from "@/components/Sidebar";
 const navItems = [
   { href: "/dashboard/documents", label: "Documents" },
   { href: "/dashboard/chat", label: "Chat" },
+  { href: "/dashboard/courses", label: "Courses" },
   { href: "/dashboard/topics", label: "Topics" },
   { href: "/dashboard/quizzes", label: "Quizzes" },
   { href: "/dashboard/flashcards", label: "Flashcards" },

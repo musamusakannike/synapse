@@ -191,8 +191,18 @@ async function generateCoursePDF(req, res) {
       return res.status(400).json({ message: "Course is not yet completed" });
     }
 
-    // Create PDF
-    const doc = new PDFDocument({ margin: 50 });
+    // Create PDF with better margins
+    const doc = new PDFDocument({ 
+      margin: 60,
+      size: 'A4',
+      bufferPages: true,
+      info: {
+        Title: course.title,
+        Author: 'Synapse Learning Platform',
+        Subject: course.description || course.title,
+        Keywords: `${course.settings.level}, education, course`,
+      }
+    });
 
     // Set response headers
     res.setHeader("Content-Type", "application/pdf");
@@ -204,29 +214,125 @@ async function generateCoursePDF(req, res) {
     // Pipe PDF to response
     doc.pipe(res);
 
-    // Add title page
-    doc.fontSize(28).font("Helvetica-Bold").text(course.title, { align: "center" });
-    doc.moveDown();
+    // Define color scheme
+    const colors = {
+      primary: '#2563eb',      // Blue
+      secondary: '#64748b',    // Slate gray
+      accent: '#0ea5e9',       // Sky blue
+      text: '#1e293b',         // Dark slate
+      lightGray: '#f1f5f9',    // Light background
+    };
 
+    // Helper function to add decorative line
+    const addDecorativeLine = (y, color = colors.primary) => {
+      doc.strokeColor(color)
+         .lineWidth(2)
+         .moveTo(60, y)
+         .lineTo(doc.page.width - 60, y)
+         .stroke();
+    };
+
+    // Add title page with enhanced styling
+    doc.moveDown(4);
+    
+    // Add decorative top line
+    addDecorativeLine(doc.y);
+    doc.moveDown(2);
+
+    // Main title with shadow effect
+    doc.fillColor(colors.primary)
+       .fontSize(36)
+       .font("Helvetica-Bold")
+       .text(course.title, { 
+         align: "center",
+         lineGap: 8
+       });
+    
+    doc.moveDown(1.5);
+    
+    // Add decorative bottom line
+    addDecorativeLine(doc.y);
+    doc.moveDown(2);
+
+    // Description with better styling
     if (course.description) {
-      doc.fontSize(12).font("Helvetica").text(course.description, { align: "center" });
-      doc.moveDown();
+      doc.fillColor(colors.text)
+         .fontSize(14)
+         .font("Helvetica")
+         .text(course.description, { 
+           align: "center",
+           width: 400,
+           lineGap: 4
+         });
+      doc.moveDown(2);
     }
 
-    doc.fontSize(10).text(`Level: ${course.settings.level}`, { align: "center" });
-    doc.fontSize(10).text(`Generated: ${new Date(course.createdAt).toLocaleDateString()}`, { align: "center" });
+    // Course metadata in a styled box
+    const metadataY = doc.y;
+    doc.roundedRect(150, metadataY, doc.page.width - 300, 80, 5)
+       .fillAndStroke(colors.lightGray, colors.primary);
+    
+    doc.fillColor(colors.text)
+       .fontSize(12)
+       .font("Helvetica-Bold")
+       .text("Course Details", 150, metadataY + 15, { 
+         width: doc.page.width - 300,
+         align: "center" 
+       });
+    
+    doc.fontSize(11)
+       .font("Helvetica")
+       .fillColor(colors.secondary)
+       .text(`Level: ${course.settings.level.charAt(0).toUpperCase() + course.settings.level.slice(1)}`, {
+         align: "center"
+       })
+       .text(`Generated: ${new Date(course.createdAt).toLocaleDateString('en-US', { 
+         year: 'numeric', 
+         month: 'long', 
+         day: 'numeric' 
+       })}`, {
+         align: "center"
+       });
+
+    // Add footer to title page
+    doc.fontSize(10)
+       .fillColor(colors.secondary)
+       .text("Powered by Synapse Learning Platform", 
+         60, 
+         doc.page.height - 80, 
+         { align: "center", width: doc.page.width - 120 }
+       );
+
     doc.addPage();
 
-    // Add table of contents
-    doc.fontSize(20).font("Helvetica-Bold").text("Table of Contents", { underline: true });
-    doc.moveDown();
-    doc.fontSize(12).font("Helvetica");
+    // Add table of contents with enhanced styling
+    doc.fillColor(colors.primary)
+       .fontSize(28)
+       .font("Helvetica-Bold")
+       .text("Table of Contents");
+    
+    addDecorativeLine(doc.y + 10, colors.accent);
+    doc.moveDown(2);
+
+    doc.fontSize(12).font("Helvetica").fillColor(colors.text);
 
     course.outline.forEach((section, index) => {
-      doc.text(`${index + 1}. ${section.section}`);
+      // Main section in TOC
+      doc.fillColor(colors.primary)
+         .font("Helvetica-Bold")
+         .text(`${index + 1}. ${section.section}`, { continued: false });
+      
+      doc.moveDown(0.3);
+      
+      // Subsections in TOC
       if (section.subsections && section.subsections.length > 0) {
         section.subsections.forEach((subsection, subIndex) => {
-          doc.text(`   ${index + 1}.${subIndex + 1}. ${subsection}`);
+          doc.fillColor(colors.text)
+             .font("Helvetica")
+             .text(`     ${index + 1}.${subIndex + 1}  ${subsection}`, {
+               indent: 20
+             });
+          doc.moveDown(0.2);
         });
       }
       doc.moveDown(0.5);
@@ -234,32 +340,91 @@ async function generateCoursePDF(req, res) {
 
     doc.addPage();
 
-    // Add content
+    // Add content with improved typography
     course.outline.forEach((section, sectionIndex) => {
-      // Main section
-      doc.fontSize(18).font("Helvetica-Bold").text(`${sectionIndex + 1}. ${section.section}`);
-      doc.moveDown();
+      // Main section header with background
+      const headerY = doc.y;
+      
+      // Add colored background for section header
+      doc.rect(50, headerY - 5, doc.page.width - 100, 35)
+         .fillAndStroke(colors.lightGray, colors.primary);
+      
+      doc.fillColor(colors.primary)
+         .fontSize(22)
+         .font("Helvetica-Bold")
+         .text(`${sectionIndex + 1}. ${section.section}`, 60, headerY + 5);
+      
+      doc.moveDown(2);
 
+      // Section content with better formatting
       const sectionContent = course.content.find(
         (c) => c.section === section.section && !c.subsection
       );
+      
       if (sectionContent) {
-        doc.fontSize(11).font("Helvetica").text(sectionContent.explanation, { align: "justify" });
-        doc.moveDown();
+        // Format content with proper paragraphs
+        const paragraphs = sectionContent.explanation.split('\n\n');
+        paragraphs.forEach((paragraph, pIndex) => {
+          if (paragraph.trim()) {
+            doc.fillColor(colors.text)
+               .fontSize(11)
+               .font("Helvetica")
+               .text(paragraph.trim(), { 
+                 align: "justify",
+                 lineGap: 3,
+                 paragraphGap: 8
+               });
+            
+            if (pIndex < paragraphs.length - 1) {
+              doc.moveDown(0.8);
+            }
+          }
+        });
+        doc.moveDown(1.5);
       }
 
-      // Subsections
+      // Subsections with improved styling
       if (section.subsections && section.subsections.length > 0) {
         section.subsections.forEach((subsection, subIndex) => {
-          doc.fontSize(14).font("Helvetica-Bold").text(`${sectionIndex + 1}.${subIndex + 1}. ${subsection}`);
-          doc.moveDown(0.5);
+          // Subsection header
+          doc.fillColor(colors.accent)
+             .fontSize(16)
+             .font("Helvetica-Bold")
+             .text(`${sectionIndex + 1}.${subIndex + 1}  ${subsection}`);
+          
+          // Add subtle underline
+          const lineY = doc.y + 3;
+          doc.strokeColor(colors.accent)
+             .lineWidth(1)
+             .moveTo(60, lineY)
+             .lineTo(250, lineY)
+             .stroke();
+          
+          doc.moveDown(1);
 
           const subsectionContent = course.content.find(
             (c) => c.section === section.section && c.subsection === subsection
           );
+          
           if (subsectionContent) {
-            doc.fontSize(11).font("Helvetica").text(subsectionContent.explanation, { align: "justify" });
-            doc.moveDown();
+            const paragraphs = subsectionContent.explanation.split('\n\n');
+            paragraphs.forEach((paragraph, pIndex) => {
+              if (paragraph.trim()) {
+                doc.fillColor(colors.text)
+                   .fontSize(11)
+                   .font("Helvetica")
+                   .text(paragraph.trim(), { 
+                     align: "justify",
+                     lineGap: 3,
+                     paragraphGap: 8
+                   });
+                
+                if (pIndex < paragraphs.length - 1) {
+                  doc.moveDown(0.8);
+                }
+              }
+            });
+            doc.moveDown(1.5);
           }
         });
       }
@@ -269,6 +434,30 @@ async function generateCoursePDF(req, res) {
         doc.addPage();
       }
     });
+
+    // Add page numbers to all pages except the first
+    const pages = doc.bufferedPageRange();
+    for (let i = 1; i < pages.count; i++) {
+      doc.switchToPage(i);
+      
+      // Add footer line
+      doc.strokeColor(colors.secondary)
+         .lineWidth(0.5)
+         .moveTo(60, doc.page.height - 60)
+         .lineTo(doc.page.width - 60, doc.page.height - 60)
+         .stroke();
+      
+      // Add page number
+      doc.fillColor(colors.secondary)
+         .fontSize(9)
+         .font("Helvetica")
+         .text(
+           `Page ${i} of ${pages.count - 1}`,
+           60,
+           doc.page.height - 50,
+           { align: "center", width: doc.page.width - 120 }
+         );
+    }
 
     // Finalize PDF
     doc.end();

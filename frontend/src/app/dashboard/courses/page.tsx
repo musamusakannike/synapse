@@ -14,6 +14,9 @@ import {
   ChevronDown,
   ChevronRight,
   Loader2,
+  Maximize,
+  Minimize,
+  ChevronUp,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import OptimisticLoader from "@/components/OptimisticLoader";
@@ -57,6 +60,8 @@ export default function CoursesPage() {
   const [search, setSearch] = useState("");
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [inputCollapsed, setInputCollapsed] = useState(false);
 
   const load = async () => {
     try {
@@ -198,9 +203,9 @@ export default function CoursesPage() {
   });
 
   return (
-    <div className="flex h-full">
+    <div className={`flex h-full ${focusMode ? 'fixed inset-0 z-50 bg-white' : ''}`}>
       {/* Sidebar */}
-      <div className="hidden lg:block w-72 border-r border-gray-200 p-4 space-y-4">
+      <div className={`hidden lg:block w-72 border-r border-gray-200 p-4 space-y-4 ${focusMode ? 'lg:hidden' : ''}`}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Courses</h2>
           <button onClick={load} className="p-2 rounded hover:bg-gray-100" aria-label="Refresh courses">
@@ -291,7 +296,7 @@ export default function CoursesPage() {
 
       {/* Right panel */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center justify-between lg:hidden p-3 border-b border-gray-200">
+        <div className={`flex items-center justify-between lg:hidden p-3 border-b border-gray-200 ${focusMode ? 'hidden' : ''}`}>
           <button className="inline-flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
             <Menu className="w-5 h-5" />
             <span className="text-sm">Courses</span>
@@ -300,9 +305,9 @@ export default function CoursesPage() {
         </div>
 
         {/* Content area */}
-        <div className="flex-1 p-4 overflow-y-auto pb-96">
+        <div className={`flex-1 p-4 overflow-y-auto ${inputCollapsed ? 'pb-4' : 'pb-96'} ${focusMode ? 'p-8 max-w-full' : ''}`}>
           {!selected ? (
-            <div className="max-w-3xl">
+            <div className={`${focusMode ? 'max-w-6xl mx-auto' : 'max-w-3xl'}`}>
               <h1 className="text-2xl font-bold text-gray-900">Courses</h1>
               <p className="text-gray-600">Generate comprehensive courses on any topic</p>
               {!loading && courses.length === 0 && (
@@ -310,7 +315,7 @@ export default function CoursesPage() {
               )}
             </div>
           ) : (
-            <div className="max-w-4xl">
+            <div className={`${focusMode ? 'max-w-6xl mx-auto' : 'max-w-4xl'}`}>
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
                   <GraduationCap className="w-5 h-5 text-blue-600" />
@@ -326,6 +331,20 @@ export default function CoursesPage() {
                     <span className="text-xs text-gray-500">Detail: {selected.settings.detailLevel}</span>
                   </div>
                 </div>
+                {/* Focus Mode Toggle */}
+                {(selected.status === "completed" || selected.status === "generating_content") && (
+                  <button
+                    onClick={() => setFocusMode(!focusMode)}
+                    className="p-2 rounded hover:bg-gray-100 border border-gray-200 transition-colors"
+                    title={focusMode ? "Exit focus mode" : "Enter focus mode"}
+                  >
+                    {focusMode ? (
+                      <Minimize className="w-5 h-5 text-gray-600" />
+                    ) : (
+                      <Maximize className="w-5 h-5 text-gray-600" />
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Course Outline */}
@@ -447,7 +466,19 @@ export default function CoursesPage() {
         </div>
 
         {/* Bottom composer to create courses */}
-        <div className="fixed left-0 right-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className={`fixed left-0 right-0 bottom-0 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 transition-transform duration-300 ${inputCollapsed ? 'translate-y-full' : 'translate-y-0'} ${focusMode ? 'hidden' : ''}`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          {/* Toggle Button for Input Section */}
+          <button
+            onClick={() => setInputCollapsed(!inputCollapsed)}
+            className="absolute -top-10 right-4 p-2 rounded-t-lg bg-white border border-b-0 border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+            title={inputCollapsed ? "Show input section" : "Hide input section"}
+          >
+            {inputCollapsed ? (
+              <ChevronUp className="w-5 h-5 text-gray-600" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-600" />
+            )}
+          </button>
           <div className="max-w-4xl mx-auto px-3 py-3">
             <form onSubmit={create} className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

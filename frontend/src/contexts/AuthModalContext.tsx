@@ -1,6 +1,8 @@
 "use client";
 import React, { createContext, useContext, useState } from "react";
 import AuthModal from "../components/AuthModal";
+import { useEffect } from "react";
+import { uiBus } from "@/lib/uiBus";
 
 type ContextShape = {
   openModal: () => void;
@@ -19,6 +21,13 @@ export const AuthModalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const openModal = () => setOpen(true);
   const closeModal = () => setOpen(false);
+
+  useEffect(() => {
+    const off = uiBus.on("open-auth-modal", () => {
+      setOpen(true);
+    });
+    return () => off();
+  }, []);
 
   return (
     <AuthModalContext.Provider value={{ openModal, closeModal }}>

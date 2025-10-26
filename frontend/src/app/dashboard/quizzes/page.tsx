@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { QuizAPI, TopicAPI, DocumentAPI, WebsiteAPI } from "@/lib/api";
 import {
-  HelpCircle,
   Plus,
   RefreshCw,
   Trash2,
   Play,
-  Save,
-  ListChecks,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import HelpButton from "@/components/HelpButton";
@@ -65,12 +63,7 @@ export default function QuizzesPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
 
-  const [takingId, setTakingId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Record<number, number>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ score: number; total: number } | null>(
-    null
-  );
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const load = async () => {
     try {
@@ -130,38 +123,11 @@ export default function QuizzesPage() {
       setDifficulty("mixed");
       setIncludeCalculations(false);
       await load();
+      setShowCreateModal(false);
     } catch (e) {
       console.error(e);
     } finally {
       setCreating(false);
-    }
-  };
-
-  const take = (id: string) => {
-    const q = quizzes.find((x) => x._id === id) || null;
-    setTakingId(id);
-    setSelected({});
-    setResult(null);
-  };
-
-  const submit = async () => {
-    if (!takingId) return;
-    try {
-      setSubmitting(true);
-      const q = quizzes.find((x) => x._id === takingId);
-      const answers = (q?.questions || []).map((_, idx) => ({
-        questionIndex: idx,
-        selectedOption: typeof selected[idx] === "number" ? selected[idx] : -1,
-      }));
-      const { data } = await QuizAPI.submitAttempt(takingId, answers);
-      const attempt = data?.attempt;
-      if (attempt) {
-        setResult({ score: attempt.score, total: attempt.totalQuestions });
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -170,10 +136,6 @@ export default function QuizzesPage() {
     try {
       await QuizAPI.delete(id);
       setQuizzes((prev) => prev.filter((q) => q._id !== id));
-      if (takingId === id) {
-        setTakingId(null);
-        setResult(null);
-      }
     } catch (e) {
       console.error(e);
     }
@@ -187,110 +149,32 @@ export default function QuizzesPage() {
     return sites.map((s) => ({ value: s._id, label: s.title || s.url }));
   }, [sourceType, topics, docs, sites]);
 
-  const currentQuiz = quizzes.find((x) => x._id === takingId) || null;
+  const recentAttempt = (q: Quiz) => {
+    const atts = q.attempts || [];
+    if (!atts.length) return null;
+    const last = atts[atts.length - 1];
+    return `${last.score}/${last.totalQuestions}`;
+  };
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
-        <p className="text-gray-600">
-          Generate and take quizzes to test your knowledge
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
+          <p className="text-gray-600">Generate and take quizzes to test your knowledge</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            <Plus className="w-4 h-4" /> Create Quiz
+          </button>
+          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
+        </div>
       </div>
-
-      {/* Create */}
-      <form
-        data-help="create-quiz"
-        onSubmit={create}
-        className="bg-white border border-gray-200 rounded-lg p-6 space-y-4"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Quiz title (required)"
-            className="w-full border border-gray-200 rounded px-3 py-2"
-          />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
-            className="w-full border border-gray-200 rounded px-3 py-2"
-          />
-          <div className="grid grid-cols-3 gap-2">
-            <input
-              type="number"
-              min={1}
-              value={numberOfQuestions}
-              onChange={(e) =>
-                setNumberOfQuestions(parseInt(e.target.value || "10"))
-              }
-              className="border border-gray-200 rounded px-3 py-2"
-              placeholder="# Questions"
-            />
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className="border border-gray-200 rounded px-3 py-2"
-            >
-              <option value="mixed">Mixed</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                checked={includeCalculations}
-                onChange={(e) => setIncludeCalculations(e.target.checked)}
-              />
-              Calculations
-            </label>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as any)}
-              className="border border-gray-200 rounded px-3 py-2"
-            >
-              <option value="topic">Topic</option>
-              <option value="document">Document</option>
-              <option value="website">Website</option>
-            </select>
-            <select
-              value={sourceId}
-              onChange={(e) => setSourceId(e.target.value)}
-              className="flex-1 border border-gray-200 rounded px-3 py-2 max-w-[80vw]"
-            >
-              <option value="">Select source (optional)</option>
-              {sourceOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <input
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Optional custom content to generate from"
-              className="w-full border border-gray-200 rounded px-3 py-2"
-            />
-          </div>
-        </div>
-
-        <button
-          disabled={!title.trim() || creating}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {creating ? <Loader /> : <Plus className="w-4 h-4" />}
-          Create Quiz
-        </button>
-      </form>
 
       {/* List */}
       <div data-help="quiz-list" className="bg-white border border-gray-200 rounded-lg p-6">
@@ -315,9 +199,7 @@ export default function QuizzesPage() {
             {quizzes.map((q) => (
               <div
                 key={q._id}
-                className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white ${
-                  takingId === q._id ? "ring-2 ring-blue-200" : ""
-                }`}
+                className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -330,8 +212,13 @@ export default function QuizzesPage() {
                       </p>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      {q.questions?.length || 0} questions • Difficulty:{" "}
+                      {q.questions?.length || 0} questions • Difficulty: {" "}
                       {q.settings?.difficulty || "mixed"}
+                      {recentAttempt(q) && (
+                        <>
+                          {" "}• Last score: <span className="font-medium">{recentAttempt(q)}</span>
+                        </>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -346,12 +233,9 @@ export default function QuizzesPage() {
                 </div>
 
                 <div className="mt-3 flex items-center gap-2">
-                  <button
-                    onClick={() => take(q._id)}
-                    className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    <Play className="w-4 h-4" /> Take quiz
-                  </button>
+                  <Link href={`/dashboard/quizzes/${q._id}`} className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50">
+                    <Play className="w-4 h-4" /> Open
+                  </Link>
                 </div>
               </div>
             ))}
@@ -359,85 +243,113 @@ export default function QuizzesPage() {
         )}
       </div>
 
-      {/* Take quiz panel */}
-      {currentQuiz && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
-              <ListChecks className="w-5 h-5 text-blue-600" />
+      {/* Create Quiz Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowCreateModal(false)} />
+          <div className="absolute inset-x-0 top-10 mx-auto max-w-3xl w-[92%] bg-white rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Create Quiz</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-sm text-gray-600 hover:text-gray-900">Close</button>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {currentQuiz.title}
-              </h3>
-              {result ? (
-                <p className="text-sm text-gray-700">
-                  Result: {result.score}/{result.total}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-600">
-                  Answer the questions below and submit
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {currentQuiz.questions.map((qs, idx) => (
-              <div key={idx} className="border border-gray-200 rounded p-3">
-                <p className="font-medium text-gray-900">
-                  Q{idx + 1}. {qs.questionText}
-                </p>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {qs.options.map((opt, oi) => (
-                    <label
-                      key={oi}
-                      className={`flex items-center gap-2 border rounded px-3 py-2 cursor-pointer ${
-                        selected[idx] === oi
-                          ? "border-blue-300 bg-blue-50"
-                          : "border-gray-200 hover:bg-gray-50"
-                      }`}
+            <div className="p-5">
+              <form onSubmit={create} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Quiz title (required)"
+                    className="w-full border border-gray-200 rounded px-3 py-2"
+                  />
+                  <input
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Optional description"
+                    className="w-full border border-gray-200 rounded px-3 py-2"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      value={numberOfQuestions}
+                      onChange={(e) => setNumberOfQuestions(parseInt(e.target.value || "10"))}
+                      className="border border-gray-200 rounded px-3 py-2"
+                      placeholder="# Questions"
+                    />
+                    <select
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value)}
+                      className="border border-gray-200 rounded px-3 py-2"
                     >
+                      <option value="mixed">Mixed</option>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
                       <input
-                        type="radio"
-                        name={`q-${idx}`}
-                        checked={selected[idx] === oi}
-                        onChange={() =>
-                          setSelected((p) => ({ ...p, [idx]: oi }))
-                        }
+                        type="checkbox"
+                        checked={includeCalculations}
+                        onChange={(e) => setIncludeCalculations(e.target.checked)}
                       />
-                      <span className="text-sm text-gray-800">{opt}</span>
+                      Calculations
                     </label>
-                  ))}
+                  </div>
                 </div>
-                {result && (
-                  <p className="text-sm mt-2">
-                    {typeof selected[idx] === "number" &&
-                    selected[idx] ===
-                      currentQuiz.questions[idx].correctOption ? (
-                      <span className="text-green-700">Correct ✓</span>
-                    ) : (
-                      <span className="text-red-700">Incorrect ✗</span>
-                    )}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
 
-          <div className="mt-4">
-            <button
-              onClick={submit}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-            >
-              {submitting ? <Loader /> : <Save className="w-4 h-4" />}
-              Submit answers
-            </button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={sourceType}
+                      onChange={(e) => setSourceType(e.target.value as any)}
+                      className="border border-gray-200 rounded px-3 py-2"
+                    >
+                      <option value="topic">Topic</option>
+                      <option value="document">Document</option>
+                      <option value="website">Website</option>
+                    </select>
+                    <select
+                      value={sourceId}
+                      onChange={(e) => setSourceId(e.target.value)}
+                      className="flex-1 border border-gray-200 rounded px-3 py-2 max-w-[80vw]"
+                    >
+                      <option value="">Select source (optional)</option>
+                      {sourceOptions.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <input
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="Optional custom content to generate from"
+                      className="w-full border border-gray-200 rounded px-3 py-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!title.trim() || creating}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+                  >
+                    {creating ? <Loader /> : <Plus className="w-4 h-4" />}
+                    Create
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
-      
+
       <HelpButton helpConfig={helpConfigs.quizzes} />
     </div>
   );

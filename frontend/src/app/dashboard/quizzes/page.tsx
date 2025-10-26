@@ -159,7 +159,7 @@ export default function QuizzesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Quizzes</h1>
           <p className="text-gray-600">Generate and take quizzes to test your knowledge</p>

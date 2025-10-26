@@ -384,7 +384,7 @@ export default function TopicsPage() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Optional content (leave empty to auto-generate)"
-                className="hidden sm:block sm:col-span-2 w-full border border-gray-200 rounded px-3 py-2 min-h-[48px] max-h-40"
+                className="hidden sm:col-span-2 w-full border border-gray-200 rounded px-3 py-2 min-h-[48px] max-h-40"
                 rows={2}
               />
             </form>

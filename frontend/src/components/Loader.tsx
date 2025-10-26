@@ -4,6 +4,7 @@ type LoaderSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface LoaderProps {
   size?: LoaderSize;
+  color?: string;
 }
 
 const sizeMap: Record<LoaderSize, string> = {
@@ -14,7 +15,7 @@ const sizeMap: Record<LoaderSize, string> = {
   xl: '50',
 };
 
-const Loader = ({ size = 'md' }: LoaderProps) => {
+const Loader = ({ size = 'md', color = "#155dfc" }: LoaderProps) => {
   const dimension = sizeMap[size];
   
   return (
@@ -22,7 +23,7 @@ const Loader = ({ size = 'md' }: LoaderProps) => {
       height={dimension}
       width={dimension}
       radius={1}
-      color="#1F51FF"
+      color={color}
       ariaLabel="puff-loading"
       wrapperStyle={{}}
       wrapperClass=""

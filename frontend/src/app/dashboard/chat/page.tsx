@@ -223,7 +223,7 @@ export default function ChatPage() {
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
               aria-label="Send message"
             >
-              {sending ? <Loader size="xs" /> : <SendHorizontal className="w-4 h-4" />}
+              {sending ? <Loader size="xs" color="#FFFFFF" /> : <SendHorizontal className="w-4 h-4" />}
               <span className="hidden sm:inline">Send</span>
             </button>
           </form>

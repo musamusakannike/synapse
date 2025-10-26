@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import OptimisticLoader from "@/components/OptimisticLoader";
 
 type Message = {
   role: "user" | "assistant";
@@ -74,10 +75,17 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
 
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.2s]"></span>
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.1s]"></span>
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></span>
+    <div className="w-full">
+      <OptimisticLoader
+        messages={[
+          "Analyzing your document...",
+          "Searching for relevant information...",
+          "Generating a detailed response...",
+          "Processing your question...",
+          "Crafting the perfect answer...",
+        ]}
+        interval={2500}
+      />
     </div>
   );
 }

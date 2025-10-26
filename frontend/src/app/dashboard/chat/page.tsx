@@ -11,6 +11,7 @@ import {
   FileSearch,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import { useSearchParams } from "next/navigation";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
@@ -237,10 +238,17 @@ export default function ChatPage() {
 
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1">
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.2s]"></span>
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:-0.1s]"></span>
-      <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></span>
+    <div className="w-full">
+      <OptimisticLoader
+        messages={[
+          "Thinking about your question...",
+          "Analyzing the context...",
+          "Generating a thoughtful response...",
+          "Processing your request...",
+          "Crafting the perfect answer...",
+        ]}
+        interval={2500}
+      />
     </div>
   );
 }

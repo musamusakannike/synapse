@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 
 type Course = {
   _id: string;
@@ -363,8 +364,23 @@ export default function CoursesPage() {
                 </div>
               )}
 
-              {/* Course Content */}
-              {selected.status === "completed" && selected.content && selected.content.length > 0 && (
+              {/* Course Content or Loading State */}
+              {selected.status === "generating_outline" || selected.status === "generating_content" ? (
+                <div className="mt-6">
+                  <OptimisticLoader
+                    messages={[
+                      "Crafting your comprehensive course outline...",
+                      "Structuring the learning path for you...",
+                      "Generating detailed course content...",
+                      "Adding examples and explanations...",
+                      "Organizing sections and subsections...",
+                      "Almost ready with your personalized course...",
+                      "Fine-tuning the educational content...",
+                      "Building a structured learning experience...",
+                    ]}
+                  />
+                </div>
+              ) : selected.status === "completed" && selected.content && selected.content.length > 0 ? (
                 <div className="mt-6">
                   <h2 className="text-xl font-semibold mb-3">Course Content</h2>
                   <div className="space-y-6">
@@ -412,7 +428,7 @@ export default function CoursesPage() {
                     })}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               <div className="mt-6 flex items-center gap-2">
                 {selected.status === "completed" && (

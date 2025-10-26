@@ -10,6 +10,7 @@ import {
   Play,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
 
@@ -189,9 +190,14 @@ export default function QuizzesPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader size="md" />
-          </div>
+          <OptimisticLoader
+            messages={[
+              "Loading your quizzes...",
+              "Fetching quiz data...",
+              "Preparing your tests...",
+            ]}
+            interval={2500}
+          />
         ) : quizzes.length === 0 ? (
           <p className="text-gray-600">No quizzes yet. Create one above.</p>
         ) : (

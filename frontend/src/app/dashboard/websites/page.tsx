@@ -5,6 +5,7 @@ import Link from "next/link";
 import { WebsiteAPI } from "@/lib/api";
 import { Globe, Link2, RefreshCw, Trash2, RotateCcw } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
 
@@ -153,9 +154,14 @@ export default function WebsitesPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader size="md" />
-          </div>
+          <OptimisticLoader
+            messages={[
+              "Loading your websites...",
+              "Fetching saved content...",
+              "Preparing your library...",
+            ]}
+            interval={2500}
+          />
         ) : sites.length === 0 ? (
           <p className="text-gray-600">No websites yet. Add one above.</p>
         ) : (

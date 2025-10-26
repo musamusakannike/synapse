@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FlashcardAPI, TopicAPI, DocumentAPI, WebsiteAPI } from "@/lib/api";
 import { Plus, RefreshCw, Trash2, Play } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
 
@@ -302,9 +303,14 @@ export default function FlashcardsPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader size="md" />
-          </div>
+          <OptimisticLoader
+            messages={[
+              "Loading your flashcard sets...",
+              "Fetching study materials...",
+              "Preparing your learning tools...",
+            ]}
+            interval={2500}
+          />
         ) : flashcardSets.length === 0 ? (
           <p className="text-gray-600">No flashcard sets yet. Generate one above.</p>
         ) : (

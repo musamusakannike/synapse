@@ -22,7 +22,7 @@ const Loader = ({ size = 'md' }: LoaderProps) => {
       height={dimension}
       width={dimension}
       radius={1}
-      color="#155dfc"
+      color="#1F51FF"
       ariaLabel="puff-loading"
       wrapperStyle={{}}
       wrapperClass=""

@@ -10,6 +10,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import { useRouter } from "next/navigation";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
@@ -300,9 +301,16 @@ export default function WikipediaPage() {
                 </div>
 
                 {loadingDetail ? (
-                  <div className="flex items-center justify-center h-24">
-                    <Loader size="md" />
-                  </div>
+                  <OptimisticLoader
+                    messages={[
+                      "Fetching Wikipedia article...",
+                      "Loading comprehensive content...",
+                      "Gathering information for you...",
+                      "Processing article data...",
+                      "Almost there...",
+                    ]}
+                    interval={2500}
+                  />
                 ) : (
                   <>
                     {detail.extract && (

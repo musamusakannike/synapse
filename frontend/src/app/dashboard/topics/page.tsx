@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import Loader from "@/components/Loader";
+import OptimisticLoader from "@/components/OptimisticLoader";
 import HelpButton from "@/components/HelpButton";
 import TTSButton from "@/components/TTSButton";
 import { helpConfigs } from "@/config/helpConfigs";
@@ -288,11 +289,26 @@ export default function TopicsPage() {
                       {selected.description && (
                         <p className="text-sm text-gray-600 mt-1">{selected.description}</p>
                       )}
-                      <div className="mt-4 prose prose-sm sm:prose max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {selected.content || selected.generatedContent || ""}
-                        </ReactMarkdown>
-                      </div>
+                      {!selected.content && !selected.generatedContent ? (
+                        <div className="mt-4">
+                          <OptimisticLoader
+                            messages={[
+                              "Generating topic content...",
+                              "Researching the subject...",
+                              "Creating comprehensive explanations...",
+                              "Adding relevant examples...",
+                              "Structuring the information...",
+                            ]}
+                            interval={2500}
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-4 prose prose-sm sm:prose max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {selected.content || selected.generatedContent || ""}
+                          </ReactMarkdown>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 mt-3">
                         <TTSButton text={selected.content || selected.generatedContent || ""} />
                       </div>

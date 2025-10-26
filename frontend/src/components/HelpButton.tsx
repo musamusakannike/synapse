@@ -38,7 +38,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
         ${sizeClasses[size]}
         bg-blue-600 hover:bg-blue-700 
         text-white rounded-full shadow-lg 
-        hidden lg:flex items-center justify-center
+        flex items-center justify-center
         transition-all duration-200 
         hover:scale-110 hover:shadow-xl
         disabled:opacity-50 disabled:cursor-not-allowed
@@ -46,6 +46,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
         ${className}
       `}
       title="Get help with this page"
+      aria-label="Get help with this page"
     >
       <HelpCircle className={`${iconSizes[size]} group-hover:rotate-12 transition-transform`} />
     </button>

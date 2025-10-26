@@ -32,6 +32,10 @@ export const HelpSystem: React.FC = () => {
     }
 
     const calculatePosition = () => {
+      const bubbleWidth = 320; // max-w-sm = 384px, but we use 320 for safety
+      const bubbleHeight = 300; // estimated height
+      const padding = 20; // padding from viewport edges
+
       if (currentStep.targetSelector) {
         const targetElement = document.querySelector(currentStep.targetSelector);
         if (targetElement) {
@@ -60,10 +64,14 @@ export const HelpSystem: React.FC = () => {
               top = rect.top + scrollTop + rect.height / 2;
               left = rect.right + scrollLeft + 20;
               break;
+            case "center":
+              top = window.innerHeight / 2 + scrollTop;
+              left = window.innerWidth / 2 + scrollLeft;
+              break;
             default:
-              // Center position
-              top = rect.top + scrollTop + rect.height / 2;
-              left = rect.right + scrollLeft + 20;
+              // Default to bottom
+              top = rect.bottom + scrollTop + 20;
+              left = rect.left + scrollLeft + rect.width / 2;
           }
 
           // Apply custom offset
@@ -71,6 +79,23 @@ export const HelpSystem: React.FC = () => {
             top += currentStep.offset.y;
             left += currentStep.offset.x;
           }
+
+          // Boundary detection - ensure bubble stays within viewport
+          // Note: The bubble uses transform: translate(-50%, -50%), so we need to account for that
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          
+          // Check horizontal boundaries
+          const minLeft = padding + bubbleWidth / 2;
+          const maxLeft = viewportWidth - padding - bubbleWidth / 2 + scrollLeft;
+          if (left < minLeft) left = minLeft;
+          if (left > maxLeft) left = maxLeft;
+          
+          // Check vertical boundaries
+          const minTop = padding + bubbleHeight / 2 + scrollTop;
+          const maxTop = viewportHeight - padding - bubbleHeight / 2 + scrollTop;
+          if (top < minTop) top = minTop;
+          if (top > maxTop) top = maxTop;
 
           setPosition({ top, left });
           
@@ -83,9 +108,11 @@ export const HelpSystem: React.FC = () => {
         }
       } else {
         // Default center position
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
         setPosition({
-          top: window.innerHeight / 2 - 150,
-          left: window.innerWidth / 2 - 200,
+          top: window.innerHeight / 2 + scrollTop,
+          left: window.innerWidth / 2 + scrollLeft,
         });
       }
     };
@@ -141,7 +168,7 @@ export const HelpSystem: React.FC = () => {
       {/* Help Bubble */}
       <div
         ref={bubbleRef}
-        className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200 max-w-sm w-80 pointer-events-auto"
+        className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200 max-w-sm w-[90vw] sm:w-80 pointer-events-auto"
         style={{
           top: position.top,
           left: position.left,

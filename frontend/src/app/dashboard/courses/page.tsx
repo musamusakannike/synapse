@@ -77,14 +77,18 @@ export default function CoursesPage() {
 
   useEffect(() => {
     load();
+  }, []);
+
+  useEffect(() => {
     // Poll for updates every 5 seconds if any course is generating
+    const hasGenerating = courses.some(
+      (c) => c.status === "generating_outline" || c.status === "generating_content"
+    );
+    
+    if (!hasGenerating) return;
+
     const interval = setInterval(() => {
-      const hasGenerating = courses.some(
-        (c) => c.status === "generating_outline" || c.status === "generating_content"
-      );
-      if (hasGenerating) {
-        load();
-      }
+      load();
     }, 5000);
 
     return () => clearInterval(interval);

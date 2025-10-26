@@ -1,21 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { FlashcardAPI, TopicAPI, DocumentAPI, WebsiteAPI } from "@/lib/api";
-import {
-  BookOpen,
-  Plus,
-  RefreshCw,
-  Trash2,
-  Play,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  BarChart3,
-  Settings,
-} from "lucide-react";
+import { Plus, RefreshCw, Trash2, Play } from "lucide-react";
 import Loader from "@/components/Loader";
 import HelpButton from "@/components/HelpButton";
 import { helpConfigs } from "@/config/helpConfigs";
@@ -64,6 +52,7 @@ export default function FlashcardsPage() {
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
 
   // Form states
   const [title, setTitle] = useState("");
@@ -81,13 +70,7 @@ export default function FlashcardsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
 
-  // Study mode states
-  const [studyingId, setStudyingId] = useState<string | null>(null);
-  const [currentSet, setCurrentSet] = useState<FlashcardSetFull | null>(null);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showBack, setShowBack] = useState(false);
-  const [studyResults, setStudyResults] = useState<{ correct: number; total: number } | null>(null);
-  const [cardResults, setCardResults] = useState<boolean[]>([]);
+  // Study happens on a separate page now
 
   const load = async () => {
     try {
@@ -149,52 +132,13 @@ export default function FlashcardsPage() {
     }
   };
 
-  const startStudy = async (id: string) => {
-    try {
-      const { data } = await FlashcardAPI.get(id);
-      const set = data?.flashcardSet;
-      if (set) {
-        setCurrentSet(set);
-        setStudyingId(id);
-        setCurrentCardIndex(0);
-        setShowBack(false);
-        setStudyResults(null);
-        setCardResults([]);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const markCard = (correct: boolean) => {
-    if (!currentSet) return;
-    const newResults = [...cardResults];
-    newResults[currentCardIndex] = correct;
-    setCardResults(newResults);
-    
-    if (currentCardIndex < currentSet.flashcards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-      setShowBack(false);
-    } else {
-      // Study session complete
-      const correctCount = newResults.filter(r => r).length;
-      const score = Math.round((correctCount / newResults.length) * 100);
-      setStudyResults({ correct: correctCount, total: newResults.length });
-      
-      // Update study stats
-      FlashcardAPI.updateStudyStats(studyingId!, score).catch(console.error);
-    }
-  };
+  // Inline study logic removed
 
   const remove = async (id: string) => {
     if (!confirm("Delete this flashcard set?")) return;
     try {
       await FlashcardAPI.delete(id);
       setFlashcardSets(prev => prev.filter(f => f.id !== id));
-      if (studyingId === id) {
-        setStudyingId(null);
-        setCurrentSet(null);
-      }
     } catch (e) {
       console.error(e);
     }
@@ -206,115 +150,144 @@ export default function FlashcardsPage() {
     return sites.map(s => ({ value: s._id, label: s.title || s.url }));
   }, [sourceType, topics, docs, sites]);
 
-  const currentCard = currentSet?.flashcards[currentCardIndex];
+  // No currentCard on this page
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Flashcards</h1>
-        <p className="text-gray-600">Generate and study flashcards to improve retention</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Flashcards</h1>
+          <p className="text-gray-600">Generate and study flashcards to improve retention</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            <Plus className="w-4 h-4" /> Generate
+          </button>
+          <button onClick={load} className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50">
+            <RefreshCw className="w-4 h-4" /> Refresh
+          </button>
+        </div>
       </div>
 
-      {/* Generate Form */}
-      <form data-help="create-flashcards" onSubmit={generate} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Flashcard set title (required)"
-            className="w-full border border-gray-200 rounded px-3 py-2"
-          />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description"
-            className="w-full border border-gray-200 rounded px-3 py-2"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={numberOfCards}
-              onChange={(e) => setNumberOfCards(parseInt(e.target.value || "10"))}
-              className="border border-gray-200 rounded px-3 py-2"
-              placeholder="# Cards"
-            />
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className="border border-gray-200 rounded px-3 py-2"
-            >
-              <option value="mixed">Mixed</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+      {/* Generate Form (Modal) */}
+      {showGenerateModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowGenerateModal(false)} />
+          <div className="absolute inset-x-0 top-10 mx-auto max-w-3xl w-[92%] bg-white rounded-lg shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+              <h3 className="text-lg font-semibold">Generate Flashcards</h3>
+              <button onClick={() => setShowGenerateModal(false)} className="text-sm text-gray-600 hover:text-gray-900">Close</button>
+            </div>
+            <div className="p-5">
+              <form data-help="create-flashcards" onSubmit={generate} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Flashcard set title (required)"
+                    className="w-full border border-gray-200 rounded px-3 py-2"
+                  />
+                  <input
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Optional description"
+                    className="w-full border border-gray-200 rounded px-3 py-2"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={numberOfCards}
+                      onChange={(e) => setNumberOfCards(parseInt(e.target.value || "10"))}
+                      className="border border-gray-200 rounded px-3 py-2"
+                      placeholder="# Cards"
+                    />
+                    <select
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value)}
+                      className="border border-gray-200 rounded px-3 py-2"
+                    >
+                      <option value="mixed">Mixed</option>
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={sourceType}
+                      onChange={(e) => setSourceType(e.target.value as any)}
+                      className="border border-gray-200 rounded px-3 py-2"
+                    >
+                      <option value="topic">Topic</option>
+                      <option value="document">Document</option>
+                      <option value="website">Website</option>
+                      <option value="manual">Manual</option>
+                    </select>
+                    {sourceType !== "manual" && (
+                      <select
+                        value={sourceId}
+                        onChange={(e) => setSourceId(e.target.value)}
+                        className="flex-1 border border-gray-200 rounded px-3 py-2 max-w-[80vw]"
+                      >
+                        <option value="">Select source (optional)</option>
+                        {sourceOptions.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <input
+                    value={focusAreas}
+                    onChange={(e) => setFocusAreas(e.target.value)}
+                    placeholder="Focus areas (comma-separated)"
+                    className="w-full border border-gray-200 rounded px-3 py-2"
+                  />
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={includeDefinitions}
+                      onChange={(e) => setIncludeDefinitions(e.target.checked)}
+                    />
+                    Include definitions
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={includeExamples}
+                      onChange={(e) => setIncludeExamples(e.target.checked)}
+                    />
+                    Include examples
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-end gap-2">
+                  <button type="button" onClick={() => setShowGenerateModal(false)} className="px-4 py-2 rounded border border-gray-200 hover:bg-gray-50">Cancel</button>
+                  <button
+                    disabled={!title.trim() || generating}
+                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+                  >
+                    {generating ? <Loader /> : <Plus className="w-4 h-4" />}
+                    Generate
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={sourceType}
-              onChange={(e) => setSourceType(e.target.value as any)}
-              className="border border-gray-200 rounded px-3 py-2"
-            >
-              <option value="topic">Topic</option>
-              <option value="document">Document</option>
-              <option value="website">Website</option>
-              <option value="manual">Manual</option>
-            </select>
-            {sourceType !== "manual" && (
-              <select
-                value={sourceId}
-                onChange={(e) => setSourceId(e.target.value)}
-                className="flex-1 border border-gray-200 rounded px-3 py-2 max-w-[80vw]"
-              >
-                <option value="">Select source (optional)</option>
-                {sourceOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          <input
-            value={focusAreas}
-            onChange={(e) => setFocusAreas(e.target.value)}
-            placeholder="Focus areas (comma-separated)"
-            className="w-full border border-gray-200 rounded px-3 py-2"
-          />
-        </div>
-
-        <div className="flex items-center gap-4">
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={includeDefinitions}
-              onChange={(e) => setIncludeDefinitions(e.target.checked)}
-            />
-            Include definitions
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={includeExamples}
-              onChange={(e) => setIncludeExamples(e.target.checked)}
-            />
-            Include examples
-          </label>
-        </div>
-
-        <button
-          disabled={!title.trim() || generating}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {generating ? <Loader /> : <Plus className="w-4 h-4" />}
-          Generate Flashcards
-        </button>
-      </form>
+      )}
 
       {/* Flashcard Sets List */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
@@ -339,9 +312,7 @@ export default function FlashcardsPage() {
             {flashcardSets.map((set) => (
               <div
                 key={set.id}
-                className={`border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white ${
-                  studyingId === set.id ? "ring-2 ring-blue-200" : ""
-                }`}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow bg-white"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -368,12 +339,12 @@ export default function FlashcardsPage() {
                 </div>
 
                 <div className="mt-3 flex items-center gap-2">
-                  <button
-                    onClick={() => startStudy(set.id)}
+                  <Link
+                    href={`/dashboard/flashcards/${set.id}`}
                     className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                   >
                     <Play className="w-4 h-4" /> Study
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))}
@@ -381,156 +352,8 @@ export default function FlashcardsPage() {
         )}
       </div>
 
-      {/* Study Mode */}
-      {currentSet && (
-        <div data-help="study-mode" className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{currentSet.title}</h3>
-                <p className="text-sm text-gray-600">
-                  Card {currentCardIndex + 1} of {currentSet.flashcards.length}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setStudyingId(null);
-                setCurrentSet(null);
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ✕
-            </button>
-          </div>
+      {/* Completion popup removed; handled in study page */}
 
-          {studyResults ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="w-8 h-8 text-green-600" />
-              </div>
-              <h4 className="text-xl font-semibold text-gray-900 mb-2">Study Complete!</h4>
-              <p className="text-gray-600 mb-4">
-                You got {studyResults.correct} out of {studyResults.total} cards correct
-              </p>
-              <p className="text-2xl font-bold text-green-600 mb-6">
-                {Math.round((studyResults.correct / studyResults.total) * 100)}%
-              </p>
-              <button
-                onClick={() => {
-                  setCurrentCardIndex(0);
-                  setShowBack(false);
-                  setStudyResults(null);
-                  setCardResults([]);
-                }}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Study Again
-              </button>
-            </div>
-          ) : currentCard ? (
-            <div className="space-y-6">
-              {/* Progress bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${((currentCardIndex + 1) / currentSet.flashcards.length) * 100}%` }}
-                />
-              </div>
-
-              {/* Card */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 min-h-[200px] flex flex-col justify-center">
-                <div className="text-center">
-                  <p className="text-lg font-medium text-gray-900 mb-4">{currentCard.front}</p>
-                  {showBack && (
-                    <div className="border-t border-gray-300 pt-4">
-                      <p className="text-gray-700">{currentCard.back}</p>
-                      {currentCard.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3 justify-center">
-                          {currentCard.tags.map((tag, i) => (
-                            <span
-                              key={i}
-                              className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Controls */}
-              <div className="flex items-center justify-center gap-4">
-                {!showBack ? (
-                  <button
-                    onClick={() => setShowBack(true)}
-                    className="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Show Answer
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={() => markCard(false)}
-                      className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded"
-                    >
-                      Incorrect
-                    </button>
-                    <button
-                      onClick={() => markCard(true)}
-                      className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded"
-                    >
-                      Correct
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    if (currentCardIndex > 0) {
-                      setCurrentCardIndex(currentCardIndex - 1);
-                      setShowBack(false);
-                    }
-                  }}
-                  disabled={currentCardIndex === 0}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </button>
-                <span className="text-sm text-gray-500">
-                  {currentCardIndex + 1} / {currentSet.flashcards.length}
-                </span>
-                <button
-                  onClick={() => {
-                    if (currentCardIndex < currentSet.flashcards.length - 1) {
-                      setCurrentCardIndex(currentCardIndex + 1);
-                      setShowBack(false);
-                    }
-                  }}
-                  disabled={currentCardIndex === currentSet.flashcards.length - 1}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
-      
       <HelpButton helpConfig={helpConfigs.flashcards} />
     </div>
   );

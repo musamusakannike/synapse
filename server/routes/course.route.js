@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const courseController = require("../controllers/course.controller");
-const authMiddleware = require("../middlewares/auth.middleware");
+const { authenticate } = require("../middlewares/auth.middleware");
 
 // All routes require authentication
-router.use(authMiddleware);
+router.use(authenticate);
 
 // POST /api/courses - Create a new course
 router.post("/", courseController.createCourse);

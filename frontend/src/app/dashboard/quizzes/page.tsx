@@ -190,7 +190,7 @@ export default function QuizzesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader size="30" />
+            <Loader size="md" />
           </div>
         ) : quizzes.length === 0 ? (
           <p className="text-gray-600">No quizzes yet. Create one above.</p>
@@ -340,7 +340,7 @@ export default function QuizzesPage() {
                     disabled={!title.trim() || creating}
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
-                    {creating ? <Loader /> : <Plus className="w-4 h-4" />}
+                    {creating ? <Loader size="xs" /> : <Plus className="w-4 h-4" />}
                     Create
                   </button>
                 </div>

@@ -194,7 +194,7 @@ export default function WikipediaPage() {
           disabled={!query.trim() || loading}
           className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          {loading ? <Loader /> : <Search className="w-4 h-4" />}
+          {loading ? <Loader size="xs" /> : <Search className="w-4 h-4" />}
           Search
         </button>
       </form>
@@ -210,7 +210,7 @@ export default function WikipediaPage() {
           <div className="max-h-[520px] overflow-auto divide-y divide-gray-100">
             {loading ? (
               <div className="p-6 flex items-center justify-center">
-                <Loader size="25" />
+                <Loader size="sm" />
               </div>
             ) : results.length === 0 ? (
               <div className="p-6 text-gray-600">
@@ -301,7 +301,7 @@ export default function WikipediaPage() {
 
                 {loadingDetail ? (
                   <div className="flex items-center justify-center h-24">
-                    <Loader size="30" />
+                    <Loader size="md" />
                   </div>
                 ) : (
                   <>
@@ -331,7 +331,7 @@ export default function WikipediaPage() {
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
                         {importing ? (
-                          <Loader />
+                          <Loader size="xs" />
                         ) : (
                           <PlusCircle className="w-4 h-4" />
                         )}
@@ -343,7 +343,7 @@ export default function WikipediaPage() {
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
                         {creatingChat ? (
-                          <Loader />
+                          <Loader size="xs" />
                         ) : (
                           <MessageCircle className="w-4 h-4" />
                         )}
@@ -355,7 +355,7 @@ export default function WikipediaPage() {
                         className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                       >
                         {creatingQuiz ? (
-                          <Loader />
+                          <Loader size="xs" />
                         ) : (
                           <BookOpen className="w-4 h-4" />
                         )}

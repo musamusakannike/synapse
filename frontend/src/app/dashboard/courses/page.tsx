@@ -214,7 +214,7 @@ export default function CoursesPage() {
           className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
         />
         {loading ? (
-          <Loader />
+          <Loader size="sm" />
         ) : filtered.length === 0 ? (
           <p className="text-xs text-gray-500">No courses found.</p>
         ) : (
@@ -262,7 +262,7 @@ export default function CoursesPage() {
               </button>
             </div>
             {loading ? (
-              <Loader />
+              <Loader size="sm" />
             ) : filtered.length === 0 ? (
               <p className="text-xs text-gray-500">No courses found.</p>
             ) : (
@@ -498,7 +498,7 @@ export default function CoursesPage() {
                 disabled={!title.trim() || creating}
                 className="w-full inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
               >
-                {creating ? <Loader /> : <Plus className="w-4 h-4" />}
+                {creating ? <Loader size="xs" /> : <Plus className="w-4 h-4" />}
                 Generate Course
               </button>
             </form>

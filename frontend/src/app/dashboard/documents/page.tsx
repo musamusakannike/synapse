@@ -184,7 +184,7 @@ export default function DocumentsPage() {
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
         {loading ? (
-          <Loader />
+          <Loader size="sm" />
         ) : (
           <div className="space-y-2">
             {docs.length === 0 && (
@@ -238,7 +238,7 @@ export default function DocumentsPage() {
               <RefreshCw className="w-4 h-4" /> Refresh
             </button>
             {loading ? (
-              <Loader />
+              <Loader size="sm" />
             ) : (
               <div className="space-y-2">
                 {docs.length === 0 && (
@@ -326,7 +326,7 @@ export default function DocumentsPage() {
                 disabled={!file || uploading}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md disabled:opacity-50"
               >
-                {uploading ? <Loader /> : 'Upload'}
+                {uploading ? <Loader size="xs" /> : 'Upload'}
               </button>
               {file && (
                 <span className="hidden sm:inline text-xs text-gray-600 truncate max-w-[25%]" title={file.name}>
@@ -349,7 +349,7 @@ export default function DocumentsPage() {
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50"
                 aria-label="Send message"
               >
-                {sending ? <Loader /> : <SendHorizontal className="w-4 h-4" />}
+                {sending ? <Loader size="xs" /> : <SendHorizontal className="w-4 h-4" />}
                 <span className="hidden sm:inline">Send</span>
               </button>
             </form>

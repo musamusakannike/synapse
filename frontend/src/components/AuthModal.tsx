@@ -189,7 +189,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">
                     {oauthLoading ? (
                       <span className="flex items-center gap-2">
-                        <Loader size="18" />
+                        <Loader size="xs" />
                         Connecting...
                       </span>
                     ) : (
@@ -207,7 +207,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   <span className="font-medium text-gray-700 group-hover:text-gray-900">
                     {oauthLoading ? (
                       <span className="flex items-center gap-2">
-                        <Loader size="18" />
+                        <Loader size="xs" />
                         Connecting...
                       </span>
                     ) : (
@@ -304,7 +304,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 >
                   {sending ? (
                     <>
-                      <Loader size="18" />
+                      <Loader size="xs" />
                       Sending...
                     </>
                   ) : (
@@ -371,7 +371,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                   >
                     {sending ? (
                       <>
-                      <Loader size="18" />
+                      <Loader size="xs" />
                         Verifying...
                       </>
                     ) : (

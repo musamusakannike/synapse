@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Open_Sans } from "next/font/google";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -48,7 +49,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${openSans.className} antialiased`}>{children}</body>
+      <body className={`${openSans.className} antialiased`}>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { uiBus } from "@/lib/uiBus";
 
 // Base API URL
 // export const API_BASE_URL = "http://localhost:5000/api";
@@ -29,8 +30,49 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error?.response?.data?.message || error?.message || "Request failed";
+    const status = error?.response?.status as number | undefined;
+    const serverMessage = error?.response?.data?.message as string | undefined;
+    const message = serverMessage || error?.message || "Request failed";
+
+    // Handle expired/invalid token -> open auth modal and show toast once in a while
+    const tokenIssues = [401, 403].includes(status || 0);
+    const tokenMessageHints = [
+      "token",
+      "expired",
+      "unauthorized",
+      "invalid",
+      "authentication",
+    ];
+
+    // Simple rate limiter to avoid spamming modal/toast
+    const now = Date.now();
+    // @ts-ignore - augment on the api instance for simplicity
+    const lastPromptAt: number | undefined = api.__lastAuthPromptAt;
+    const shouldPrompt = !lastPromptAt || now - lastPromptAt > 10_000; // 10s window
+
+    if (tokenIssues && shouldPrompt) {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+        }
+      } catch {}
+
+      // Mark last time we prompted
+      // @ts-ignore
+      api.__lastAuthPromptAt = now;
+
+      // Show comprehensive toast
+      uiBus.emit("toast", {
+        type: "warning",
+        message:
+          "Your session has expired for security reasons. Please sign in again to continue. This helps protect your account and data.",
+        durationMs: 8000,
+      });
+
+      // Open Auth modal
+      uiBus.emit("open-auth-modal");
+    }
+
     return Promise.reject(new Error(message));
   }
 );

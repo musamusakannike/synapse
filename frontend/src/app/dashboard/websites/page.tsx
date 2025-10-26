@@ -133,7 +133,7 @@ export default function WebsitesPage() {
                     disabled={!url.trim() || creating}
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
-                    {creating ? <Loader /> : <Link2 className="w-4 h-4" />}
+                    {creating ? <Loader size="xs" /> : <Link2 className="w-4 h-4" />}
                     Add
                   </button>
                 </div>
@@ -154,7 +154,7 @@ export default function WebsitesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader size="30" />
+            <Loader size="md" />
           </div>
         ) : sites.length === 0 ? (
           <p className="text-gray-600">No websites yet. Add one above.</p>
@@ -221,7 +221,7 @@ export default function WebsitesPage() {
                     className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                   >
                     {actionId === s._id ? (
-                      <Loader />
+                      <Loader size="xs" />
                     ) : (
                       <RotateCcw className="w-4 h-4" />
                     )}

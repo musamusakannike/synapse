@@ -279,7 +279,7 @@ export default function FlashcardsPage() {
                     disabled={!title.trim() || generating}
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
                   >
-                    {generating ? <Loader /> : <Plus className="w-4 h-4" />}
+                    {generating ? <Loader size="xs" /> : <Plus className="w-4 h-4" />}
                     Generate
                   </button>
                 </div>
@@ -303,7 +303,7 @@ export default function FlashcardsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center h-32">
-            <Loader size="30" />
+            <Loader size="md" />
           </div>
         ) : flashcardSets.length === 0 ? (
           <p className="text-gray-600">No flashcard sets yet. Generate one above.</p>

@@ -98,7 +98,7 @@ export default function WebsiteDetailPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <Loader size="30" />
+          <Loader size="md" />
         </div>
       ) : !site ? (
         <p className="text-gray-600">Website not found.</p>

@@ -162,7 +162,7 @@ export default function TopicsPage() {
           className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
         />
         {loading ? (
-          <Loader />
+          <Loader size="sm" />
         ) : filtered.length === 0 ? (
           <p className="text-xs text-gray-500">No topics found.</p>
         ) : (
@@ -209,7 +209,7 @@ export default function TopicsPage() {
               </button>
             </div>
             {loading ? (
-              <Loader />
+              <Loader size="sm" />
             ) : filtered.length === 0 ? (
               <p className="text-xs text-gray-500">No topics found.</p>
             ) : (
@@ -308,7 +308,7 @@ export default function TopicsPage() {
                     disabled={actionId === selected._id}
                     className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                   >
-                    {actionId === selected._id ? <Loader /> : <Save className="w-4 h-4" />}
+                    {actionId === selected._id ? <Loader size="xs" /> : <Save className="w-4 h-4" />}
                     Save
                   </button>
                 ) : (
@@ -324,7 +324,7 @@ export default function TopicsPage() {
                   disabled={actionId === selected._id}
                   className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
                 >
-                  {actionId === selected._id ? <Loader /> : <RotateCcw className="w-4 h-4" />}
+                  {actionId === selected._id ? <Loader size="xs" /> : <RotateCcw className="w-4 h-4" />}
                   Regenerate
                 </button>
                 <button
@@ -361,7 +361,7 @@ export default function TopicsPage() {
                   disabled={!title.trim() || creating}
                   className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
                 >
-                  {creating ? <Loader /> : <Plus className="w-4 h-4" />}
+                  {creating ? <Loader size="xs" /> : <Plus className="w-4 h-4" />}
                   Create
                 </button>
               </div>

@@ -114,7 +114,7 @@ export default function StudyFlashcardsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <Loader size="30" />
+          <Loader size="md" />
         </div>
       ) : !setData ? (
         <p className="text-gray-600">Flashcard set not found.</p>

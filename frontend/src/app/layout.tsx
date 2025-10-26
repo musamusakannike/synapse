@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Open_Sans } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 
-const openSans = Open_Sans({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-open-sans",
-});
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-roboto",
+})
 
 export const metadata: Metadata = {
   title: "Synapse",
@@ -49,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${openSans.className} antialiased`}>
+      <body className={`${poppins.className} antialiased`}>
         <Providers>
           {children}
         </Providers>

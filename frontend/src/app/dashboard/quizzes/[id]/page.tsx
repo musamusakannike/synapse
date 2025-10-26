@@ -103,7 +103,7 @@ export default function TakeQuizPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
-          <Loader size="30" />
+          <Loader size="md" />
         </div>
       ) : !quiz ? (
         <p className="text-gray-600">Quiz not found.</p>

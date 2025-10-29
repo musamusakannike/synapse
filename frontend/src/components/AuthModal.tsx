@@ -222,14 +222,14 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
               )}
 
               {/* Divider */}
-              <div className="flex items-center gap-4 py-2">
+              {/* <div className="flex items-center gap-4 py-2">
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
                 <span className="text-sm text-gray-400 bg-white px-2">or</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-              </div>
+              </div> */}
 
               {/* Email Input */}
-              <div className="space-y-4">
+              {/* <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email address
@@ -270,7 +270,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                     Continue
                   </button>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
 

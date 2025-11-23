@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInRight } from 'react-native-reanimated';
@@ -23,6 +23,8 @@ interface ChatListItemProps {
     onFavorite?: () => void;
     onSelect?: () => void;
     index: number;
+    peekHintActive?: boolean;
+    onPeekHintComplete?: () => void;
 }
 
 const ChatListItem: React.FC<ChatListItemProps> = ({
@@ -40,10 +42,14 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
     onArchive,
     onFavorite,
     onSelect,
+    onPeekHintComplete,
     index,
+    peekHintActive,
 }) => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editedTitle, setEditedTitle] = useState(title);
+    const swipeableRef = useRef<Swipeable | null>(null);
+    const hasRunPeekRef = useRef(false);
 
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
@@ -67,6 +73,35 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
             setShowEditModal(false);
         }
     };
+
+    useEffect(() => {
+        if (!peekHintActive || hasRunPeekRef.current) {
+            return;
+        }
+
+        hasRunPeekRef.current = true;
+
+        let openTimeout: number | undefined;
+        let closeTimeout: number | undefined;
+
+        openTimeout = setTimeout(() => {
+            if (!swipeableRef.current) return;
+
+            swipeableRef.current.openRight();
+
+            closeTimeout = setTimeout(() => {
+                swipeableRef.current?.close();
+                if (onPeekHintComplete) {
+                    onPeekHintComplete();
+                }
+            }, 800);
+        }, 300);
+
+        return () => {
+            if (openTimeout) clearTimeout(openTimeout);
+            if (closeTimeout) clearTimeout(closeTimeout);
+        };
+    }, [peekHintActive, onPeekHintComplete]);
 
     const renderRightActions = () => (
         <View style={styles.actionsContainer}>
@@ -123,6 +158,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
         <>
             <Animated.View entering={FadeInRight.delay(index * 50)}>
                 <Swipeable
+                    ref={swipeableRef}
                     renderRightActions={renderRightActions}
                     enabled={!isSelectionMode}
                 >
@@ -234,8 +270,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         paddingVertical: 16,
         paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',

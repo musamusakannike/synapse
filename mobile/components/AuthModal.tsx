@@ -12,7 +12,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/botto
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from "expo-auth-session";
+
 import { AuthAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 
@@ -410,5 +410,7 @@ const styles = StyleSheet.create({
         fontFamily: "Outfit_400Regular",
     },
 });
+
+AuthModal.displayName = "AuthModal";
 
 export default AuthModal;

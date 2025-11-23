@@ -17,6 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ChatAPI } from '../lib/api';
 import ChatListItem from './ChatListItem';
+import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -192,12 +193,10 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                         value={searchQuery}
                         onChangeText={handleSearch}
                     />
+                    <TouchableOpacity onPress={handleCreateNewChat} style={styles.newChatButton}>
+                        <FontAwesome name="pencil-square-o" size={24} color="#333" />
+                    </TouchableOpacity>
                 </View>
-
-                {/* New Chat Button */}
-                <TouchableOpacity style={styles.newChatButton} onPress={handleCreateNewChat}>
-                    <Text style={styles.newChatButtonText}>+ New Chat</Text>
-                </TouchableOpacity>
 
                 {/* Chat List */}
                 <ScrollView
@@ -296,6 +295,9 @@ const styles = StyleSheet.create({
     searchContainer: {
         paddingHorizontal: 20,
         paddingVertical: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     searchInput: {
         backgroundColor: '#f0f4f9',
@@ -305,19 +307,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Outfit_400Regular',
         color: '#1f1f1f',
+        width: "90%"
     },
     newChatButton: {
-        marginHorizontal: 20,
-        marginBottom: 16,
-        backgroundColor: '#4285F4',
-        borderRadius: 24,
-        paddingVertical: 14,
+        padding: 14,
         alignItems: 'center',
-    },
-    newChatButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Outfit_500Medium',
+        justifyContent: 'center',
     },
     chatList: {
         flex: 1,

@@ -97,7 +97,7 @@ export default function AIInterface() {
       <View style={styles.bottomBar}>
         <View style={styles.inputContainer}>
           <View>
-            <TextInput placeholder='Ask Synapse' placeholderTextColor={"#666"} style={styles.input} lineBreakModeIOS='tail' numberOfLines={3} multiline={true} />
+            <TextInput placeholder='Ask Synapse' placeholderTextColor={"#666"} style={styles.input} numberOfLines={7} multiline={true} />
           </View>
           <View style={styles.inputButtons}>
             <TouchableOpacity style={styles.addButton}>
@@ -106,16 +106,6 @@ export default function AIInterface() {
 
             <TouchableOpacity style={styles.thinkingButton}>
               <Text style={styles.thinkingText}>Thinking</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.micButton}>
-              <Text style={styles.micIcon}>🎤</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.voiceButton}>
-              <View style={styles.voiceBar} />
-              <View style={[styles.voiceBar, styles.voiceBarTall]} />
-              <View style={styles.voiceBar} />
             </TouchableOpacity>
           </View>
         </View>
@@ -134,7 +124,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
     paddingBottom: 20,
   },
   menuButton: {
@@ -230,15 +219,13 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_400Regular',
     padding: 12,
     borderRadius: 28,
-    minHeight: 120
+    minHeight: 60
   },
   addButton: {
     width: 36,
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e1e5ea',
-    borderRadius: 18,
   },
   addButtonText: {
     color: '#444',
@@ -265,11 +252,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
   },
   thinkingText: {
     color: '#444',

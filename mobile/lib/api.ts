@@ -86,6 +86,8 @@ export const ChatAPI = {
     api.delete(`/chats/${chatId}`),
   getChatWithMessages: (chatId: string) => 
     api.get(`/chats/${chatId}`),
+  sendMessage: (chatId: string, content: string) => 
+    api.post(`/chats/${chatId}/message`, { content }),
   bulkDeleteChats: (chatIds: string[]) => 
     api.post("/chats/bulk-delete", { chatIds }),
   updateChatTitle: (chatId: string, title: string) => 

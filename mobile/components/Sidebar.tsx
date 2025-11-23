@@ -15,6 +15,7 @@ import Animated, {
     withTiming,
     runOnJS,
 } from 'react-native-reanimated';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChatAPI } from '../lib/api';
 import ChatListItem from './ChatListItem';
 import { FontAwesome } from '@expo/vector-icons';
@@ -57,6 +58,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     const [error, setError] = useState<string | null>(null);
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
+    const [shouldShowSwipeHint, setShouldShowSwipeHint] = useState(false);
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -74,6 +76,18 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         translateX.value = withTiming(0, { duration: 300 });
         backdropOpacity.value = withTiming(1, { duration: 300 });
         fetchChats();
+        (async () => {
+            try {
+                const value = await AsyncStorage.getItem('chat_swipe_hint_shown');
+                if (value === 'true') {
+                    setShouldShowSwipeHint(false);
+                } else {
+                    setShouldShowSwipeHint(true);
+                }
+            } catch (e) {
+                console.error('Error reading swipe hint flag', e);
+            }
+        })();
     };
 
     const close = () => {
@@ -519,6 +533,15 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                                 onFavorite={() => handleFavorite(chat.id, chat.isFavorite || false)}
                                 onSelect={() => handleSelect(chat.id)}
                                 index={index}
+                                peekHintActive={shouldShowSwipeHint && index === 0 && !selectionMode}
+                                onPeekHintComplete={index === 0 ? async () => {
+                                    setShouldShowSwipeHint(false);
+                                    try {
+                                        await AsyncStorage.setItem('chat_swipe_hint_shown', 'true');
+                                    } catch (e) {
+                                        console.error('Error saving swipe hint flag', e);
+                                    }
+                                } : undefined}
                             />
                         ))
                     )}

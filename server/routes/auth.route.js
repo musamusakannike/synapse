@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { sendVerificationCode, verifyCode, googleAuth, githubAuth } = require('../controllers/auth.controller');
+const { sendVerificationCode, verifyCode, googleAuth, googleOAuthWithToken, githubAuth } = require('../controllers/auth.controller');
 
 const router = express.Router();
 
@@ -34,6 +34,19 @@ router.post(
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
     return googleAuth(req, res);
+  }
+);
+
+router.post(
+  '/google-token',
+  [
+    body('accessToken').isString().withMessage('accessToken is required'),
+    body('userInfo').isObject().withMessage('userInfo is required')
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    return googleOAuthWithToken(req, res);
   }
 );
 

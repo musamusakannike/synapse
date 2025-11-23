@@ -115,6 +115,70 @@ module.exports = {
       return res.status(401).json({ message: 'Invalid Firebase token' });
     }
   },
+  // Handle Google OAuth with access token (for mobile expo-auth-session)
+  googleOAuthWithToken: async (req, res) => {
+    const { accessToken, userInfo } = req.body;
+    if (!accessToken || !userInfo) {
+      return res.status(400).json({ message: 'accessToken and userInfo are required' });
+    }
+
+    try {
+      // Verify the access token by fetching user info from Google
+      const response = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(401).json({ message: 'Invalid Google access token' });
+      }
+
+      const googleUser = await response.json();
+      
+      // Verify that the userInfo matches what Google returns
+      if (googleUser.id !== userInfo.id || googleUser.email !== userInfo.email) {
+        return res.status(401).json({ message: 'User info mismatch' });
+      }
+
+      const { id: googleId, email, name, picture, verified_email } = googleUser;
+
+      if (!email) {
+        return res.status(400).json({ message: 'Email not present in Google profile' });
+      }
+
+      // Find or create user
+      let user = await User.findOne({ $or: [{ googleId }, { email }] });
+      if (!user) {
+        user = new User({ email });
+      }
+
+      // Update fields from Google profile
+      user.googleId = googleId;
+      if (name) user.name = name;
+      if (picture) user.profilePicture = picture;
+      user.isEmailVerified = verified_email || true;
+      user.lastLogin = Date.now();
+      await user.save();
+
+      // Generate our JWT token
+      const payload = { id: user._id, email: user.email };
+      const token = jwt.sign(payload, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+      
+      return res.json({ 
+        accessToken: token,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          profilePicture: user.profilePicture
+        }
+      });
+    } catch (err) {
+      console.error('Google OAuth error:', err);
+      return res.status(500).json({ message: 'Server error during authentication' });
+    }
+  },
   // Verify Firebase ID token (GitHub) and issue our JWT
   githubAuth: async (req, res) => {
     const { idToken } = req.body;

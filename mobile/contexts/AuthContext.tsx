@@ -88,6 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     <AuthModal
                         ref={authModalRef}
                         onSuccess={handleAuthSuccess}
+                        onLogout={signOut}
+                        isAuthenticated={isAuthenticated}
                     />
                 </AuthContext.Provider>
             </BottomSheetModalProvider>

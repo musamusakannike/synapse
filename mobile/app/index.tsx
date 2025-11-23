@@ -38,7 +38,7 @@ const AnimatedButton = ({ children, delay, icon }: { children: string, delay: nu
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, openSidebar } = useAuth();
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -62,7 +62,7 @@ export default function AIInterface() {
 
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />
           <View style={styles.menuLine} />

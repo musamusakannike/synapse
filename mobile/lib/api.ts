@@ -67,6 +67,7 @@ export const AuthAPI = {
   requestCode: (email: string) => api.post("/auth", { email }),
   verifyCode: (email: string, code: string) => api.post("/auth/verify", { email, code }),
   googleSignIn: (idToken: string) => api.post("/auth/google", { idToken }),
+  googleSignInWithToken: (accessToken: string, userInfo: any) => api.post("/auth/google-token", { accessToken, userInfo }),
   githubSignIn: (idToken: string) => api.post("/auth/github", { idToken }),
 };
 

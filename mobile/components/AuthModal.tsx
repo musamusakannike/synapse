@@ -47,17 +47,10 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
         present: () => bottomSheetRef.current?.expand(),
         dismiss: () => bottomSheetRef.current?.close(),
     }));
-
-    const redirectUri = AuthSession.makeRedirectUri({
-        scheme: "synapse-ai",
-        path: "oauthredirect",
-    });
-
     // Log the redirect URI for debugging
-    React.useEffect(() => {
-        // AsyncStorage.clear();
-        console.log("OAuth Redirect URI:", redirectUri);
-    }, [redirectUri]);
+    useEffect(() => {
+        AsyncStorage.clear();
+    }, []);
 
     // Google Auth Request without proxy
     const [request, response, promptAsync] = Google.useAuthRequest({
@@ -65,6 +58,52 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
         androidClientId: "49669304081-0t0d28nmsbo77242eajsepk1pdv1htl5.apps.googleusercontent.com",
         iosClientId: "49669304081-djefs8u6in5p1nrd79fv3u1l1rma9efb.apps.googleusercontent.com",
     })
+
+    const getUserInfo = React.useCallback(async (token: string) => {
+        if (!token) {
+            return
+        }
+        try {
+            setSending(true);
+            const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            const user = await response.json();
+            await AsyncStorage.setItem("@user", JSON.stringify(user));
+            setUserInfo(user);
+
+            // Authenticate with our backend server
+            try {
+                const { data } = await AuthAPI.googleSignInWithToken(token, user);
+                const accessToken = data?.accessToken;
+
+                if (!accessToken) {
+                    throw new Error("Invalid server response");
+                }
+
+                // Store the JWT token securely
+                await SecureStore.setItemAsync("accessToken", accessToken);
+
+                // Call success callback and close modal
+                onSuccess?.();
+                bottomSheetRef.current?.close();
+
+                console.log("Authentication successful!");
+            } catch (authError: any) {
+                console.error("Backend authentication error:", authError);
+                setSocialError(authError?.message || "Authentication failed. Please try again.");
+            }
+
+            return user
+        } catch (error) {
+            console.log(error)
+            setSocialError("Failed to get user information. Please try again.");
+        } finally {
+            setSending(false);
+        }
+    }, [onSuccess]);
 
     const handleSignInWithGoogle = React.useCallback(async () => {
         try {
@@ -81,31 +120,11 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
         } catch (error) {
             console.log(error);
         }
-    }, [response]);
+    }, [response, getUserInfo]);
 
     useEffect(() => {
         handleSignInWithGoogle()
     }, [response, handleSignInWithGoogle])
-
-
-    const getUserInfo = async (token: string) => {
-        if (!token) {
-            return
-        }
-        try {
-            const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            const user = await response.json();
-            await AsyncStorage.setItem("@user", JSON.stringify(user));
-            setUserInfo(user);
-            return user
-        } catch (error) {
-            console.log(error)
-        }
-    }
 
 
     const handleGithub = async () => {

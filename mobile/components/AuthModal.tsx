@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
 import { AuthAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 
@@ -32,10 +33,17 @@ const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
     const [socialError, setSocialError] = useState("");
 
     // Google OAuth configuration using the web client ID from Firebase
-    // The format is: {messagingSenderId}-{randomString}.apps.googleusercontent.com
+    // For Expo Go, we use Expo's auth proxy since Google doesn't accept exp:// URLs
+    const redirectUri = "https://auth.expo.io/@musamusakannike/synapse-ai";
+
+    // Log the redirect URI for debugging
+    React.useEffect(() => {
+        console.log("OAuth Redirect URI:", redirectUri);
+    }, [redirectUri]);
+
     const [googleRequest, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
         clientId: "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
-        redirectUri: "https://auth.expo.io/@musamusakannike/synapse-ai",
+        redirectUri,
     });
 
     const handleGoogleSuccess = React.useCallback(async (idToken: string) => {
@@ -64,6 +72,7 @@ const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
             }
         } else if (googleResponse?.type === "error") {
             setSocialError("Google sign-in failed. Please try again.");
+            console.error("Google OAuth error:", googleResponse.error);
         }
     }, [googleResponse, handleGoogleSuccess]);
 

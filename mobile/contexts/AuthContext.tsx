@@ -2,11 +2,14 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AuthModal, { AuthModalRef } from "../components/AuthModal";
+import Sidebar, { SidebarRef } from "../components/Sidebar";
 import * as SecureStore from "expo-secure-store";
 
 type AuthContextShape = {
     openAuthModal: () => void;
     closeAuthModal: () => void;
+    openSidebar: () => void;
+    closeSidebar: () => void;
     signOut: () => Promise<void>;
     isAuthenticated: boolean;
     checkAuth: () => Promise<boolean>;
@@ -15,6 +18,8 @@ type AuthContextShape = {
 const AuthContext = createContext<AuthContextShape>({
     openAuthModal: () => { },
     closeAuthModal: () => { },
+    openSidebar: () => { },
+    closeSidebar: () => { },
     signOut: async () => { },
     isAuthenticated: false,
     checkAuth: async () => false,
@@ -24,11 +29,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const authModalRef = useRef<AuthModalRef>(null);
+    const sidebarRef = useRef<SidebarRef>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     const openAuthModal = () => authModalRef.current?.present();
     const closeAuthModal = () => authModalRef.current?.dismiss();
+    const openSidebar = () => sidebarRef.current?.open();
+    const closeSidebar = () => sidebarRef.current?.close();
 
     const checkAuth = async (): Promise<boolean> => {
         try {
@@ -82,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
                 <AuthContext.Provider
-                    value={{ openAuthModal, closeAuthModal, signOut, isAuthenticated, checkAuth }}
+                    value={{ openAuthModal, closeAuthModal, openSidebar, closeSidebar, signOut, isAuthenticated, checkAuth }}
                 >
                     {children}
                     <AuthModal
@@ -91,6 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         onLogout={signOut}
                         isAuthenticated={isAuthenticated}
                     />
+                    <Sidebar ref={sidebarRef} />
                 </AuthContext.Provider>
             </BottomSheetModalProvider>
         </GestureHandlerRootView>

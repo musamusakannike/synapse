@@ -76,4 +76,16 @@ export const UserAPI = {
   getCurrentUser: () => api.get("/users/me"),
 };
 
+// Chat endpoints
+export const ChatAPI = {
+  getUserChats: (page: number = 1, limit: number = 20) => 
+    api.get("/chats", { params: { page, limit } }),
+  createNewChat: (title?: string, type: string = "general", sourceId?: string) => 
+    api.post("/chats/new", { title, type, sourceId }),
+  deleteChat: (chatId: string) => 
+    api.delete(`/chats/${chatId}`),
+  getChatWithMessages: (chatId: string) => 
+    api.get(`/chats/${chatId}`),
+};
+
 export default api;

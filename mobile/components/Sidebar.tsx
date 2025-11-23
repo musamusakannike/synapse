@@ -30,6 +30,8 @@ interface Chat {
         timestamp: string;
     } | null;
     lastActivity: string;
+    isArchived?: boolean;
+    isFavorite?: boolean;
 }
 
 export interface SidebarRef {
@@ -41,13 +43,20 @@ interface SidebarProps {
     onChatSelect?: (chatId: string) => void;
 }
 
+type TabType = 'all' | 'favorites' | 'archived';
+
 const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<TabType>('all');
     const [chats, setChats] = useState<Chat[]>([]);
+    const [favoriteChats, setFavoriteChats] = useState<Chat[]>([]);
+    const [archivedChats, setArchivedChats] = useState<Chat[]>([]);
     const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
 
     const { isAuthenticated, openAuthModal } = useAuth();
 
@@ -71,6 +80,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         setTimeout(() => {
             runOnJS(setIsOpen)(false);
             runOnJS(setSearchQuery)('');
+            runOnJS(setSelectionMode)(false);
+            runOnJS(setSelectedChats)(new Set());
         }, 300);
     };
 
@@ -89,6 +100,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                 title: chat.title,
                 lastMessage: chat.lastMessage,
                 lastActivity: chat.lastActivity,
+                isArchived: chat.isArchived || false,
+                isFavorite: chat.isFavorite || false,
             }));
             setChats(chatData);
             setFilteredChats(chatData);
@@ -100,6 +113,65 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         }
     };
 
+    const fetchFavoriteChats = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await ChatAPI.getFavoriteChats(1, 50);
+            const chatData = response.data.chats.map((chat: any) => ({
+                id: chat.id,
+                title: chat.title,
+                lastMessage: chat.lastMessage,
+                lastActivity: chat.lastActivity,
+                isArchived: chat.isArchived || false,
+                isFavorite: chat.isFavorite || false,
+            }));
+            setFavoriteChats(chatData);
+        } catch (err: any) {
+            console.error('Error fetching favorite chats:', err);
+            setError(err.message || 'Failed to load favorite chats');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchArchivedChats = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await ChatAPI.getArchivedChats(1, 50);
+            const chatData = response.data.chats.map((chat: any) => ({
+                id: chat.id,
+                title: chat.title,
+                lastMessage: chat.lastMessage,
+                lastActivity: chat.lastActivity,
+                isArchived: chat.isArchived || false,
+                isFavorite: chat.isFavorite || false,
+            }));
+            setArchivedChats(chatData);
+        } catch (err: any) {
+            console.error('Error fetching archived chats:', err);
+            setError(err.message || 'Failed to load archived chats');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        setSearchQuery('');
+        setSelectionMode(false);
+        setSelectedChats(new Set());
+
+        if (tab === 'favorites') {
+            fetchFavoriteChats();
+        } else if (tab === 'archived') {
+            fetchArchivedChats();
+        } else {
+            fetchChats();
+        }
+    };
+
     const handleCreateNewChat = async () => {
         try {
             const response = await ChatAPI.createNewChat('New Chat', 'general');
@@ -108,6 +180,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                 title: response.data.chat.title,
                 lastMessage: null,
                 lastActivity: response.data.chat.createdAt,
+                isArchived: false,
+                isFavorite: false,
             };
             setChats([newChat, ...chats]);
             setFilteredChats([newChat, ...filteredChats]);
@@ -124,22 +198,104 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     const handleDeleteChat = async (chatId: string) => {
         try {
             await ChatAPI.deleteChat(chatId);
-            const updatedChats = chats.filter(chat => chat.id !== chatId);
-            setChats(updatedChats);
-            setFilteredChats(updatedChats.filter(chat =>
-                chat.title.toLowerCase().includes(searchQuery.toLowerCase())
-            ));
+            updateChatLists(chatId, 'delete');
         } catch (err: any) {
             console.error('Error deleting chat:', err);
         }
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedChats.size === 0) return;
+
+        try {
+            const chatIds = Array.from(selectedChats);
+            await ChatAPI.bulkDeleteChats(chatIds);
+
+            chatIds.forEach(chatId => updateChatLists(chatId, 'delete'));
+
+            setSelectionMode(false);
+            setSelectedChats(new Set());
+        } catch (err: any) {
+            console.error('Error bulk deleting chats:', err);
+        }
+    };
+
+    const handleEditTitle = async (chatId: string, newTitle: string) => {
+        try {
+            await ChatAPI.updateChatTitle(chatId, newTitle);
+            updateChatLists(chatId, 'update', { title: newTitle });
+        } catch (err: any) {
+            console.error('Error updating chat title:', err);
+        }
+    };
+
+    const handleArchive = async (chatId: string, isCurrentlyArchived: boolean) => {
+        try {
+            if (isCurrentlyArchived) {
+                await ChatAPI.unarchiveChat(chatId);
+                updateChatLists(chatId, 'update', { isArchived: false });
+            } else {
+                await ChatAPI.archiveChat(chatId);
+                updateChatLists(chatId, 'update', { isArchived: true });
+            }
+
+            // Refresh the current tab
+            if (activeTab === 'archived') {
+                fetchArchivedChats();
+            } else {
+                fetchChats();
+            }
+        } catch (err: any) {
+            console.error('Error archiving chat:', err);
+        }
+    };
+
+    const handleFavorite = async (chatId: string, isCurrentlyFavorite: boolean) => {
+        try {
+            if (isCurrentlyFavorite) {
+                await ChatAPI.unfavoriteChat(chatId);
+                updateChatLists(chatId, 'update', { isFavorite: false });
+            } else {
+                await ChatAPI.favoriteChat(chatId);
+                updateChatLists(chatId, 'update', { isFavorite: true });
+            }
+
+            // Refresh the current tab
+            if (activeTab === 'favorites') {
+                fetchFavoriteChats();
+            }
+        } catch (err: any) {
+            console.error('Error favoriting chat:', err);
+        }
+    };
+
+    const updateChatLists = (chatId: string, action: 'delete' | 'update', updates?: Partial<Chat>) => {
+        const updateList = (list: Chat[]) => {
+            if (action === 'delete') {
+                return list.filter(chat => chat.id !== chatId);
+            } else if (action === 'update' && updates) {
+                return list.map(chat =>
+                    chat.id === chatId ? { ...chat, ...updates } : chat
+                );
+            }
+            return list;
+        };
+
+        setChats(prev => updateList(prev));
+        setFilteredChats(prev => updateList(prev));
+        setFavoriteChats(prev => updateList(prev));
+        setArchivedChats(prev => updateList(prev));
+    };
+
     const handleSearch = (query: string) => {
         setSearchQuery(query);
+        const currentList = activeTab === 'favorites' ? favoriteChats :
+            activeTab === 'archived' ? archivedChats : chats;
+
         if (query.trim() === '') {
-            setFilteredChats(chats);
+            setFilteredChats(currentList);
         } else {
-            const filtered = chats.filter(chat =>
+            const filtered = currentList.filter(chat =>
                 chat.title.toLowerCase().includes(query.toLowerCase())
             );
             setFilteredChats(filtered);
@@ -153,6 +309,42 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         close();
     };
 
+    const handleLongPress = (chatId: string) => {
+        setSelectionMode(true);
+        setSelectedChats(new Set([chatId]));
+    };
+
+    const handleSelect = (chatId: string) => {
+        setSelectedChats(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(chatId)) {
+                newSet.delete(chatId);
+            } else {
+                newSet.add(chatId);
+            }
+            return newSet;
+        });
+    };
+
+    const exitSelectionMode = () => {
+        setSelectionMode(false);
+        setSelectedChats(new Set());
+    };
+
+    const getCurrentChats = () => {
+        if (activeTab === 'favorites') return favoriteChats;
+        if (activeTab === 'archived') return archivedChats;
+        return chats;
+    };
+
+    const getDisplayChats = () => {
+        const currentChats = getCurrentChats();
+        if (searchQuery.trim() === '') {
+            return currentChats;
+        }
+        return filteredChats;
+    };
+
     const sidebarStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],
     }));
@@ -162,6 +354,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     }));
 
     if (!isOpen) return null;
+
+    const displayChats = getDisplayChats();
 
     return (
         <>
@@ -184,18 +378,71 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                     </TouchableOpacity>
                 </View>
 
-                {/* Search */}
-                <View style={styles.searchContainer}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search chats..."
-                        placeholderTextColor="#999"
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                    />
-                    <TouchableOpacity onPress={handleCreateNewChat} style={styles.newChatButton}>
-                        <FontAwesome name="pencil-square-o" size={24} color="#333" />
+                {/* Tabs */}
+                <View style={styles.tabsContainer}>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'all' && styles.tabActive]}
+                        onPress={() => handleTabChange('all')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
+                            All Chats
+                        </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'favorites' && styles.tabActive]}
+                        onPress={() => handleTabChange('favorites')}
+                    >
+                        <FontAwesome
+                            name="star"
+                            size={14}
+                            color={activeTab === 'favorites' ? '#4285F4' : '#999'}
+                            style={styles.tabIcon}
+                        />
+                        <Text style={[styles.tabText, activeTab === 'favorites' && styles.tabTextActive]}>
+                            Favorites
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tab, activeTab === 'archived' && styles.tabActive]}
+                        onPress={() => handleTabChange('archived')}
+                    >
+                        <FontAwesome
+                            name="archive"
+                            size={14}
+                            color={activeTab === 'archived' ? '#4285F4' : '#999'}
+                            style={styles.tabIcon}
+                        />
+                        <Text style={[styles.tabText, activeTab === 'archived' && styles.tabTextActive]}>
+                            Archived
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Search and Actions */}
+                <View style={styles.searchContainer}>
+                    {selectionMode ? (
+                        <View style={styles.selectionHeader}>
+                            <TouchableOpacity onPress={exitSelectionMode}>
+                                <Text style={styles.selectionCancel}>Cancel</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.selectionCount}>
+                                {selectedChats.size} selected
+                            </Text>
+                        </View>
+                    ) : (
+                        <>
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Search chats..."
+                                placeholderTextColor="#999"
+                                value={searchQuery}
+                                onChangeText={handleSearch}
+                            />
+                            <TouchableOpacity onPress={handleCreateNewChat} style={styles.newChatButton}>
+                                <FontAwesome name="pencil-square-o" size={24} color="#333" />
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
 
                 {/* Chat List */}
@@ -214,31 +461,56 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                                 <Text style={styles.retryButtonText}>Retry</Text>
                             </TouchableOpacity>
                         </View>
-                    ) : filteredChats.length === 0 ? (
+                    ) : displayChats.length === 0 ? (
                         <View style={styles.centerContainer}>
                             <Text style={styles.emptyText}>
-                                {searchQuery ? 'No chats found' : 'No chats yet'}
+                                {searchQuery ? 'No chats found' :
+                                    activeTab === 'favorites' ? 'No favorite chats' :
+                                        activeTab === 'archived' ? 'No archived chats' : 'No chats yet'}
                             </Text>
-                            {!searchQuery && (
+                            {!searchQuery && activeTab === 'all' && (
                                 <Text style={styles.emptySubtext}>
                                     Create a new chat to get started
                                 </Text>
                             )}
                         </View>
                     ) : (
-                        filteredChats.map((chat, index) => (
+                        displayChats.map((chat, index) => (
                             <ChatListItem
                                 key={chat.id}
                                 id={chat.id}
                                 title={chat.title}
                                 lastMessage={chat.lastMessage}
+                                isArchived={chat.isArchived}
+                                isFavorite={chat.isFavorite}
+                                isSelectionMode={selectionMode}
+                                isSelected={selectedChats.has(chat.id)}
                                 onPress={() => handleChatPress(chat.id)}
                                 onDelete={() => handleDeleteChat(chat.id)}
+                                onEdit={(newTitle) => handleEditTitle(chat.id, newTitle)}
+                                onArchive={() => handleArchive(chat.id, chat.isArchived || false)}
+                                onFavorite={() => handleFavorite(chat.id, chat.isFavorite || false)}
+                                onSelect={() => handleSelect(chat.id)}
                                 index={index}
                             />
                         ))
                     )}
                 </ScrollView>
+
+                {/* Bulk Delete Button */}
+                {selectionMode && selectedChats.size > 0 && (
+                    <View style={styles.bulkActionContainer}>
+                        <TouchableOpacity
+                            style={styles.bulkDeleteButton}
+                            onPress={handleBulkDelete}
+                        >
+                            <FontAwesome name="trash" size={20} color="#fff" />
+                            <Text style={styles.bulkDeleteText}>
+                                Delete {selectedChats.size} chat{selectedChats.size > 1 ? 's' : ''}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
             </Animated.View>
         </>
     );
@@ -292,12 +564,59 @@ const styles = StyleSheet.create({
         color: '#666',
         fontWeight: '300',
     },
+    tabsContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        borderBottomWidth: 2,
+        borderBottomColor: 'transparent',
+    },
+    tabActive: {
+        borderBottomColor: '#4285F4',
+    },
+    tabIcon: {
+        marginRight: 4,
+    },
+    tabText: {
+        fontSize: 14,
+        fontFamily: 'Outfit_400Regular',
+        color: '#999',
+    },
+    tabTextActive: {
+        fontFamily: 'Outfit_500Medium',
+        color: '#4285F4',
+    },
     searchContainer: {
         paddingHorizontal: 20,
         paddingVertical: 16,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+    },
+    selectionHeader: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    selectionCancel: {
+        fontSize: 16,
+        fontFamily: 'Outfit_500Medium',
+        color: '#4285F4',
+    },
+    selectionCount: {
+        fontSize: 16,
+        fontFamily: 'Outfit_500Medium',
+        color: '#1f1f1f',
     },
     searchInput: {
         backgroundColor: '#f0f4f9',
@@ -354,6 +673,26 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 14,
         fontFamily: 'Outfit_500Medium',
+    },
+    bulkActionContainer: {
+        padding: 20,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        backgroundColor: '#fff',
+    },
+    bulkDeleteButton: {
+        backgroundColor: '#ff3b30',
+        borderRadius: 12,
+        paddingVertical: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bulkDeleteText: {
+        color: '#fff',
+        fontSize: 16,
+        fontFamily: 'Outfit_500Medium',
+        marginLeft: 8,
     },
 });
 

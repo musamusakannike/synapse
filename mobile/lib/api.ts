@@ -86,6 +86,22 @@ export const ChatAPI = {
     api.delete(`/chats/${chatId}`),
   getChatWithMessages: (chatId: string) => 
     api.get(`/chats/${chatId}`),
+  bulkDeleteChats: (chatIds: string[]) => 
+    api.post("/chats/bulk-delete", { chatIds }),
+  updateChatTitle: (chatId: string, title: string) => 
+    api.put(`/chats/${chatId}/title`, { title }),
+  archiveChat: (chatId: string) => 
+    api.put(`/chats/${chatId}/archive`),
+  unarchiveChat: (chatId: string) => 
+    api.put(`/chats/${chatId}/unarchive`),
+  getArchivedChats: (page: number = 1, limit: number = 20) => 
+    api.get("/chats/archived", { params: { page, limit } }),
+  favoriteChat: (chatId: string) => 
+    api.put(`/chats/${chatId}/favorite`),
+  unfavoriteChat: (chatId: string) => 
+    api.put(`/chats/${chatId}/unfavorite`),
+  getFavoriteChats: (page: number = 1, limit: number = 20) => 
+    api.get("/chats/favorites", { params: { page, limit } }),
 };
 
 export default api;

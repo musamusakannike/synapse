@@ -1,4 +1,4 @@
-import React, { useState, useMemo, forwardRef, useImperativeHandle } from "react";
+import React, { useState, useMemo, forwardRef, useImperativeHandle, useEffect } from "react";
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import * as Google from "expo-auth-session/providers/google";
 import * as AuthSession from "expo-auth-session";
 import { AuthAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // This is required for expo-auth-session to work properly
 WebBrowser.maybeCompleteAuthSession();
@@ -36,6 +37,7 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
     const [sending, setSending] = useState(false);
     const [codeError, setCodeError] = useState("");
     const [socialError, setSocialError] = useState("");
+    const [userInfo, setUserInfo] = useState({});
 
     // Snap points for the bottom sheet
     const snapPoints = useMemo(() => ["30%", "45%"], []);
@@ -53,60 +55,58 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
 
     // Log the redirect URI for debugging
     React.useEffect(() => {
+        // AsyncStorage.clear();
         console.log("OAuth Redirect URI:", redirectUri);
     }, [redirectUri]);
 
     // Google Auth Request without proxy
-    const [googleRequest, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
-        useProxy: false,
-        redirectUri,
+    const [request, response, promptAsync] = Google.useAuthRequest({
         clientId: "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com", // Web ID
         androidClientId: "49669304081-0t0d28nmsbo77242eajsepk1pdv1htl5.apps.googleusercontent.com",
         iosClientId: "49669304081-djefs8u6in5p1nrd79fv3u1l1rma9efb.apps.googleusercontent.com",
-    });
+    })
 
-    const handleGoogleSuccess = React.useCallback(async (idToken: string) => {
+    const handleSignInWithGoogle = React.useCallback(async () => {
         try {
-            setSocialError("");
-            setSending(true);
-            const { data } = await AuthAPI.googleSignIn(idToken);
-            const token = data?.accessToken;
-            if (!token) throw new Error("Invalid server response");
-            await SecureStore.setItemAsync("accessToken", token);
-            onSuccess?.();
-            bottomSheetRef.current?.close();
-        } catch (err: any) {
-            setSocialError(err?.message || "Google sign-in failed");
-        } finally {
-            setSending(false);
-        }
-    }, [onSuccess]);
-
-    // Handle Google OAuth response
-    // Handle OAuth Response
-    React.useEffect(() => {
-        if (googleResponse?.type === "success") {
-            const { id_token } = googleResponse.params;
-            if (id_token) {
-                handleGoogleSuccess(id_token);
+            const user = await AsyncStorage.getItem("@user");
+            if (!user) {
+                if (response?.type === "success") {
+                    console.log("ACCESS TOKEN: ", response?.authentication?.accessToken);
+                    await getUserInfo(response?.authentication?.accessToken || "");
+                }
             } else {
-                setSocialError("No ID token returned from Google.");
+                setUserInfo(JSON.parse(user));
+                console.log("USER INFO: ", JSON.parse(user));
             }
-        } else if (googleResponse?.type === "error") {
-            setSocialError("Google sign-in failed. Please try again.");
-            console.error("Google OAuth error:", googleResponse.error);
+        } catch (error) {
+            console.log(error);
         }
-    }, [googleResponse]);
+    }, [response]);
 
-    // Handle Button Press
-    const handleGoogle = async () => {
-        try {
-            setSocialError("");
-            await googlePromptAsync(); // opens Google Auth screen
-        } catch (err: any) {
-            setSocialError(err?.message || "Failed to open Google Sign-In");
+    useEffect(() => {
+        handleSignInWithGoogle()
+    }, [response, handleSignInWithGoogle])
+
+
+    const getUserInfo = async (token: string) => {
+        if (!token) {
+            return
         }
-    };
+        try {
+            const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            const user = await response.json();
+            await AsyncStorage.setItem("@user", JSON.stringify(user));
+            setUserInfo(user);
+            return user
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 
     const handleGithub = async () => {
         setSocialError("GitHub authentication is not yet configured for mobile. Please use Google sign-in.");
@@ -173,13 +173,12 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
                             <Text style={styles.subtitle}>
                                 Sign in or create an account to continue
                             </Text>
+                            <Text>USER INFO: {JSON.stringify(userInfo)}</Text>
 
                             {/* Social Auth Buttons */}
                             <View style={styles.buttonsContainer}>
                                 <TouchableOpacity
-                                    onPress={handleGoogle}
-                                    disabled={!googleRequest || sending}
-                                    style={[styles.socialButton, (!googleRequest || sending) && styles.buttonDisabled]}
+                                    onPress={() => promptAsync()}
                                 >
                                     <Text style={styles.googleIcon}>G</Text>
                                     <Text style={styles.socialButtonText}>

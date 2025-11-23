@@ -508,7 +508,6 @@ const styles = StyleSheet.create({
   },
   messageWrapper: {
     marginBottom: 16,
-    paddingHorizontal: 16,
   },
   userMessageWrapper: {
     alignItems: "flex-end",

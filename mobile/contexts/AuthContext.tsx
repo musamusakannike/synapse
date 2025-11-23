@@ -13,6 +13,8 @@ type AuthContextShape = {
     signOut: () => Promise<void>;
     isAuthenticated: boolean;
     checkAuth: () => Promise<boolean>;
+    onChatSelect?: (chatId: string) => void;
+    setOnChatSelect: (callback: (chatId: string) => void) => void;
 };
 
 const AuthContext = createContext<AuthContextShape>({
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextShape>({
     signOut: async () => { },
     isAuthenticated: false,
     checkAuth: async () => false,
+    setOnChatSelect: () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -32,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const sidebarRef = useRef<SidebarRef>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [onChatSelect, setOnChatSelect] = useState<((chatId: string) => void) | undefined>();
 
     const openAuthModal = () => authModalRef.current?.present();
     const closeAuthModal = () => authModalRef.current?.dismiss();
@@ -86,11 +90,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return null;
     }
 
+    const handleChatSelect = (chatId: string) => {
+        if (onChatSelect) {
+            onChatSelect(chatId);
+        }
+    };
+
+    const updateOnChatSelect = (callback: (chatId: string) => void) => {
+        setOnChatSelect(() => callback);
+    };
+
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <BottomSheetModalProvider>
                 <AuthContext.Provider
-                    value={{ openAuthModal, closeAuthModal, openSidebar, closeSidebar, signOut, isAuthenticated, checkAuth }}
+                    value={{ 
+                        openAuthModal, 
+                        closeAuthModal, 
+                        openSidebar, 
+                        closeSidebar, 
+                        signOut, 
+                        isAuthenticated, 
+                        checkAuth,
+                        onChatSelect,
+                        setOnChatSelect: updateOnChatSelect
+                    }}
                 >
                     {children}
                     <AuthModal
@@ -99,7 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         onLogout={signOut}
                         isAuthenticated={isAuthenticated}
                     />
-                    <Sidebar ref={sidebarRef} />
+                    <Sidebar ref={sidebarRef} onChatSelect={handleChatSelect} />
                 </AuthContext.Provider>
             </BottomSheetModalProvider>
         </GestureHandlerRootView>

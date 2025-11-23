@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
 } from "react-native";
+import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedStyle,
@@ -259,16 +260,24 @@ export default function AIInterface() {
                         : styles.assistantMessage,
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.messageText,
-                        message.role === "user"
-                          ? styles.userMessageText
-                          : styles.assistantMessageText,
-                      ]}
-                    >
-                      {message.content}
-                    </Text>
+                    {message.role === "user" ? (
+                      <Text
+                        style={[
+                          styles.messageText,
+                          styles.userMessageText,
+                        ]}
+                      >
+                        {message.content}
+                      </Text>
+                    ) : (
+                      <Markdown
+                        style={{
+                          body: [styles.messageText, styles.assistantMessageText],
+                        }}
+                      >
+                        {message.content}
+                      </Markdown>
+                    )}
                   </View>
                 </View>
               ))}

@@ -58,6 +58,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedChats, setSelectedChats] = useState<Set<string>>(new Set());
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     const { isAuthenticated, openAuthModal } = useAuth();
 
     const translateX = useSharedValue(-SCREEN_WIDTH);
@@ -82,6 +84,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
             runOnJS(setSearchQuery)('');
             runOnJS(setSelectionMode)(false);
             runOnJS(setSelectedChats)(new Set());
+            runOnJS(setShowDeleteConfirm)(false);
         }, 300);
     };
 
@@ -162,6 +165,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         setSearchQuery('');
         setSelectionMode(false);
         setSelectedChats(new Set());
+        setShowDeleteConfirm(false);
 
         if (tab === 'favorites') {
             fetchFavoriteChats();
@@ -204,7 +208,13 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         }
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDeletePress = () => {
+        if (selectedChats.size > 0) {
+            setShowDeleteConfirm(true);
+        }
+    };
+
+    const confirmBulkDelete = async () => {
         if (selectedChats.size === 0) return;
 
         try {
@@ -215,6 +225,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
 
             setSelectionMode(false);
             setSelectedChats(new Set());
+            setShowDeleteConfirm(false);
         } catch (err: any) {
             console.error('Error bulk deleting chats:', err);
         }
@@ -303,15 +314,23 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     };
 
     const handleChatPress = (chatId: string) => {
-        if (onChatSelect) {
-            onChatSelect(chatId);
+        if (selectionMode) {
+            handleSelect(chatId);
+        } else {
+            if (onChatSelect) {
+                onChatSelect(chatId);
+            }
+            close();
         }
-        close();
     };
 
     const handleLongPress = (chatId: string) => {
-        setSelectionMode(true);
-        setSelectedChats(new Set([chatId]));
+        if (!selectionMode) {
+            setSelectionMode(true);
+            setSelectedChats(new Set([chatId]));
+        } else {
+            handleSelect(chatId);
+        }
     };
 
     const handleSelect = (chatId: string) => {
@@ -322,6 +341,12 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
             } else {
                 newSet.add(chatId);
             }
+
+            // If no items selected, exit selection mode
+            if (newSet.size === 0) {
+                setSelectionMode(false);
+            }
+
             return newSet;
         });
     };
@@ -329,6 +354,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     const exitSelectionMode = () => {
         setSelectionMode(false);
         setSelectedChats(new Set());
+        setShowDeleteConfirm(false);
     };
 
     const getCurrentChats = () => {
@@ -486,6 +512,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                                 isSelectionMode={selectionMode}
                                 isSelected={selectedChats.has(chat.id)}
                                 onPress={() => handleChatPress(chat.id)}
+                                onLongPress={() => handleLongPress(chat.id)}
                                 onDelete={() => handleDeleteChat(chat.id)}
                                 onEdit={(newTitle) => handleEditTitle(chat.id, newTitle)}
                                 onArchive={() => handleArchive(chat.id, chat.isArchived || false)}
@@ -502,13 +529,41 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                     <View style={styles.bulkActionContainer}>
                         <TouchableOpacity
                             style={styles.bulkDeleteButton}
-                            onPress={handleBulkDelete}
+                            onPress={handleBulkDeletePress}
                         >
                             <FontAwesome name="trash" size={20} color="#fff" />
                             <Text style={styles.bulkDeleteText}>
                                 Delete {selectedChats.size} chat{selectedChats.size > 1 ? 's' : ''}
                             </Text>
                         </TouchableOpacity>
+                    </View>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && (
+                    <View style={styles.confirmOverlay}>
+                        <View style={styles.confirmSheet}>
+                            <View style={styles.confirmHeader}>
+                                <Text style={styles.confirmTitle}>Delete Chats?</Text>
+                                <Text style={styles.confirmMessage}>
+                                    Are you sure you want to delete {selectedChats.size} selected chat{selectedChats.size > 1 ? 's' : ''}? This action cannot be undone.
+                                </Text>
+                            </View>
+                            <View style={styles.confirmActions}>
+                                <TouchableOpacity
+                                    style={styles.cancelButton}
+                                    onPress={() => setShowDeleteConfirm(false)}
+                                >
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.deleteConfirmButton}
+                                    onPress={confirmBulkDelete}
+                                >
+                                    <Text style={styles.deleteConfirmText}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                     </View>
                 )}
             </Animated.View>
@@ -693,6 +748,64 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Outfit_500Medium',
         marginLeft: 8,
+    },
+    confirmOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+        zIndex: 1100,
+    },
+    confirmSheet: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        paddingBottom: 40,
+    },
+    confirmHeader: {
+        marginBottom: 24,
+    },
+    confirmTitle: {
+        fontSize: 20,
+        fontFamily: 'Outfit_600SemiBold',
+        color: '#1f1f1f',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    confirmMessage: {
+        fontSize: 16,
+        fontFamily: 'Outfit_400Regular',
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    confirmActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    cancelButton: {
+        flex: 1,
+        backgroundColor: '#f0f4f9',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        fontFamily: 'Outfit_500Medium',
+        color: '#666',
+    },
+    deleteConfirmButton: {
+        flex: 1,
+        backgroundColor: '#ff3b30',
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    deleteConfirmText: {
+        fontSize: 16,
+        fontFamily: 'Outfit_500Medium',
+        color: '#fff',
     },
 });
 

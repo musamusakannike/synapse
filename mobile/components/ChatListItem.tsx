@@ -16,6 +16,7 @@ interface ChatListItemProps {
     isSelectionMode?: boolean;
     isSelected?: boolean;
     onPress: () => void;
+    onLongPress?: () => void;
     onDelete: () => void;
     onEdit?: (newTitle: string) => void;
     onArchive?: () => void;
@@ -33,6 +34,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
     isSelectionMode = false,
     isSelected = false,
     onPress,
+    onLongPress,
     onDelete,
     onEdit,
     onArchive,
@@ -130,7 +132,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                             isSelected && styles.selectedContainer
                         ]}
                         onPress={handleItemPress}
-                        onLongPress={onSelect}
+                        onLongPress={onLongPress || onSelect}
                         activeOpacity={0.7}
                     >
                         {isSelectionMode && (

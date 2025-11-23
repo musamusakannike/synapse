@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import AuthModal from "../components/AuthModal";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import AuthModal, { AuthModalRef } from "../components/AuthModal";
 import * as SecureStore from "expo-secure-store";
 
 type AuthContextShape = {
@@ -21,12 +23,12 @@ const AuthContext = createContext<AuthContextShape>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
-    const [modalOpen, setModalOpen] = useState(false);
+    const authModalRef = useRef<AuthModalRef>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
-    const openAuthModal = () => setModalOpen(true);
-    const closeAuthModal = () => setModalOpen(false);
+    const openAuthModal = () => authModalRef.current?.present();
+    const closeAuthModal = () => authModalRef.current?.dismiss();
 
     const checkAuth = async (): Promise<boolean> => {
         try {
@@ -45,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
             await SecureStore.deleteItemAsync("accessToken");
             setIsAuthenticated(false);
-            setModalOpen(true);
+            authModalRef.current?.present();
         } catch (error) {
             console.error("Error signing out:", error);
         }
@@ -61,7 +63,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setIsLoading(true);
             const authenticated = await checkAuth();
             if (!authenticated) {
-                setModalOpen(true);
+                // Delay opening the modal slightly to ensure the component is mounted
+                setTimeout(() => {
+                    authModalRef.current?.present();
+                }, 100);
             }
             setIsLoading(false);
         };
@@ -74,16 +79,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     return (
-        <AuthContext.Provider
-            value={{ openAuthModal, closeAuthModal, signOut, isAuthenticated, checkAuth }}
-        >
-            {children}
-            <AuthModal
-                visible={modalOpen}
-                onClose={closeAuthModal}
-                onSuccess={handleAuthSuccess}
-            />
-        </AuthContext.Provider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <BottomSheetModalProvider>
+                <AuthContext.Provider
+                    value={{ openAuthModal, closeAuthModal, signOut, isAuthenticated, checkAuth }}
+                >
+                    {children}
+                    <AuthModal
+                        ref={authModalRef}
+                        onSuccess={handleAuthSuccess}
+                    />
+                </AuthContext.Provider>
+            </BottomSheetModalProvider>
+        </GestureHandlerRootView>
     );
 };
 

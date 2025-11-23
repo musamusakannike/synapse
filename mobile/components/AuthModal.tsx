@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, forwardRef, useImperativeHandle } from "react";
 import {
     View,
     Text,
-    Modal,
     StyleSheet,
     TouchableOpacity,
     TextInput,
     ScrollView,
     ActivityIndicator,
 } from "react-native";
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
+import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as AuthSession from "expo-auth-session";
@@ -19,18 +20,31 @@ import * as SecureStore from "expo-secure-store";
 WebBrowser.maybeCompleteAuthSession();
 
 type Props = {
-    visible: boolean;
-    onClose: () => void;
     onSuccess?: () => void;
 };
 
-const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
+export type AuthModalRef = {
+    present: () => void;
+    dismiss: () => void;
+};
+
+const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
+    const bottomSheetRef = React.useRef<BottomSheet>(null);
     const [step, setStep] = useState<"choose" | "code">("choose");
     const [email] = useState("");
     const [code, setCode] = useState("");
     const [sending, setSending] = useState(false);
     const [codeError, setCodeError] = useState("");
     const [socialError, setSocialError] = useState("");
+
+    // Snap points for the bottom sheet
+    const snapPoints = useMemo(() => ["30%", "45%"], []);
+
+    // Expose methods to parent component
+    useImperativeHandle(ref, () => ({
+        present: () => bottomSheetRef.current?.expand(),
+        dismiss: () => bottomSheetRef.current?.close(),
+    }));
 
     // Google OAuth configuration using the web client ID from Firebase
     // For Expo Go, we use Expo's auth proxy since Google doesn't accept exp:// URLs
@@ -55,13 +69,13 @@ const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
             if (!token) throw new Error("Invalid server response");
             await SecureStore.setItemAsync("accessToken", token);
             onSuccess?.();
-            onClose();
+            bottomSheetRef.current?.close();
         } catch (err: any) {
             setSocialError(err?.message || "Google sign-in failed");
         } finally {
             setSending(false);
         }
-    }, [onSuccess, onClose]);
+    }, [onSuccess]);
 
     // Handle Google OAuth response
     React.useEffect(() => {
@@ -102,7 +116,7 @@ const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
             if (!token) throw new Error("Invalid server response");
             await SecureStore.setItemAsync("accessToken", token);
             onSuccess?.();
-            onClose();
+            bottomSheetRef.current?.close();
         } catch (err: any) {
             setCodeError(err?.message || "Verification failed");
         } finally {
@@ -110,144 +124,156 @@ const AuthModal: React.FC<Props> = ({ visible, onClose, onSuccess }) => {
         }
     };
 
-    return (
-        <Modal
-            visible={visible}
-            animationType="fade"
-            transparent={true}
-            onRequestClose={onClose}
-        >
-            <View style={styles.backdrop}>
-                <View style={styles.container}>
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>
-                            {step === "choose" && "Welcome"}
-                            {step === "code" && "Enter verification code"}
-                        </Text>
-                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Text style={styles.closeButtonText}>✕</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                        {step === "choose" && (
-                            <View style={styles.stepContainer}>
-                                <Text style={styles.subtitle}>
-                                    Sign in or create an account to continue
-                                </Text>
-
-                                {/* Social Auth Buttons */}
-                                <View style={styles.buttonsContainer}>
-                                    <TouchableOpacity
-                                        onPress={handleGoogle}
-                                        disabled={!googleRequest || sending}
-                                        style={[styles.socialButton, (!googleRequest || sending) && styles.buttonDisabled]}
-                                    >
-                                        <Text style={styles.googleIcon}>G</Text>
-                                        <Text style={styles.socialButtonText}>
-                                            {sending ? "Connecting..." : "Continue with Google"}
-                                        </Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        onPress={handleGithub}
-                                        disabled={sending}
-                                        style={[styles.socialButton, sending && styles.buttonDisabled]}
-                                    >
-                                        <Text style={styles.githubIcon}>⚙</Text>
-                                        <Text style={styles.socialButtonText}>
-                                            Continue with GitHub
-                                        </Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                {socialError ? (
-                                    <Text style={styles.errorText}>{socialError}</Text>
-                                ) : null}
-                            </View>
-                        )}
-
-                        {step === "code" && (
-                            <View style={styles.stepContainer}>
-                                <View style={styles.iconContainer}>
-                                    <Text style={styles.iconText}>✓</Text>
-                                </View>
-
-                                <Text style={styles.subtitle}>
-                                    Enter the 6-digit code we sent to
-                                </Text>
-                                <Text style={styles.emailText}>{email}</Text>
-
-                                <TextInput
-                                    value={code}
-                                    onChangeText={(value) => {
-                                        const cleaned = value.replace(/\D/g, "").slice(0, 6);
-                                        setCode(cleaned);
-                                        if (codeError) setCodeError("");
-                                    }}
-                                    style={[styles.codeInput, codeError && styles.inputError]}
-                                    placeholder="000000"
-                                    keyboardType="number-pad"
-                                    maxLength={6}
-                                    textAlign="center"
-                                />
-                                {codeError ? (
-                                    <Text style={styles.errorText}>{codeError}</Text>
-                                ) : null}
-
-                                <View style={styles.buttonRow}>
-                                    <TouchableOpacity
-                                        onPress={() => setStep("choose")}
-                                        style={styles.backButton}
-                                    >
-                                        <Text style={styles.backButtonText}>← Start over</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={verifyCode}
-                                        disabled={sending || code.length < 6}
-                                        style={[
-                                            styles.primaryButton,
-                                            styles.successButton,
-                                            (sending || code.length < 6) && styles.buttonDisabled,
-                                        ]}
-                                    >
-                                        {sending ? (
-                                            <ActivityIndicator color="#fff" size="small" />
-                                        ) : (
-                                            <Text style={styles.primaryButtonText}>Verify & continue</Text>
-                                        )}
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
-                    </ScrollView>
-                </View>
-            </View>
-        </Modal>
+    const renderBackdrop = React.useCallback(
+        (props: BottomSheetBackdropProps) => (
+            <BottomSheetBackdrop
+                {...props}
+                disappearsOnIndex={-1}
+                appearsOnIndex={0}
+                opacity={0.6}
+            />
+        ),
+        []
     );
-};
+
+    return (
+        <BottomSheet
+            ref={bottomSheetRef}
+            index={-1}
+            snapPoints={snapPoints}
+            enablePanDownToClose={true}
+            backdropComponent={renderBackdrop}
+            backgroundStyle={styles.bottomSheetBackground}
+            handleIndicatorStyle={styles.handleIndicator}
+        >
+            <BottomSheetView style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>
+                        {step === "choose" && "Welcome"}
+                        {step === "code" && "Enter verification code"}
+                    </Text>
+                    <TouchableOpacity onPress={() => bottomSheetRef.current?.close()} style={styles.closeButton}>
+                        <Text style={styles.closeButtonText}>✕</Text>
+                    </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                    {step === "choose" && (
+                        <View style={styles.stepContainer}>
+                            <Text style={styles.subtitle}>
+                                Sign in or create an account to continue
+                            </Text>
+
+                            {/* Social Auth Buttons */}
+                            <View style={styles.buttonsContainer}>
+                                <TouchableOpacity
+                                    onPress={handleGoogle}
+                                    disabled={!googleRequest || sending}
+                                    style={[styles.socialButton, (!googleRequest || sending) && styles.buttonDisabled]}
+                                >
+                                    <Text style={styles.googleIcon}>G</Text>
+                                    <Text style={styles.socialButtonText}>
+                                        {sending ? "Connecting..." : "Continue with Google"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={handleGithub}
+                                    disabled={sending}
+                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
+                                >
+                                    <Text style={styles.githubIcon}>⚙</Text>
+                                    <Text style={styles.socialButtonText}>
+                                        Continue with GitHub
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {socialError ? (
+                                <Text style={styles.errorText}>{socialError}</Text>
+                            ) : null}
+                        </View>
+                    )}
+
+                    {step === "code" && (
+                        <View style={styles.stepContainer}>
+                            <View style={styles.iconContainer}>
+                                <Text style={styles.iconText}>✓</Text>
+                            </View>
+
+                            <Text style={styles.subtitle}>
+                                Enter the 6-digit code we sent to
+                            </Text>
+                            <Text style={styles.emailText}>{email}</Text>
+
+                            <TextInput
+                                value={code}
+                                onChangeText={(value) => {
+                                    const cleaned = value.replace(/\D/g, "").slice(0, 6);
+                                    setCode(cleaned);
+                                    if (codeError) setCodeError("");
+                                }}
+                                style={[styles.codeInput, codeError && styles.inputError]}
+                                placeholder="000000"
+                                keyboardType="number-pad"
+                                maxLength={6}
+                                textAlign="center"
+                            />
+                            {codeError ? (
+                                <Text style={styles.errorText}>{codeError}</Text>
+                            ) : null}
+
+                            <View style={styles.buttonRow}>
+                                <TouchableOpacity
+                                    onPress={() => setStep("choose")}
+                                    style={styles.backButton}
+                                >
+                                    <Text style={styles.backButtonText}>← Start over</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={verifyCode}
+                                    disabled={sending || code.length < 6}
+                                    style={[
+                                        styles.primaryButton,
+                                        styles.successButton,
+                                        (sending || code.length < 6) && styles.buttonDisabled,
+                                    ]}
+                                >
+                                    {sending ? (
+                                        <ActivityIndicator color="#fff" size="small" />
+                                    ) : (
+                                        <Text style={styles.primaryButtonText}>Verify & continue</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+                </ScrollView>
+            </BottomSheetView>
+        </BottomSheet>
+    );
+});
 
 const styles = StyleSheet.create({
-    backdrop: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.6)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
+    bottomSheetBackground: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+    },
+    handleIndicator: {
+        backgroundColor: "#ccc",
+        width: 40,
     },
     container: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        width: "100%",
-        maxWidth: 450,
-        maxHeight: "90%",
+        flex: 1,
     },
     header: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 16,
         borderBottomWidth: 1,
         borderBottomColor: "#f0f0f0",
     },

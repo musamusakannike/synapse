@@ -12,7 +12,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/botto
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-
+import * as AuthSession from "expo-auth-session";
 import { AuthAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 
@@ -46,18 +46,23 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
         dismiss: () => bottomSheetRef.current?.close(),
     }));
 
-    // Google OAuth configuration using the web client ID from Firebase
-    // For Expo Go, we use Expo's auth proxy since Google doesn't accept exp:// URLs
-    const redirectUri = "https://auth.expo.io/@musamusakannike/synapse-ai";
+    const redirectUri = AuthSession.makeRedirectUri({
+        scheme: "synapse-ai",
+        path: "oauthredirect",
+    });
 
     // Log the redirect URI for debugging
     React.useEffect(() => {
         console.log("OAuth Redirect URI:", redirectUri);
     }, [redirectUri]);
 
+    // Google Auth Request without proxy
     const [googleRequest, googleResponse, googlePromptAsync] = Google.useIdTokenAuthRequest({
-        clientId: "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
+        useProxy: false,
         redirectUri,
+        clientId: "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com", // Web ID
+        androidClientId: "49669304081-0t0d28nmsbo77242eajsepk1pdv1htl5.apps.googleusercontent.com",
+        iosClientId: "49669304081-djefs8u6in5p1nrd79fv3u1l1rma9efb.apps.googleusercontent.com",
     });
 
     const handleGoogleSuccess = React.useCallback(async (idToken: string) => {
@@ -78,24 +83,28 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
     }, [onSuccess]);
 
     // Handle Google OAuth response
+    // Handle OAuth Response
     React.useEffect(() => {
         if (googleResponse?.type === "success") {
             const { id_token } = googleResponse.params;
             if (id_token) {
                 handleGoogleSuccess(id_token);
+            } else {
+                setSocialError("No ID token returned from Google.");
             }
         } else if (googleResponse?.type === "error") {
             setSocialError("Google sign-in failed. Please try again.");
             console.error("Google OAuth error:", googleResponse.error);
         }
-    }, [googleResponse, handleGoogleSuccess]);
+    }, [googleResponse]);
 
+    // Handle Button Press
     const handleGoogle = async () => {
         try {
             setSocialError("");
-            await googlePromptAsync();
+            await googlePromptAsync(); // opens Google Auth screen
         } catch (err: any) {
-            setSocialError(err?.message || "Google sign-in failed");
+            setSocialError(err?.message || "Failed to open Google Sign-In");
         }
     };
 

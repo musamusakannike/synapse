@@ -4,18 +4,13 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
-    TextInput,
-    ScrollView,
-    ActivityIndicator,
 } from "react-native";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from "expo-auth-session";
 import { AuthAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // This is required for expo-auth-session to work properly
 WebBrowser.maybeCompleteAuthSession();
@@ -31,26 +26,17 @@ export type AuthModalRef = {
 
 const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
     const bottomSheetRef = React.useRef<BottomSheet>(null);
-    const [step, setStep] = useState<"choose" | "code">("choose");
-    const [email] = useState("");
-    const [code, setCode] = useState("");
     const [sending, setSending] = useState(false);
-    const [codeError, setCodeError] = useState("");
     const [socialError, setSocialError] = useState("");
-    const [userInfo, setUserInfo] = useState({});
 
     // Snap points for the bottom sheet
-    const snapPoints = useMemo(() => ["30%", "45%"], []);
+    const snapPoints = useMemo(() => ["30%"], []);
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
         present: () => bottomSheetRef.current?.expand(),
         dismiss: () => bottomSheetRef.current?.close(),
     }));
-    // Log the redirect URI for debugging
-    useEffect(() => {
-        AsyncStorage.clear();
-    }, []);
 
     // Google Auth Request without proxy
     const [request, response, promptAsync] = Google.useAuthRequest({
@@ -60,96 +46,48 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
     })
 
     const getUserInfo = React.useCallback(async (token: string) => {
-        if (!token) {
-            return
-        }
+        if (!token) return;
+
         try {
             setSending(true);
             const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
-            })
+            });
+
             const user = await response.json();
-            await AsyncStorage.setItem("@user", JSON.stringify(user));
-            setUserInfo(user);
 
             // Authenticate with our backend server
-            try {
-                const { data } = await AuthAPI.googleSignInWithToken(token, user);
-                const accessToken = data?.accessToken;
+            const { data } = await AuthAPI.googleSignInWithToken(token, user);
+            const accessToken = data?.accessToken;
 
-                if (!accessToken) {
-                    throw new Error("Invalid server response");
-                }
-
-                // Store the JWT token securely
-                await SecureStore.setItemAsync("accessToken", accessToken);
-
-                // Call success callback and close modal
-                onSuccess?.();
-                bottomSheetRef.current?.close();
-
-                console.log("Authentication successful!");
-            } catch (authError: any) {
-                console.error("Backend authentication error:", authError);
-                setSocialError(authError?.message || "Authentication failed. Please try again.");
+            if (!accessToken) {
+                throw new Error("Invalid server response");
             }
 
-            return user
-        } catch (error) {
-            console.log(error)
-            setSocialError("Failed to get user information. Please try again.");
+            // Store the JWT token securely
+            await SecureStore.setItemAsync("accessToken", accessToken);
+
+            // Call success callback and close modal
+            onSuccess?.();
+            bottomSheetRef.current?.close();
+        } catch (error: any) {
+            setSocialError(error?.message || "Authentication failed. Please try again.");
         } finally {
             setSending(false);
         }
     }, [onSuccess]);
 
-    const handleSignInWithGoogle = React.useCallback(async () => {
-        try {
-            const user = await AsyncStorage.getItem("@user");
-            if (!user) {
-                if (response?.type === "success") {
-                    console.log("ACCESS TOKEN: ", response?.authentication?.accessToken);
-                    await getUserInfo(response?.authentication?.accessToken || "");
-                }
-            } else {
-                setUserInfo(JSON.parse(user));
-                console.log("USER INFO: ", JSON.parse(user));
-            }
-        } catch (error) {
-            console.log(error);
+    useEffect(() => {
+        if (response?.type === "success" && response?.authentication?.accessToken) {
+            getUserInfo(response.authentication.accessToken);
         }
     }, [response, getUserInfo]);
 
-    useEffect(() => {
-        handleSignInWithGoogle()
-    }, [response, handleSignInWithGoogle])
 
-
-    const handleGithub = async () => {
+    const handleGithub = () => {
         setSocialError("GitHub authentication is not yet configured for mobile. Please use Google sign-in.");
-    };
-
-    const verifyCode = async () => {
-        if (!code || code.length < 6) {
-            setCodeError("Please enter a valid 6-digit code");
-            return;
-        }
-        try {
-            setCodeError("");
-            setSending(true);
-            const { data } = await AuthAPI.verifyCode(email, code);
-            const token = data?.accessToken;
-            if (!token) throw new Error("Invalid server response");
-            await SecureStore.setItemAsync("accessToken", token);
-            onSuccess?.();
-            bottomSheetRef.current?.close();
-        } catch (err: any) {
-            setCodeError(err?.message || "Verification failed");
-        } finally {
-            setSending(false);
-        }
     };
 
     const renderBackdrop = React.useCallback(
@@ -177,106 +115,48 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
             <BottomSheetView style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>
-                        {step === "choose" && "Welcome"}
-                        {step === "code" && "Enter verification code"}
-                    </Text>
+                    <Text style={styles.headerTitle}>Welcome</Text>
                     <TouchableOpacity onPress={() => bottomSheetRef.current?.close()} style={styles.closeButton}>
                         <Text style={styles.closeButtonText}>✕</Text>
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                    {step === "choose" && (
-                        <View style={styles.stepContainer}>
-                            <Text style={styles.subtitle}>
-                                Sign in or create an account to continue
-                            </Text>
-                            <Text>USER INFO: {JSON.stringify(userInfo)}</Text>
+                <View style={styles.content}>
+                    <View style={styles.stepContainer}>
+                        <Text style={styles.subtitle}>
+                            Sign in or create an account to continue
+                        </Text>
 
-                            {/* Social Auth Buttons */}
-                            <View style={styles.buttonsContainer}>
-                                <TouchableOpacity
-                                    onPress={() => promptAsync()}
-                                >
-                                    <Text style={styles.googleIcon}>G</Text>
-                                    <Text style={styles.socialButtonText}>
-                                        {sending ? "Connecting..." : "Continue with Google"}
-                                    </Text>
-                                </TouchableOpacity>
+                        {/* Social Auth Buttons */}
+                        <View style={styles.buttonsContainer}>
+                            <TouchableOpacity
+                                onPress={() => promptAsync()}
+                                disabled={sending}
+                                style={[styles.socialButton, sending && styles.buttonDisabled]}
+                            >
+                                <Text style={styles.googleIcon}>G</Text>
+                                <Text style={styles.socialButtonText}>
+                                    {sending ? "Connecting..." : "Continue with Google"}
+                                </Text>
+                            </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    onPress={handleGithub}
-                                    disabled={sending}
-                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
-                                >
-                                    <Text style={styles.githubIcon}>⚙</Text>
-                                    <Text style={styles.socialButtonText}>
-                                        Continue with GitHub
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {socialError ? (
-                                <Text style={styles.errorText}>{socialError}</Text>
-                            ) : null}
+                            <TouchableOpacity
+                                onPress={handleGithub}
+                                disabled={sending}
+                                style={[styles.socialButton, sending && styles.buttonDisabled]}
+                            >
+                                <Text style={styles.githubIcon}>⚙</Text>
+                                <Text style={styles.socialButtonText}>
+                                    Continue with GitHub
+                                </Text>
+                            </TouchableOpacity>
                         </View>
-                    )}
 
-                    {step === "code" && (
-                        <View style={styles.stepContainer}>
-                            <View style={styles.iconContainer}>
-                                <Text style={styles.iconText}>✓</Text>
-                            </View>
-
-                            <Text style={styles.subtitle}>
-                                Enter the 6-digit code we sent to
-                            </Text>
-                            <Text style={styles.emailText}>{email}</Text>
-
-                            <TextInput
-                                value={code}
-                                onChangeText={(value) => {
-                                    const cleaned = value.replace(/\D/g, "").slice(0, 6);
-                                    setCode(cleaned);
-                                    if (codeError) setCodeError("");
-                                }}
-                                style={[styles.codeInput, codeError && styles.inputError]}
-                                placeholder="000000"
-                                keyboardType="number-pad"
-                                maxLength={6}
-                                textAlign="center"
-                            />
-                            {codeError ? (
-                                <Text style={styles.errorText}>{codeError}</Text>
-                            ) : null}
-
-                            <View style={styles.buttonRow}>
-                                <TouchableOpacity
-                                    onPress={() => setStep("choose")}
-                                    style={styles.backButton}
-                                >
-                                    <Text style={styles.backButtonText}>← Start over</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={verifyCode}
-                                    disabled={sending || code.length < 6}
-                                    style={[
-                                        styles.primaryButton,
-                                        styles.successButton,
-                                        (sending || code.length < 6) && styles.buttonDisabled,
-                                    ]}
-                                >
-                                    {sending ? (
-                                        <ActivityIndicator color="#fff" size="small" />
-                                    ) : (
-                                        <Text style={styles.primaryButtonText}>Verify & continue</Text>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )}
-                </ScrollView>
+                        {socialError ? (
+                            <Text style={styles.errorText}>{socialError}</Text>
+                        ) : null}
+                    </View>
+                </View>
             </BottomSheetView>
         </BottomSheet>
     );
@@ -358,77 +238,8 @@ const styles = StyleSheet.create({
     githubIcon: {
         fontSize: 20,
     },
-    iconContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: "#e8f0fe",
-        justifyContent: "center",
-        alignItems: "center",
-        alignSelf: "center",
-    },
-    iconText: {
-        fontSize: 28,
-    },
-    emailText: {
-        fontSize: 16,
-        fontWeight: "500",
-        color: "#1f1f1f",
-        textAlign: "center",
-        fontFamily: "Outfit_500Medium",
-    },
-    buttonRow: {
-        flexDirection: "row",
-        gap: 12,
-        marginTop: 8,
-    },
-    backButton: {
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderWidth: 1,
-        borderColor: "#e0e0e0",
-        borderRadius: 8,
-    },
-    backButtonText: {
-        fontSize: 16,
-        color: "#1f1f1f",
-        fontFamily: "Outfit_400Regular",
-    },
-    primaryButton: {
-        flex: 1,
-        backgroundColor: "#4285F4",
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    successButton: {
-        backgroundColor: "#34A853",
-    },
-    primaryButtonText: {
-        fontSize: 16,
-        color: "#fff",
-        fontWeight: "600",
-        fontFamily: "Outfit_500Medium",
-    },
     buttonDisabled: {
         opacity: 0.5,
-    },
-    codeInput: {
-        fontSize: 28,
-        fontFamily: "monospace",
-        letterSpacing: 8,
-        paddingVertical: 16,
-        paddingHorizontal: 16,
-        borderWidth: 2,
-        borderColor: "#e0e0e0",
-        borderRadius: 8,
-        textAlign: "center",
-    },
-    inputError: {
-        borderColor: "#f44336",
-        backgroundColor: "#ffebee",
     },
     errorText: {
         fontSize: 14,

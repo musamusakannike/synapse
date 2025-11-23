@@ -1,14 +1,17 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, TextInput } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withDelay,
-  interpolate
+  interpolate,
+  withTiming
 } from 'react-native-reanimated';
 import { useAuth } from '../contexts/AuthContext';
+import { ChatAPI } from '../lib/api';
+import ChatSkeleton from '../components/ChatSkeleton';
 
 const AnimatedButton = ({ children, delay, icon }: { children: string, delay: number, icon: string }) => {
   const opacity = useSharedValue(0);
@@ -35,15 +38,39 @@ const AnimatedButton = ({ children, delay, icon }: { children: string, delay: nu
   );
 };
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: Date;
+}
+
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
+  const sendButtonWidth = useSharedValue(0);
   const { openAuthModal, openSidebar } = useAuth();
+
+  // Chat state
+  const [inputText, setInputText] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [isChatMode, setIsChatMode] = useState(false);
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
     titleOpacity.value = withDelay(200, withSpring(1, { duration: 800 }));
   }, [headerOpacity, titleOpacity]);
+
+  // Animate send button when user types
+  useEffect(() => {
+    if (inputText.trim().length > 0) {
+      sendButtonWidth.value = withTiming(60, { duration: 200 });
+    } else {
+      sendButtonWidth.value = withTiming(0, { duration: 200 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputText]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value
@@ -55,6 +82,54 @@ export default function AIInterface() {
       translateY: interpolate(titleOpacity.value, [0, 1], [30, 0])
     }]
   }));
+
+  const sendButtonStyle = useAnimatedStyle(() => ({
+    width: sendButtonWidth.value,
+    opacity: sendButtonWidth.value > 0 ? 1 : 0,
+    marginLeft: sendButtonWidth.value > 0 ? 8 : 0,
+  }));
+
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading) return;
+
+    const userMessage = inputText.trim();
+    setInputText('');
+
+    try {
+      // Enter chat mode and hide homepage content
+      setIsChatMode(true);
+
+      // Add user message to UI
+      setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+      setIsLoading(true);
+
+      // Create new chat if needed
+      let chatId = currentChatId;
+      if (!chatId) {
+        const response = await ChatAPI.createNewChat();
+        chatId = response.data.chat.id;
+        setCurrentChatId(chatId);
+      }
+
+      // Send message and get response
+      if (!chatId) throw new Error('Chat ID is required');
+      const response = await ChatAPI.sendMessage(chatId, userMessage);
+      
+      // Add AI response to UI
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: response.data.aiResponse.content,
+        timestamp: new Date(response.data.aiResponse.timestamp)
+      }]);
+    } catch (error) {
+      console.error('Send message error:', error);
+      Alert.alert('Error', 'Failed to send message. Please try again.');
+      // Remove the user message if sending failed
+      setMessages(prev => prev.slice(0, -1));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -83,35 +158,92 @@ export default function AIInterface() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting Section */}
-        <Animated.View style={titleStyle}>
-          <Text style={styles.greeting}>Hi Musa</Text>
-          <Text style={styles.question}>Where should we start?</Text>
-        </Animated.View>
+        {!isChatMode ? (
+          <>
+            {/* Greeting Section */}
+            <Animated.View style={titleStyle}>
+              <Text style={styles.greeting}>Hi Musa</Text>
+              <Text style={styles.question}>Where should we start?</Text>
+            </Animated.View>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonsWrapper}>
-          <AnimatedButton delay={400} icon="✍️">Upload Document</AnimatedButton>
-          <AnimatedButton delay={500} icon="">Generate a complete course</AnimatedButton>
-          <AnimatedButton delay={600} icon="">Take a Quiz</AnimatedButton>
-          <AnimatedButton delay={800} icon="">Watch Tutorials</AnimatedButton>
-        </View>
+            {/* Action Buttons */}
+            <View style={styles.buttonsWrapper}>
+              <AnimatedButton delay={400} icon="✍️">Upload Document</AnimatedButton>
+              <AnimatedButton delay={500} icon="">Generate a complete course</AnimatedButton>
+              <AnimatedButton delay={600} icon="">Take a Quiz</AnimatedButton>
+              <AnimatedButton delay={800} icon="">Watch Tutorials</AnimatedButton>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Chat Messages */}
+            <View style={styles.chatContainer}>
+              {messages.map((message, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.messageWrapper,
+                    message.role === 'user' ? styles.userMessageWrapper : styles.assistantMessageWrapper
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      message.role === 'user' ? styles.userMessage : styles.assistantMessage
+                    ]}
+                  >
+                    <Text style={[
+                      styles.messageText,
+                      message.role === 'user' ? styles.userMessageText : styles.assistantMessageText
+                    ]}>
+                      {message.content}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+
+              {/* Loading Skeleton */}
+              {isLoading && <ChatSkeleton />}
+            </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Bottom Input Bar */}
       <View style={styles.bottomBar}>
         <View style={styles.inputContainer}>
           <View>
-            <TextInput placeholder='Ask Synapse' placeholderTextColor={"#666"} style={styles.input} numberOfLines={7} multiline={true} />
+            <TextInput 
+              placeholder='Ask Synapse' 
+              placeholderTextColor={"#666"} 
+              style={styles.input} 
+              numberOfLines={7} 
+              multiline={true}
+              value={inputText}
+              onChangeText={setInputText}
+              editable={!isLoading}
+            />
           </View>
           <View style={styles.inputButtons}>
             <TouchableOpacity style={styles.addButton}>
               <Text style={styles.addButtonText}>+</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.thinkingButton}>
-              <Text style={styles.thinkingText}>Thinking</Text>
-            </TouchableOpacity>
+            <View style={styles.rightButtons}>
+              <TouchableOpacity style={styles.thinkingButton}>
+                <Text style={styles.thinkingText}>Thinking</Text>
+              </TouchableOpacity>
+              
+              <Animated.View style={[styles.sendButtonContainer, sendButtonStyle]}>
+                <TouchableOpacity 
+                  style={styles.sendButton}
+                  onPress={handleSendMessage}
+                  disabled={isLoading || !inputText.trim()}
+                >
+                  <Text style={styles.sendButtonText}>➤</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
           </View>
         </View>
       </View>
@@ -296,5 +428,64 @@ const styles = StyleSheet.create({
   },
   voiceBarTall: {
     height: 18,
+  },
+  chatContainer: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  messageWrapper: {
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  userMessageWrapper: {
+    alignItems: 'flex-end',
+  },
+  assistantMessageWrapper: {
+    alignItems: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '80%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  userMessage: {
+    backgroundColor: '#4285F4',
+    borderBottomRightRadius: 4,
+  },
+  assistantMessage: {
+    backgroundColor: '#f0f4f9',
+    borderBottomLeftRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    fontFamily: 'Outfit_400Regular',
+    lineHeight: 22,
+  },
+  userMessageText: {
+    color: '#fff',
+  },
+  assistantMessageText: {
+    color: '#1f1f1f',
+  },
+  rightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sendButtonContainer: {
+    overflow: 'hidden',
+  },
+  sendButton: {
+    width: 60,
+    height: 36,
+    backgroundColor: '#4285F4',
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
   },
 });

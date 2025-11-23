@@ -15,16 +15,18 @@ const getUserChats = async (req, res) => {
     const chats = await Chat.find({
       userId: req.user._id,
       isActive: true,
+      isArchived: false,
     })
       .sort({ lastActivity: -1 })
       .skip(skip)
       .limit(limit)
-      .select("title type sourceId sourceModel lastActivity createdAt messages")
+      .select("title type sourceId sourceModel lastActivity createdAt messages isArchived isFavorite")
       .populate("sourceId", "title originalName url");
 
     const total = await Chat.countDocuments({
       userId: req.user._id,
       isActive: true,
+      isArchived: false,
     });
 
     // Add message count and last message preview
@@ -49,6 +51,8 @@ const getUserChats = async (req, res) => {
           : null,
       lastActivity: chat.lastActivity,
       createdAt: chat.createdAt,
+      isArchived: chat.isArchived,
+      isFavorite: chat.isFavorite,
     }));
 
     res.json({
@@ -278,6 +282,257 @@ const deleteChat = async (req, res) => {
   }
 };
 
+const bulkDeleteChats = async (req, res) => {
+  try {
+    const { chatIds } = req.body;
+
+    if (!chatIds || !Array.isArray(chatIds) || chatIds.length === 0) {
+      return res.status(400).json({ error: "chatIds array is required" });
+    }
+
+    // Soft delete all chats that belong to the user
+    const result = await Chat.updateMany(
+      {
+        _id: { $in: chatIds },
+        userId: req.user._id,
+      },
+      {
+        $set: { isActive: false },
+      }
+    );
+
+    res.json({
+      message: "Chats deleted successfully",
+      deletedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Bulk delete chats error:", error);
+    res.status(500).json({ error: "Failed to delete chats" });
+  }
+};
+
+const archiveChat = async (req, res) => {
+  try {
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    chat.isArchived = true;
+    await chat.save();
+
+    res.json({
+      message: "Chat archived successfully",
+      isArchived: chat.isArchived,
+    });
+  } catch (error) {
+    console.error("Archive chat error:", error);
+    res.status(500).json({ error: "Failed to archive chat" });
+  }
+};
+
+const unarchiveChat = async (req, res) => {
+  try {
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    chat.isArchived = false;
+    await chat.save();
+
+    res.json({
+      message: "Chat unarchived successfully",
+      isArchived: chat.isArchived,
+    });
+  } catch (error) {
+    console.error("Unarchive chat error:", error);
+    res.status(500).json({ error: "Failed to unarchive chat" });
+  }
+};
+
+const getArchivedChats = async (req, res) => {
+  try {
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const chats = await Chat.find({
+      userId: req.user._id,
+      isActive: true,
+      isArchived: true,
+    })
+      .sort({ lastActivity: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("title type sourceId sourceModel lastActivity createdAt messages isArchived isFavorite")
+      .populate("sourceId", "title originalName url");
+
+    const total = await Chat.countDocuments({
+      userId: req.user._id,
+      isActive: true,
+      isArchived: true,
+    });
+
+    // Add message count and last message preview
+    const chatsWithPreview = chats.map((chat) => ({
+      id: chat._id,
+      title: chat.title,
+      type: chat.type,
+      sourceId: chat.sourceId,
+      sourceModel: chat.sourceModel,
+      messageCount: chat.messages.length,
+      lastMessage:
+        chat.messages.length > 0
+          ? {
+              role: chat.messages[chat.messages.length - 1].role,
+              content:
+                chat.messages[chat.messages.length - 1].content.substring(
+                  0,
+                  100
+                ) + "...",
+              timestamp: chat.messages[chat.messages.length - 1].timestamp,
+            }
+          : null,
+      lastActivity: chat.lastActivity,
+      createdAt: chat.createdAt,
+      isArchived: chat.isArchived,
+      isFavorite: chat.isFavorite,
+    }));
+
+    res.json({
+      chats: chatsWithPreview,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total,
+      },
+    });
+  } catch (error) {
+    console.error("Get archived chats error:", error);
+    res.status(500).json({ error: "Failed to fetch archived chats" });
+  }
+};
+
+const favoriteChat = async (req, res) => {
+  try {
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    chat.isFavorite = true;
+    await chat.save();
+
+    res.json({
+      message: "Chat marked as favorite",
+      isFavorite: chat.isFavorite,
+    });
+  } catch (error) {
+    console.error("Favorite chat error:", error);
+    res.status(500).json({ error: "Failed to favorite chat" });
+  }
+};
+
+const unfavoriteChat = async (req, res) => {
+  try {
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    chat.isFavorite = false;
+    await chat.save();
+
+    res.json({
+      message: "Chat removed from favorites",
+      isFavorite: chat.isFavorite,
+    });
+  } catch (error) {
+    console.error("Unfavorite chat error:", error);
+    res.status(500).json({ error: "Failed to unfavorite chat" });
+  }
+};
+
+const getFavoriteChats = async (req, res) => {
+  try {
+    const page = Number.parseInt(req.query.page) || 1;
+    const limit = Number.parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const chats = await Chat.find({
+      userId: req.user._id,
+      isActive: true,
+      isFavorite: true,
+    })
+      .sort({ lastActivity: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select("title type sourceId sourceModel lastActivity createdAt messages isArchived isFavorite")
+      .populate("sourceId", "title originalName url");
+
+    const total = await Chat.countDocuments({
+      userId: req.user._id,
+      isActive: true,
+      isFavorite: true,
+    });
+
+    // Add message count and last message preview
+    const chatsWithPreview = chats.map((chat) => ({
+      id: chat._id,
+      title: chat.title,
+      type: chat.type,
+      sourceId: chat.sourceId,
+      sourceModel: chat.sourceModel,
+      messageCount: chat.messages.length,
+      lastMessage:
+        chat.messages.length > 0
+          ? {
+              role: chat.messages[chat.messages.length - 1].role,
+              content:
+                chat.messages[chat.messages.length - 1].content.substring(
+                  0,
+                  100
+                ) + "...",
+              timestamp: chat.messages[chat.messages.length - 1].timestamp,
+            }
+          : null,
+      lastActivity: chat.lastActivity,
+      createdAt: chat.createdAt,
+      isArchived: chat.isArchived,
+      isFavorite: chat.isFavorite,
+    }));
+
+    res.json({
+      chats: chatsWithPreview,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total,
+      },
+    });
+  } catch (error) {
+    console.error("Get favorite chats error:", error);
+    res.status(500).json({ error: "Failed to fetch favorite chats" });
+  }
+};
+
 module.exports = {
   getUserChats,
   getChatWithMessages,
@@ -285,4 +540,11 @@ module.exports = {
   createNewChat,
   updateChatTitle,
   deleteChat,
+  bulkDeleteChats,
+  archiveChat,
+  unarchiveChat,
+  getArchivedChats,
+  favoriteChat,
+  unfavoriteChat,
+  getFavoriteChats,
 };

@@ -49,6 +49,14 @@ const chatSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    },
     lastActivity: {
       type: Date,
       default: Date.now,

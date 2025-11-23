@@ -8,6 +8,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Image,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,7 +21,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
-import { ChatAPI } from "../lib/api";
+import { ChatAPI, UserAPI } from "../lib/api";
 import ChatSkeleton from "../components/ChatSkeleton";
 
 const AnimatedButton = ({
@@ -75,11 +76,70 @@ export default function AIInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [isChatMode, setIsChatMode] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userProfilePicture, setUserProfilePicture] = useState<string | null>(
+    null
+  );
+  const [greeting, setGreeting] = useState<string>("Hi there");
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
     titleOpacity.value = withDelay(200, withSpring(1, { duration: 800 }));
   }, [headerOpacity, titleOpacity]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await UserAPI.getCurrentUser();
+        if (data?.name || data?.email) {
+          const nameFromEmail = data.email
+            ? data.email.split("@")[0]
+            : "";
+          const normalizedName = (data.name || nameFromEmail || "").trim();
+          if (normalizedName) {
+            setUserName(normalizedName);
+          }
+        }
+
+        if (data?.profilePicture) {
+          setUserProfilePicture(data.profilePicture);
+        }
+      } catch {
+        // Ignore error and keep default greeting
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const now = new Date();
+    const hour = now.getHours();
+    const baseName = userName || "there";
+
+    let timeOfDay: "morning" | "afternoon" | "evening";
+    if (hour < 12) {
+      timeOfDay = "morning";
+    } else if (hour < 18) {
+      timeOfDay = "afternoon";
+    } else {
+      timeOfDay = "evening";
+    }
+
+    const options: string[] = [
+      `Hi ${baseName}`,
+      `Hello ${baseName}`,
+      `Welcome back, ${baseName}`,
+      timeOfDay === "morning" ? `Good morning, ${baseName}` : "",
+      timeOfDay === "afternoon" ? `Good afternoon, ${baseName}` : "",
+      timeOfDay === "evening" ? `Good evening, ${baseName}` : "",
+    ].filter(Boolean) as string[];
+
+    if (options.length > 0) {
+      const index = Math.floor(Math.random() * options.length);
+      setGreeting(options[index]);
+    }
+  }, [userName]);
 
   const handleOpenChat = useCallback(async (chatId: string) => {
     try {
@@ -204,9 +264,21 @@ export default function AIInterface() {
 
         <TouchableOpacity onPress={openAuthModal}>
           <View style={styles.profileCircle}>
-            <View style={styles.profileInner}>
-              <Text style={styles.profileText}>💻</Text>
-            </View>
+            {userProfilePicture ? (
+              <Image
+                source={{ uri: userProfilePicture }}
+                style={styles.profileImageHeader}
+              />
+            ) : (
+              <View style={styles.profileInner}>
+                <Text style={styles.profileText}>
+                  {(userName || "?")
+                    .trim()
+                    .charAt(0)
+                    .toUpperCase()}
+                </Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
       </Animated.View>
@@ -223,7 +295,7 @@ export default function AIInterface() {
           <>
             {/* Greeting Section */}
             <Animated.View style={titleStyle}>
-              <Text style={styles.greeting}>Hi Musa</Text>
+              <Text style={styles.greeting}>{greeting}</Text>
               <Text style={styles.question}>Where should we start?</Text>
             </Animated.View>
 
@@ -277,7 +349,10 @@ export default function AIInterface() {
                     ) : (
                       <Markdown
                         style={{
-                          body: [styles.messageText, styles.assistantMessageText],
+                          body: StyleSheet.flatten([
+                            styles.messageText,
+                            styles.assistantMessageText,
+                          ]),
                         }}
                       >
                         {message.content}
@@ -316,7 +391,7 @@ export default function AIInterface() {
 
             <View style={styles.rightButtons}>
               <TouchableOpacity style={styles.thinkingButton}>
-                <Text style={styles.thinkingText}>Thinking</Text>
+                <Text style={styles.thinkingText}>Fast</Text>
               </TouchableOpacity>
 
               <Animated.View
@@ -383,6 +458,11 @@ const styles = StyleSheet.create({
   },
   profileText: {
     fontSize: 16,
+  },
+  profileImageHeader: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   content: {
     paddingHorizontal: 24,

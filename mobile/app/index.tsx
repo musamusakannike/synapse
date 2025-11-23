@@ -7,6 +7,7 @@ import Animated, {
   withDelay,
   interpolate
 } from 'react-native-reanimated';
+import { useAuth } from '../contexts/AuthContext';
 
 const AnimatedButton = ({ children, delay, icon }: { children: string, delay: number, icon: string }) => {
   const opacity = useSharedValue(0);
@@ -36,6 +37,7 @@ const AnimatedButton = ({ children, delay, icon }: { children: string, delay: nu
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
+  const { signOut } = useAuth();
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -67,11 +69,13 @@ export default function AIInterface() {
 
         <Text style={styles.headerTitle}>Synapse</Text>
 
-        <View style={styles.profileCircle}>
-          <View style={styles.profileInner}>
-            <Text style={styles.profileText}>💻</Text>
+        <TouchableOpacity onPress={signOut}>
+          <View style={styles.profileCircle}>
+            <View style={styles.profileInner}>
+              <Text style={styles.profileText}>💻</Text>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Animated.View>
 
       <ScrollView

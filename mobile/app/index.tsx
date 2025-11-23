@@ -9,6 +9,8 @@ import {
   TextInput,
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -251,164 +253,170 @@ export default function AIInterface() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* Header */}
-      <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-          <View style={styles.menuLine} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Synapse</Text>
-
-        <TouchableOpacity onPress={openAuthModal}>
-          <View style={styles.profileCircle}>
-            {userProfilePicture ? (
-              <Image
-                source={{ uri: userProfilePicture }}
-                style={styles.profileImageHeader}
-              />
-            ) : (
-              <View style={styles.profileInner}>
-                <Text style={styles.profileText}>
-                  {(userName || "?")
-                    .trim()
-                    .charAt(0)
-                    .toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={10}
       >
-        {!isChatMode || messages.length === 0 ? (
-          <>
-            {/* Greeting Section */}
-            <Animated.View style={titleStyle}>
-              <Text style={styles.greeting}>{greeting}</Text>
-              <Text style={styles.question}>Where should we start?</Text>
-            </Animated.View>
+        {/* Header */}
+        <Animated.View style={[styles.header, headerStyle]}>
+          <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+          </TouchableOpacity>
 
-            {/* Action Buttons */}
-            <View style={styles.buttonsWrapper}>
-              <AnimatedButton delay={400} icon="✍️">
-                Upload Document
-              </AnimatedButton>
-              <AnimatedButton delay={500} icon="">
-                Generate a complete course
-              </AnimatedButton>
-              <AnimatedButton delay={600} icon="">
-                Take a Quiz
-              </AnimatedButton>
-              <AnimatedButton delay={800} icon="">
-                Watch Tutorials
-              </AnimatedButton>
+          <Text style={styles.headerTitle}>Synapse</Text>
+
+          <TouchableOpacity onPress={openAuthModal}>
+            <View style={styles.profileCircle}>
+              {userProfilePicture ? (
+                <Image
+                  source={{ uri: userProfilePicture }}
+                  style={styles.profileImageHeader}
+                />
+              ) : (
+                <View style={styles.profileInner}>
+                  <Text style={styles.profileText}>
+                    {(userName || "?")
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </Text>
+                </View>
+              )}
             </View>
-          </>
-        ) : (
-          <>
-            {/* Chat Messages */}
-            <View style={styles.chatContainer}>
-              {messages.map((message, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.messageWrapper,
-                    message.role === "user"
-                      ? styles.userMessageWrapper
-                      : styles.assistantMessageWrapper,
-                  ]}
-                >
+          </TouchableOpacity>
+        </Animated.View>
+
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {!isChatMode || messages.length === 0 ? (
+            <>
+              {/* Greeting Section */}
+              <Animated.View style={titleStyle}>
+                <Text style={styles.greeting}>{greeting}</Text>
+                <Text style={styles.question}>Where should we start?</Text>
+              </Animated.View>
+
+              {/* Action Buttons */}
+              <View style={styles.buttonsWrapper}>
+                <AnimatedButton delay={400} icon="✍️">
+                  Upload Document
+                </AnimatedButton>
+                <AnimatedButton delay={500} icon="">
+                  Generate a complete course
+                </AnimatedButton>
+                <AnimatedButton delay={600} icon="">
+                  Take a Quiz
+                </AnimatedButton>
+                <AnimatedButton delay={800} icon="">
+                  Watch Tutorials
+                </AnimatedButton>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Chat Messages */}
+              <View style={styles.chatContainer}>
+                {messages.map((message, index) => (
                   <View
+                    key={index}
                     style={[
-                      styles.messageBubble,
+                      styles.messageWrapper,
                       message.role === "user"
-                        ? styles.userMessage
-                        : styles.assistantMessage,
+                        ? styles.userMessageWrapper
+                        : styles.assistantMessageWrapper,
                     ]}
                   >
-                    {message.role === "user" ? (
-                      <Text
-                        style={[
-                          styles.messageText,
-                          styles.userMessageText,
-                        ]}
-                      >
-                        {message.content}
-                      </Text>
-                    ) : (
-                      <Markdown
-                        style={{
-                          body: StyleSheet.flatten([
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        message.role === "user"
+                          ? styles.userMessage
+                          : styles.assistantMessage,
+                      ]}
+                    >
+                      {message.role === "user" ? (
+                        <Text
+                          style={[
                             styles.messageText,
-                            styles.assistantMessageText,
-                          ]),
-                        }}
-                      >
-                        {message.content}
-                      </Markdown>
-                    )}
+                            styles.userMessageText,
+                          ]}
+                        >
+                          {message.content}
+                        </Text>
+                      ) : (
+                        <Markdown
+                          style={{
+                            body: StyleSheet.flatten([
+                              styles.messageText,
+                              styles.assistantMessageText,
+                            ]),
+                          }}
+                        >
+                          {message.content}
+                        </Markdown>
+                      )}
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
 
-              {/* Loading Skeleton */}
-              {isLoading && <ChatSkeleton />}
+                {/* Loading Skeleton */}
+                {isLoading && <ChatSkeleton />}
+              </View>
+            </>
+          )}
+        </ScrollView>
+
+        {/* Bottom Input Bar */}
+        <View style={styles.bottomBar}>
+          <View style={styles.inputContainer}>
+            <View>
+              <TextInput
+                placeholder="Ask Synapse"
+                placeholderTextColor={"#666"}
+                style={styles.input}
+                numberOfLines={7}
+                multiline={true}
+                value={inputText}
+                onChangeText={setInputText}
+                editable={!isLoading}
+              />
             </View>
-          </>
-        )}
-      </ScrollView>
-
-      {/* Bottom Input Bar */}
-      <View style={styles.bottomBar}>
-        <View style={styles.inputContainer}>
-          <View>
-            <TextInput
-              placeholder="Ask Synapse"
-              placeholderTextColor={"#666"}
-              style={styles.input}
-              numberOfLines={7}
-              multiline={true}
-              value={inputText}
-              onChangeText={setInputText}
-              editable={!isLoading}
-            />
-          </View>
-          <View style={styles.inputButtons}>
-            <TouchableOpacity style={styles.addButton}>
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-
-            <View style={styles.rightButtons}>
-              <TouchableOpacity style={styles.thinkingButton}>
-                <Text style={styles.thinkingText}>Fast</Text>
+            <View style={styles.inputButtons}>
+              <TouchableOpacity style={styles.addButton}>
+                <Text style={styles.addButtonText}>+</Text>
               </TouchableOpacity>
 
-              <Animated.View
-                style={[styles.sendButtonContainer, sendButtonStyle]}
-              >
-                <TouchableOpacity
-                  style={styles.sendButton}
-                  onPress={handleSendMessage}
-                  disabled={isLoading || !inputText.trim()}
-                >
-                  <Text style={styles.sendButtonText}>➤</Text>
+              <View style={styles.rightButtons}>
+                <TouchableOpacity style={styles.thinkingButton}>
+                  <Text style={styles.thinkingText}>Fast</Text>
                 </TouchableOpacity>
-              </Animated.View>
+
+                <Animated.View
+                  style={[styles.sendButtonContainer, sendButtonStyle]}
+                >
+                  <TouchableOpacity
+                    style={styles.sendButton}
+                    onPress={handleSendMessage}
+                    disabled={isLoading || !inputText.trim()}
+                  >
+                    <Text style={styles.sendButtonText}>➤</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
             </View>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -501,10 +509,6 @@ const styles = StyleSheet.create({
     fontFamily: "Outfit_400Regular",
   },
   bottomBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: "#fff",
   },
   inputContainer: {

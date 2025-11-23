@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -67,6 +67,7 @@ export default function AIInterface() {
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
   const { openAuthModal, openSidebar, setOnChatSelect } = useAuth();
+  const scrollViewRef = useRef<ScrollView | null>(null);
 
   // Chat state
   const [inputText, setInputText] = useState("");
@@ -211,8 +212,12 @@ export default function AIInterface() {
       </Animated.View>
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }}
       >
         {!isChatMode || messages.length === 0 ? (
           <>

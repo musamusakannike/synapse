@@ -25,6 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.musamusakannike.synapseai",
+      "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json"
     },
     "web": {

@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "49669304081",
+    "project_id": "synapsebotai",
+    "storage_bucket": "synapsebotai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:49669304081:android:90160b0e150bfacac626b0",
+        "android_client_info": {
+          "package_name": "com.musamusakannike.synapseai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCA0zgMKMLMqOEVBnt7QgcN9aa0KVfq92g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

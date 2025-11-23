@@ -38,7 +38,7 @@ const AnimatedButton = ({ children, delay, icon }: { children: string, delay: nu
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
-  const { signOut } = useAuth();
+  const { openAuthModal } = useAuth();
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -70,7 +70,7 @@ export default function AIInterface() {
 
         <Text style={styles.headerTitle}>Synapse</Text>
 
-        <TouchableOpacity onPress={signOut}>
+        <TouchableOpacity onPress={openAuthModal}>
           <View style={styles.profileCircle}>
             <View style={styles.profileInner}>
               <Text style={styles.profileText}>💻</Text>

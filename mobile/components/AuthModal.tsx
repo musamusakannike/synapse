@@ -4,12 +4,13 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    Image,
 } from "react-native";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
-import { AuthAPI } from "../lib/api";
+import { AuthAPI, UserAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 
 // This is required for expo-auth-session to work properly
@@ -17,6 +18,15 @@ WebBrowser.maybeCompleteAuthSession();
 
 type Props = {
     onSuccess?: () => void;
+    onLogout?: () => void;
+    isAuthenticated?: boolean;
+};
+
+type UserData = {
+    id: string;
+    email: string;
+    name?: string;
+    profilePicture?: string;
 };
 
 export type AuthModalRef = {
@@ -24,19 +34,41 @@ export type AuthModalRef = {
     dismiss: () => void;
 };
 
-const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
+const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuthenticated = false }, ref) => {
     const bottomSheetRef = React.useRef<BottomSheet>(null);
     const [sending, setSending] = useState(false);
     const [socialError, setSocialError] = useState("");
+    const [userData, setUserData] = useState<UserData | null>(null);
+    const [loadingUser, setLoadingUser] = useState(false);
 
     // Snap points for the bottom sheet
-    const snapPoints = useMemo(() => ["30%"], []);
+    const snapPoints = useMemo(() => ["40%"], []);
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
         present: () => bottomSheetRef.current?.expand(),
         dismiss: () => bottomSheetRef.current?.close(),
     }));
+
+    // Fetch user data when authenticated
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (isAuthenticated) {
+                try {
+                    setLoadingUser(true);
+                    const { data } = await UserAPI.getCurrentUser();
+                    setUserData(data);
+                } catch (error) {
+                    console.error("Error fetching user data:", error);
+                } finally {
+                    setLoadingUser(false);
+                }
+            } else {
+                setUserData(null);
+            }
+        };
+        fetchUserData();
+    }, [isAuthenticated]);
 
     // Google Auth Request without proxy
     const [request, response, promptAsync] = Google.useAuthRequest({
@@ -85,9 +117,19 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
         }
     }, [response, getUserInfo]);
 
-
     const handleGithub = () => {
         setSocialError("GitHub authentication is not yet configured for mobile. Please use Google sign-in.");
+    };
+
+    const handleLogout = async () => {
+        try {
+            await SecureStore.deleteItemAsync("accessToken");
+            setUserData(null);
+            bottomSheetRef.current?.close();
+            onLogout?.();
+        } catch (error) {
+            console.error("Error logging out:", error);
+        }
     };
 
     const renderBackdrop = React.useCallback(
@@ -115,47 +157,93 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess }, ref) => {
             <BottomSheetView style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Welcome</Text>
+                    <Text style={styles.headerTitle}>{isAuthenticated ? "Profile" : "Welcome"}</Text>
                     <TouchableOpacity onPress={() => bottomSheetRef.current?.close()} style={styles.closeButton}>
                         <Text style={styles.closeButtonText}>✕</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.content}>
-                    <View style={styles.stepContainer}>
-                        <Text style={styles.subtitle}>
-                            Sign in or create an account to continue
-                        </Text>
+                    {isAuthenticated ? (
+                        // Show profile when authenticated
+                        <View style={styles.profileContainer}>
+                            {loadingUser ? (
+                                <Text style={styles.loadingText}>Loading...</Text>
+                            ) : userData ? (
+                                <>
+                                    {/* Profile Picture */}
+                                    <View style={styles.profileImageContainer}>
+                                        {userData.profilePicture ? (
+                                            <Image
+                                                source={{ uri: userData.profilePicture }}
+                                                style={styles.profileImage}
+                                            />
+                                        ) : (
+                                            <View style={styles.profilePlaceholder}>
+                                                <Text style={styles.profilePlaceholderText}>
+                                                    {userData.name?.charAt(0).toUpperCase() || userData.email.charAt(0).toUpperCase()}
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
 
-                        {/* Social Auth Buttons */}
-                        <View style={styles.buttonsContainer}>
-                            <TouchableOpacity
-                                onPress={() => promptAsync()}
-                                disabled={sending}
-                                style={[styles.socialButton, sending && styles.buttonDisabled]}
-                            >
-                                <Text style={styles.googleIcon}>G</Text>
-                                <Text style={styles.socialButtonText}>
-                                    {sending ? "Connecting..." : "Continue with Google"}
-                                </Text>
-                            </TouchableOpacity>
+                                    {/* User Info */}
+                                    <View style={styles.userInfo}>
+                                        {userData.name && (
+                                            <Text style={styles.userName}>{userData.name}</Text>
+                                        )}
+                                        <Text style={styles.userEmail}>{userData.email}</Text>
+                                    </View>
 
-                            <TouchableOpacity
-                                onPress={handleGithub}
-                                disabled={sending}
-                                style={[styles.socialButton, sending && styles.buttonDisabled]}
-                            >
-                                <Text style={styles.githubIcon}>⚙</Text>
-                                <Text style={styles.socialButtonText}>
-                                    Continue with GitHub
-                                </Text>
-                            </TouchableOpacity>
+                                    {/* Logout Button */}
+                                    <TouchableOpacity
+                                        onPress={handleLogout}
+                                        style={styles.logoutButton}
+                                    >
+                                        <Text style={styles.logoutButtonText}>Logout</Text>
+                                    </TouchableOpacity>
+                                </>
+                            ) : (
+                                <Text style={styles.errorText}>Failed to load profile</Text>
+                            )}
                         </View>
+                    ) : (
+                        // Show login options when not authenticated
+                        <View style={styles.stepContainer}>
+                            <Text style={styles.subtitle}>
+                                Sign in or create an account to continue
+                            </Text>
 
-                        {socialError ? (
-                            <Text style={styles.errorText}>{socialError}</Text>
-                        ) : null}
-                    </View>
+                            {/* Social Auth Buttons */}
+                            <View style={styles.buttonsContainer}>
+                                <TouchableOpacity
+                                    onPress={() => promptAsync()}
+                                    disabled={sending}
+                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
+                                >
+                                    <Text style={styles.googleIcon}>G</Text>
+                                    <Text style={styles.socialButtonText}>
+                                        {sending ? "Connecting..." : "Continue with Google"}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={handleGithub}
+                                    disabled={sending}
+                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
+                                >
+                                    <Text style={styles.githubIcon}>⚙</Text>
+                                    <Text style={styles.socialButtonText}>
+                                        Continue with GitHub
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {socialError ? (
+                                <Text style={styles.errorText}>{socialError}</Text>
+                            ) : null}
+                        </View>
+                    )}
                 </View>
             </BottomSheetView>
         </BottomSheet>
@@ -245,6 +333,73 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#f44336",
         textAlign: "center",
+        fontFamily: "Outfit_400Regular",
+    },
+    // Profile styles
+    profileContainer: {
+        alignItems: "center",
+        gap: 20,
+        paddingVertical: 10,
+    },
+    profileImageContainer: {
+        marginBottom: 8,
+    },
+    profileImage: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        borderWidth: 2,
+        borderColor: "#4285F4",
+    },
+    profilePlaceholder: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: "#e8f0fe",
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 2,
+        borderColor: "#4285F4",
+    },
+    profilePlaceholderText: {
+        fontSize: 32,
+        color: "#4285F4",
+        fontWeight: "600",
+        fontFamily: "Outfit_600SemiBold",
+    },
+    userInfo: {
+        alignItems: "center",
+        gap: 4,
+    },
+    userName: {
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#1f1f1f",
+        fontFamily: "Outfit_600SemiBold",
+    },
+    userEmail: {
+        fontSize: 14,
+        color: "#666",
+        fontFamily: "Outfit_400Regular",
+    },
+    logoutButton: {
+        backgroundColor: "#f44336",
+        paddingVertical: 12,
+        paddingHorizontal: 32,
+        borderRadius: 8,
+        marginTop: 8,
+        width: "100%",
+        alignItems: "center",
+    },
+    logoutButtonText: {
+        fontSize: 16,
+        color: "#fff",
+        fontWeight: "600",
+        fontFamily: "Outfit_600SemiBold",
+    },
+    loadingText: {
+        fontSize: 16,
+        color: "#666",
         fontFamily: "Outfit_400Regular",
     },
 });

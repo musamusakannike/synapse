@@ -71,4 +71,9 @@ export const AuthAPI = {
   githubSignIn: (idToken: string) => api.post("/auth/github", { idToken }),
 };
 
+// User endpoints
+export const UserAPI = {
+  getCurrentUser: () => api.get("/users/me"),
+};
+
 export default api;

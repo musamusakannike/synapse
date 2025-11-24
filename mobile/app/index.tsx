@@ -79,7 +79,7 @@ export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
-  const { openAuthModal, openSidebar, setOnChatSelect } = useAuth();
+  const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } = useAuth();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
   const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
@@ -430,6 +430,15 @@ export default function AIInterface() {
     };
   }, []);
 
+  // Handle upload document button press
+  const handleUploadDocumentPress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    documentUploadModalRef.current?.present();
+  }, [isAuthenticated, openAuthModal]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -490,7 +499,7 @@ export default function AIInterface() {
                 <AnimatedButton
                   delay={400}
                   icon="✍️"
-                  onPress={() => documentUploadModalRef.current?.present()}
+                  onPress={handleUploadDocumentPress}
                 >
                   Upload Document
                 </AnimatedButton>

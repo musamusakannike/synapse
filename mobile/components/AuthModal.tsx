@@ -9,12 +9,13 @@ import {
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import { AuthAPI, UserAPI } from "../lib/api";
+import * as Linking from "expo-linking";
+import { UserAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 
-// This is required for expo-auth-session to work properly
-WebBrowser.maybeCompleteAuthSession();
+// Configuration for web-based OAuth
+const FRONTEND_URL = "https://synapsebot.vercel.app";
+const MOBILE_AUTH_URL = `${FRONTEND_URL}/mobile-auth?auto=true`;
 
 type Props = {
     onSuccess?: () => void;
@@ -70,52 +71,43 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
         fetchUserData();
     }, [isAuthenticated]);
 
-    // Google Auth Request without proxy
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com", // Web ID
-        androidClientId: "49669304081-0t0d28nmsbo77242eajsepk1pdv1htl5.apps.googleusercontent.com",
-        iosClientId: "49669304081-djefs8u6in5p1nrd79fv3u1l1rma9efb.apps.googleusercontent.com",
-    })
-
-    const getUserInfo = React.useCallback(async (token: string) => {
-        if (!token) return;
-
+    // Handle Google OAuth via web browser
+    const handleGoogleAuth = async () => {
         try {
             setSending(true);
-            const response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-                headers: {
-                    Authorization: `Bearer ${token}`
+            setSocialError("");
+
+            // Open the mobile-auth page in an in-app browser
+            const result = await WebBrowser.openAuthSessionAsync(
+                MOBILE_AUTH_URL,
+                "synapse-ai://auth-callback"
+            );
+
+            if (result.type === "success" && result.url) {
+                // Extract token from the callback URL
+                const url = Linking.parse(result.url);
+                const token = url.queryParams?.token as string;
+
+                if (token) {
+                    // Store the JWT token securely
+                    await SecureStore.setItemAsync("accessToken", token);
+
+                    // Call success callback and close modal
+                    onSuccess?.();
+                    bottomSheetRef.current?.close();
+                } else {
+                    throw new Error("No token received from authentication");
                 }
-            });
-
-            const user = await response.json();
-
-            // Authenticate with our backend server
-            const { data } = await AuthAPI.googleSignInWithToken(token, user);
-            const accessToken = data?.accessToken;
-
-            if (!accessToken) {
-                throw new Error("Invalid server response");
+            } else if (result.type === "cancel") {
+                setSocialError("Authentication cancelled");
             }
-
-            // Store the JWT token securely
-            await SecureStore.setItemAsync("accessToken", accessToken);
-
-            // Call success callback and close modal
-            onSuccess?.();
-            bottomSheetRef.current?.close();
         } catch (error: any) {
+            console.error("Google auth error:", error);
             setSocialError(error?.message || "Authentication failed. Please try again.");
         } finally {
             setSending(false);
         }
-    }, [onSuccess]);
-
-    useEffect(() => {
-        if (response?.type === "success" && response?.authentication?.accessToken) {
-            getUserInfo(response.authentication.accessToken);
-        }
-    }, [response, getUserInfo]);
+    };
 
     const handleGithub = () => {
         setSocialError("GitHub authentication is not yet configured for mobile. Please use Google sign-in.");
@@ -217,7 +209,7 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                             {/* Social Auth Buttons */}
                             <View style={styles.buttonsContainer}>
                                 <TouchableOpacity
-                                    onPress={() => promptAsync()}
+                                    onPress={handleGoogleAuth}
                                     disabled={sending}
                                     style={[styles.socialButton, sending && styles.buttonDisabled]}
                                 >

@@ -50,7 +50,7 @@ const ChatSkeleton = () => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 2,
     paddingVertical: 20,
   },
   messageContainer: {

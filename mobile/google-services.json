@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "49669304081-0t0d28nmsbo77242eajsepk1pdv1htl5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.musamusakannike.synapseai",
+            "certificate_hash": "746415eab07ab3a9d39b81ed1402cd940884d318"
+          }
+        },
+        {
           "client_id": "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "49669304081-pbml5pmtl0bfrq6p8bnu4le1sm93j3fj.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "49669304081-djefs8u6in5p1nrd79fv3u1l1rma9efb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.musamusakannike.synapseai"
+              }
             }
           ]
         }

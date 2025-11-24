@@ -23,6 +23,8 @@ import Animated, {
   interpolate,
   withTiming,
 } from "react-native-reanimated";
+import * as Linking from "expo-linking";
+import * as SecureStore from "expo-secure-store";
 import { useAuth } from "../contexts/AuthContext";
 import { ChatAPI, UserAPI } from "../lib/api";
 import ChatSkeleton from "../components/ChatSkeleton";
@@ -152,6 +154,42 @@ export default function AIInterface() {
       setGreeting(options[index]);
     }
   }, [userName]);
+
+  // Handle deep links for OAuth callback
+  useEffect(() => {
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = Linking.parse(event.url);
+
+      // Check if this is an auth callback
+      if (url.path === "auth-callback" && url.queryParams?.token) {
+        const token = url.queryParams.token as string;
+
+        try {
+          // Store the token securely
+          await SecureStore.setItemAsync("accessToken", token);
+
+          // The AuthContext will automatically detect the token and update state
+          console.log("OAuth token received and stored successfully");
+        } catch (error) {
+          console.error("Error storing OAuth token:", error);
+        }
+      }
+    };
+
+    // Listen for deep link events
+    const subscription = Linking.addEventListener("url", handleDeepLink);
+
+    // Check if app was opened with a deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleOpenChat = useCallback(async (chatId: string) => {
     try {

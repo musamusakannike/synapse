@@ -110,4 +110,18 @@ export const ChatAPI = {
     api.post(`/chats/${chatId}/message/${messageIndex}/regenerate`),
 };
 
+// Document endpoints
+export const DocumentAPI = {
+  uploadDocument: (formData: FormData) => 
+    api.post("/documents", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }),
+  getDocument: (documentId: string) => 
+    api.get(`/documents/${documentId}`),
+  listDocuments: () => 
+    api.get("/documents"),
+};
+
 export default api;

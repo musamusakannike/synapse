@@ -25,20 +25,25 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
-import { ChatAPI, UserAPI } from "../lib/api";
+import { ChatAPI, UserAPI, DocumentAPI } from "../lib/api";
 import ChatSkeleton from "../components/ChatSkeleton";
 import MessageOptionsModal, {
   MessageOptionsModalRef,
 } from "../components/MessageOptionsModal";
+import DocumentUploadModal, {
+  DocumentUploadModalRef,
+} from "../components/DocumentUploadModal";
 
 const AnimatedButton = ({
   children,
   delay,
   icon,
+  onPress,
 }: {
   children: string;
   delay: number;
   icon: string;
+  onPress?: () => void;
 }) => {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
@@ -55,7 +60,7 @@ const AnimatedButton = ({
 
   return (
     <Animated.View style={[styles.buttonContainer, animatedStyle]}>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={onPress}>
         <Text style={styles.buttonText}>
           {icon} {children}
         </Text>
@@ -77,6 +82,7 @@ export default function AIInterface() {
   const { openAuthModal, openSidebar, setOnChatSelect } = useAuth();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
+  const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
 
   // Chat state
   const [inputText, setInputText] = useState("");
@@ -94,6 +100,10 @@ export default function AIInterface() {
   const [selectedMessageRole, setSelectedMessageRole] = useState<"user" | "assistant">("user");
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [editedMessageContent, setEditedMessageContent] = useState("");
+
+  // Document upload state
+  const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Keyboard listeners for Android
@@ -359,6 +369,67 @@ export default function AIInterface() {
     }
   }, [selectedMessageIndex, currentChatId]);
 
+  // Document upload handlers
+  const handleDocumentUpload = useCallback(async (documentId: string) => {
+    setUploadingDocumentId(documentId);
+
+    // Start polling for document status
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const response = await DocumentAPI.getDocument(documentId);
+        const document = response.data;
+
+        if (document.processingStatus === "completed") {
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setUploadingDocumentId(null);
+
+          // Find the associated chat
+          const chatsResponse = await ChatAPI.getUserChats(1, 50);
+          const documentChat = chatsResponse.data.chats.find(
+            (chat: any) => chat.type === "document" && chat.sourceId?._id === documentId
+          );
+
+          if (documentChat) {
+            // Navigate to the chat
+            Alert.alert(
+              "Document Ready!",
+              "Your document has been processed. Opening chat...",
+              [
+                {
+                  text: "OK",
+                  onPress: () => handleOpenChat(documentChat.id),
+                },
+              ]
+            );
+          }
+        } else if (document.processingStatus === "failed") {
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          setUploadingDocumentId(null);
+          Alert.alert("Processing Failed", "Failed to process document. Please try again.");
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    }, 3000); // Poll every 3 seconds
+  }, [handleOpenChat]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -416,7 +487,11 @@ export default function AIInterface() {
 
               {/* Action Buttons */}
               <View style={styles.buttonsWrapper}>
-                <AnimatedButton delay={400} icon="✍️">
+                <AnimatedButton
+                  delay={400}
+                  icon="✍️"
+                  onPress={() => documentUploadModalRef.current?.present()}
+                >
                   Upload Document
                 </AnimatedButton>
                 <AnimatedButton delay={500} icon="">
@@ -575,6 +650,12 @@ export default function AIInterface() {
           messageIndex={selectedMessageIndex}
           onEdit={handleEditMessage}
           onRegenerate={handleRegenerateResponse}
+        />
+
+        {/* Document Upload Modal */}
+        <DocumentUploadModal
+          ref={documentUploadModalRef}
+          onUploadSuccess={handleDocumentUpload}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

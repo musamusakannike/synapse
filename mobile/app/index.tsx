@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  Keyboard,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -93,6 +94,30 @@ export default function AIInterface() {
   const [selectedMessageRole, setSelectedMessageRole] = useState<"user" | "assistant">("user");
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [editedMessageContent, setEditedMessageContent] = useState("");
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  // Keyboard listeners for Android
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      const keyboardDidShowListener = Keyboard.addListener(
+        "keyboardDidShow",
+        (e) => {
+          setKeyboardHeight(e.endCoordinates.height);
+        }
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        "keyboardDidHide",
+        () => {
+          setKeyboardHeight(0);
+        }
+      );
+
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }
+  }, []);
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -339,7 +364,7 @@ export default function AIInterface() {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle]}>
@@ -499,7 +524,10 @@ export default function AIInterface() {
         </ScrollView>
 
         {/* Bottom Input Bar */}
-        <View style={styles.bottomBar}>
+        <View style={[
+          styles.bottomBar,
+          Platform.OS === "android" && keyboardHeight > 0 && { marginBottom: keyboardHeight }
+        ]}>
           <View style={styles.inputContainer}>
             <View>
               <TextInput

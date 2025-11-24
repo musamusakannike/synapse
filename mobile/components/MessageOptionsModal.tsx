@@ -12,7 +12,11 @@ import * as Clipboard from "expo-clipboard";
 
 type Props = {
     messageContent: string;
+    messageRole: "user" | "assistant";
+    messageIndex: number;
     onOptionSelected?: () => void;
+    onEdit?: () => void;
+    onRegenerate?: () => void;
 };
 
 export type MessageOptionsModalRef = {
@@ -21,11 +25,11 @@ export type MessageOptionsModalRef = {
 };
 
 const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
-    ({ messageContent, onOptionSelected }, ref) => {
+    ({ messageContent, messageRole, messageIndex, onOptionSelected, onEdit, onRegenerate }, ref) => {
         const bottomSheetRef = React.useRef<BottomSheet>(null);
 
         // Snap points for the bottom sheet
-        const snapPoints = useMemo(() => ["25%"], []);
+        const snapPoints = useMemo(() => ["30%"], []);
 
         // Expose methods to parent component
         useImperativeHandle(ref, () => ({
@@ -53,6 +57,16 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
             } catch (error) {
                 console.error("Error sharing:", error);
             }
+        };
+
+        const handleEdit = () => {
+            bottomSheetRef.current?.close();
+            onEdit?.();
+        };
+
+        const handleRegenerate = () => {
+            bottomSheetRef.current?.close();
+            onRegenerate?.();
         };
 
         const renderBackdrop = React.useCallback(
@@ -91,6 +105,26 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
 
                     {/* Options */}
                     <View style={styles.optionsContainer}>
+                        {messageRole === "user" && onEdit && (
+                            <TouchableOpacity
+                                style={styles.optionButton}
+                                onPress={handleEdit}
+                            >
+                                <Text style={styles.optionIcon}>✏️</Text>
+                                <Text style={styles.optionText}>Edit Message</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {messageRole === "assistant" && onRegenerate && (
+                            <TouchableOpacity
+                                style={styles.optionButton}
+                                onPress={handleRegenerate}
+                            >
+                                <Text style={styles.optionIcon}>🔄</Text>
+                                <Text style={styles.optionText}>Regenerate Response</Text>
+                            </TouchableOpacity>
+                        )}
+
                         <TouchableOpacity
                             style={styles.optionButton}
                             onPress={handleCopyToClipboard}

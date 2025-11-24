@@ -89,6 +89,10 @@ export default function AIInterface() {
   );
   const [greeting, setGreeting] = useState<string>("Hi there");
   const [selectedMessageContent, setSelectedMessageContent] = useState<string>("");
+  const [selectedMessageIndex, setSelectedMessageIndex] = useState<number>(-1);
+  const [selectedMessageRole, setSelectedMessageRole] = useState<"user" | "assistant">("user");
+  const [isEditingMessage, setIsEditingMessage] = useState(false);
+  const [editedMessageContent, setEditedMessageContent] = useState("");
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -256,6 +260,80 @@ export default function AIInterface() {
     }
   }, [inputText, isLoading, currentChatId]);
 
+  const handleEditMessage = useCallback(() => {
+    if (selectedMessageIndex < 0 || !currentChatId) return;
+
+    // Set edit mode and populate edit input with current message content
+    setIsEditingMessage(true);
+    setEditedMessageContent(messages[selectedMessageIndex].content);
+  }, [selectedMessageIndex, currentChatId, messages]);
+
+  const handleSubmitEdit = useCallback(async () => {
+    if (!editedMessageContent.trim() || !currentChatId || selectedMessageIndex < 0) return;
+
+    try {
+      setIsLoading(true);
+
+      // Call API to edit message
+      const response = await ChatAPI.editMessage(
+        currentChatId,
+        selectedMessageIndex,
+        editedMessageContent.trim()
+      );
+
+      // Update messages with the response
+      setMessages(response.data.messages.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+      })));
+
+      // Reset edit mode
+      setIsEditingMessage(false);
+      setEditedMessageContent("");
+      setSelectedMessageIndex(-1);
+    } catch (error) {
+      console.error("Edit message error:", error);
+      Alert.alert("Error", "Failed to edit message. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [editedMessageContent, currentChatId, selectedMessageIndex]);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditingMessage(false);
+    setEditedMessageContent("");
+    setSelectedMessageIndex(-1);
+  }, []);
+
+  const handleRegenerateResponse = useCallback(async () => {
+    if (selectedMessageIndex < 0 || !currentChatId) return;
+
+    try {
+      setIsLoading(true);
+
+      // Call API to regenerate response
+      const response = await ChatAPI.regenerateResponse(
+        currentChatId,
+        selectedMessageIndex
+      );
+
+      // Update messages with the response
+      setMessages(response.data.messages.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+      })));
+
+      setSelectedMessageIndex(-1);
+    } catch (error) {
+      console.error("Regenerate response error:", error);
+      Alert.alert("Error", "Failed to regenerate response. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedMessageIndex, currentChatId]);
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -344,10 +422,10 @@ export default function AIInterface() {
                   >
                     <Pressable
                       onLongPress={() => {
-                        if (message.role === "assistant") {
-                          setSelectedMessageContent(message.content);
-                          messageOptionsModalRef.current?.present();
-                        }
+                        setSelectedMessageContent(message.content);
+                        setSelectedMessageIndex(index);
+                        setSelectedMessageRole(message.role);
+                        messageOptionsModalRef.current?.present();
                       }}
                       style={[
                         styles.messageBubble,
@@ -380,6 +458,39 @@ export default function AIInterface() {
                     </Pressable>
                   </View>
                 ))}
+
+                {/* Edit Mode UI */}
+                {isEditingMessage && (
+                  <View style={styles.editModeContainer}>
+                    <View style={styles.editHeader}>
+                      <Text style={styles.editHeaderText}>Edit Message</Text>
+                    </View>
+                    <TextInput
+                      style={styles.editInput}
+                      value={editedMessageContent}
+                      onChangeText={setEditedMessageContent}
+                      multiline
+                      autoFocus
+                      placeholder="Edit your message..."
+                      placeholderTextColor="#666"
+                    />
+                    <View style={styles.editButtons}>
+                      <TouchableOpacity
+                        style={[styles.editButton, styles.cancelButton]}
+                        onPress={handleCancelEdit}
+                      >
+                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.editButton, styles.saveButton]}
+                        onPress={handleSubmitEdit}
+                        disabled={isLoading || !editedMessageContent.trim()}
+                      >
+                        <Text style={styles.saveButtonText}>Save</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
 
                 {/* Loading Skeleton */}
                 {isLoading && <ChatSkeleton />}
@@ -433,6 +544,10 @@ export default function AIInterface() {
         <MessageOptionsModal
           ref={messageOptionsModalRef}
           messageContent={selectedMessageContent}
+          messageRole={selectedMessageRole}
+          messageIndex={selectedMessageIndex}
+          onEdit={handleEditMessage}
+          onRegenerate={handleRegenerateResponse}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -675,5 +790,62 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 20,
     fontWeight: "600",
+  },
+  editModeContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "#4285F4",
+  },
+  editHeader: {
+    marginBottom: 12,
+  },
+  editHeaderText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#4285F4",
+    fontFamily: "Outfit_600SemiBold",
+  },
+  editInput: {
+    backgroundColor: "#f0f4f9",
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    fontFamily: "Outfit_400Regular",
+    color: "#1f1f1f",
+    minHeight: 100,
+    maxHeight: 200,
+    textAlignVertical: "top",
+  },
+  editButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 12,
+  },
+  editButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  saveButton: {
+    backgroundColor: "#4285F4",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    fontFamily: "Outfit_600SemiBold",
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+    fontFamily: "Outfit_600SemiBold",
   },
 });

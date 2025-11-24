@@ -104,6 +104,10 @@ export const ChatAPI = {
     api.put(`/chats/${chatId}/unfavorite`),
   getFavoriteChats: (page: number = 1, limit: number = 20) => 
     api.get("/chats/favorites", { params: { page, limit } }),
+  editMessage: (chatId: string, messageIndex: number, newContent: string) =>
+    api.put(`/chats/${chatId}/message/${messageIndex}`, { content: newContent }),
+  regenerateResponse: (chatId: string, messageIndex: number) =>
+    api.post(`/chats/${chatId}/message/${messageIndex}/regenerate`),
 };
 
 export default api;

@@ -533,6 +533,162 @@ const getFavoriteChats = async (req, res) => {
   }
 };
 
+const editMessage = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { content } = req.body;
+    const messageIndex = Number.parseInt(req.params.messageIndex);
+
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    }).populate("sourceId");
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Validate message index
+    if (messageIndex < 0 || messageIndex >= chat.messages.length) {
+      return res.status(400).json({ error: "Invalid message index" });
+    }
+
+    // Validate that the message is a user message
+    if (chat.messages[messageIndex].role !== "user") {
+      return res.status(400).json({ error: "Can only edit user messages" });
+    }
+
+    // Update the message content
+    chat.messages[messageIndex].content = content;
+    chat.messages[messageIndex].timestamp = new Date();
+
+    // Remove all messages after the edited message
+    chat.messages = chat.messages.slice(0, messageIndex + 1);
+
+    // Prepare context based on chat type
+    let context = "";
+    if (chat.sourceId) {
+      switch (chat.type) {
+        case "topic":
+          context = `Topic: ${chat.sourceId.title}\nContent: ${
+            chat.sourceId.generatedContent || chat.sourceId.content
+          }`;
+          break;
+        case "document":
+          context = `Document: ${chat.sourceId.originalName}\nContent: ${chat.sourceId.extractedText}`;
+          break;
+        case "website":
+          context = `Website: ${chat.sourceId.url}\nContent: ${chat.sourceId.extractedContent}`;
+          break;
+      }
+    }
+
+    // Generate new AI response
+    const aiResponse = await geminiService.generateChatResponse(
+      chat.messages.slice(-10), // Last 10 messages for context
+      context
+    );
+
+    // Add new AI response
+    chat.messages.push({
+      role: "assistant",
+      content: aiResponse,
+    });
+
+    await chat.save();
+
+    res.json({
+      message: "Message edited successfully",
+      messages: chat.messages,
+      newResponse: {
+        role: "assistant",
+        content: aiResponse,
+        timestamp: chat.messages[chat.messages.length - 1].timestamp,
+      },
+    });
+  } catch (error) {
+    console.error("Edit message error:", error);
+    res.status(500).json({ error: "Failed to edit message" });
+  }
+};
+
+const regenerateResponse = async (req, res) => {
+  try {
+    const messageIndex = Number.parseInt(req.params.messageIndex);
+
+    const chat = await Chat.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    }).populate("sourceId");
+
+    if (!chat) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Validate message index
+    if (messageIndex < 0 || messageIndex >= chat.messages.length) {
+      return res.status(400).json({ error: "Invalid message index" });
+    }
+
+    // Validate that the message is an assistant message
+    if (chat.messages[messageIndex].role !== "assistant") {
+      return res.status(400).json({ error: "Can only regenerate assistant messages" });
+    }
+
+    // Remove the assistant message and all messages after it
+    chat.messages = chat.messages.slice(0, messageIndex);
+
+    // Prepare context based on chat type
+    let context = "";
+    if (chat.sourceId) {
+      switch (chat.type) {
+        case "topic":
+          context = `Topic: ${chat.sourceId.title}\nContent: ${
+            chat.sourceId.generatedContent || chat.sourceId.content
+          }`;
+          break;
+        case "document":
+          context = `Document: ${chat.sourceId.originalName}\nContent: ${chat.sourceId.extractedText}`;
+          break;
+        case "website":
+          context = `Website: ${chat.sourceId.url}\nContent: ${chat.sourceId.extractedContent}`;
+          break;
+      }
+    }
+
+    // Generate new AI response
+    const aiResponse = await geminiService.generateChatResponse(
+      chat.messages.slice(-10), // Last 10 messages for context
+      context
+    );
+
+    // Add new AI response
+    chat.messages.push({
+      role: "assistant",
+      content: aiResponse,
+    });
+
+    await chat.save();
+
+    res.json({
+      message: "Response regenerated successfully",
+      messages: chat.messages,
+      newResponse: {
+        role: "assistant",
+        content: aiResponse,
+        timestamp: chat.messages[chat.messages.length - 1].timestamp,
+      },
+    });
+  } catch (error) {
+    console.error("Regenerate response error:", error);
+    res.status(500).json({ error: "Failed to regenerate response" });
+  }
+};
+
 module.exports = {
   getUserChats,
   getChatWithMessages,
@@ -547,4 +703,6 @@ module.exports = {
   favoriteChat,
   unfavoriteChat,
   getFavoriteChats,
+  editMessage,
+  regenerateResponse,
 };

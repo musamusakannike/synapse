@@ -2,6 +2,7 @@ const Website = require("../models/website.model");
 const GeminiService = require("../config/gemini.config");
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { createChatWithAttachment } = require("./chat.controller");
 
 function extractReadableText(html) {
   const $ = cheerio.load(html);
@@ -52,6 +53,32 @@ async function createWebsite(req, res) {
       site.processingStatus = "completed";
       site.scrapedAt = new Date();
       await site.save();
+
+      // Create a chat with website attachment
+      try {
+        const chatTitle = `${site.title || url} - Website`;
+        const messageContent = `I've scraped the website "${site.title || url}".\n\nSummary: ${summary}\n\nYou can ask me questions about this website!`;
+        
+        await createChatWithAttachment(
+          userId,
+          chatTitle,
+          "website",
+          site._id,
+          "Website",
+          "website",
+          {
+            websiteId: site._id,
+            title: site.title,
+            url: site.url,
+            summary: summary,
+            extractedContent: text.substring(0, 5000), // Limit text size in attachment
+          },
+          messageContent
+        );
+      } catch (chatError) {
+        console.error("Failed to create chat for website:", chatError);
+        // Continue without failing the website creation
+      }
     } catch (processingError) {
       console.error("Website processing failed:", processingError);
       site.processingStatus = "failed";

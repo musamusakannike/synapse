@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const Document = require("../models/document.model");
 const GeminiService = require("../config/gemini.config");
+const { createChatWithAttachment } = require("./chat.controller");
 
 // Lazy-load heavy libs only when needed
 let pdfParse; // pdf-parse
@@ -85,6 +86,31 @@ async function uploadDocument(req, res) {
       doc.summary = summary;
       doc.processingStatus = "completed";
       await doc.save();
+
+      // 3) Create a chat with document attachment
+      try {
+        const chatTitle = `${originalname} - Document`;
+        const messageContent = `I've processed your document "${originalname}". Here's a summary:\n\n${summary}\n\nYou can ask me questions about this document!`;
+        
+        await createChatWithAttachment(
+          userId,
+          chatTitle,
+          "document",
+          doc._id,
+          "Document",
+          "document",
+          {
+            documentId: doc._id,
+            originalName: originalname,
+            summary: summary,
+            extractedText: extractedText.substring(0, 5000), // Limit text size in attachment
+          },
+          messageContent
+        );
+      } catch (chatError) {
+        console.error("Failed to create chat for document:", chatError);
+        // Continue without failing the document upload
+      }
     } catch (processingError) {
       console.error("Document processing failed:", processingError);
       doc.processingStatus = "failed";

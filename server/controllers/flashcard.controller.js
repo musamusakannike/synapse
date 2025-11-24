@@ -4,6 +4,7 @@ const Document = require("../models/document.model");
 const Website = require("../models/website.model");
 const geminiService = require("../config/gemini.config");
 const { validationResult } = require("express-validator");
+const { createChatWithAttachment } = require("./chat.controller");
 
 const getUserFlashcardSets = async (req, res) => {
   try {
@@ -158,6 +159,31 @@ const generateFlashcards = async (req, res) => {
     });
 
     await flashcardSet.save();
+
+    // Create a chat with flashcard attachment
+    try {
+      const chatTitle = `${flashcardSet.title} - Flashcards`;
+      const messageContent = `I've generated ${flashcardSet.flashcards.length} flashcards for you: "${flashcardSet.title}"\n\nYou can use these flashcards to study and test your knowledge!`;
+      
+      await createChatWithAttachment(
+        req.user._id,
+        chatTitle,
+        "flashcard",
+        flashcardSet._id,
+        "FlashcardSet",
+        "flashcard",
+        {
+          flashcardSetId: flashcardSet._id,
+          title: flashcardSet.title,
+          flashcards: flashcardSet.flashcards,
+          settings: flashcardSet.settings,
+        },
+        messageContent
+      );
+    } catch (chatError) {
+      console.error("Failed to create chat for flashcards:", chatError);
+      // Continue without failing the flashcard creation
+    }
 
     res.status(201).json({
       message: "Flashcards generated successfully",

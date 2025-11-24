@@ -1,5 +1,21 @@
 const mongoose = require("mongoose")
 
+const attachmentSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["document", "quiz", "flashcard", "course", "website", "wikipedia"],
+    required: true,
+  },
+  data: {
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
+  },
+}, { _id: false })
+
 const messageSchema = new mongoose.Schema({
   role: {
     type: String,
@@ -18,6 +34,10 @@ const messageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {},
   },
+  attachments: {
+    type: [attachmentSchema],
+    default: [],
+  },
 })
 
 const chatSchema = new mongoose.Schema(
@@ -33,7 +53,7 @@ const chatSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["topic", "document", "website", "general"],
+      enum: ["topic", "document", "website", "general", "quiz", "flashcard", "course", "wikipedia"],
       required: true,
     },
     sourceId: {
@@ -42,7 +62,7 @@ const chatSchema = new mongoose.Schema(
     },
     sourceModel: {
       type: String,
-      enum: ["Topic", "Document", "Website"],
+      enum: ["Topic", "Document", "Website", "Course", "Quiz", "FlashcardSet"],
     },
     messages: [messageSchema],
     isActive: {

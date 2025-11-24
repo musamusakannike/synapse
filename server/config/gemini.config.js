@@ -309,6 +309,33 @@ class GeminiService {
     }
   }
 
+  async generateChatTitle(message) {
+    try {
+      const prompt = `Generate a short, descriptive title (maximum 50 characters) for a chat conversation that starts with this message: "${message}"\n\nReturn only the title, nothing else. Make it concise and informative.`;
+      
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        safetySettings: this.safetySettings,
+      });
+      
+      let title = response.text.trim();
+      
+      // Remove quotes if present
+      title = title.replace(/^["']|["']$/g, '');
+      
+      // Truncate if too long
+      if (title.length > 50) {
+        title = title.substring(0, 47) + "...";
+      }
+      
+      return title || "New Chat";
+    } catch (error) {
+      console.error("Error generating chat title:", error);
+      return "New Chat";
+    }
+  }
+
   // Helpers
   buildTopicPrompt(topic, customizations) {
     let prompt = `Please provide a comprehensive explanation of the topic: "${topic}"\n\n`;

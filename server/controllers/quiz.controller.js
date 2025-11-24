@@ -2,6 +2,7 @@ const Quiz = require("../models/quiz.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
 const GeminiService = require("../config/gemini.config");
+const { createChatWithAttachment } = require("./chat.controller");
 
 // POST /api/quizzes
 // Body: { title, description?, sourceType: 'topic'|'document'|'website', sourceId?, sourceModel?, content?, settings? }
@@ -68,6 +69,31 @@ async function createQuiz(req, res) {
         timeLimit: settings.timeLimit,
       },
     });
+
+    // Create a chat with quiz attachment
+    try {
+      const chatTitle = `${quiz.title} - Quiz`;
+      const messageContent = `I've generated a quiz for you: "${quiz.title}"\n\nThis quiz contains ${quiz.questions.length} questions. You can start the quiz and track your progress!`;
+      
+      await createChatWithAttachment(
+        userId,
+        chatTitle,
+        "quiz",
+        quiz._id,
+        "Quiz",
+        "quiz",
+        {
+          quizId: quiz._id,
+          title: quiz.title,
+          questions: quiz.questions,
+          settings: quiz.settings,
+        },
+        messageContent
+      );
+    } catch (chatError) {
+      console.error("Failed to create chat for quiz:", chatError);
+      // Continue without failing the quiz creation
+    }
 
     return res.status(201).json(quiz);
   } catch (error) {

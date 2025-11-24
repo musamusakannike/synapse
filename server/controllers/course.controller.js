@@ -1,6 +1,7 @@
 const Course = require("../models/course.model");
 const GeminiService = require("../config/gemini.config");
 const PDFDocument = require("pdfkit");
+const { createChatWithAttachment } = require("./chat.controller");
 
 // POST /api/courses
 // Body: { title, description?, settings? }
@@ -29,7 +30,7 @@ async function createCourse(req, res) {
     });
 
     // Generate outline asynchronously
-    generateCourseOutlineAsync(course._id, title, description, course.settings);
+    generateCourseOutlineAsync(course._id, title, description, course.settings, userId);
 
     return res.status(201).json(course);
   } catch (error) {
@@ -39,7 +40,7 @@ async function createCourse(req, res) {
 }
 
 // Async function to generate outline and content
-async function generateCourseOutlineAsync(courseId, title, description, settings) {
+async function generateCourseOutlineAsync(courseId, title, description, settings, userId) {
   try {
     // Generate outline
     const outlineData = await GeminiService.generateCourseOutline(
@@ -92,6 +93,31 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
     course.content = contentArray;
     course.status = "completed";
     await course.save();
+
+    // Create a chat with course attachment
+    try {
+      const chatTitle = `${course.title} - Course`;
+      const messageContent = `I've generated a complete course for you: "${course.title}"\n\nThe course includes ${course.outline.length} main sections with detailed content. You can ask me questions about any topic in the course!`;
+      
+      await createChatWithAttachment(
+        userId,
+        chatTitle,
+        "course",
+        course._id,
+        "Course",
+        "course",
+        {
+          courseId: course._id,
+          title: course.title,
+          outline: course.outline,
+          settings: course.settings,
+        },
+        messageContent
+      );
+    } catch (chatError) {
+      console.error("Failed to create chat for course:", chatError);
+      // Continue without failing the course generation
+    }
   } catch (error) {
     console.error("Error generating course:", error);
     const course = await Course.findById(courseId);
@@ -169,7 +195,7 @@ async function regenerateCourse(req, res) {
     await course.save();
 
     // Regenerate asynchronously
-    generateCourseOutlineAsync(course._id, course.title, course.description, course.settings);
+    generateCourseOutlineAsync(course._id, course.title, course.description, course.settings, userId);
 
     return res.status(200).json(course);
   } catch (error) {

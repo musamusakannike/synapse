@@ -141,6 +141,17 @@ const sendMessage = async (req, res) => {
       content: aiResponse,
     });
 
+    // Auto-generate title if this is the first message (only user message + AI response)
+    if (chat.messages.length === 2 && (chat.title === "New Chat" || chat.title.includes("Chat"))) {
+      try {
+        const generatedTitle = await geminiService.generateChatTitle(content);
+        chat.title = generatedTitle;
+      } catch (titleError) {
+        console.error("Failed to generate chat title:", titleError);
+        // Continue without updating title
+      }
+    }
+
     await chat.save();
 
     res.json({
@@ -155,6 +166,7 @@ const sendMessage = async (req, res) => {
         content: aiResponse,
         timestamp: chat.messages[chat.messages.length - 1].timestamp,
       },
+      title: chat.title, // Include updated title in response
     });
   } catch (error) {
     console.error("Send message error:", error);
@@ -689,6 +701,49 @@ const regenerateResponse = async (req, res) => {
   }
 };
 
+// Helper function to create a chat with an attachment
+const createChatWithAttachment = async (
+  userId,
+  title,
+  type,
+  sourceId,
+  sourceModel,
+  attachmentType,
+  attachmentData,
+  messageContent
+) => {
+  try {
+    const chat = new Chat({
+      userId,
+      title,
+      type,
+      sourceId,
+      sourceModel,
+      messages: [
+        {
+          role: "assistant",
+          content: messageContent,
+          attachments: [
+            {
+              type: attachmentType,
+              data: attachmentData,
+              metadata: {
+                createdAt: new Date(),
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    await chat.save();
+    return chat;
+  } catch (error) {
+    console.error("Error creating chat with attachment:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getUserChats,
   getChatWithMessages,
@@ -705,4 +760,5 @@ module.exports = {
   getFavoriteChats,
   editMessage,
   regenerateResponse,
+  createChatWithAttachment, // Export helper function
 };

@@ -1,6 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const Website = require("../models/website.model");
+const { createChatWithAttachment } = require("./chat.controller");
 
 function htmlToText(html) {
   const $ = cheerio.load(html || "");
@@ -110,6 +111,32 @@ async function importWikipediaPage(req, res) {
       processingStatus: "completed",
       scrapedAt: new Date(),
     });
+
+    // Create a chat with Wikipedia attachment
+    try {
+      const chatTitle = `${site.title} - Wikipedia`;
+      const messageContent = `I've imported the Wikipedia article "${site.title}".\n\nSummary: ${site.summary}\n\nYou can ask me questions about this article!`;
+      
+      await createChatWithAttachment(
+        userId,
+        chatTitle,
+        "wikipedia",
+        site._id,
+        "Website",
+        "wikipedia",
+        {
+          websiteId: site._id,
+          title: site.title,
+          url: site.url,
+          summary: site.summary,
+          extractedContent: text.substring(0, 5000), // Limit text size in attachment
+        },
+        messageContent
+      );
+    } catch (chatError) {
+      console.error("Failed to create chat for Wikipedia import:", chatError);
+      // Continue without failing the import
+    }
 
     return res.status(201).json(site);
   } catch (error) {

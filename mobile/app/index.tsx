@@ -11,6 +11,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from "react-native";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +26,9 @@ import Animated, {
 import { useAuth } from "../contexts/AuthContext";
 import { ChatAPI, UserAPI } from "../lib/api";
 import ChatSkeleton from "../components/ChatSkeleton";
+import MessageOptionsModal, {
+  MessageOptionsModalRef,
+} from "../components/MessageOptionsModal";
 
 const AnimatedButton = ({
   children,
@@ -71,6 +75,7 @@ export default function AIInterface() {
   const sendButtonWidth = useSharedValue(0);
   const { openAuthModal, openSidebar, setOnChatSelect } = useAuth();
   const scrollViewRef = useRef<ScrollView | null>(null);
+  const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
 
   // Chat state
   const [inputText, setInputText] = useState("");
@@ -83,6 +88,7 @@ export default function AIInterface() {
     null
   );
   const [greeting, setGreeting] = useState<string>("Hi there");
+  const [selectedMessageContent, setSelectedMessageContent] = useState<string>("");
 
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
@@ -336,7 +342,13 @@ export default function AIInterface() {
                         : styles.assistantMessageWrapper,
                     ]}
                   >
-                    <View
+                    <Pressable
+                      onLongPress={() => {
+                        if (message.role === "assistant") {
+                          setSelectedMessageContent(message.content);
+                          messageOptionsModalRef.current?.present();
+                        }
+                      }}
                       style={[
                         styles.messageBubble,
                         message.role === "user"
@@ -365,7 +377,7 @@ export default function AIInterface() {
                           {message.content}
                         </Markdown>
                       )}
-                    </View>
+                    </Pressable>
                   </View>
                 ))}
 
@@ -416,6 +428,12 @@ export default function AIInterface() {
             </View>
           </View>
         </View>
+
+        {/* Message Options Modal */}
+        <MessageOptionsModal
+          ref={messageOptionsModalRef}
+          messageContent={selectedMessageContent}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

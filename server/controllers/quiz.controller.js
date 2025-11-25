@@ -5,75 +5,84 @@ const Course = require("../models/course.model");
 const GeminiService = require("../config/gemini.config");
 const { createChatWithAttachment } = require("./chat.controller");
 
-// Helper function to generate quiz in parts for larger question counts
-async function generateQuizInParts(content, settings, numberOfQuestions) {
-  let allQuestions = [];
-  
-  if (numberOfQuestions <= 10) {
-    // Standard generation for 10 or fewer questions
-    const quizJSON = await GeminiService.generateQuiz(content, { ...settings, numberOfQuestions });
-    return quizJSON;
-  } else if (numberOfQuestions <= 20) {
-    // Split into 2 parts for 11-20 questions
-    const questionsPerPart = Math.ceil(numberOfQuestions / 2);
-    const part1Count = questionsPerPart;
-    const part2Count = numberOfQuestions - part1Count;
+// Async function to generate quiz questions in parts
+async function generateQuizAsync(quizId, content, settings, numberOfQuestions, userId) {
+  try {
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) return;
+
+    let allQuestions = [];
     
-    // Generate first part
-    const part1Settings = { ...settings, numberOfQuestions: part1Count };
-    const part1 = await GeminiService.generateQuiz(
-      content + "\n\nGenerate the FIRST part of the quiz focusing on foundational concepts and early topics.",
-      part1Settings
-    );
-    allQuestions = [...(part1.questions || [])];
+    // Always generate in batches of max 10 questions to avoid JSON parsing errors
+    const batchSize = 10;
+    const numBatches = Math.ceil(numberOfQuestions / batchSize);
     
-    // Generate second part
-    const part2Settings = { ...settings, numberOfQuestions: part2Count };
-    const part2 = await GeminiService.generateQuiz(
-      content + "\n\nGenerate the SECOND part of the quiz focusing on advanced concepts and later topics. Make sure questions are different from the first part.",
-      part2Settings
-    );
-    allQuestions = [...allQuestions, ...(part2.questions || [])];
+    for (let i = 0; i < numBatches; i++) {
+      const questionsInBatch = Math.min(batchSize, numberOfQuestions - (i * batchSize));
+      
+      // Add context to help AI generate diverse questions across batches
+      let batchContent = content;
+      if (numBatches > 1) {
+        const batchNumber = i + 1;
+        if (batchNumber === 1) {
+          batchContent += `\n\nGenerate the FIRST batch of questions (${questionsInBatch} questions) focusing on foundational concepts and introductory topics.`;
+        } else if (batchNumber === numBatches) {
+          batchContent += `\n\nGenerate the FINAL batch of questions (${questionsInBatch} questions) focusing on advanced concepts and complex topics. Make sure questions are different from previous batches.`;
+        } else {
+          batchContent += `\n\nGenerate batch ${batchNumber} of questions (${questionsInBatch} questions) focusing on intermediate concepts. Make sure questions are different from previous batches.`;
+        }
+      }
+      
+      const batchSettings = { ...settings, numberOfQuestions: questionsInBatch };
+      const batchResult = await GeminiService.generateQuiz(batchContent, batchSettings);
+      
+      if (batchResult.questions && batchResult.questions.length > 0) {
+        allQuestions = [...allQuestions, ...batchResult.questions];
+        
+        // Update quiz with current progress
+        quiz.questions = allQuestions;
+        if (i === 0 && batchResult.title) {
+          quiz.title = batchResult.title;
+        }
+        await quiz.save();
+      }
+    }
     
-    return {
-      title: part1.title || "Generated Quiz",
-      questions: allQuestions
-    };
-  } else {
-    // Split into 3 parts for 21-30 questions
-    const questionsPerPart = Math.ceil(numberOfQuestions / 3);
-    const part1Count = questionsPerPart;
-    const part2Count = questionsPerPart;
-    const part3Count = numberOfQuestions - part1Count - part2Count;
-    
-    // Generate first part
-    const part1Settings = { ...settings, numberOfQuestions: part1Count };
-    const part1 = await GeminiService.generateQuiz(
-      content + "\n\nGenerate the FIRST part of the quiz focusing on foundational concepts and introductory topics.",
-      part1Settings
-    );
-    allQuestions = [...(part1.questions || [])];
-    
-    // Generate second part
-    const part2Settings = { ...settings, numberOfQuestions: part2Count };
-    const part2 = await GeminiService.generateQuiz(
-      content + "\n\nGenerate the SECOND part of the quiz focusing on intermediate concepts and core topics. Make sure questions are different from the first part.",
-      part2Settings
-    );
-    allQuestions = [...allQuestions, ...(part2.questions || [])];
-    
-    // Generate third part
-    const part3Settings = { ...settings, numberOfQuestions: part3Count };
-    const part3 = await GeminiService.generateQuiz(
-      content + "\n\nGenerate the THIRD part of the quiz focusing on advanced concepts and complex topics. Make sure questions are different from the first two parts.",
-      part3Settings
-    );
-    allQuestions = [...allQuestions, ...(part3.questions || [])];
-    
-    return {
-      title: part1.title || "Generated Quiz",
-      questions: allQuestions
-    };
+    // Mark as completed
+    quiz.status = "completed";
+    await quiz.save();
+
+    // Create a chat with quiz attachment
+    try {
+      const chatTitle = `${quiz.title} - Quiz`;
+      const messageContent = `I've generated a quiz for you: "${quiz.title}"\n\nThis quiz contains ${quiz.questions.length} questions. You can start the quiz and track your progress!`;
+      
+      await createChatWithAttachment(
+        userId,
+        chatTitle,
+        "quiz",
+        quiz._id,
+        "Quiz",
+        "quiz",
+        {
+          quizId: quiz._id,
+          title: quiz.title,
+          questions: quiz.questions,
+          settings: quiz.settings,
+        },
+        messageContent
+      );
+    } catch (chatError) {
+      console.error("Failed to create chat for quiz:", chatError);
+      // Continue without failing the quiz generation
+    }
+  } catch (error) {
+    console.error("Error generating quiz:", error);
+    const quiz = await Quiz.findById(quizId);
+    if (quiz) {
+      quiz.status = "failed";
+      await quiz.save();
+    }
   }
 }
 
@@ -149,12 +158,10 @@ async function createQuiz(req, res) {
     // Get number of questions from settings
     const numberOfQuestions = settings.numberOfQuestions ?? 10;
     
-    // Generate questions via Gemini (with multi-part support for larger counts)
-    const quizJSON = await generateQuizInParts(generationContent, settings, numberOfQuestions);
-
+    // Create quiz with initial status
     const quiz = await Quiz.create({
       userId,
-      title: quizJSON.title || title,
+      title,
       description: description || undefined,
       sourceType,
       sourceId: sourceId || undefined,
@@ -167,39 +174,18 @@ async function createQuiz(req, res) {
           : sourceType === "course"
           ? "Course"
           : undefined),
-      questions: quizJSON.questions || [],
+      questions: [],
+      status: "generating",
       settings: {
-        numberOfQuestions: settings.numberOfQuestions ?? (quizJSON.questions?.length || 10),
+        numberOfQuestions: numberOfQuestions,
         difficulty: settings.difficulty ?? "mixed",
         includeCalculations: settings.includeCalculations ?? false,
         timeLimit: settings.timeLimit,
       },
     });
 
-    // Create a chat with quiz attachment
-    try {
-      const chatTitle = `${quiz.title} - Quiz`;
-      const messageContent = `I've generated a quiz for you: "${quiz.title}"\n\nThis quiz contains ${quiz.questions.length} questions. You can start the quiz and track your progress!`;
-      
-      await createChatWithAttachment(
-        userId,
-        chatTitle,
-        "quiz",
-        quiz._id,
-        "Quiz",
-        "quiz",
-        {
-          quizId: quiz._id,
-          title: quiz.title,
-          questions: quiz.questions,
-          settings: quiz.settings,
-        },
-        messageContent
-      );
-    } catch (chatError) {
-      console.error("Failed to create chat for quiz:", chatError);
-      // Continue without failing the quiz creation
-    }
+    // Generate questions asynchronously
+    generateQuizAsync(quiz._id, generationContent, settings, numberOfQuestions, userId);
 
     return res.status(201).json(quiz);
   } catch (error) {

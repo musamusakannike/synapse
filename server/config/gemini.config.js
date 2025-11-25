@@ -77,6 +77,53 @@ function convertToWav(rawData, mimeType) {
   return Buffer.concat([wavHeader, buffer]);
 }
 
+// Helper function to sanitize potentially malformed JSON
+function sanitizeJsonText(jsonText) {
+  try {
+    // First, try to parse as-is
+    return JSON.parse(jsonText);
+  } catch (e) {
+    console.warn("Direct JSON parse failed, attempting sanitization...");
+    
+    // Remove markdown code blocks
+    let cleaned = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    
+    try {
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      console.warn("Parse after markdown removal failed, attempting manual repair...");
+      
+      // Manual repair: Fix common escape sequence issues
+      // The most common issue is unescaped backslashes or quotes in string values
+      
+      // Strategy: Replace problematic patterns
+      // Fix unescaped backslashes followed by characters that aren't valid escape sequences
+      let repaired = cleaned;
+      
+      // Log the area around the error for debugging
+      const errorPos = parseInt(e2.message.match(/position (\d+)/)?.[1] || '0');
+      if (errorPos > 0) {
+        const start = Math.max(0, errorPos - 100);
+        const end = Math.min(cleaned.length, errorPos + 100);
+        console.error("Error context:", cleaned.substring(start, end));
+        console.error("Error position marker:", " ".repeat(errorPos - start) + "^");
+      }
+      
+      // Try to fix by escaping unescaped backslashes
+      // This is tricky because we need to avoid double-escaping
+      // Look for backslashes not followed by valid escape characters
+      repaired = repaired.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      
+      try {
+        return JSON.parse(repaired);
+      } catch (e3) {
+        console.error("Manual repair failed");
+        // Throw the original error with more context
+        throw new Error(`JSON parse failed at position ${errorPos}: ${e.message}`);
+      }
+    }
+  }
+}
 
 class GeminiService {
   constructor() {
@@ -246,40 +293,8 @@ class GeminiService {
         safetySettings: this.safetySettings,
       });
       
-      let jsonText = response.text;
-      
-      // Try to parse the JSON with multiple fallback strategies
-      try {
-        return JSON.parse(jsonText);
-      } catch (parseError) {
-        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
-        
-        // Strategy 1: Remove markdown code blocks if present
-        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-        
-        try {
-          return JSON.parse(jsonText);
-        } catch (parseError2) {
-          console.warn("Parse after markdown removal failed, attempting regex extraction...");
-          
-          // Strategy 2: Try to extract JSON object using regex
-          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              return JSON.parse(jsonMatch[0]);
-            } catch (parseError3) {
-              console.error("Parse after regex extraction failed");
-              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
-              console.error("Parse error:", parseError3.message);
-              throw new Error(`Failed to parse quiz JSON: ${parseError3.message}`);
-            }
-          }
-          
-          console.error("Could not extract valid JSON from response");
-          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
-          throw new Error("Failed to extract valid JSON from quiz response");
-        }
-      }
+      const jsonText = response.text;
+      return sanitizeJsonText(jsonText);
     } catch (error) {
       console.error("Error generating quiz:", error);
       throw new Error("Failed to generate quiz");
@@ -299,40 +314,8 @@ class GeminiService {
         safetySettings: this.safetySettings,
       });
       
-      let jsonText = response.text;
-      
-      // Try to parse the JSON with multiple fallback strategies
-      try {
-        return JSON.parse(jsonText);
-      } catch (parseError) {
-        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
-        
-        // Strategy 1: Remove markdown code blocks if present
-        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-        
-        try {
-          return JSON.parse(jsonText);
-        } catch (parseError2) {
-          console.warn("Parse after markdown removal failed, attempting regex extraction...");
-          
-          // Strategy 2: Try to extract JSON object using regex
-          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              return JSON.parse(jsonMatch[0]);
-            } catch (parseError3) {
-              console.error("Parse after regex extraction failed");
-              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
-              console.error("Parse error:", parseError3.message);
-              throw new Error(`Failed to parse flashcards JSON: ${parseError3.message}`);
-            }
-          }
-          
-          console.error("Could not extract valid JSON from response");
-          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
-          throw new Error("Failed to extract valid JSON from flashcards response");
-        }
-      }
+      const jsonText = response.text;
+      return sanitizeJsonText(jsonText);
     } catch (error) {
       console.error("Error generating flashcards:", error);
       throw new Error("Failed to generate flashcards");
@@ -573,40 +556,8 @@ class GeminiService {
         safetySettings: this.safetySettings,
       });
       
-      let jsonText = response.text;
-      
-      // Try to parse the JSON with multiple fallback strategies
-      try {
-        return JSON.parse(jsonText);
-      } catch (parseError) {
-        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
-        
-        // Strategy 1: Remove markdown code blocks if present
-        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-        
-        try {
-          return JSON.parse(jsonText);
-        } catch (parseError2) {
-          console.warn("Parse after markdown removal failed, attempting regex extraction...");
-          
-          // Strategy 2: Try to extract JSON object using regex
-          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            try {
-              return JSON.parse(jsonMatch[0]);
-            } catch (parseError3) {
-              console.error("Parse after regex extraction failed");
-              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
-              console.error("Parse error:", parseError3.message);
-              throw new Error(`Failed to parse course outline JSON: ${parseError3.message}`);
-            }
-          }
-          
-          console.error("Could not extract valid JSON from response");
-          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
-          throw new Error("Failed to extract valid JSON from course outline response");
-        }
-      }
+      const jsonText = response.text;
+      return sanitizeJsonText(jsonText);
     } catch (error) {
       console.error("Error generating course outline:", error);
       throw new Error("Failed to generate course outline");

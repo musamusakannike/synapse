@@ -7,6 +7,7 @@ import {
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import { AuthProvider } from "../contexts/AuthContext";
+import { SidebarProvider } from "../contexts/SidebarContext";
 
 SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
@@ -27,7 +28,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <SidebarProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </SidebarProvider>
     </AuthProvider>
   );
 }

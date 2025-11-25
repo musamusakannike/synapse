@@ -5,12 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Alert,
   Dimensions,
   Share,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
@@ -286,7 +287,7 @@ export default function CourseViewPage() {
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-          <Text style={styles.headerButtonText}>←</Text>
+          <Ionicons name="chevron-back" size={20} color="#1f1f1f" />
         </TouchableOpacity>
         
         <View style={styles.headerCenter}>
@@ -297,10 +298,10 @@ export default function CourseViewPage() {
         
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerButton} onPress={toggleTableOfContents}>
-            <Text style={styles.headerButtonText}>☰</Text>
+            <MaterialIcons name="menu" size={20} color="#1f1f1f" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={shareCourse}>
-            <Text style={styles.headerButtonText}>↗</Text>
+            <Ionicons name="share-outline" size={20} color="#1f1f1f" />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -386,9 +387,12 @@ export default function CourseViewPage() {
           onPress={navigatePrevious}
           disabled={!canNavigatePrevious()}
         >
-          <Text style={[styles.navButtonText, !canNavigatePrevious() && styles.navButtonTextDisabled]}>
-            ← Previous
-          </Text>
+          <View style={styles.navButtonContent}>
+            <Ionicons name="chevron-back" size={16} color={!canNavigatePrevious() ? "#999" : "#fff"} />
+            <Text style={[styles.navButtonText, !canNavigatePrevious() && styles.navButtonTextDisabled]}>
+              Previous
+            </Text>
+          </View>
         </TouchableOpacity>
         
         <View style={styles.progressIndicator}>
@@ -402,9 +406,12 @@ export default function CourseViewPage() {
           onPress={navigateNext}
           disabled={!canNavigateNext()}
         >
-          <Text style={[styles.navButtonText, !canNavigateNext() && styles.navButtonTextDisabled]}>
-            Next →
-          </Text>
+          <View style={styles.navButtonContent}>
+            <Text style={[styles.navButtonText, !canNavigateNext() && styles.navButtonTextDisabled]}>
+              Next
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={!canNavigateNext() ? "#999" : "#fff"} />
+          </View>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -592,6 +599,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     backgroundColor: "#4285F4",
+  },
+  navButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   navButtonDisabled: {
     backgroundColor: "#e0e0e0",

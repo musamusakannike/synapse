@@ -57,6 +57,11 @@ const quizSchema = new mongoose.Schema(
       enum: ["Topic", "Document", "Website", "Course"],
     },
     questions: [questionSchema],
+    status: {
+      type: String,
+      enum: ["generating", "completed", "failed"],
+      default: "generating",
+    },
     settings: {
       numberOfQuestions: {
         type: Number,

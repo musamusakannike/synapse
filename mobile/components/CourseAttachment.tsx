@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
+  Animated,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { CourseAPI } from "../lib/api";
 
 interface CourseOutlineItem {
@@ -28,29 +32,98 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
   onViewCourse,
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const pulseAnim = new Animated.Value(1);
+
+  useEffect(() => {
+    if (isDownloading) {
+      const pulse = () => {
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.6,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          if (isDownloading) pulse();
+        });
+      };
+      pulse();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isDownloading, pulseAnim]);
 
   const handleDownloadPDF = useCallback(async () => {
     try {
       setIsDownloading(true);
       
-      // For mobile, we'll need to handle PDF download differently
-      // This is a placeholder - you might want to use a library like react-native-fs
-      // or open the PDF in a web browser
-      const response = await CourseAPI.downloadCoursePDF(courseId);
+      // Create a safe filename
+      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const fileName = `${safeTitle}_course.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
       
-      // For now, we'll show an alert that the feature is coming soon
-      Alert.alert(
-        "PDF Download",
-        "PDF download feature is coming soon! For now, you can view the course content in the app.",
-        [{ text: "OK" }]
+      // Get the API base URL and construct the download URL
+      const { API_BASE_URL } = await import("../lib/api");
+      const downloadUrl = `${API_BASE_URL}/courses/${courseId}/pdf`;
+      
+      // Get the auth token for the request
+      const token = await import("expo-secure-store").then(SecureStore => 
+        SecureStore.getItemAsync("accessToken")
       );
+      
+      // Download the PDF with authentication
+      const downloadResult = await FileSystem.downloadAsync(
+        downloadUrl,
+        fileUri,
+        {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`,
+          } : {},
+        }
+      );
+      
+      if (downloadResult.status === 200) {
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        
+        if (isAvailable) {
+          // Share the file (this will allow user to save it or open in other apps)
+          await Sharing.shareAsync(downloadResult.uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: `Save ${title} Course PDF`,
+          });
+          
+          Alert.alert(
+            "Success! 📄",
+            "Course PDF has been downloaded and is ready to share or save.",
+            [{ text: "OK" }]
+          );
+        } else {
+          Alert.alert(
+            "Downloaded! 📄",
+            `Course PDF has been saved to: ${fileName}`,
+            [{ text: "OK" }]
+          );
+        }
+      } else {
+        throw new Error(`Download failed with status: ${downloadResult.status}`);
+      }
     } catch (error) {
       console.error("Error downloading PDF:", error);
-      Alert.alert("Error", "Failed to download PDF. Please try again.");
+      Alert.alert(
+        "Download Error",
+        "Failed to download PDF. Please check your internet connection and try again.",
+        [{ text: "OK" }]
+      );
     } finally {
       setIsDownloading(false);
     }
-  }, [courseId]);
+  }, [courseId, title]);
 
   const handleViewCourse = useCallback(() => {
     onViewCourse(courseId);
@@ -112,20 +185,46 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
       {/* Action Buttons */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.downloadButton]}
+          style={[
+            styles.actionButton, 
+            styles.downloadButton,
+            isDownloading && styles.downloadButtonLoading
+          ]}
           onPress={handleDownloadPDF}
           disabled={isDownloading}
+          activeOpacity={0.7}
         >
-          <Text style={styles.downloadButtonText}>
-            {isDownloading ? "📄 Downloading..." : "📄 Download PDF"}
-          </Text>
+          <View style={styles.buttonContent}>
+            {isDownloading ? (
+              <>
+                <Animated.View 
+                  style={[
+                    styles.loadingDot, 
+                    { opacity: pulseAnim }
+                  ]} 
+                />
+                <Text style={[styles.downloadButtonText, styles.loadingText]}>
+                  Downloading...
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.buttonIcon}>📄</Text>
+                <Text style={styles.downloadButtonText}>Download PDF</Text>
+              </>
+            )}
+          </View>
         </TouchableOpacity>
         
         <TouchableOpacity
           style={[styles.actionButton, styles.viewButton]}
           onPress={handleViewCourse}
+          activeOpacity={0.7}
         >
-          <Text style={styles.viewButtonText}>👁️ View Course</Text>
+          <View style={styles.buttonContent}>
+            <Text style={styles.buttonIcon}>👁️</Text>
+            <Text style={styles.viewButtonText}>View Course</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -140,6 +239,11 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderWidth: 1,
     borderColor: "#e3e8ff",
+    shadowColor: "#4285F4",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   header: {
     flexDirection: "row",
@@ -167,10 +271,12 @@ const styles = StyleSheet.create({
     color: "#1f1f1f",
     marginBottom: 4,
     lineHeight: 22,
+    fontFamily: "Outfit_500Medium",
   },
   subtitle: {
     fontSize: 14,
     color: "#666",
+    fontFamily: "Outfit_400Regular",
   },
   outlineContainer: {
     marginBottom: 16,
@@ -180,6 +286,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f1f1f",
     marginBottom: 12,
+    fontFamily: "Outfit_500Medium",
   },
   outlineScrollView: {
     maxHeight: 200,
@@ -213,11 +320,13 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#1f1f1f",
     lineHeight: 20,
+    fontFamily: "Outfit_500Medium",
   },
   subsectionCount: {
     fontSize: 12,
     color: "#666",
     marginTop: 2,
+    fontFamily: "Outfit_400Regular",
   },
   moreIndicator: {
     alignItems: "center",
@@ -227,6 +336,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#4285F4",
     fontWeight: "500",
+    fontFamily: "Outfit_500Medium",
   },
   actionsContainer: {
     flexDirection: "row",
@@ -234,21 +344,50 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  buttonIcon: {
+    fontSize: 16,
   },
   downloadButton: {
     backgroundColor: "#fff",
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: "#4285F4",
+  },
+  downloadButtonLoading: {
+    backgroundColor: "#f0f4ff",
+    borderColor: "#a0b4f4",
   },
   downloadButtonText: {
     color: "#4285F4",
     fontSize: 14,
     fontWeight: "600",
+    fontFamily: "Outfit_500Medium",
+  },
+  loadingText: {
+    color: "#666",
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#4285F4",
+    opacity: 0.6,
   },
   viewButton: {
     backgroundColor: "#4285F4",
@@ -257,6 +396,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "600",
+    fontFamily: "Outfit_500Medium",
   },
 });
 

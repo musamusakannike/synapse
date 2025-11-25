@@ -86,17 +86,26 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
-  attachment?: {
+  attachments?: Array<{
     type: "course";
     data: {
       courseId: string;
       title: string;
-      outline: {
+      outline: Array<{
         section: string;
         subsections?: string[];
-      }[];
+      }>;
+      settings?: {
+        level: string;
+        includeExamples: boolean;
+        includePracticeQuestions: boolean;
+        detailLevel: string;
+      };
     };
-  };
+    metadata?: {
+      createdAt: string;
+    };
+  }>;
 }
 
 // Optimized MessageItem component
@@ -192,14 +201,22 @@ const MessageItem = memo(
                 >
                   {message.content}
                 </Markdown>
-                {message.attachment?.type === "course" && (
+                {message.attachments && message.attachments.length > 0 && (
                   <View style={styles.attachmentContainer}>
-                    <CourseAttachment
-                      courseId={message.attachment.data.courseId}
-                      title={message.attachment.data.title}
-                      outline={message.attachment.data.outline}
-                      onViewCourse={onViewCourse}
-                    />
+                    {message.attachments.map((attachment, attachmentIndex) => {
+                      if (attachment.type === "course") {
+                        return (
+                          <CourseAttachment
+                            key={attachmentIndex}
+                            courseId={attachment.data.courseId}
+                            title={attachment.data.title}
+                            outline={attachment.data.outline}
+                            onViewCourse={onViewCourse}
+                          />
+                        );
+                      }
+                      return null;
+                    })}
                   </View>
                 )}
               </>
@@ -355,10 +372,11 @@ export default function AIInterface() {
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.timestamp),
-        attachment: msg.attachment ? {
-          type: msg.attachment.type,
-          data: msg.attachment.data,
-        } : undefined,
+        attachments: msg.attachments && msg.attachments.length > 0 ? msg.attachments.map((att: any) => ({
+          type: att.type,
+          data: att.data,
+          metadata: att.metadata,
+        })) : undefined,
       }));
 
       setMessages(loadedMessages);
@@ -473,10 +491,12 @@ export default function AIInterface() {
           role: "assistant",
           content: response.data.aiResponse.content,
           timestamp: new Date(response.data.aiResponse.timestamp),
-          attachment: response.data.aiResponse.attachment ? {
-            type: response.data.aiResponse.attachment.type,
-            data: response.data.aiResponse.attachment.data,
-          } : undefined,
+          attachments: response.data.aiResponse.attachments && response.data.aiResponse.attachments.length > 0 ? 
+            response.data.aiResponse.attachments.map((att: any) => ({
+              type: att.type,
+              data: att.data,
+              metadata: att.metadata,
+            })) : undefined,
         },
       ]);
     } catch (error) {
@@ -521,10 +541,11 @@ export default function AIInterface() {
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.timestamp),
-          attachment: msg.attachment ? {
-            type: msg.attachment.type,
-            data: msg.attachment.data,
-          } : undefined,
+          attachments: msg.attachments && msg.attachments.length > 0 ? msg.attachments.map((att: any) => ({
+            type: att.type,
+            data: att.data,
+            metadata: att.metadata,
+          })) : undefined,
         }))
       );
 
@@ -564,10 +585,11 @@ export default function AIInterface() {
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.timestamp),
-          attachment: msg.attachment ? {
-            type: msg.attachment.type,
-            data: msg.attachment.data,
-          } : undefined,
+          attachments: msg.attachments && msg.attachments.length > 0 ? msg.attachments.map((att: any) => ({
+            type: att.type,
+            data: att.data,
+            metadata: att.metadata,
+          })) : undefined,
         }))
       );
 

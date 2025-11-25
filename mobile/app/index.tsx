@@ -33,7 +33,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
-import { ChatAPI, UserAPI, DocumentAPI } from "../lib/api";
+import { ChatAPI, UserAPI, DocumentAPI, CourseAPI } from "../lib/api";
+import { useRouter } from "expo-router";
 import ChatSkeleton from "../components/ChatSkeleton";
 import MessageOptionsModal, {
   MessageOptionsModalRef,
@@ -41,6 +42,14 @@ import MessageOptionsModal, {
 import DocumentUploadModal, {
   DocumentUploadModalRef,
 } from "../components/DocumentUploadModal";
+import CourseGenerationModal, {
+  CourseGenerationModalRef,
+  CourseGenerationData,
+} from "../components/CourseGenerationModal";
+import CourseProgressModal, {
+  CourseProgressModalRef,
+} from "../components/CourseProgressModal";
+import CourseAttachment from "../components/CourseAttachment";
 
 const AnimatedButton = memo(
   ({
@@ -84,6 +93,17 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
+  attachment?: {
+    type: "course";
+    data: {
+      courseId: string;
+      title: string;
+      outline: Array<{
+        section: string;
+        subsections?: string[];
+      }>;
+    };
+  };
 }
 
 // Optimized MessageItem component
@@ -94,6 +114,7 @@ const MessageItem = memo(
     expandedUserMessages,
     onMessagePress,
     onExpandToggle,
+    onViewCourse,
   }: {
     message: Message;
     index: number;
@@ -104,6 +125,7 @@ const MessageItem = memo(
       role: "user" | "assistant"
     ) => void;
     onExpandToggle: (index: number) => void;
+    onViewCourse: (courseId: string) => void;
   }) => {
     const handleSwipeOpen = useCallback(() => {
       onMessagePress(message.content, index, message.role);
@@ -169,13 +191,25 @@ const MessageItem = memo(
                 )}
               </View>
             ) : (
-              <Markdown
-                style={{
-                  body: StyleSheet.flatten(messageTextStyle),
-                }}
-              >
-                {message.content}
-              </Markdown>
+              <>
+                <Markdown
+                  style={{
+                    body: StyleSheet.flatten(messageTextStyle),
+                  }}
+                >
+                  {message.content}
+                </Markdown>
+                {message.attachment?.type === "course" && (
+                  <View style={styles.attachmentContainer}>
+                    <CourseAttachment
+                      courseId={message.attachment.data.courseId}
+                      title={message.attachment.data.title}
+                      outline={message.attachment.data.outline}
+                      onViewCourse={onViewCourse}
+                    />
+                  </View>
+                )}
+              </>
             )}
           </Pressable>
         </Swipeable>
@@ -192,9 +226,12 @@ export default function AIInterface() {
   const headerTranslateY = useSharedValue(0);
   const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } =
     useAuth();
+  const router = useRouter();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
   const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
+  const courseGenerationModalRef = useRef<CourseGenerationModalRef>(null);
+  const courseProgressModalRef = useRef<CourseProgressModalRef>(null);
   const lastScrollYRef = useRef(0);
 
   // Chat state
@@ -327,6 +364,10 @@ export default function AIInterface() {
         role: msg.role,
         content: msg.content,
         timestamp: new Date(msg.timestamp),
+        attachment: msg.attachment ? {
+          type: msg.attachment.type,
+          data: msg.attachment.data,
+        } : undefined,
       }));
 
       setMessages(loadedMessages);
@@ -445,6 +486,10 @@ export default function AIInterface() {
           role: "assistant",
           content: response.data.aiResponse.content,
           timestamp: new Date(response.data.aiResponse.timestamp),
+          attachment: response.data.aiResponse.attachment ? {
+            type: response.data.aiResponse.attachment.type,
+            data: response.data.aiResponse.attachment.data,
+          } : undefined,
         },
       ]);
     } catch (error) {
@@ -489,6 +534,10 @@ export default function AIInterface() {
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.timestamp),
+          attachment: msg.attachment ? {
+            type: msg.attachment.type,
+            data: msg.attachment.data,
+          } : undefined,
         }))
       );
 
@@ -528,6 +577,10 @@ export default function AIInterface() {
           role: msg.role,
           content: msg.content,
           timestamp: new Date(msg.timestamp),
+          attachment: msg.attachment ? {
+            type: msg.attachment.type,
+            data: msg.attachment.data,
+          } : undefined,
         }))
       );
 
@@ -629,6 +682,52 @@ export default function AIInterface() {
     }
     documentUploadModalRef.current?.present();
   }, [isAuthenticated, openAuthModal]);
+
+  // Handle generate course button press
+  const handleGenerateCoursePress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    courseGenerationModalRef.current?.present();
+  }, [isAuthenticated, openAuthModal]);
+
+  // Handle course generation
+  const handleCourseGenerate = useCallback(async (courseData: CourseGenerationData) => {
+    try {
+      const response = await CourseAPI.createCourse(courseData);
+      const course = response.data;
+      
+      // Show progress modal
+      courseProgressModalRef.current?.present(course._id);
+    } catch (error) {
+      console.error("Course generation error:", error);
+      throw error;
+    }
+  }, []);
+
+  // Handle course ready (when generation is complete)
+  const handleCourseReady = useCallback(async (courseId: string) => {
+    try {
+      // Find the chat that was created for this course
+      const chatsResponse = await ChatAPI.getUserChats(1, 50);
+      const courseChat = chatsResponse.data.chats.find(
+        (chat: any) => chat.type === "course" && chat.sourceId?._id === courseId
+      );
+
+      if (courseChat) {
+        // Open the course chat
+        handleOpenChat(courseChat.id);
+      }
+    } catch (error) {
+      console.error("Error opening course chat:", error);
+    }
+  }, [handleOpenChat]);
+
+  // Handle view course
+  const handleViewCourse = useCallback((courseId: string) => {
+    router.push(`/course/${courseId}`);
+  }, [router]);
 
   // Optimized message interaction handlers
   const handleMessagePress = useCallback(
@@ -774,7 +873,11 @@ export default function AIInterface() {
                 >
                   Upload Document
                 </AnimatedButton>
-                <AnimatedButton delay={500} icon="">
+                <AnimatedButton 
+                  delay={500} 
+                  icon="🎓"
+                  onPress={handleGenerateCoursePress}
+                >
                   Generate a complete course
                 </AnimatedButton>
                 <AnimatedButton delay={600} icon="">
@@ -797,6 +900,7 @@ export default function AIInterface() {
                     expandedUserMessages={expandedUserMessages}
                     onMessagePress={handleMessagePress}
                     onExpandToggle={handleExpandToggle}
+                    onViewCourse={handleViewCourse}
                   />
                 ))}
 
@@ -904,6 +1008,18 @@ export default function AIInterface() {
         <DocumentUploadModal
           ref={documentUploadModalRef}
           onUploadSuccess={handleDocumentUpload}
+        />
+
+        {/* Course Generation Modal */}
+        <CourseGenerationModal
+          ref={courseGenerationModalRef}
+          onCourseGenerate={handleCourseGenerate}
+        />
+
+        {/* Course Progress Modal */}
+        <CourseProgressModal
+          ref={courseProgressModalRef}
+          onCourseReady={handleCourseReady}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1307,5 +1423,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 28,
     letterSpacing: 0.2,
+  },
+  attachmentContainer: {
+    marginTop: 12,
   },
 });

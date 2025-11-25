@@ -64,6 +64,7 @@ export default function QuizAttemptPage() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [, setIsSubmitting] = useState(false);
+  const [shuffledOptions, setShuffledOptions] = useState<number[][]>([]);
 
   const questionStartTime = useRef<number>(Date.now());
   const pollingInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,11 +74,29 @@ export default function QuizAttemptPage() {
   const optionAnim2 = useSharedValue(0);
   const optionAnim3 = useSharedValue(0);
 
+  // Helper function to shuffle array indices
+  const shuffleOptions = useCallback((length: number): number[] => {
+    const indices = Array.from({ length }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return indices;
+  }, []);
+
   const loadQuiz = useCallback(async () => {
     try {
       const response = await QuizAPI.getQuiz(id!);
       const quizData = response.data;
       setQuiz(quizData);
+
+      // Initialize shuffled options for each question ONLY on first load
+      if (quizData.questions && quizData.questions.length > 0) {
+        const shuffled = quizData.questions.map((q: Question) =>
+          shuffleOptions(q.options.length)
+        );
+        setShuffledOptions(shuffled);
+      }
 
       // If quiz is still generating, start polling
       if (quizData.status === "generating") {
@@ -88,12 +107,25 @@ export default function QuizAttemptPage() {
           clearInterval(pollingInterval.current);
         }
 
-        // Poll every 3 seconds
+        // Poll every 5 seconds
         pollingInterval.current = setInterval(async () => {
           try {
             const pollResponse = await QuizAPI.getQuiz(id!);
             const updatedQuiz = pollResponse.data;
-            setQuiz(updatedQuiz);
+
+            // Only update shuffled options for NEW questions that were just generated
+            setQuiz((prevQuiz) => {
+              if (prevQuiz && updatedQuiz.questions.length > prevQuiz.questions.length) {
+                // New questions were added, shuffle only the new ones
+                const newQuestionsCount = updatedQuiz.questions.length - prevQuiz.questions.length;
+                const newShuffled = updatedQuiz.questions
+                  .slice(-newQuestionsCount)
+                  .map((q: Question) => shuffleOptions(q.options.length));
+
+                setShuffledOptions((prev) => [...prev, ...newShuffled]);
+              }
+              return updatedQuiz;
+            });
 
             // Stop polling when quiz is completed or failed
             if (updatedQuiz.status === "completed" || updatedQuiz.status === "failed") {
@@ -114,7 +146,7 @@ export default function QuizAttemptPage() {
           } catch (error) {
             console.error("Error polling quiz:", error);
           }
-        }, 3000);
+        }, 5000);
       } else {
         setIsLoading(false);
       }
@@ -125,7 +157,7 @@ export default function QuizAttemptPage() {
       ]);
       setIsLoading(false);
     }
-  }, [id, router]);
+  }, [id, router, shuffleOptions]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -143,7 +175,8 @@ export default function QuizAttemptPage() {
         pollingInterval.current = null;
       }
     };
-  }, [id, isAuthenticated, openAuthModal, router, loadQuiz]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isAuthenticated]);
 
   useEffect(() => {
     if (quiz) {
@@ -229,7 +262,15 @@ export default function QuizAttemptPage() {
     setSelectedOption(null);
     setShowExplanation(false);
     progressWidth.value = 0;
-  }, [progressWidth]);
+
+    // Re-shuffle options for each question
+    if (quiz?.questions && quiz.questions.length > 0) {
+      const shuffled = quiz.questions.map((q: Question) =>
+        shuffleOptions(q.options.length)
+      );
+      setShuffledOptions(shuffled);
+    }
+  }, [progressWidth, quiz, shuffleOptions]);
 
   const progressStyle = useAnimatedStyle(() => ({
     width: `${progressWidth.value}%`,
@@ -414,27 +455,30 @@ export default function QuizAttemptPage() {
 
         {/* Options */}
         <View style={styles.optionsContainer}>
-          {currentQuestion.options.map((option, index) => (
-            <TouchableOpacity
-              key={index}
-              style={getOptionStyle(index)}
-              onPress={() => handleSelectOption(index)}
-              disabled={showExplanation}
-            >
-              <View style={styles.optionLetter}>
-                <Text style={styles.optionLetterText}>
-                  {String.fromCharCode(65 + index)}
-                </Text>
-              </View>
-              <Text style={getOptionTextStyle(index)}>{option}</Text>
-              {showExplanation && index === currentQuestion.correctOption && (
-                <Ionicons name="checkmark-circle" size={24} color="#34A853" style={styles.optionIcon} />
-              )}
-              {showExplanation && index === selectedOption && index !== currentQuestion.correctOption && (
-                <Ionicons name="close-circle" size={24} color="#EA4335" style={styles.optionIcon} />
-              )}
-            </TouchableOpacity>
-          ))}
+          {shuffledOptions[currentQuestionIndex]?.map((originalIndex, displayIndex) => {
+            const option = currentQuestion.options[originalIndex];
+            return (
+              <TouchableOpacity
+                key={displayIndex}
+                style={getOptionStyle(originalIndex)}
+                onPress={() => handleSelectOption(originalIndex)}
+                disabled={showExplanation}
+              >
+                <View style={styles.optionLetter}>
+                  <Text style={styles.optionLetterText}>
+                    {String.fromCharCode(65 + displayIndex)}
+                  </Text>
+                </View>
+                <Text style={getOptionTextStyle(originalIndex)}>{option}</Text>
+                {showExplanation && originalIndex === currentQuestion.correctOption && (
+                  <Ionicons name="checkmark-circle" size={24} color="#34A853" style={styles.optionIcon} />
+                )}
+                {showExplanation && originalIndex === selectedOption && originalIndex !== currentQuestion.correctOption && (
+                  <Ionicons name="close-circle" size={24} color="#EA4335" style={styles.optionIcon} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Explanation */}

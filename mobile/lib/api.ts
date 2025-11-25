@@ -124,4 +124,25 @@ export const DocumentAPI = {
     api.get("/documents"),
 };
 
+// Course endpoints
+export const CourseAPI = {
+  createCourse: (courseData: {
+    title: string;
+    description?: string;
+    settings?: {
+      level?: string;
+      includeExamples?: boolean;
+      includePracticeQuestions?: boolean;
+      detailLevel?: string;
+    };
+  }) => api.post("/courses", courseData),
+  listCourses: () => api.get("/courses"),
+  getCourse: (courseId: string) => api.get(`/courses/${courseId}`),
+  deleteCourse: (courseId: string) => api.delete(`/courses/${courseId}`),
+  regenerateCourse: (courseId: string, settings?: any) => 
+    api.post(`/courses/${courseId}/regenerate`, { settings }),
+  downloadCoursePDF: (courseId: string) => 
+    api.get(`/courses/${courseId}/pdf`, { responseType: "blob" }),
+};
+
 export default api;

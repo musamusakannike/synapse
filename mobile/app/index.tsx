@@ -103,6 +103,7 @@ export default function AIInterface() {
   const [selectedMessageRole, setSelectedMessageRole] = useState<"user" | "assistant">("user");
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [editedMessageContent, setEditedMessageContent] = useState("");
+  const [expandedUserMessages, setExpandedUserMessages] = useState<Record<number, boolean>>({});
 
   // Document upload state
   const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(null);
@@ -582,14 +583,33 @@ export default function AIInterface() {
                         ]}
                       >
                       {message.role === "user" ? (
-                        <Text
-                          style={[
-                            styles.messageText,
-                            styles.userMessageText,
-                          ]}
-                        >
-                          {message.content}
-                        </Text>
+                        <View style={styles.userMessageContent}>
+                          <Text
+                            style={[
+                              styles.messageText,
+                              styles.userMessageText,
+                            ]}
+                            numberOfLines={expandedUserMessages[index] ? undefined : 6}
+                            ellipsizeMode="tail"
+                          >
+                            {message.content}
+                          </Text>
+                          {!!message.content && (
+                            <TouchableOpacity
+                              style={styles.expandIconButton}
+                              onPress={() => {
+                                setExpandedUserMessages((prev) => ({
+                                  ...prev,
+                                  [index]: !prev[index],
+                                }));
+                              }}
+                            >
+                              <Text style={styles.expandIconText}>
+                                {expandedUserMessages[index] ? "▲" : "▼"}
+                              </Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
                       ) : (
                         <Markdown
                           style={{
@@ -770,7 +790,7 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: 60,
     paddingBottom: 100,
-    paddingLeft: 8,
+    paddingHorizontal: 8,
   },
   greeting: {
     fontSize: 32,
@@ -927,6 +947,10 @@ const styles = StyleSheet.create({
     fontFamily: "Outfit_400Regular",
     lineHeight: 22,
   },
+  userMessageContent: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
   userMessageText: {
     color: "#fff",
   },
@@ -1009,5 +1033,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
     fontFamily: "Outfit_600SemiBold",
+  },
+  expandIconButton: {
+    marginLeft: 6,
+    marginTop: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  expandIconText: {
+    color: "#fff",
+    fontSize: 12,
   },
 });

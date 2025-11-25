@@ -17,6 +17,7 @@ type Props = {
     onOptionSelected?: () => void;
     onEdit?: () => void;
     onRegenerate?: () => void;
+    onFocusView?: () => void;
 };
 
 export type MessageOptionsModalRef = {
@@ -25,7 +26,7 @@ export type MessageOptionsModalRef = {
 };
 
 const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
-    ({ messageContent, messageRole, messageIndex, onOptionSelected, onEdit, onRegenerate }, ref) => {
+    ({ messageContent, messageRole, messageIndex, onOptionSelected, onEdit, onRegenerate, onFocusView }, ref) => {
         const bottomSheetRef = React.useRef<BottomSheet>(null);
 
         // Snap points for the bottom sheet
@@ -67,6 +68,11 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
         const handleRegenerate = () => {
             bottomSheetRef.current?.close();
             onRegenerate?.();
+        };
+
+        const handleFocusView = () => {
+            bottomSheetRef.current?.close();
+            onFocusView?.();
         };
 
         const renderBackdrop = React.useCallback(
@@ -112,6 +118,16 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
                             >
                                 <Text style={styles.optionIcon}>✏️</Text>
                                 <Text style={styles.optionText}>Edit Message</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {onFocusView && (
+                            <TouchableOpacity
+                                style={styles.optionButton}
+                                onPress={handleFocusView}
+                            >
+                                <Text style={styles.optionIcon}>🔍</Text>
+                                <Text style={styles.optionText}>View in Focus Mode</Text>
                             </TouchableOpacity>
                         )}
 

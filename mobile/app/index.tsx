@@ -104,10 +104,11 @@ export default function AIInterface() {
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [editedMessageContent, setEditedMessageContent] = useState("");
   const [expandedUserMessages, setExpandedUserMessages] = useState<Record<number, boolean>>({});
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   // Document upload state
   const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Keyboard listeners for Android
@@ -265,7 +266,7 @@ export default function AIInterface() {
       const lastY = lastScrollYRef.current || 0;
       const deltaY = y - lastY;
 
-      if (isChatMode && messages.length > 1) {
+      if (!isFocusMode && isChatMode && messages.length > 1) {
         if (deltaY > 5 && y > 0) {
           headerTranslateY.value = withTiming(-80, { duration: 200 });
         } else if (deltaY < -5) {
@@ -277,7 +278,7 @@ export default function AIInterface() {
 
       lastScrollYRef.current = y;
     },
-    [isChatMode, messages.length]
+    [isFocusMode, isChatMode, messages.length]
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -399,6 +400,15 @@ export default function AIInterface() {
     }
   }, [selectedMessageIndex, currentChatId]);
 
+  const handleEnterFocusMode = useCallback(() => {
+    if (selectedMessageIndex < 0) return;
+    setIsFocusMode(true);
+  }, [selectedMessageIndex]);
+
+  const handleExitFocusMode = useCallback(() => {
+    setIsFocusMode(false);
+  }, []);
+
   // Document upload handlers
   const handleDocumentUpload = useCallback(async (documentId: string) => {
     setUploadingDocumentId(documentId);
@@ -477,39 +487,41 @@ export default function AIInterface() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Header */}
-        <Animated.View style={[styles.header, headerStyle]}>
-          <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
-            <View style={styles.menuLine} />
-            <View style={styles.menuLine} />
-            <View style={styles.menuLine} />
-          </TouchableOpacity>
+        {!isFocusMode && (
+          <Animated.View style={[styles.header, headerStyle]}>
+            <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+              <View style={styles.menuLine} />
+            </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>Synapse</Text>
+            <Text style={styles.headerTitle}>Synapse</Text>
 
-          <TouchableOpacity onPress={openAuthModal}>
-            <View style={styles.profileCircle}>
-              {userProfilePicture ? (
-                <Image
-                  source={{ uri: userProfilePicture }}
-                  style={styles.profileImageHeader}
-                />
-              ) : (
-                <View style={styles.profileInner}>
-                  <Text style={styles.profileText}>
-                    {(userName || "?")
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase()}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+            <TouchableOpacity onPress={openAuthModal}>
+              <View style={styles.profileCircle}>
+                {userProfilePicture ? (
+                  <Image
+                    source={{ uri: userProfilePicture }}
+                    style={styles.profileImageHeader}
+                  />
+                ) : (
+                  <View style={styles.profileInner}>
+                    <Text style={styles.profileText}>
+                      {(userName || "?")
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={isFocusMode ? styles.focusContent : styles.content}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -518,7 +530,64 @@ export default function AIInterface() {
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
         >
-          {!isChatMode || messages.length === 0 ? (
+          {isFocusMode ? (
+            // Focus mode: show only the selected message in full-screen
+            <View style={styles.focusContainer}>
+              <TouchableOpacity
+                style={styles.focusCloseButton}
+                onPress={handleExitFocusMode}
+              >
+                <Text style={styles.focusCloseButtonText}>✕</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.focusHeader}>
+                <Text style={styles.focusTitle}>Focus Mode</Text>
+              </View>
+
+              {selectedMessageIndex >= 0 && messages[selectedMessageIndex] && (
+                <View
+                  style={[
+                    styles.focusMessageWrapper,
+                    messages[selectedMessageIndex].role === "user"
+                      ? styles.userMessageWrapper
+                      : styles.assistantMessageWrapper,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.messageBubble,
+                      styles.focusMessageBubble,
+                      messages[selectedMessageIndex].role === "user"
+                        ? styles.userMessage
+                        : styles.assistantMessage,
+                    ]}
+                  >
+                    {messages[selectedMessageIndex].role === "user" ? (
+                      <Text
+                        style={[
+                          styles.messageText,
+                          styles.userMessageText,
+                        ]}
+                      >
+                        {messages[selectedMessageIndex].content}
+                      </Text>
+                    ) : (
+                      <Markdown
+                        style={{
+                          body: StyleSheet.flatten([
+                            styles.messageText,
+                            styles.assistantMessageText,
+                          ]),
+                        }}
+                      >
+                        {messages[selectedMessageIndex].content}
+                      </Markdown>
+                    )}
+                  </View>
+                </View>
+              )}
+            </View>
+          ) : !isChatMode || messages.length === 0 ? (
             <>
               {/* Greeting Section */}
               <Animated.View style={titleStyle}>
@@ -668,48 +737,50 @@ export default function AIInterface() {
         </ScrollView>
 
         {/* Bottom Input Bar */}
-        <View style={[
-          styles.bottomBar,
-          Platform.OS === "android" && keyboardHeight > 0 && { marginBottom: keyboardHeight }
-        ]}>
-          <View style={styles.inputContainer}>
-            <View>
-              <TextInput
-                placeholder="Ask Synapse"
-                placeholderTextColor={"#666"}
-                style={styles.input}
-                numberOfLines={7}
-                multiline={true}
-                value={inputText}
-                onChangeText={setInputText}
-                editable={!isLoading}
-              />
-            </View>
-            <View style={styles.inputButtons}>
-              <TouchableOpacity style={styles.addButton}>
-                <Text style={styles.addButtonText}>+</Text>
-              </TouchableOpacity>
-
-              <View style={styles.rightButtons}>
-                <TouchableOpacity style={styles.thinkingButton}>
-                  <Text style={styles.thinkingText}>Fast</Text>
+        {!isFocusMode && (
+          <View style={[
+            styles.bottomBar,
+            Platform.OS === "android" && keyboardHeight > 0 && { marginBottom: keyboardHeight }
+          ]}>
+            <View style={styles.inputContainer}>
+              <View>
+                <TextInput
+                  placeholder="Ask Synapse"
+                  placeholderTextColor={"#666"}
+                  style={styles.input}
+                  numberOfLines={7}
+                  multiline={true}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  editable={!isLoading}
+                />
+              </View>
+              <View style={styles.inputButtons}>
+                <TouchableOpacity style={styles.addButton}>
+                  <Text style={styles.addButtonText}>+</Text>
                 </TouchableOpacity>
 
-                <Animated.View
-                  style={[styles.sendButtonContainer, sendButtonStyle]}
-                >
-                  <TouchableOpacity
-                    style={styles.sendButton}
-                    onPress={handleSendMessage}
-                    disabled={isLoading || !inputText.trim()}
-                  >
-                    <Text style={styles.sendButtonText}>➤</Text>
+                <View style={styles.rightButtons}>
+                  <TouchableOpacity style={styles.thinkingButton}>
+                    <Text style={styles.thinkingText}>Fast</Text>
                   </TouchableOpacity>
-                </Animated.View>
+
+                  <Animated.View
+                    style={[styles.sendButtonContainer, sendButtonStyle]}
+                  >
+                    <TouchableOpacity
+                      style={styles.sendButton}
+                      onPress={handleSendMessage}
+                      disabled={isLoading || !inputText.trim()}
+                    >
+                      <Text style={styles.sendButtonText}>➤</Text>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Message Options Modal */}
         <MessageOptionsModal
@@ -719,6 +790,7 @@ export default function AIInterface() {
           messageIndex={selectedMessageIndex}
           onEdit={handleEditMessage}
           onRegenerate={handleRegenerateResponse}
+          onFocusView={handleEnterFocusMode}
         />
 
         {/* Document Upload Modal */}
@@ -1033,6 +1105,60 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
     fontFamily: "Outfit_600SemiBold",
+  },
+  focusContent: {
+    paddingTop: 60,
+    paddingBottom: 100,
+    paddingHorizontal: 0,
+  },
+  focusContainer: {
+    flex: 1,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 0,
+    backgroundColor: "#fff",
+  },
+  focusCloseButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.08)",
+    zIndex: 10,
+  },
+  focusCloseButtonText: {
+    fontSize: 18,
+    color: "#333",
+    fontWeight: "500",
+  },
+  focusHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
+  focusTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#4285F4",
+    fontFamily: "Outfit_600SemiBold",
+  },
+  focusMessageWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "stretch",
+    paddingHorizontal: 16,
+  },
+  focusMessageBubble: {
+    maxWidth: "100%",
+    width: "100%",
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    borderRadius: 16,
+    minHeight: 120,
   },
   expandIconButton: {
     marginLeft: 6,

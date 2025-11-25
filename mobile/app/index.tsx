@@ -976,6 +976,7 @@ const styles = StyleSheet.create({
     color: "#4285F4",
     fontFamily: "Outfit_500Medium",
     marginBottom: 8,
+    paddingLeft: 10
   },
   question: {
     fontSize: 32,
@@ -983,10 +984,13 @@ const styles = StyleSheet.create({
     color: "#C4C7C5",
     fontFamily: "Outfit_400Regular",
     lineHeight: 42,
+    paddingLeft: 10
   },
   buttonsWrapper: {
     marginTop: 50,
     gap: 16,
+    paddingLeft: 10,
+    paddingRight: 25
   },
   buttonContainer: {
     marginBottom: 0,

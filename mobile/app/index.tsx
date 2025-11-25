@@ -78,6 +78,7 @@ const AnimatedButton = memo(
     );
   }
 );
+AnimatedButton.displayName = "AnimatedButton";
 
 interface Message {
   role: "user" | "assistant";
@@ -182,6 +183,7 @@ const MessageItem = memo(
     );
   }
 );
+MessageItem.displayName = "MessageItem";
 
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);

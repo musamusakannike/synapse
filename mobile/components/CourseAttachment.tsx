@@ -6,12 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  Platform,
   Animated,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
-import { CourseAPI } from "../lib/api";
 
 interface CourseOutlineItem {
   section: string;
@@ -209,7 +207,6 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
               </>
             ) : (
               <>
-                <Text style={styles.buttonIcon}>📄</Text>
                 <Text style={styles.downloadButtonText}>Download PDF</Text>
               </>
             )}
@@ -222,7 +219,6 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
           activeOpacity={0.7}
         >
           <View style={styles.buttonContent}>
-            <Text style={styles.buttonIcon}>👁️</Text>
             <Text style={styles.viewButtonText}>View Course</Text>
           </View>
         </TouchableOpacity>

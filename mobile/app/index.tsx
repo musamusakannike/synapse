@@ -148,7 +148,7 @@ const MessageItem = memo(
       () => [
         styles.messageBubble,
         message.role === "user" ? styles.userMessage : styles.assistantMessage,
-        message.attachments?.some(att => att.type === "course") && { maxWidth: "100%" },
+        message.attachments?.some(att => att.type === "course") && { maxWidth: "100%" as any },
       ],
       [message.role, message.attachments]
     );
@@ -269,9 +269,6 @@ export default function AIInterface() {
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   // Document upload state
-  const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(
-    null
-  );
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
@@ -617,8 +614,6 @@ export default function AIInterface() {
   // Document upload handlers (optimized polling)
   const handleDocumentUpload = useCallback(
     async (documentId: string) => {
-      setUploadingDocumentId(documentId);
-
       // Start polling for document status with exponential backoff
       let pollInterval = 2000; // Start with 2 seconds
       const maxInterval = 10000; // Max 10 seconds
@@ -633,7 +628,6 @@ export default function AIInterface() {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
-            setUploadingDocumentId(null);
 
             // Find the associated chat
             const chatsResponse = await ChatAPI.getUserChats(1, 50);
@@ -654,7 +648,6 @@ export default function AIInterface() {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
-            setUploadingDocumentId(null);
             Alert.alert(
               "Processing Failed",
               "Failed to process document. Please try again."

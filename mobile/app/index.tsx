@@ -1,4 +1,11 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+  memo,
+} from "react";
 import {
   View,
   Text,
@@ -35,40 +42,42 @@ import DocumentUploadModal, {
   DocumentUploadModalRef,
 } from "../components/DocumentUploadModal";
 
-const AnimatedButton = ({
-  children,
-  delay,
-  icon,
-  onPress,
-}: {
-  children: string;
-  delay: number;
-  icon: string;
-  onPress?: () => void;
-}) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+const AnimatedButton = memo(
+  ({
+    children,
+    delay,
+    icon,
+    onPress,
+  }: {
+    children: string;
+    delay: number;
+    icon: string;
+    onPress?: () => void;
+  }) => {
+    const opacity = useSharedValue(0);
+    const translateY = useSharedValue(20);
 
-  useEffect(() => {
-    opacity.value = withDelay(delay, withSpring(1));
-    translateY.value = withDelay(delay, withSpring(0));
-  }, [delay, opacity, translateY]);
+    useEffect(() => {
+      opacity.value = withDelay(delay, withSpring(1));
+      translateY.value = withDelay(delay, withSpring(0));
+    }, [delay, opacity, translateY]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
+    const animatedStyle = useAnimatedStyle(() => ({
+      opacity: opacity.value,
+      transform: [{ translateY: translateY.value }],
+    }));
 
-  return (
-    <Animated.View style={[styles.buttonContainer, animatedStyle]}>
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Text style={styles.buttonText}>
-          {icon} {children}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
+    return (
+      <Animated.View style={[styles.buttonContainer, animatedStyle]}>
+        <TouchableOpacity style={styles.button} onPress={onPress}>
+          <Text style={styles.buttonText}>
+            {icon} {children}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+);
 
 interface Message {
   role: "user" | "assistant";
@@ -76,12 +85,111 @@ interface Message {
   timestamp?: Date;
 }
 
+// Optimized MessageItem component
+const MessageItem = memo(
+  ({
+    message,
+    index,
+    expandedUserMessages,
+    onMessagePress,
+    onExpandToggle,
+  }: {
+    message: Message;
+    index: number;
+    expandedUserMessages: Record<number, boolean>;
+    onMessagePress: (
+      content: string,
+      index: number,
+      role: "user" | "assistant"
+    ) => void;
+    onExpandToggle: (index: number) => void;
+  }) => {
+    const handleSwipeOpen = useCallback(() => {
+      onMessagePress(message.content, index, message.role);
+    }, [message.content, index, message.role, onMessagePress]);
+
+    const handleLongPress = useCallback(() => {
+      onMessagePress(message.content, index, message.role);
+    }, [message.content, index, message.role, onMessagePress]);
+
+    const handleExpandPress = useCallback(() => {
+      onExpandToggle(index);
+    }, [index, onExpandToggle]);
+
+    const isExpanded = expandedUserMessages[index];
+
+    const messageBubbleStyle = useMemo(
+      () => [
+        styles.messageBubble,
+        message.role === "user" ? styles.userMessage : styles.assistantMessage,
+      ],
+      [message.role]
+    );
+
+    const messageTextStyle = useMemo(
+      () => [
+        styles.messageText,
+        message.role === "user"
+          ? styles.userMessageText
+          : styles.assistantMessageText,
+      ],
+      [message.role]
+    );
+
+    return (
+      <View
+        style={[
+          styles.messageWrapper,
+          message.role === "user"
+            ? styles.userMessageWrapper
+            : styles.assistantMessageWrapper,
+        ]}
+      >
+        <Swipeable onSwipeableOpen={handleSwipeOpen}>
+          <Pressable onLongPress={handleLongPress} style={messageBubbleStyle}>
+            {message.role === "user" ? (
+              <View style={styles.userMessageContent}>
+                <Text
+                  style={messageTextStyle}
+                  numberOfLines={isExpanded ? undefined : 6}
+                  ellipsizeMode="tail"
+                >
+                  {message.content}
+                </Text>
+                {!!message.content && (
+                  <TouchableOpacity
+                    style={styles.expandIconButton}
+                    onPress={handleExpandPress}
+                  >
+                    <Text style={styles.expandIconText}>
+                      {isExpanded ? "▲" : "▼"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <Markdown
+                style={{
+                  body: StyleSheet.flatten(messageTextStyle),
+                }}
+              >
+                {message.content}
+              </Markdown>
+            )}
+          </Pressable>
+        </Swipeable>
+      </View>
+    );
+  }
+);
+
 export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
   const headerTranslateY = useSharedValue(0);
-  const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } = useAuth();
+  const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } =
+    useAuth();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
   const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
@@ -98,17 +206,26 @@ export default function AIInterface() {
     null
   );
   const [greeting, setGreeting] = useState<string>("Hi there");
-  const [selectedMessageContent, setSelectedMessageContent] = useState<string>("");
+  const [selectedMessageContent, setSelectedMessageContent] =
+    useState<string>("");
   const [selectedMessageIndex, setSelectedMessageIndex] = useState<number>(-1);
-  const [selectedMessageRole, setSelectedMessageRole] = useState<"user" | "assistant">("user");
+  const [selectedMessageRole, setSelectedMessageRole] = useState<
+    "user" | "assistant"
+  >("user");
   const [isEditingMessage, setIsEditingMessage] = useState(false);
   const [editedMessageContent, setEditedMessageContent] = useState("");
-  const [expandedUserMessages, setExpandedUserMessages] = useState<Record<number, boolean>>({});
+  const [expandedUserMessages, setExpandedUserMessages] = useState<
+    Record<number, boolean>
+  >({});
   const [isFocusMode, setIsFocusMode] = useState(false);
 
   // Document upload state
-  const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(null);
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [uploadingDocumentId, setUploadingDocumentId] = useState<string | null>(
+    null
+  );
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null
+  );
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   // Keyboard listeners for Android
@@ -144,9 +261,7 @@ export default function AIInterface() {
       try {
         const { data } = await UserAPI.getCurrentUser();
         if (data?.name || data?.email) {
-          const nameFromEmail = data.email
-            ? data.email.split("@")[0]
-            : "";
+          const nameFromEmail = data.email ? data.email.split("@")[0] : "";
           const normalizedName = (data.name || nameFromEmail || "").trim();
           if (normalizedName) {
             setUserName(normalizedName);
@@ -226,15 +341,29 @@ export default function AIInterface() {
     setOnChatSelect(handleOpenChat);
   }, [setOnChatSelect, handleOpenChat]);
 
-  // Animate send button when user types
+  // Memoize expensive computations
+  const memoizedMessages = useMemo(() => messages, [messages]);
+  const shouldShowChat = useMemo(
+    () => isChatMode && messages.length > 0,
+    [isChatMode, messages.length]
+  );
+  const shouldShowHomepage = useMemo(
+    () => !isChatMode || messages.length === 0,
+    [isChatMode, messages.length]
+  );
+
+  // Animate send button when user types (debounced)
+  const debouncedInputLength = useMemo(() => {
+    return inputText.trim().length;
+  }, [inputText]);
+
   useEffect(() => {
-    if (inputText.trim().length > 0) {
+    if (debouncedInputLength > 0) {
       sendButtonWidth.value = withTiming(60, { duration: 200 });
     } else {
       sendButtonWidth.value = withTiming(0, { duration: 200 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputText]);
+  }, [debouncedInputLength, sendButtonWidth]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -278,7 +407,7 @@ export default function AIInterface() {
 
       lastScrollYRef.current = y;
     },
-    [isFocusMode, isChatMode, messages.length]
+    [isFocusMode, isChatMode, messages.length, headerTranslateY]
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -335,7 +464,12 @@ export default function AIInterface() {
   }, [selectedMessageIndex, currentChatId, messages]);
 
   const handleSubmitEdit = useCallback(async () => {
-    if (!editedMessageContent.trim() || !currentChatId || selectedMessageIndex < 0) return;
+    if (
+      !editedMessageContent.trim() ||
+      !currentChatId ||
+      selectedMessageIndex < 0
+    )
+      return;
 
     try {
       setIsLoading(true);
@@ -348,11 +482,13 @@ export default function AIInterface() {
       );
 
       // Update messages with the response
-      setMessages(response.data.messages.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp),
-      })));
+      setMessages(
+        response.data.messages.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+        }))
+      );
 
       // Reset edit mode
       setIsEditingMessage(false);
@@ -385,11 +521,13 @@ export default function AIInterface() {
       );
 
       // Update messages with the response
-      setMessages(response.data.messages.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content,
-        timestamp: new Date(msg.timestamp),
-      })));
+      setMessages(
+        response.data.messages.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+        }))
+      );
 
       setSelectedMessageIndex(-1);
     } catch (error) {
@@ -409,57 +547,68 @@ export default function AIInterface() {
     setIsFocusMode(false);
   }, []);
 
-  // Document upload handlers
-  const handleDocumentUpload = useCallback(async (documentId: string) => {
-    setUploadingDocumentId(documentId);
+  // Document upload handlers (optimized polling)
+  const handleDocumentUpload = useCallback(
+    async (documentId: string) => {
+      setUploadingDocumentId(documentId);
 
-    // Start polling for document status
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const response = await DocumentAPI.getDocument(documentId);
-        const document = response.data;
+      // Start polling for document status with exponential backoff
+      let pollInterval = 2000; // Start with 2 seconds
+      const maxInterval = 10000; // Max 10 seconds
 
-        if (document.processingStatus === "completed") {
-          // Stop polling
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-          setUploadingDocumentId(null);
+      const pollDocument = async () => {
+        try {
+          const response = await DocumentAPI.getDocument(documentId);
+          const document = response.data;
 
-          // Find the associated chat
-          const chatsResponse = await ChatAPI.getUserChats(1, 50);
-          const documentChat = chatsResponse.data.chats.find(
-            (chat: any) => chat.type === "document" && chat.sourceId?._id === documentId
-          );
+          if (document.processingStatus === "completed") {
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            setUploadingDocumentId(null);
 
-          if (documentChat) {
-            // Navigate to the chat
-            Alert.alert(
-              "Document Ready!",
-              "Your document has been processed. Opening chat...",
-              [
-                {
-                  text: "OK",
-                  onPress: () => handleOpenChat(documentChat.id),
-                },
-              ]
+            // Find the associated chat
+            const chatsResponse = await ChatAPI.getUserChats(1, 50);
+            const documentChat = chatsResponse.data.chats.find(
+              (chat: any) =>
+                chat.type === "document" && chat.sourceId?._id === documentId
             );
+
+            if (documentChat) {
+              Alert.alert(
+                "Document Ready!",
+                "Your document has been processed. Opening chat...",
+                [{ text: "OK", onPress: () => handleOpenChat(documentChat.id) }]
+              );
+            }
+          } else if (document.processingStatus === "failed") {
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+            setUploadingDocumentId(null);
+            Alert.alert(
+              "Processing Failed",
+              "Failed to process document. Please try again."
+            );
+          } else {
+            // Increase poll interval for next check (exponential backoff)
+            pollInterval = Math.min(pollInterval * 1.2, maxInterval);
+            pollingIntervalRef.current = setTimeout(pollDocument, pollInterval);
           }
-        } else if (document.processingStatus === "failed") {
-          // Stop polling
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-          setUploadingDocumentId(null);
-          Alert.alert("Processing Failed", "Failed to process document. Please try again.");
+        } catch (error) {
+          console.error("Polling error:", error);
+          // Retry with increased interval
+          pollInterval = Math.min(pollInterval * 1.5, maxInterval);
+          pollingIntervalRef.current = setTimeout(pollDocument, pollInterval);
         }
-      } catch (error) {
-        console.error("Polling error:", error);
-      }
-    }, 3000); // Poll every 3 seconds
-  }, [handleOpenChat]);
+      };
+
+      pollingIntervalRef.current = setTimeout(pollDocument, pollInterval);
+    },
+    [handleOpenChat]
+  );
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -478,6 +627,24 @@ export default function AIInterface() {
     }
     documentUploadModalRef.current?.present();
   }, [isAuthenticated, openAuthModal]);
+
+  // Optimized message interaction handlers
+  const handleMessagePress = useCallback(
+    (content: string, index: number, role: "user" | "assistant") => {
+      setSelectedMessageContent(content);
+      setSelectedMessageIndex(index);
+      setSelectedMessageRole(role);
+      messageOptionsModalRef.current?.present();
+    },
+    []
+  );
+
+  const handleExpandToggle = useCallback((index: number) => {
+    setExpandedUserMessages((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -507,10 +674,7 @@ export default function AIInterface() {
                 ) : (
                   <View style={styles.profileInner}>
                     <Text style={styles.profileText}>
-                      {(userName || "?")
-                        .trim()
-                        .charAt(0)
-                        .toUpperCase()}
+                      {(userName || "?").trim().charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
@@ -521,7 +685,9 @@ export default function AIInterface() {
 
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={isFocusMode ? styles.focusContent : styles.content}
+          contentContainerStyle={
+            isFocusMode ? styles.focusContent : styles.content
+          }
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -539,7 +705,7 @@ export default function AIInterface() {
               >
                 <Text style={styles.focusCloseButtonText}>✕</Text>
               </TouchableOpacity>
-              
+
               <View style={styles.focusHeader}>
                 <Text style={styles.focusTitle}>Focus Mode</Text>
               </View>
@@ -564,10 +730,7 @@ export default function AIInterface() {
                   >
                     {messages[selectedMessageIndex].role === "user" ? (
                       <Text
-                        style={[
-                          styles.messageText,
-                          styles.userMessageText,
-                        ]}
+                        style={[styles.messageText, styles.userMessageText]}
                       >
                         {messages[selectedMessageIndex].content}
                       </Text>
@@ -587,7 +750,7 @@ export default function AIInterface() {
                 </View>
               )}
             </View>
-          ) : !isChatMode || messages.length === 0 ? (
+          ) : shouldShowHomepage ? (
             <>
               {/* Greeting Section */}
               <Animated.View style={titleStyle}>
@@ -619,81 +782,15 @@ export default function AIInterface() {
             <>
               {/* Chat Messages */}
               <View style={styles.chatContainer}>
-                {messages.map((message, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.messageWrapper,
-                      message.role === "user"
-                        ? styles.userMessageWrapper
-                        : styles.assistantMessageWrapper,
-                    ]}
-                  >
-                    <Swipeable
-                      onSwipeableOpen={() => {
-                        setSelectedMessageContent(message.content);
-                        setSelectedMessageIndex(index);
-                        setSelectedMessageRole(message.role);
-                        messageOptionsModalRef.current?.present();
-                      }}
-                    >
-                      <Pressable
-                        onLongPress={() => {
-                          setSelectedMessageContent(message.content);
-                          setSelectedMessageIndex(index);
-                          setSelectedMessageRole(message.role);
-                          messageOptionsModalRef.current?.present();
-                        }}
-                        style={[
-                          styles.messageBubble,
-                          message.role === "user"
-                            ? styles.userMessage
-                            : styles.assistantMessage,
-                        ]}
-                      >
-                      {message.role === "user" ? (
-                        <View style={styles.userMessageContent}>
-                          <Text
-                            style={[
-                              styles.messageText,
-                              styles.userMessageText,
-                            ]}
-                            numberOfLines={expandedUserMessages[index] ? undefined : 6}
-                            ellipsizeMode="tail"
-                          >
-                            {message.content}
-                          </Text>
-                          {!!message.content && (
-                            <TouchableOpacity
-                              style={styles.expandIconButton}
-                              onPress={() => {
-                                setExpandedUserMessages((prev) => ({
-                                  ...prev,
-                                  [index]: !prev[index],
-                                }));
-                              }}
-                            >
-                              <Text style={styles.expandIconText}>
-                                {expandedUserMessages[index] ? "▲" : "▼"}
-                              </Text>
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      ) : (
-                        <Markdown
-                          style={{
-                            body: StyleSheet.flatten([
-                              styles.messageText,
-                              styles.assistantMessageText,
-                            ]),
-                          }}
-                        >
-                          {message.content}
-                        </Markdown>
-                      )}
-                      </Pressable>
-                    </Swipeable>
-                  </View>
+                {memoizedMessages.map((message, index) => (
+                  <MessageItem
+                    key={`${index}-${message.content.slice(0, 20)}`}
+                    message={message}
+                    index={index}
+                    expandedUserMessages={expandedUserMessages}
+                    onMessagePress={handleMessagePress}
+                    onExpandToggle={handleExpandToggle}
+                  />
                 ))}
 
                 {/* Edit Mode UI */}
@@ -738,10 +835,13 @@ export default function AIInterface() {
 
         {/* Bottom Input Bar */}
         {!isFocusMode && (
-          <View style={[
-            styles.bottomBar,
-            Platform.OS === "android" && keyboardHeight > 0 && { marginBottom: keyboardHeight }
-          ]}>
+          <View
+            style={[
+              styles.bottomBar,
+              Platform.OS === "android" &&
+                keyboardHeight > 0 && { marginBottom: keyboardHeight },
+            ]}
+          >
             <View style={styles.inputContainer}>
               <View>
                 <TextInput
@@ -818,7 +918,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   menuButton: {
     padding: 10,

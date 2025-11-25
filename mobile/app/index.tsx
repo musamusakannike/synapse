@@ -33,7 +33,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
-import { ChatAPI, UserAPI, DocumentAPI, CourseAPI } from "../lib/api";
+import { ChatAPI, UserAPI, DocumentAPI } from "../lib/api";
 import { useRouter } from "expo-router";
 import ChatSkeleton from "../components/ChatSkeleton";
 import MessageOptionsModal, {
@@ -42,13 +42,6 @@ import MessageOptionsModal, {
 import DocumentUploadModal, {
   DocumentUploadModalRef,
 } from "../components/DocumentUploadModal";
-import CourseGenerationModal, {
-  CourseGenerationModalRef,
-  CourseGenerationData,
-} from "../components/CourseGenerationModal";
-import CourseProgressModal, {
-  CourseProgressModalRef,
-} from "../components/CourseProgressModal";
 import CourseAttachment from "../components/CourseAttachment";
 
 const AnimatedButton = memo(
@@ -98,10 +91,10 @@ interface Message {
     data: {
       courseId: string;
       title: string;
-      outline: Array<{
+      outline: {
         section: string;
         subsections?: string[];
-      }>;
+      }[];
     };
   };
 }
@@ -230,8 +223,6 @@ export default function AIInterface() {
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
   const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
-  const courseGenerationModalRef = useRef<CourseGenerationModalRef>(null);
-  const courseProgressModalRef = useRef<CourseProgressModalRef>(null);
   const lastScrollYRef = useRef(0);
 
   // Chat state
@@ -386,10 +377,6 @@ export default function AIInterface() {
 
   // Memoize expensive computations
   const memoizedMessages = useMemo(() => messages, [messages]);
-  const shouldShowChat = useMemo(
-    () => isChatMode && messages.length > 0,
-    [isChatMode, messages.length]
-  );
   const shouldShowHomepage = useMemo(
     () => !isChatMode || messages.length === 0,
     [isChatMode, messages.length]
@@ -689,40 +676,9 @@ export default function AIInterface() {
       openAuthModal();
       return;
     }
-    courseGenerationModalRef.current?.present();
-  }, [isAuthenticated, openAuthModal]);
+    router.push("/generate-course");
+  }, [isAuthenticated, openAuthModal, router]);
 
-  // Handle course generation
-  const handleCourseGenerate = useCallback(async (courseData: CourseGenerationData) => {
-    try {
-      const response = await CourseAPI.createCourse(courseData);
-      const course = response.data;
-      
-      // Show progress modal
-      courseProgressModalRef.current?.present(course._id);
-    } catch (error) {
-      console.error("Course generation error:", error);
-      throw error;
-    }
-  }, []);
-
-  // Handle course ready (when generation is complete)
-  const handleCourseReady = useCallback(async (courseId: string) => {
-    try {
-      // Find the chat that was created for this course
-      const chatsResponse = await ChatAPI.getUserChats(1, 50);
-      const courseChat = chatsResponse.data.chats.find(
-        (chat: any) => chat.type === "course" && chat.sourceId?._id === courseId
-      );
-
-      if (courseChat) {
-        // Open the course chat
-        handleOpenChat(courseChat.id);
-      }
-    } catch (error) {
-      console.error("Error opening course chat:", error);
-    }
-  }, [handleOpenChat]);
 
   // Handle view course
   const handleViewCourse = useCallback((courseId: string) => {
@@ -1008,18 +964,6 @@ export default function AIInterface() {
         <DocumentUploadModal
           ref={documentUploadModalRef}
           onUploadSuccess={handleDocumentUpload}
-        />
-
-        {/* Course Generation Modal */}
-        <CourseGenerationModal
-          ref={courseGenerationModalRef}
-          onCourseGenerate={handleCourseGenerate}
-        />
-
-        {/* Course Progress Modal */}
-        <CourseProgressModal
-          ref={courseProgressModalRef}
-          onCourseReady={handleCourseReady}
         />
       </KeyboardAvoidingView>
     </SafeAreaView>

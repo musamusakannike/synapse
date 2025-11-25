@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  forwardRef,
-  useImperativeHandle,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,24 +6,22 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  SafeAreaView,
+  StatusBar,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
+import { useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
+  withDelay,
+  interpolate,
 } from "react-native-reanimated";
-
-export interface CourseGenerationModalRef {
-  present: () => void;
-  dismiss: () => void;
-}
-
-interface CourseGenerationModalProps {
-  onCourseGenerate: (courseData: CourseGenerationData) => void;
-}
+import { CourseAPI } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface CourseGenerationData {
   title: string;
@@ -42,11 +34,10 @@ export interface CourseGenerationData {
   };
 }
 
-const CourseGenerationModal = forwardRef<
-  CourseGenerationModalRef,
-  CourseGenerationModalProps
->(({ onCourseGenerate }, ref) => {
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+export default function GenerateCoursePage() {
+  const router = useRouter();
+  const { isAuthenticated, openAuthModal } = useAuth();
+  
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [level, setLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
@@ -55,32 +46,23 @@ const CourseGenerationModal = forwardRef<
   const [detailLevel, setDetailLevel] = useState<"basic" | "moderate" | "comprehensive">("moderate");
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const headerOpacity = useSharedValue(0);
+  const titleOpacity = useSharedValue(0);
+  const formOpacity = useSharedValue(0);
   const buttonScale = useSharedValue(1);
-  const formOpacity = useSharedValue(1);
 
-  useImperativeHandle(ref, () => ({
-    present: () => {
-      bottomSheetModalRef.current?.present();
-    },
-    dismiss: () => {
-      bottomSheetModalRef.current?.dismiss();
-    },
-  }));
+  useEffect(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      router.back();
+      return;
+    }
 
-  const resetForm = useCallback(() => {
-    setTitle("");
-    setDescription("");
-    setLevel("intermediate");
-    setIncludeExamples(true);
-    setIncludePracticeQuestions(false);
-    setDetailLevel("moderate");
-    setIsGenerating(false);
-    formOpacity.value = 1;
-  }, [formOpacity]);
-
-  const handleDismiss = useCallback(() => {
-    resetForm();
-  }, [resetForm]);
+    // Animate elements in
+    headerOpacity.value = withSpring(1, { duration: 800 });
+    titleOpacity.value = withDelay(200, withSpring(1, { duration: 800 }));
+    formOpacity.value = withDelay(400, withSpring(1, { duration: 800 }));
+  }, [isAuthenticated, headerOpacity, titleOpacity, formOpacity, openAuthModal, router]);
 
   const handleGenerateCourse = useCallback(async () => {
     if (!title.trim()) {
@@ -90,7 +72,6 @@ const CourseGenerationModal = forwardRef<
 
     setIsGenerating(true);
     buttonScale.value = withSpring(0.95);
-    formOpacity.value = withTiming(0.7);
 
     try {
       const courseData: CourseGenerationData = {
@@ -104,16 +85,16 @@ const CourseGenerationModal = forwardRef<
         },
       };
 
-      await onCourseGenerate(courseData);
-      bottomSheetModalRef.current?.dismiss();
-      resetForm();
+      const response = await CourseAPI.createCourse(courseData);
+      const course = response.data;
+      
+      // Navigate to course progress page
+      router.push(`/course-progress/${course._id}`);
     } catch (error) {
       console.error("Course generation error:", error);
       Alert.alert("Error", "Failed to generate course. Please try again.");
-    } finally {
-      setIsGenerating(false);
       buttonScale.value = withSpring(1);
-      formOpacity.value = withTiming(1);
+      setIsGenerating(false);
     }
   }, [
     title,
@@ -122,18 +103,29 @@ const CourseGenerationModal = forwardRef<
     includeExamples,
     includePracticeQuestions,
     detailLevel,
-    onCourseGenerate,
     buttonScale,
-    formOpacity,
-    resetForm,
+    router,
   ]);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+  }));
+
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [
+      {
+        translateY: interpolate(titleOpacity.value, [0, 1], [30, 0]),
+      },
+    ],
+  }));
+
+  const formStyle = useAnimatedStyle(() => ({
+    opacity: formOpacity.value,
+  }));
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: buttonScale.value }],
-  }));
-
-  const formAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: formOpacity.value,
   }));
 
   const LevelOption = ({ 
@@ -229,32 +221,35 @@ const CourseGenerationModal = forwardRef<
   );
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetModalRef}
-      index={0}
-      snapPoints={["90%"]}
-      onDismiss={handleDismiss}
-      backgroundStyle={styles.bottomSheetBackground}
-      handleIndicatorStyle={styles.handleIndicator}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      android_keyboardInputMode="adjustResize"
-    >
-      <BottomSheetView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Generate Complete Course</Text>
-          <Text style={styles.subtitle}>
-            Create a comprehensive course with AI-generated content
-          </Text>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        {/* Header */}
+        <Animated.View style={[styles.header, headerStyle]}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Generate Course</Text>
+          <View style={styles.headerSpacer} />
+        </Animated.View>
 
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <Animated.View style={[styles.form, formAnimatedStyle]}>
+          {/* Title Section */}
+          <Animated.View style={titleStyle}>
+            <Text style={styles.greeting}>Create Your Course</Text>
+            <Text style={styles.question}>Let&apos;s build something amazing together</Text>
+          </Animated.View>
+
+          {/* Form */}
+          <Animated.View style={[styles.form, formStyle]}>
             {/* Course Title */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Course Title *</Text>
@@ -363,57 +358,76 @@ const CourseGenerationModal = forwardRef<
               disabled={!title.trim() || isGenerating}
             >
               <Text style={styles.generateButtonText}>
-                {isGenerating ? "Generating Course..." : "🎓 Generate Course"}
+                {isGenerating ? "🎓 Generating Course..." : "🎓 Generate Course"}
               </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
-      </BottomSheetView>
-    </BottomSheetModal>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-});
-
-CourseGenerationModal.displayName = "CourseGenerationModal";
+}
 
 const styles = StyleSheet.create({
-  bottomSheetBackground: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-  },
-  handleIndicator: {
-    backgroundColor: "#ddd",
-    width: 40,
-    height: 4,
-  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
   header: {
-    paddingVertical: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#1f1f1f",
-    marginBottom: 8,
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    lineHeight: 22,
+  backButtonText: {
+    fontSize: 24,
+    color: "#000",
+  },
+  headerTitle: {
+    fontSize: 22,
+    color: "#000",
+    fontFamily: "Outfit_500Medium",
+    letterSpacing: 0.5,
+  },
+  headerSpacer: {
+    width: 40,
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 20,
+  content: {
+    paddingHorizontal: 8,
+    paddingBottom: 120,
+  },
+  greeting: {
+    fontSize: 32,
+    color: "#4285F4",
+    fontFamily: "Outfit_500Medium",
+    marginBottom: 8,
+    paddingLeft: 10,
+    marginTop: 20,
+  },
+  question: {
+    fontSize: 32,
+    fontWeight: "400",
+    color: "#C4C7C5",
+    fontFamily: "Outfit_400Regular",
+    lineHeight: 42,
+    paddingLeft: 10,
   },
   form: {
-    paddingTop: 20,
+    marginTop: 40,
+    paddingHorizontal: 10,
   },
   section: {
     marginBottom: 32,
@@ -423,6 +437,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f1f1f",
     marginBottom: 12,
+    fontFamily: "Outfit_500Medium",
   },
   textInput: {
     borderWidth: 1,
@@ -433,6 +448,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1f1f1f",
     backgroundColor: "#fafafa",
+    fontFamily: "Outfit_400Regular",
   },
   textArea: {
     height: 100,
@@ -457,6 +473,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f1f1f",
     marginBottom: 4,
+    fontFamily: "Outfit_500Medium",
   },
   optionLabelSelected: {
     color: "#4285F4",
@@ -465,6 +482,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
+    fontFamily: "Outfit_400Regular",
   },
   optionDescriptionSelected: {
     color: "#4285F4",
@@ -492,11 +510,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f1f1f",
     marginBottom: 4,
+    fontFamily: "Outfit_500Medium",
   },
   toggleDescription: {
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
+    fontFamily: "Outfit_400Regular",
   },
   toggle: {
     width: 50,
@@ -524,14 +544,20 @@ const styles = StyleSheet.create({
     transform: [{ translateX: 22 }],
   },
   footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
     paddingVertical: 20,
     borderTopWidth: 1,
     borderTopColor: "#f0f0f0",
   },
   generateButton: {
     backgroundColor: "#4285F4",
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -540,9 +566,7 @@ const styles = StyleSheet.create({
   },
   generateButtonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 17,
+    fontFamily: "Outfit_400Regular",
   },
 });
-
-export default CourseGenerationModal;

@@ -12,20 +12,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   ActivityIndicator,
 } from "react-native";
 import { BottomSheetModal, BottomSheetView, BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
   interpolate,
 } from "react-native-reanimated";
 import { CourseAPI } from "../lib/api";
-
-const { width: screenWidth } = Dimensions.get("window");
 
 export interface CourseProgressModalRef {
   present: (courseId: string) => void;
@@ -206,7 +202,7 @@ const CourseProgressModal = forwardRef<
       case "generating_outline":
         return 30;
       case "generating_content":
-        return 70;
+        return 40;
       case "completed":
         return 100;
       default:

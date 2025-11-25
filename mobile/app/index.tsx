@@ -147,8 +147,9 @@ const MessageItem = memo(
       () => [
         styles.messageBubble,
         message.role === "user" ? styles.userMessage : styles.assistantMessage,
+        message.attachments?.some(att => att.type === "course") && { maxWidth: "100%" },
       ],
-      [message.role]
+      [message.role, message.attachments]
     );
 
     const messageTextStyle = useMemo(

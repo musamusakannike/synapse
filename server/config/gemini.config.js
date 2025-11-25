@@ -245,8 +245,41 @@ class GeminiService {
         },
         safetySettings: this.safetySettings,
       });
-      const jsonText = response.text;
-      return JSON.parse(jsonText);
+      
+      let jsonText = response.text;
+      
+      // Try to parse the JSON with multiple fallback strategies
+      try {
+        return JSON.parse(jsonText);
+      } catch (parseError) {
+        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
+        
+        // Strategy 1: Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        
+        try {
+          return JSON.parse(jsonText);
+        } catch (parseError2) {
+          console.warn("Parse after markdown removal failed, attempting regex extraction...");
+          
+          // Strategy 2: Try to extract JSON object using regex
+          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              return JSON.parse(jsonMatch[0]);
+            } catch (parseError3) {
+              console.error("Parse after regex extraction failed");
+              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
+              console.error("Parse error:", parseError3.message);
+              throw new Error(`Failed to parse quiz JSON: ${parseError3.message}`);
+            }
+          }
+          
+          console.error("Could not extract valid JSON from response");
+          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
+          throw new Error("Failed to extract valid JSON from quiz response");
+        }
+      }
     } catch (error) {
       console.error("Error generating quiz:", error);
       throw new Error("Failed to generate quiz");
@@ -265,8 +298,41 @@ class GeminiService {
         },
         safetySettings: this.safetySettings,
       });
-      const jsonText = response.text;
-      return JSON.parse(jsonText);
+      
+      let jsonText = response.text;
+      
+      // Try to parse the JSON with multiple fallback strategies
+      try {
+        return JSON.parse(jsonText);
+      } catch (parseError) {
+        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
+        
+        // Strategy 1: Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        
+        try {
+          return JSON.parse(jsonText);
+        } catch (parseError2) {
+          console.warn("Parse after markdown removal failed, attempting regex extraction...");
+          
+          // Strategy 2: Try to extract JSON object using regex
+          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              return JSON.parse(jsonMatch[0]);
+            } catch (parseError3) {
+              console.error("Parse after regex extraction failed");
+              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
+              console.error("Parse error:", parseError3.message);
+              throw new Error(`Failed to parse flashcards JSON: ${parseError3.message}`);
+            }
+          }
+          
+          console.error("Could not extract valid JSON from response");
+          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
+          throw new Error("Failed to extract valid JSON from flashcards response");
+        }
+      }
     } catch (error) {
       console.error("Error generating flashcards:", error);
       throw new Error("Failed to generate flashcards");
@@ -407,7 +473,12 @@ class GeminiService {
     prompt += `\nReturn the quiz in the following JSON format:\n`;
     prompt += `{\n      "title": "Quiz Title",\n      "questions": [\n        {\n          "questionText": "Question text here",\n          "options": ["Option A", "Option B", "Option C", "Option D"],\n          "correctOption": 0,\n          "explanation": "Explanation for the correct answer",\n          "difficulty": "easy|medium|hard",\n          "includesCalculation": true|false\n        }\n      ]\n    }\n\n`;
 
-    prompt += `Make sure each question has exactly 4 options, and the correctOption index is 0-based (0, 1, 2, or 3).`;
+    prompt += `IMPORTANT JSON FORMATTING RULES:\n`;
+    prompt += `- Make sure each question has exactly 4 options, and the correctOption index is 0-based (0, 1, 2, or 3)\n`;
+    prompt += `- Properly escape all special characters in strings (quotes, backslashes, newlines)\n`;
+    prompt += `- Use double quotes for all JSON strings\n`;
+    prompt += `- Do NOT include any markdown formatting or code blocks in the response\n`;
+    prompt += `- Return ONLY valid JSON, nothing else`;
 
     return prompt;
   }
@@ -445,7 +516,13 @@ class GeminiService {
     prompt += `- Use appropriate difficulty levels based on content complexity\n`;
     prompt += `- Add relevant tags for categorization\n`;
     prompt += `- Ensure each flashcard tests a single concept\n`;
-    prompt += `- Make flashcards that promote active recall and understanding`;
+    prompt += `- Make flashcards that promote active recall and understanding\n\n`;
+    
+    prompt += `IMPORTANT JSON FORMATTING RULES:\n`;
+    prompt += `- Properly escape all special characters in strings (quotes, backslashes, newlines)\n`;
+    prompt += `- Use double quotes for all JSON strings\n`;
+    prompt += `- Do NOT include any markdown formatting or code blocks in the response\n`;
+    prompt += `- Return ONLY valid JSON, nothing else`;
 
     return prompt;
   }
@@ -478,7 +555,13 @@ class GeminiService {
     prompt += `- Each section should have 2-5 subsections\n`;
     prompt += `- Progress from foundational concepts to advanced topics\n`;
     prompt += `- Ensure logical flow and coherence\n`;
-    prompt += `- Make sections comprehensive but focused`;
+    prompt += `- Make sections comprehensive but focused\n\n`;
+    
+    prompt += `IMPORTANT JSON FORMATTING RULES:\n`;
+    prompt += `- Properly escape all special characters in strings (quotes, backslashes, newlines)\n`;
+    prompt += `- Use double quotes for all JSON strings\n`;
+    prompt += `- Do NOT include any markdown formatting or code blocks in the response\n`;
+    prompt += `- Return ONLY valid JSON, nothing else`;
 
     try {
       const response = await this.genAI.models.generateContent({
@@ -489,8 +572,41 @@ class GeminiService {
         },
         safetySettings: this.safetySettings,
       });
-      const jsonText = response.text;
-      return JSON.parse(jsonText);
+      
+      let jsonText = response.text;
+      
+      // Try to parse the JSON with multiple fallback strategies
+      try {
+        return JSON.parse(jsonText);
+      } catch (parseError) {
+        console.warn("Initial JSON parse failed, attempting to sanitize...", parseError.message);
+        
+        // Strategy 1: Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+        
+        try {
+          return JSON.parse(jsonText);
+        } catch (parseError2) {
+          console.warn("Parse after markdown removal failed, attempting regex extraction...");
+          
+          // Strategy 2: Try to extract JSON object using regex
+          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              return JSON.parse(jsonMatch[0]);
+            } catch (parseError3) {
+              console.error("Parse after regex extraction failed");
+              console.error("Problematic JSON text (first 500 chars):", jsonText.substring(0, 500));
+              console.error("Parse error:", parseError3.message);
+              throw new Error(`Failed to parse course outline JSON: ${parseError3.message}`);
+            }
+          }
+          
+          console.error("Could not extract valid JSON from response");
+          console.error("Response text (first 500 chars):", jsonText.substring(0, 500));
+          throw new Error("Failed to extract valid JSON from course outline response");
+        }
+      }
     } catch (error) {
       console.error("Error generating course outline:", error);
       throw new Error("Failed to generate course outline");

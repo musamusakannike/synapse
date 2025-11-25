@@ -86,15 +86,15 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
-  attachments?: Array<{
+  attachments?: {
     type: "course";
     data: {
       courseId: string;
       title: string;
-      outline: Array<{
+      outline: {
         section: string;
         subsections?: string[];
-      }>;
+      }[];
       settings?: {
         level: string;
         includeExamples: boolean;
@@ -105,7 +105,7 @@ interface Message {
     metadata?: {
       createdAt: string;
     };
-  }>;
+  }[];
 }
 
 // Optimized MessageItem component

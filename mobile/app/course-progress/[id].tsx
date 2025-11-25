@@ -42,7 +42,7 @@ interface Course {
 export default function CourseProgressPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  
+
   const [course, setCourse] = useState<Course | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,9 +51,96 @@ export default function CourseProgressPage() {
   const progressValue = useSharedValue(0);
   const outlineOpacity = useSharedValue(0);
 
+  const startPolling = useCallback(
+    async (courseId: string) => {
+      setIsPolling(true);
+
+      const pollCourse = async () => {
+        try {
+          const response = await CourseAPI.getCourse(courseId);
+          const courseData = response.data;
+          setCourse(courseData);
+
+          // Update progress based on status
+          let progress = 0;
+          switch (courseData.status) {
+            case "generating_outline":
+              progress = 0.3;
+              break;
+            case "generating_content":
+              progress = 0.7;
+              break;
+            case "completed":
+              progress = 1;
+              break;
+            case "failed":
+              progress = 0;
+              break;
+          }
+
+          progressValue.value = withTiming(progress, { duration: 500 });
+
+          // Show outline when available
+          if (courseData.outline && courseData.outline.length > 0) {
+            outlineOpacity.value = withTiming(1, { duration: 800 });
+          }
+
+          // Handle completion or failure
+          if (courseData.status === "completed") {
+            setIsPolling(false);
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+
+            // Delay to show completion animation
+            setTimeout(async () => {
+              try {
+                // Find the chat that was created for this course
+                const chatsResponse = await ChatAPI.getUserChats(1, 50);
+                const courseChat = chatsResponse.data.chats.find(
+                  (chat: any) =>
+                    chat.type === "course" && chat.sourceId?._id === courseId
+                );
+
+                if (courseChat) {
+                  // Navigate back to home and the chat will be opened
+                  router.replace("/");
+                  // Note: You might need to implement a way to open the specific chat
+                } else {
+                  router.replace("/");
+                }
+              } catch (error) {
+                console.error("Error finding course chat:", error);
+                router.replace("/");
+              }
+            }, 1500);
+          } else if (courseData.status === "failed") {
+            setIsPolling(false);
+            if (pollingIntervalRef.current) {
+              clearInterval(pollingIntervalRef.current);
+              pollingIntervalRef.current = null;
+            }
+          }
+        } catch (error) {
+          console.error("Error polling course:", error);
+        }
+      };
+
+      // Initial poll
+      await pollCourse();
+
+      // Set up polling interval
+      if (!pollingIntervalRef.current) {
+        pollingIntervalRef.current = setInterval(pollCourse, 3000);
+      }
+    },
+    [progressValue, outlineOpacity, router]
+  );
+
   useEffect(() => {
     headerOpacity.value = withSpring(1, { duration: 800 });
-    
+
     if (id) {
       startPolling(id);
     }
@@ -63,90 +150,7 @@ export default function CourseProgressPage() {
         clearInterval(pollingIntervalRef.current);
       }
     };
-  }, [id, headerOpacity]);
-
-  const startPolling = useCallback(async (courseId: string) => {
-    setIsPolling(true);
-    
-    const pollCourse = async () => {
-      try {
-        const response = await CourseAPI.getCourse(courseId);
-        const courseData = response.data;
-        setCourse(courseData);
-
-        // Update progress based on status
-        let progress = 0;
-        switch (courseData.status) {
-          case "generating_outline":
-            progress = 0.3;
-            break;
-          case "generating_content":
-            progress = 0.7;
-            break;
-          case "completed":
-            progress = 1;
-            break;
-          case "failed":
-            progress = 0;
-            break;
-        }
-
-        progressValue.value = withTiming(progress, { duration: 500 });
-
-        // Show outline when available
-        if (courseData.outline && courseData.outline.length > 0) {
-          outlineOpacity.value = withTiming(1, { duration: 800 });
-        }
-
-        // Handle completion or failure
-        if (courseData.status === "completed") {
-          setIsPolling(false);
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-          
-          // Delay to show completion animation
-          setTimeout(async () => {
-            try {
-              // Find the chat that was created for this course
-              const chatsResponse = await ChatAPI.getUserChats(1, 50);
-              const courseChat = chatsResponse.data.chats.find(
-                (chat: any) => chat.type === "course" && chat.sourceId?._id === courseId
-              );
-
-              if (courseChat) {
-                // Navigate back to home and the chat will be opened
-                router.replace("/");
-                // Note: You might need to implement a way to open the specific chat
-              } else {
-                router.replace("/");
-              }
-            } catch (error) {
-              console.error("Error finding course chat:", error);
-              router.replace("/");
-            }
-          }, 1500);
-        } else if (courseData.status === "failed") {
-          setIsPolling(false);
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-        }
-      } catch (error) {
-        console.error("Error polling course:", error);
-      }
-    };
-
-    // Initial poll
-    await pollCourse();
-
-    // Set up polling interval
-    if (!pollingIntervalRef.current) {
-      pollingIntervalRef.current = setInterval(pollCourse, 3000);
-    }
-  }, [progressValue, outlineOpacity, router]);
+  }, [id, headerOpacity, startPolling]);
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
@@ -167,7 +171,7 @@ export default function CourseProgressPage() {
 
   const getStatusText = () => {
     if (!course) return "Initializing...";
-    
+
     switch (course.status) {
       case "generating_outline":
         return "Creating course outline...";
@@ -184,7 +188,7 @@ export default function CourseProgressPage() {
 
   const getProgressPercentage = () => {
     if (!course) return 0;
-    
+
     switch (course.status) {
       case "generating_outline":
         return 30;
@@ -200,10 +204,13 @@ export default function CourseProgressPage() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Course Generation</Text>
@@ -218,9 +225,7 @@ export default function CourseProgressPage() {
         {/* Title Section */}
         <View style={styles.titleSection}>
           <Text style={styles.greeting}>Generating Your Course</Text>
-          {course && (
-            <Text style={styles.courseTitle}>{course.title}</Text>
-          )}
+          {course && <Text style={styles.courseTitle}>{course.title}</Text>}
         </View>
 
         {/* Progress Section */}
@@ -231,7 +236,7 @@ export default function CourseProgressPage() {
               {getProgressPercentage()}%
             </Text>
           </View>
-          
+
           <View style={styles.progressBarContainer}>
             <Animated.View style={[styles.progressBar, progressBarStyle]} />
           </View>
@@ -259,7 +264,7 @@ export default function CourseProgressPage() {
                     </View>
                     <Text style={styles.sectionTitle}>{section.section}</Text>
                   </View>
-                  
+
                   {section.subsections && section.subsections.length > 0 && (
                     <View style={styles.subsectionsContainer}>
                       {section.subsections.map((subsection, subIndex) => (
@@ -286,15 +291,15 @@ export default function CourseProgressPage() {
               <View style={styles.settingItem}>
                 <Text style={styles.settingLabel}>Level</Text>
                 <Text style={styles.settingValue}>
-                  {course.settings.level.charAt(0).toUpperCase() + 
-                   course.settings.level.slice(1)}
+                  {course.settings.level.charAt(0).toUpperCase() +
+                    course.settings.level.slice(1)}
                 </Text>
               </View>
               <View style={styles.settingItem}>
                 <Text style={styles.settingLabel}>Detail Level</Text>
                 <Text style={styles.settingValue}>
-                  {course.settings.detailLevel.charAt(0).toUpperCase() + 
-                   course.settings.detailLevel.slice(1)}
+                  {course.settings.detailLevel.charAt(0).toUpperCase() +
+                    course.settings.detailLevel.slice(1)}
                 </Text>
               </View>
               <View style={styles.settingItem}>

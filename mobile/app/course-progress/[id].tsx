@@ -46,7 +46,7 @@ export default function CourseProgressPage() {
 
   const [course, setCourse] = useState<Course | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<number | null>(null);
 
   const headerOpacity = useSharedValue(0);
   const progressValue = useSharedValue(0);

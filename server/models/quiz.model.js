@@ -45,7 +45,7 @@ const quizSchema = new mongoose.Schema(
     description: String,
     sourceType: {
       type: String,
-      enum: ["topic", "document", "website"],
+      enum: ["topic", "document", "website", "course"],
       required: true,
     },
     sourceId: {
@@ -54,7 +54,7 @@ const quizSchema = new mongoose.Schema(
     },
     sourceModel: {
       type: String,
-      enum: ["Topic", "Document", "Website"],
+      enum: ["Topic", "Document", "Website", "Course"],
     },
     questions: [questionSchema],
     settings: {

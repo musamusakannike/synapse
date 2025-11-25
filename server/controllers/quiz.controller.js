@@ -1,11 +1,84 @@
 const Quiz = require("../models/quiz.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
+const Course = require("../models/course.model");
 const GeminiService = require("../config/gemini.config");
 const { createChatWithAttachment } = require("./chat.controller");
 
+// Helper function to generate quiz in parts for larger question counts
+async function generateQuizInParts(content, settings, numberOfQuestions) {
+  let allQuestions = [];
+  
+  if (numberOfQuestions <= 10) {
+    // Standard generation for 10 or fewer questions
+    const quizJSON = await GeminiService.generateQuiz(content, { ...settings, numberOfQuestions });
+    return quizJSON;
+  } else if (numberOfQuestions <= 20) {
+    // Split into 2 parts for 11-20 questions
+    const questionsPerPart = Math.ceil(numberOfQuestions / 2);
+    const part1Count = questionsPerPart;
+    const part2Count = numberOfQuestions - part1Count;
+    
+    // Generate first part
+    const part1Settings = { ...settings, numberOfQuestions: part1Count };
+    const part1 = await GeminiService.generateQuiz(
+      content + "\n\nGenerate the FIRST part of the quiz focusing on foundational concepts and early topics.",
+      part1Settings
+    );
+    allQuestions = [...(part1.questions || [])];
+    
+    // Generate second part
+    const part2Settings = { ...settings, numberOfQuestions: part2Count };
+    const part2 = await GeminiService.generateQuiz(
+      content + "\n\nGenerate the SECOND part of the quiz focusing on advanced concepts and later topics. Make sure questions are different from the first part.",
+      part2Settings
+    );
+    allQuestions = [...allQuestions, ...(part2.questions || [])];
+    
+    return {
+      title: part1.title || "Generated Quiz",
+      questions: allQuestions
+    };
+  } else {
+    // Split into 3 parts for 21-30 questions
+    const questionsPerPart = Math.ceil(numberOfQuestions / 3);
+    const part1Count = questionsPerPart;
+    const part2Count = questionsPerPart;
+    const part3Count = numberOfQuestions - part1Count - part2Count;
+    
+    // Generate first part
+    const part1Settings = { ...settings, numberOfQuestions: part1Count };
+    const part1 = await GeminiService.generateQuiz(
+      content + "\n\nGenerate the FIRST part of the quiz focusing on foundational concepts and introductory topics.",
+      part1Settings
+    );
+    allQuestions = [...(part1.questions || [])];
+    
+    // Generate second part
+    const part2Settings = { ...settings, numberOfQuestions: part2Count };
+    const part2 = await GeminiService.generateQuiz(
+      content + "\n\nGenerate the SECOND part of the quiz focusing on intermediate concepts and core topics. Make sure questions are different from the first part.",
+      part2Settings
+    );
+    allQuestions = [...allQuestions, ...(part2.questions || [])];
+    
+    // Generate third part
+    const part3Settings = { ...settings, numberOfQuestions: part3Count };
+    const part3 = await GeminiService.generateQuiz(
+      content + "\n\nGenerate the THIRD part of the quiz focusing on advanced concepts and complex topics. Make sure questions are different from the first two parts.",
+      part3Settings
+    );
+    allQuestions = [...allQuestions, ...(part3.questions || [])];
+    
+    return {
+      title: part1.title || "Generated Quiz",
+      questions: allQuestions
+    };
+  }
+}
+
 // POST /api/quizzes
-// Body: { title, description?, sourceType: 'topic'|'document'|'website', sourceId?, sourceModel?, content?, settings? }
+// Body: { title, description?, sourceType: 'topic'|'document'|'website'|'course', sourceId?, sourceModel?, content?, settings? }
 async function createQuiz(req, res) {
   try {
     const userId = req.user?.id;
@@ -40,13 +113,44 @@ async function createQuiz(req, res) {
         if (!generationContent) {
           return res.status(400).json({ message: "Website has no content to generate quiz from" });
         }
+      } else if (sourceType === "course" && sourceId) {
+        const course = await Course.findOne({ _id: sourceId, userId });
+        if (!course) return res.status(404).json({ message: "Source course not found" });
+        // Build content from course outline and content
+        let courseContent = `Course: ${course.title}\n`;
+        if (course.description) courseContent += `Description: ${course.description}\n\n`;
+        if (course.content && course.content.length > 0) {
+          courseContent += "Course Content:\n";
+          course.content.forEach((section) => {
+            courseContent += `\n## ${section.section}\n`;
+            if (section.subsection) courseContent += `### ${section.subsection}\n`;
+            courseContent += section.explanation + "\n";
+          });
+        } else if (course.outline && course.outline.length > 0) {
+          courseContent += "Course Outline:\n";
+          course.outline.forEach((section) => {
+            courseContent += `\n## ${section.section}\n`;
+            if (section.subsections) {
+              section.subsections.forEach((sub) => {
+                courseContent += `- ${sub}\n`;
+              });
+            }
+          });
+        }
+        generationContent = courseContent;
+        if (!generationContent || generationContent.length < 50) {
+          return res.status(400).json({ message: "Course has insufficient content to generate quiz from" });
+        }
       } else if (sourceType === "topic") {
         generationContent = description || title;
       }
     }
 
-    // Generate questions via Gemini
-    const quizJSON = await GeminiService.generateQuiz(generationContent, settings);
+    // Get number of questions from settings
+    const numberOfQuestions = settings.numberOfQuestions ?? 10;
+    
+    // Generate questions via Gemini (with multi-part support for larger counts)
+    const quizJSON = await generateQuizInParts(generationContent, settings, numberOfQuestions);
 
     const quiz = await Quiz.create({
       userId,
@@ -60,6 +164,8 @@ async function createQuiz(req, res) {
           ? "Document"
           : sourceType === "website"
           ? "Website"
+          : sourceType === "course"
+          ? "Course"
           : undefined),
       questions: quizJSON.questions || [],
       settings: {

@@ -56,29 +56,25 @@ export default function CourseViewPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
-  
+
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<number>(0);
-  const [selectedSubsection, setSelectedSubsection] = useState<number | null>(null);
+  const [selectedSubsection, setSelectedSubsection] = useState<number | null>(
+    null
+  );
   const [showTableOfContents, setShowTableOfContents] = useState(false);
 
   const headerOpacity = useSharedValue(1);
   const tocOpacity = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
 
-  useEffect(() => {
-    if (id) {
-      loadCourse();
-    }
-  }, [id]);
-
   const loadCourse = useCallback(async () => {
     try {
       setLoading(true);
       const response = await CourseAPI.getCourse(id);
       setCourse(response.data);
-      
+
       // Animate content in
       contentOpacity.value = withTiming(1, { duration: 800 });
     } catch (error) {
@@ -90,26 +86,35 @@ export default function CourseViewPage() {
     }
   }, [id, contentOpacity, router]);
 
+  useEffect(() => {
+    if (id) {
+      loadCourse();
+    }
+  }, [id, loadCourse]);
+
   const toggleTableOfContents = useCallback(() => {
     setShowTableOfContents(!showTableOfContents);
     tocOpacity.value = withSpring(showTableOfContents ? 0 : 1);
   }, [showTableOfContents, tocOpacity]);
 
-  const navigateToSection = useCallback((sectionIndex: number, subsectionIndex?: number) => {
-    setSelectedSection(sectionIndex);
-    setSelectedSubsection(subsectionIndex ?? null);
-    setShowTableOfContents(false);
-    tocOpacity.value = withSpring(0);
-    
-    // Scroll to top of content
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-  }, [tocOpacity]);
+  const navigateToSection = useCallback(
+    (sectionIndex: number, subsectionIndex?: number) => {
+      setSelectedSection(sectionIndex);
+      setSelectedSubsection(subsectionIndex ?? null);
+      setShowTableOfContents(false);
+      tocOpacity.value = withSpring(0);
+
+      // Scroll to top of content
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    },
+    [tocOpacity]
+  );
 
   const navigateNext = useCallback(() => {
     if (!course) return;
 
     const currentSection = course.outline[selectedSection];
-    
+
     if (selectedSubsection === null) {
       // Currently viewing main section
       if (currentSection.subsections && currentSection.subsections.length > 0) {
@@ -135,7 +140,7 @@ export default function CourseViewPage() {
         }
       }
     }
-    
+
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, [course, selectedSection, selectedSubsection]);
 
@@ -147,7 +152,7 @@ export default function CourseViewPage() {
       if (selectedSection > 0) {
         const prevSection = course.outline[selectedSection - 1];
         setSelectedSection(selectedSection - 1);
-        
+
         // Go to last subsection of previous section if it has any
         if (prevSection.subsections && prevSection.subsections.length > 0) {
           setSelectedSubsection(prevSection.subsections.length - 1);
@@ -165,13 +170,13 @@ export default function CourseViewPage() {
         setSelectedSubsection(null);
       }
     }
-    
+
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   }, [course, selectedSection, selectedSubsection]);
 
   const shareCourse = useCallback(async () => {
     if (!course) return;
-    
+
     try {
       await Share.share({
         message: `Check out this course: ${course.title}\n\nGenerated with Synapse AI`,
@@ -197,7 +202,9 @@ export default function CourseViewPage() {
       // Return subsection content
       const subsectionName = currentSection.subsections?.[selectedSubsection];
       return course.content.find(
-        (c) => c.section === currentSection.section && c.subsection === subsectionName
+        (c) =>
+          c.section === currentSection.section &&
+          c.subsection === subsectionName
       );
     }
   }, [course, selectedSection, selectedSubsection]);
@@ -212,7 +219,9 @@ export default function CourseViewPage() {
       return `${selectedSection + 1}. ${currentSection.section}`;
     } else {
       const subsectionName = currentSection.subsections?.[selectedSubsection];
-      return `${selectedSection + 1}.${selectedSubsection + 1} ${subsectionName}`;
+      return `${selectedSection + 1}.${
+        selectedSubsection + 1
+      } ${subsectionName}`;
     }
   }, [course, selectedSection, selectedSubsection]);
 
@@ -220,15 +229,19 @@ export default function CourseViewPage() {
     if (!course) return false;
 
     const currentSection = course.outline[selectedSection];
-    
+
     if (selectedSubsection === null) {
       // Check if there are subsections or next section
-      return (currentSection.subsections && currentSection.subsections.length > 0) ||
-             selectedSection < course.outline.length - 1;
+      return (
+        (currentSection.subsections && currentSection.subsections.length > 0) ||
+        selectedSection < course.outline.length - 1
+      );
     } else {
       // Check if there are more subsections or next section
-      return selectedSubsection < (currentSection.subsections?.length || 0) - 1 ||
-             selectedSection < course.outline.length - 1;
+      return (
+        selectedSubsection < (currentSection.subsections?.length || 0) - 1 ||
+        selectedSection < course.outline.length - 1
+      );
     }
   }, [course, selectedSection, selectedSubsection]);
 
@@ -270,7 +283,10 @@ export default function CourseViewPage() {
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Course not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -283,21 +299,27 @@ export default function CourseViewPage() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+
       {/* Header */}
       <Animated.View style={[styles.header, headerStyle]}>
-        <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => router.back()}
+        >
           <Ionicons name="chevron-back" size={20} color="#1f1f1f" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>
             {course.title}
           </Text>
         </View>
-        
+
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerButton} onPress={toggleTableOfContents}>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={toggleTableOfContents}
+          >
             <MaterialIcons name="menu" size={20} color="#1f1f1f" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={shareCourse}>
@@ -311,45 +333,66 @@ export default function CourseViewPage() {
         <Animated.View style={[styles.tocOverlay, tocStyle]}>
           <View style={styles.tocContainer}>
             <Text style={styles.tocTitle}>Table of Contents</Text>
-            <ScrollView style={styles.tocScrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.tocScrollView}
+              showsVerticalScrollIndicator={false}
+            >
               {course.outline.map((section, sectionIndex) => (
                 <View key={sectionIndex} style={styles.tocSection}>
                   <TouchableOpacity
                     style={[
                       styles.tocItem,
-                      selectedSection === sectionIndex && selectedSubsection === null && styles.tocItemActive,
+                      selectedSection === sectionIndex &&
+                        selectedSubsection === null &&
+                        styles.tocItemActive,
                     ]}
                     onPress={() => navigateToSection(sectionIndex)}
                   >
-                    <Text style={[
-                      styles.tocItemText,
-                      selectedSection === sectionIndex && selectedSubsection === null && styles.tocItemTextActive,
-                    ]}>
+                    <Text
+                      style={[
+                        styles.tocItemText,
+                        selectedSection === sectionIndex &&
+                          selectedSubsection === null &&
+                          styles.tocItemTextActive,
+                      ]}
+                    >
                       {sectionIndex + 1}. {section.section}
                     </Text>
                   </TouchableOpacity>
-                  
-                  {section.subsections && section.subsections.map((subsection, subsectionIndex) => (
-                    <TouchableOpacity
-                      key={subsectionIndex}
-                      style={[
-                        styles.tocSubItem,
-                        selectedSection === sectionIndex && selectedSubsection === subsectionIndex && styles.tocItemActive,
-                      ]}
-                      onPress={() => navigateToSection(sectionIndex, subsectionIndex)}
-                    >
-                      <Text style={[
-                        styles.tocSubItemText,
-                        selectedSection === sectionIndex && selectedSubsection === subsectionIndex && styles.tocItemTextActive,
-                      ]}>
-                        {sectionIndex + 1}.{subsectionIndex + 1} {subsection}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+
+                  {section.subsections &&
+                    section.subsections.map((subsection, subsectionIndex) => (
+                      <TouchableOpacity
+                        key={subsectionIndex}
+                        style={[
+                          styles.tocSubItem,
+                          selectedSection === sectionIndex &&
+                            selectedSubsection === subsectionIndex &&
+                            styles.tocItemActive,
+                        ]}
+                        onPress={() =>
+                          navigateToSection(sectionIndex, subsectionIndex)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.tocSubItemText,
+                            selectedSection === sectionIndex &&
+                              selectedSubsection === subsectionIndex &&
+                              styles.tocItemTextActive,
+                          ]}
+                        >
+                          {sectionIndex + 1}.{subsectionIndex + 1} {subsection}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                 </View>
               ))}
             </ScrollView>
-            <TouchableOpacity style={styles.tocCloseButton} onPress={toggleTableOfContents}>
+            <TouchableOpacity
+              style={styles.tocCloseButton}
+              onPress={toggleTableOfContents}
+            >
               <Text style={styles.tocCloseButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -361,7 +404,7 @@ export default function CourseViewPage() {
         <View style={styles.contentHeader}>
           <Text style={styles.contentTitle}>{getCurrentTitle()}</Text>
         </View>
-        
+
         <ScrollView
           ref={scrollViewRef}
           style={styles.contentScrollView}
@@ -383,34 +426,58 @@ export default function CourseViewPage() {
       {/* Navigation Footer */}
       <View style={styles.navigationFooter}>
         <TouchableOpacity
-          style={[styles.navButton, !canNavigatePrevious() && styles.navButtonDisabled]}
+          style={[
+            styles.navButton,
+            !canNavigatePrevious() && styles.navButtonDisabled,
+          ]}
           onPress={navigatePrevious}
           disabled={!canNavigatePrevious()}
         >
           <View style={styles.navButtonContent}>
-            <Ionicons name="chevron-back" size={16} color={!canNavigatePrevious() ? "#999" : "#fff"} />
-            <Text style={[styles.navButtonText, !canNavigatePrevious() && styles.navButtonTextDisabled]}>
+            <Ionicons
+              name="chevron-back"
+              size={16}
+              color={!canNavigatePrevious() ? "#999" : "#fff"}
+            />
+            <Text
+              style={[
+                styles.navButtonText,
+                !canNavigatePrevious() && styles.navButtonTextDisabled,
+              ]}
+            >
               Previous
             </Text>
           </View>
         </TouchableOpacity>
-        
+
         <View style={styles.progressIndicator}>
           <Text style={styles.progressText}>
             {selectedSection + 1} of {course.outline.length}
           </Text>
         </View>
-        
+
         <TouchableOpacity
-          style={[styles.navButton, !canNavigateNext() && styles.navButtonDisabled]}
+          style={[
+            styles.navButton,
+            !canNavigateNext() && styles.navButtonDisabled,
+          ]}
           onPress={navigateNext}
           disabled={!canNavigateNext()}
         >
           <View style={styles.navButtonContent}>
-            <Text style={[styles.navButtonText, !canNavigateNext() && styles.navButtonTextDisabled]}>
+            <Text
+              style={[
+                styles.navButtonText,
+                !canNavigateNext() && styles.navButtonTextDisabled,
+              ]}
+            >
               Next
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={!canNavigateNext() ? "#999" : "#fff"} />
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={!canNavigateNext() ? "#999" : "#fff"}
+            />
           </View>
         </TouchableOpacity>
       </View>

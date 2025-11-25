@@ -33,6 +33,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
+import { useSidebar } from "../contexts/SidebarContext";
 import { ChatAPI, UserAPI, DocumentAPI } from "../lib/api";
 import { useRouter } from "expo-router";
 import ChatSkeleton from "../components/ChatSkeleton";
@@ -235,8 +236,8 @@ export default function AIInterface() {
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
   const headerTranslateY = useSharedValue(0);
-  const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } =
-    useAuth();
+  const { openAuthModal, setOnChatSelect, isAuthenticated } = useAuth();
+  const { openSidebar, setOnChatSelect: setSidebarChatSelect } = useSidebar();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
@@ -392,7 +393,8 @@ export default function AIInterface() {
   // Register chat select handler
   useEffect(() => {
     setOnChatSelect(handleOpenChat);
-  }, [setOnChatSelect, handleOpenChat]);
+    setSidebarChatSelect(handleOpenChat);
+  }, [setOnChatSelect, setSidebarChatSelect, handleOpenChat]);
 
   // Memoize expensive computations
   const memoizedMessages = useMemo(() => messages, [messages]);

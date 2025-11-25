@@ -2,14 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AuthModal, { AuthModalRef } from "../components/AuthModal";
-import Sidebar, { SidebarRef } from "../components/Sidebar";
 import * as SecureStore from "expo-secure-store";
 
 type AuthContextShape = {
     openAuthModal: () => void;
     closeAuthModal: () => void;
-    openSidebar: () => void;
-    closeSidebar: () => void;
     signOut: () => Promise<void>;
     isAuthenticated: boolean;
     checkAuth: () => Promise<boolean>;
@@ -20,8 +17,6 @@ type AuthContextShape = {
 const AuthContext = createContext<AuthContextShape>({
     openAuthModal: () => { },
     closeAuthModal: () => { },
-    openSidebar: () => { },
-    closeSidebar: () => { },
     signOut: async () => { },
     isAuthenticated: false,
     checkAuth: async () => false,
@@ -32,15 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
 }) => {
     const authModalRef = useRef<AuthModalRef>(null);
-    const sidebarRef = useRef<SidebarRef>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [onChatSelect, setOnChatSelect] = useState<((chatId: string) => void) | undefined>();
 
     const openAuthModal = () => authModalRef.current?.present();
     const closeAuthModal = () => authModalRef.current?.dismiss();
-    const openSidebar = () => sidebarRef.current?.open();
-    const closeSidebar = () => sidebarRef.current?.close();
 
     const checkAuth = async (): Promise<boolean> => {
         try {
@@ -90,12 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return null;
     }
 
-    const handleChatSelect = (chatId: string) => {
-        if (onChatSelect) {
-            onChatSelect(chatId);
-        }
-    };
-
     const updateOnChatSelect = (callback: (chatId: string) => void) => {
         setOnChatSelect(() => callback);
     };
@@ -107,8 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                     value={{ 
                         openAuthModal, 
                         closeAuthModal, 
-                        openSidebar, 
-                        closeSidebar, 
                         signOut, 
                         isAuthenticated, 
                         checkAuth,
@@ -123,7 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         onLogout={signOut}
                         isAuthenticated={isAuthenticated}
                     />
-                    <Sidebar ref={sidebarRef} onChatSelect={handleChatSelect} />
                 </AuthContext.Provider>
             </BottomSheetModalProvider>
         </GestureHandlerRootView>

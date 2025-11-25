@@ -14,6 +14,7 @@ import {
   Pressable,
   Keyboard,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import Markdown from "react-native-markdown-display";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
@@ -79,10 +80,12 @@ export default function AIInterface() {
   const headerOpacity = useSharedValue(0);
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
+  const headerTranslateY = useSharedValue(0);
   const { openAuthModal, openSidebar, setOnChatSelect, isAuthenticated } = useAuth();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
   const documentUploadModalRef = useRef<DocumentUploadModalRef>(null);
+  const lastScrollYRef = useRef(0);
 
   // Chat state
   const [inputText, setInputText] = useState("");
@@ -233,6 +236,11 @@ export default function AIInterface() {
 
   const headerStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
+    transform: [
+      {
+        translateY: headerTranslateY.value,
+      },
+    ],
   }));
 
   const titleStyle = useAnimatedStyle(() => ({
@@ -249,6 +257,27 @@ export default function AIInterface() {
     opacity: sendButtonWidth.value > 0 ? 1 : 0,
     marginLeft: sendButtonWidth.value > 0 ? 8 : 0,
   }));
+
+  const handleScroll = useCallback(
+    (event: any) => {
+      const y = event.nativeEvent.contentOffset?.y || 0;
+      const lastY = lastScrollYRef.current || 0;
+      const deltaY = y - lastY;
+
+      if (isChatMode && messages.length > 1) {
+        if (deltaY > 5 && y > 0) {
+          headerTranslateY.value = withTiming(-80, { duration: 200 });
+        } else if (deltaY < -5) {
+          headerTranslateY.value = withTiming(0, { duration: 200 });
+        }
+      } else {
+        headerTranslateY.value = withTiming(0, { duration: 200 });
+      }
+
+      lastScrollYRef.current = y;
+    },
+    [isChatMode, messages.length]
+  );
 
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim() || isLoading) return;
@@ -484,6 +513,8 @@ export default function AIInterface() {
           onContentSizeChange={() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
         >
           {!isChatMode || messages.length === 0 ? (
@@ -528,20 +559,28 @@ export default function AIInterface() {
                         : styles.assistantMessageWrapper,
                     ]}
                   >
-                    <Pressable
-                      onLongPress={() => {
+                    <Swipeable
+                      onSwipeableOpen={() => {
                         setSelectedMessageContent(message.content);
                         setSelectedMessageIndex(index);
                         setSelectedMessageRole(message.role);
                         messageOptionsModalRef.current?.present();
                       }}
-                      style={[
-                        styles.messageBubble,
-                        message.role === "user"
-                          ? styles.userMessage
-                          : styles.assistantMessage,
-                      ]}
                     >
+                      <Pressable
+                        onLongPress={() => {
+                          setSelectedMessageContent(message.content);
+                          setSelectedMessageIndex(index);
+                          setSelectedMessageRole(message.role);
+                          messageOptionsModalRef.current?.present();
+                        }}
+                        style={[
+                          styles.messageBubble,
+                          message.role === "user"
+                            ? styles.userMessage
+                            : styles.assistantMessage,
+                        ]}
+                      >
                       {message.role === "user" ? (
                         <Text
                           style={[
@@ -563,7 +602,8 @@ export default function AIInterface() {
                           {message.content}
                         </Markdown>
                       )}
-                    </Pressable>
+                      </Pressable>
+                    </Swipeable>
                   </View>
                 ))}
 
@@ -677,11 +717,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   header: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 20
   },
   menuButton: {
     padding: 10,
@@ -723,9 +768,9 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   content: {
-    paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 100,
+    paddingLeft: 8,
   },
   greeting: {
     fontSize: 32,
@@ -864,7 +909,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   messageBubble: {
-    maxWidth: "80%",
+    maxWidth: "90%",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,

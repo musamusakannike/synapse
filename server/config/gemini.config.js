@@ -287,6 +287,26 @@ class GeminiService {
         throw new Error("The last message must be from the user.");
       }
 
+      // Add system prompt for AI identity (only at the beginning of conversations)
+      const systemPrompt = `You are Synapse AI, an intelligent learning assistant created by Musa Musa Kannike. Your primary function is to help users learn, understand concepts, and answer their questions across various subjects. If asked about your identity, creator, or purpose, you can share this information. However, focus primarily on providing helpful, accurate responses to the user's main questions without unnecessarily mentioning your identity unless specifically asked.`;
+      
+      // Add system prompt at the beginning if this is a new conversation or if the user is asking about the AI
+      const userMessage = latestMessage.parts[0].text.toLowerCase();
+      const isAskingAboutAI = userMessage.includes('who are you') || 
+                             userMessage.includes('what are you') || 
+                             userMessage.includes('your name') ||
+                             userMessage.includes('who created you') ||
+                             userMessage.includes('who made you') ||
+                             userMessage.includes('your creator') ||
+                             userMessage.includes('synapse');
+      
+      if (conversationHistory.length === 0 || isAskingAboutAI) {
+        conversationHistory.unshift(
+          { role: "user", parts: [{ text: systemPrompt }] },
+          { role: "model", parts: [{ text: "Understood. I am Synapse AI, created by Musa Musa Kannike to help with learning and answering questions. I'll focus on providing helpful responses to your questions." }] }
+        );
+      }
+
       // Optional context injection
       if (context) {
         conversationHistory.unshift(

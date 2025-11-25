@@ -6,12 +6,13 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, {
   useAnimatedStyle,
@@ -230,7 +231,7 @@ export default function GenerateCoursePage() {
         {/* Header */}
         <Animated.View style={[styles.header, headerStyle]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>←</Text>
+            <Ionicons name="chevron-back" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Generate Course</Text>
           <View style={styles.headerSpacer} />
@@ -388,10 +389,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 20,
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: "#000",
   },
   headerTitle: {
     fontSize: 22,

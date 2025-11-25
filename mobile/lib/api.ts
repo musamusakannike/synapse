@@ -145,4 +145,29 @@ export const CourseAPI = {
     api.get(`/courses/${courseId}/pdf`, { responseType: "blob" }),
 };
 
+// Quiz endpoints
+export const QuizAPI = {
+  createQuiz: (quizData: {
+    title: string;
+    description?: string;
+    sourceType: "topic" | "document" | "website" | "course";
+    sourceId?: string;
+    content?: string;
+    settings?: {
+      numberOfQuestions?: number;
+      difficulty?: "easy" | "medium" | "hard" | "mixed";
+      includeCalculations?: boolean;
+      timeLimit?: number;
+    };
+  }) => api.post("/quizzes", quizData),
+  listQuizzes: () => api.get("/quizzes"),
+  getQuiz: (quizId: string) => api.get(`/quizzes/${quizId}`),
+  deleteQuiz: (quizId: string) => api.delete(`/quizzes/${quizId}`),
+  submitAttempt: (quizId: string, answers: {
+    questionIndex: number;
+    selectedOption: number;
+    timeSpent?: number;
+  }[]) => api.post(`/quizzes/${quizId}/attempt`, { answers }),
+};
+
 export default api;

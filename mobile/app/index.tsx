@@ -697,6 +697,14 @@ export default function AIInterface() {
     router.push("/generate-course");
   }, [isAuthenticated, openAuthModal, router]);
 
+  // Handle take quiz button press
+  const handleTakeQuizPress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    router.push("/generate-quiz");
+  }, [isAuthenticated, openAuthModal, router]);
 
   // Handle view course
   const handleViewCourse = useCallback((courseId: string) => {
@@ -854,7 +862,11 @@ export default function AIInterface() {
                 >
                   Generate a complete course
                 </AnimatedButton>
-                <AnimatedButton delay={600} icon="">
+                <AnimatedButton 
+                  delay={600} 
+                  icon="📝"
+                  onPress={handleTakeQuizPress}
+                >
                   Take a Quiz
                 </AnimatedButton>
                 <AnimatedButton delay={800} icon="">

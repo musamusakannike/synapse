@@ -732,7 +732,11 @@ export default function AIInterface() {
                   >
                     {messages[selectedMessageIndex].role === "user" ? (
                       <Text
-                        style={[styles.messageText, styles.userMessageText]}
+                        style={[
+                          styles.messageText,
+                          styles.userMessageText,
+                          styles.focusMessageText,
+                        ]}
                       >
                         {messages[selectedMessageIndex].content}
                       </Text>
@@ -742,6 +746,7 @@ export default function AIInterface() {
                           body: StyleSheet.flatten([
                             styles.messageText,
                             styles.assistantMessageText,
+                            styles.focusMessageText,
                           ]),
                         }}
                       >
@@ -1209,58 +1214,78 @@ const styles = StyleSheet.create({
     fontFamily: "Outfit_600SemiBold",
   },
   focusContent: {
-    paddingTop: 60,
-    paddingBottom: 100,
+    paddingTop: 0,
+    paddingBottom: 0,
     paddingHorizontal: 0,
+    backgroundColor: "#f8fafc",
   },
   focusContainer: {
     flex: 1,
-    paddingTop: 20,
-    paddingBottom: 40,
-    paddingHorizontal: 0,
-    backgroundColor: "#fff",
+    backgroundColor: "#f8fafc",
+    position: "relative",
   },
   focusCloseButton: {
     position: "absolute",
-    top: 20,
+    top: 60,
     right: 20,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.08)",
+    backgroundColor: "#fff",
     zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.05)",
   },
   focusCloseButtonText: {
-    fontSize: 18,
-    color: "#333",
-    fontWeight: "500",
+    fontSize: 20,
+    color: "#64748b",
+    fontWeight: "600",
+    lineHeight: 20,
   },
   focusHeader: {
     alignItems: "center",
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    paddingTop: 80,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
   },
   focusTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#4285F4",
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1e293b",
     fontFamily: "Outfit_600SemiBold",
+    letterSpacing: -0.5,
   },
   focusMessageWrapper: {
     flex: 1,
     justifyContent: "center",
     alignItems: "stretch",
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 32,
   },
   focusMessageBubble: {
     maxWidth: "100%",
     width: "100%",
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    borderRadius: 16,
-    minHeight: 120,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    borderRadius: 20,
+    minHeight: 200,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.8)",
   },
   expandIconButton: {
     marginLeft: 6,
@@ -1273,5 +1298,10 @@ const styles = StyleSheet.create({
   expandIconText: {
     color: "#fff",
     fontSize: 12,
+  },
+  focusMessageText: {
+    fontSize: 18,
+    lineHeight: 28,
+    letterSpacing: 0.2,
   },
 });

@@ -44,6 +44,7 @@ import DocumentUploadModal, {
   DocumentUploadModalRef,
 } from "../components/DocumentUploadModal";
 import CourseAttachment from "../components/CourseAttachment";
+import QuizAttachment from "../components/QuizAttachment";
 
 const AnimatedButton = memo(
   ({
@@ -87,26 +88,45 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp?: Date;
-  attachments?: {
-    type: "course";
-    data: {
-      courseId: string;
-      title: string;
-      outline: {
-        section: string;
-        subsections?: string[];
-      }[];
-      settings?: {
-        level: string;
-        includeExamples: boolean;
-        includePracticeQuestions: boolean;
-        detailLevel: string;
+  attachments?: (
+    | {
+      type: "course";
+      data: {
+        courseId: string;
+        title: string;
+        outline: {
+          section: string;
+          subsections?: string[];
+        }[];
+        settings?: {
+          level: string;
+          includeExamples: boolean;
+          includePracticeQuestions: boolean;
+          detailLevel: string;
+        };
       };
-    };
-    metadata?: {
-      createdAt: string;
-    };
-  }[];
+      metadata?: {
+        createdAt: string;
+      };
+    }
+    | {
+      type: "quiz";
+      data: {
+        quizId: string;
+        title: string;
+        questions: any[];
+        settings: {
+          numberOfQuestions: number;
+          difficulty: string;
+          includeCalculations: boolean;
+          timeLimit?: number;
+        };
+      };
+      metadata?: {
+        createdAt: string;
+      };
+    }
+  )[];
 }
 
 // Optimized MessageItem component
@@ -118,6 +138,7 @@ const MessageItem = memo(
     onMessagePress,
     onExpandToggle,
     onViewCourse,
+    onStartQuiz,
   }: {
     message: Message;
     index: number;
@@ -129,6 +150,7 @@ const MessageItem = memo(
     ) => void;
     onExpandToggle: (index: number) => void;
     onViewCourse: (courseId: string) => void;
+    onStartQuiz: (quizId: string) => void;
   }) => {
     const handleSwipeOpen = useCallback(() => {
       onMessagePress(message.content, index, message.role);
@@ -148,7 +170,7 @@ const MessageItem = memo(
       () => [
         styles.messageBubble,
         message.role === "user" ? styles.userMessage : styles.assistantMessage,
-        message.attachments?.some(att => att.type === "course") && { maxWidth: "100%" as any },
+        message.attachments?.some(att => att.type === "course" || att.type === "quiz") && { maxWidth: "100%" as any },
       ],
       [message.role, message.attachments]
     );
@@ -214,6 +236,18 @@ const MessageItem = memo(
                             title={attachment.data.title}
                             outline={attachment.data.outline}
                             onViewCourse={onViewCourse}
+                          />
+                        );
+                      }
+                      if (attachment.type === "quiz") {
+                        return (
+                          <QuizAttachment
+                            key={attachmentIndex}
+                            quizId={attachment.data.quizId}
+                            title={attachment.data.title}
+                            questions={attachment.data.questions}
+                            settings={attachment.data.settings}
+                            onStartQuiz={onStartQuiz}
                           />
                         );
                       }
@@ -491,7 +525,7 @@ export default function AIInterface() {
           role: "assistant",
           content: response.data.aiResponse.content,
           timestamp: new Date(response.data.aiResponse.timestamp),
-          attachments: response.data.aiResponse.attachments && response.data.aiResponse.attachments.length > 0 ? 
+          attachments: response.data.aiResponse.attachments && response.data.aiResponse.attachments.length > 0 ?
             response.data.aiResponse.attachments.map((att: any) => ({
               type: att.type,
               data: att.data,
@@ -711,6 +745,11 @@ export default function AIInterface() {
     router.push(`/course/${courseId}`);
   }, [router]);
 
+  // Handle start quiz
+  const handleStartQuiz = useCallback((quizId: string) => {
+    router.push(`/quiz/${quizId}`);
+  }, [router]);
+
   // Optimized message interaction handlers
   const handleMessagePress = useCallback(
     (content: string, index: number, role: "user" | "assistant") => {
@@ -855,15 +894,15 @@ export default function AIInterface() {
                 >
                   Upload Document
                 </AnimatedButton>
-                <AnimatedButton 
-                  delay={500} 
+                <AnimatedButton
+                  delay={500}
                   icon="🎓"
                   onPress={handleGenerateCoursePress}
                 >
                   Generate a complete course
                 </AnimatedButton>
-                <AnimatedButton 
-                  delay={600} 
+                <AnimatedButton
+                  delay={600}
                   icon="📝"
                   onPress={handleTakeQuizPress}
                 >
@@ -887,6 +926,7 @@ export default function AIInterface() {
                     onMessagePress={handleMessagePress}
                     onExpandToggle={handleExpandToggle}
                     onViewCourse={handleViewCourse}
+                    onStartQuiz={handleStartQuiz}
                   />
                 ))}
 
@@ -936,7 +976,7 @@ export default function AIInterface() {
             style={[
               styles.bottomBar,
               Platform.OS === "android" &&
-                keyboardHeight > 0 && { marginBottom: keyboardHeight },
+              keyboardHeight > 0 && { marginBottom: keyboardHeight },
             ]}
           >
             <View style={styles.inputContainer}>

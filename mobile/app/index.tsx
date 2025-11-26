@@ -1176,6 +1176,8 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     backgroundColor: "transparent",
+    borderTopRightRadius: 35,
+    borderTopLeftRadius: 35
   },
   inputContainer: {
     flexDirection: "column",

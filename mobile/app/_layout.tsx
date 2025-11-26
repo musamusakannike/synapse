@@ -6,10 +6,22 @@ import {
 } from "@expo-google-fonts/outfit";
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import * as Notifications from "expo-notifications";
 import { AuthProvider } from "../contexts/AuthContext";
 import { SidebarProvider } from "../contexts/SidebarContext";
 
 SplashScreen.preventAutoHideAsync();
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     Outfit_400Regular,

@@ -3,6 +3,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AuthModal, { AuthModalRef } from "../components/AuthModal";
 import * as SecureStore from "expo-secure-store";
+import { initializeNotifications } from "../services/notifications.service";
 
 type AuthContextShape = {
     openAuthModal: () => void;
@@ -59,6 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const handleAuthSuccess = async () => {
         await checkAuth();
+        // Initialize notifications after successful authentication
+        initializeNotifications().catch(error => {
+            console.error('Failed to initialize notifications:', error);
+        });
     };
 
     // Check authentication on mount
@@ -66,7 +71,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const initAuth = async () => {
             setIsLoading(true);
             const authenticated = await checkAuth();
-            if (!authenticated) {
+            if (authenticated) {
+                // Initialize notifications for already-authenticated users
+                initializeNotifications().catch(error => {
+                    console.error('Failed to initialize notifications on app start:', error);
+                });
+            } else {
                 // Delay opening the modal slightly to ensure the component is mounted
                 setTimeout(() => {
                     authModalRef.current?.present();

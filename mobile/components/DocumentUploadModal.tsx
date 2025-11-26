@@ -17,25 +17,33 @@ import * as DocumentPicker from "expo-document-picker";
 import { DocumentAPI } from "../lib/api";
 
 export interface DocumentUploadModalRef {
-    present: () => void;
+    present: (initialGuidanceText?: string) => void;
     dismiss: () => void;
 }
 
 interface DocumentUploadModalProps {
     onUploadSuccess?: (documentId: string) => void;
     onUploadError?: (error: string) => void;
+    initialGuidanceText?: string;
 }
 
 const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadModalProps>(
-    ({ onUploadSuccess, onUploadError }, ref) => {
+    ({ onUploadSuccess, onUploadError, initialGuidanceText }, ref) => {
         const bottomSheetRef = React.useRef<BottomSheet>(null);
         const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
         const [isUploading, setIsUploading] = useState(false);
-        const [guidanceText, setGuidanceText] = useState("");
+        const [currentInitialGuidanceText, setCurrentInitialGuidanceText] = useState<string>("");
+        const [guidanceText, setGuidanceText] = useState(initialGuidanceText || "");
         const snapPoints = useMemo(() => ["65%"], []);
 
         useImperativeHandle(ref, () => ({
-            present: () => bottomSheetRef.current?.expand(),
+            present: (newInitialGuidanceText?: string) => {
+                if (newInitialGuidanceText !== undefined) {
+                    setCurrentInitialGuidanceText(newInitialGuidanceText);
+                    setGuidanceText(newInitialGuidanceText);
+                }
+                bottomSheetRef.current?.expand();
+            },
             dismiss: () => bottomSheetRef.current?.close(),
         }));
 
@@ -141,7 +149,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
 
                 // Reset state
                 setSelectedFile(null);
-                setGuidanceText("");
+                setGuidanceText(currentInitialGuidanceText);
                 setIsUploading(false);
 
                 // Dismiss modal
@@ -270,7 +278,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                                 style={styles.cancelButton}
                                 onPress={() => {
                                     setSelectedFile(null);
-                                    setGuidanceText("");
+                                    setGuidanceText(currentInitialGuidanceText);
                                     bottomSheetRef.current?.close();
                                 }}
                                 disabled={isUploading}

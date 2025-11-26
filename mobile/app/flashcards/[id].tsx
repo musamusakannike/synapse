@@ -255,7 +255,7 @@ export default function FlashcardStudyPage() {
       case "hard":
         return "#EA4335";
       default:
-        return "#9C27B0";
+        return "#4285F4";
     }
   };
 
@@ -264,7 +264,7 @@ export default function FlashcardStudyPage() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#9C27B0" />
+          <ActivityIndicator size="large" color="#4285F4" />
           <Text style={styles.loadingText}>Loading flashcards...</Text>
         </View>
       </SafeAreaView>
@@ -333,7 +333,7 @@ export default function FlashcardStudyPage() {
 
             <View style={styles.resultsButtons}>
               <TouchableOpacity style={styles.retakeButton} onPress={handleRestartStudy}>
-                <Ionicons name="refresh" size={20} color="#9C27B0" />
+                <Ionicons name="refresh" size={20} color="#4285F4" />
                 <Text style={styles.retakeButtonText}>Study Again</Text>
               </TouchableOpacity>
 
@@ -467,7 +467,7 @@ export default function FlashcardStudyPage() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.flipButton} onPress={handleFlipCard}>
-            <Ionicons name="sync" size={20} color="#9C27B0" />
+            <Ionicons name="sync" size={20} color="#4285F4" />
             <Text style={styles.flipButtonText}>Flip Card</Text>
           </TouchableOpacity>
 
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16 },
   loadingText: { fontSize: 16, color: "#666", fontFamily: "Outfit_400Regular" },
-  backButtonLarge: { marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: "#9C27B0", borderRadius: 20 },
+  backButtonLarge: { marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: "#4285F4", borderRadius: 20 },
   backButtonText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_500Medium" },
   header: {
     flexDirection: "row",
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   closeButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   progressContainer: { flex: 1, alignItems: "center", paddingHorizontal: 16 },
   progressBar: { width: "100%", height: 8, backgroundColor: "#e0e0e0", borderRadius: 4, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: "#9C27B0", borderRadius: 4 },
+  progressFill: { height: "100%", backgroundColor: "#4285F4", borderRadius: 4 },
   progressText: { marginTop: 4, fontSize: 13, color: "#666", fontFamily: "Outfit_500Medium" },
   headerSpacer: { width: 40 },
   cardTitleContainer: {
@@ -545,9 +545,9 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   cardFront: {
-    backgroundColor: "#f5f0ff",
+    backgroundColor: "#f0f4ff",
     borderWidth: 2,
-    borderColor: "#e0d4ff",
+    borderColor: "#d0e0ff",
   },
   cardBack: {
     backgroundColor: "#e8f5e9",
@@ -657,12 +657,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: "#f5f0ff",
+    backgroundColor: "#f0f4ff",
     borderWidth: 1,
-    borderColor: "#e0d4ff",
+    borderColor: "#d0e0ff",
   },
   flipButtonText: {
-    color: "#9C27B0",
+    color: "#4285F4",
     fontSize: 14,
     fontWeight: "600",
     fontFamily: "Outfit_500Medium",
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   resultsTitle: { fontSize: 28, fontWeight: "700", color: "#1f1f1f", marginBottom: 8, fontFamily: "Outfit_500Medium" },
   resultsSubtitle: { fontSize: 16, color: "#666", marginBottom: 24, textAlign: "center", fontFamily: "Outfit_400Regular" },
   scoreContainer: { flexDirection: "row", alignItems: "baseline", marginBottom: 8 },
-  scoreText: { fontSize: 64, fontWeight: "700", color: "#9C27B0" },
+  scoreText: { fontSize: 64, fontWeight: "700", color: "#4285F4" },
   scoreDivider: { fontSize: 48, color: "#ccc", marginHorizontal: 4 },
   scoreTotalText: { fontSize: 32, fontWeight: "600", color: "#999" },
   percentageText: { fontSize: 24, color: "#666", marginBottom: 32, fontFamily: "Outfit_500Medium" },
@@ -709,10 +709,10 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderWidth: 2,
-    borderColor: "#9C27B0",
+    borderColor: "#4285F4",
     borderRadius: 28,
   },
-  retakeButtonText: { color: "#9C27B0", fontSize: 17, fontFamily: "Outfit_500Medium" },
-  doneButton: { backgroundColor: "#9C27B0", paddingVertical: 16, borderRadius: 28, alignItems: "center" },
+  retakeButtonText: { color: "#4285F4", fontSize: 17, fontFamily: "Outfit_500Medium" },
+  doneButton: { backgroundColor: "#4285F4", paddingVertical: 16, borderRadius: 28, alignItems: "center" },
   doneButtonText: { color: "#fff", fontSize: 17, fontFamily: "Outfit_500Medium" },
 });

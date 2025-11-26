@@ -48,7 +48,7 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
             case "hard":
                 return "#EA4335";
             default:
-                return "#9C27B0";
+                return "#4285F4";
         }
     };
 
@@ -165,13 +165,13 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: "#f5f0ff",
+        backgroundColor: "#f0f4ff",
         borderRadius: 16,
         padding: 16,
         marginVertical: 8,
         borderWidth: 1,
-        borderColor: "#e0d4ff",
-        shadowColor: "#9C27B0",
+        borderColor: "#d0e0ff",
+        shadowColor: "#4285F4",
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: "#9C27B0",
+        backgroundColor: "#4285F4",
         alignItems: "center",
         justifyContent: "center",
         marginRight: 12,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 12,
         borderWidth: 1,
-        borderColor: "#e0d4ff",
+        borderColor: "#d0e0ff",
     },
     previewCardFront: {
         flex: 1,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     },
     moreCardsText: {
         fontSize: 13,
-        color: "#9C27B0",
+        color: "#4285F4",
         fontFamily: "Outfit_500Medium",
     },
     detailsContainer: {
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: "#e0d4ff",
+        borderColor: "#d0e0ff",
     },
     featureText: {
         fontSize: 13,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     studyButton: {
-        backgroundColor: "#9C27B0",
+        backgroundColor: "#4285F4",
     },
     studyButtonText: {
         color: "#fff",

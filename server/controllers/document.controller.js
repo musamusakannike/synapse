@@ -8,6 +8,21 @@ const { createChatWithAttachment } = require("./chat.controller");
 let pdfParse; // pdf-parse
 let mammoth; // DOCX -> text
 
+function isImageFile(mimeType, ext) {
+  const imageMimeTypes = [
+    "image/jpeg",
+    "image/png", 
+    "image/webp",
+    "image/gif",
+    "image/bmp",
+    "image/tiff"
+  ];
+  
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff"];
+  
+  return imageMimeTypes.includes(mimeType) || imageExtensions.includes(ext);
+}
+
 async function extractTextFromFile(filePath, mimeType) {
   const ext = path.extname(filePath).toLowerCase();
 
@@ -38,6 +53,18 @@ async function extractTextFromFile(filePath, mimeType) {
   return content;
 }
 
+async function processImageFile(filePath, mimeType) {
+  // For images, we need to read as base64 for Gemini vision API
+  const buffer = await fs.readFile(filePath);
+  const base64Image = buffer.toString("base64");
+  
+  return {
+    isImage: true,
+    base64Data: base64Image,
+    mimeType: mimeType
+  };
+}
+
 function buildDefaultSummaryPrompt(filename, userGuidance = "") {
   let basePrompt = `You are an intelligent learning assistant that processes documents for study and quick review.\n` +
     `Analyze the following document and provide a comprehensive summary.\n` +
@@ -48,6 +75,22 @@ function buildDefaultSummaryPrompt(filename, userGuidance = "") {
   if (userGuidance && userGuidance.trim()) {
     basePrompt += `\n\nUser Instructions: ${userGuidance.trim()}\n` +
       `Please follow these specific instructions while processing the document.`;
+  }
+  
+  return basePrompt;
+}
+
+function buildImageAnalysisPrompt(filename, userGuidance = "") {
+  let basePrompt = `You are an intelligent learning assistant that analyzes images for educational purposes.\n` +
+    `Analyze this image and provide a comprehensive description.\n` +
+    `Focus on identifying key elements, text content, diagrams, charts, or any educational information visible.\n` +
+    `If there's text in the image, extract and summarize it. If there are diagrams or charts, explain what they show.\n` +
+    `Provide a structured analysis that would be useful for learning and study purposes.\n\n` +
+    `Image: ${filename}`;
+    
+  if (userGuidance && userGuidance.trim()) {
+    basePrompt += `\n\nUser Instructions: ${userGuidance.trim()}\n` +
+      `Please follow these specific instructions while analyzing this image.`;
   }
   
   return basePrompt;
@@ -78,43 +121,69 @@ async function uploadDocument(req, res) {
     });
 
     try {
-      // 1) Extract text
-      const extractedText = await extractTextFromFile(savedPath, mimetype);
-
-      // 2) Summarize with Gemini
       const userGuidance = req.body?.prompt || "";
-      const prompt = userGuidance ? 
-        buildDefaultSummaryPrompt(originalname, userGuidance) : 
-        buildDefaultSummaryPrompt(originalname);
-      // If we already have text, pass as plain text to Gemini
-      const summary = await GeminiService.processDocument(
-        Buffer.from(extractedText, "utf8"),
-        "text/plain",
-        prompt
-      );
+      let summary;
+      let extractedText = "";
 
-      doc.extractedText = extractedText;
-      doc.summary = summary;
+      // Check if it's an image file
+      const ext = path.extname(savedPath).toLowerCase();
+      const isImage = isImageFile(mimetype, ext);
+
+      if (isImage) {
+        // Process image with Gemini vision API
+        const imageData = await processImageFile(savedPath, mimetype);
+        const prompt = userGuidance ? 
+          buildImageAnalysisPrompt(originalname, userGuidance) : 
+          buildImageAnalysisPrompt(originalname);
+        
+        summary = await GeminiService.processImage(
+          imageData.base64Data,
+          imageData.mimeType,
+          prompt
+        );
+        
+        doc.extractedText = `Image analysis: ${summary}`;
+        doc.summary = summary;
+      } else {
+        // Process regular document
+        extractedText = await extractTextFromFile(savedPath, mimetype);
+        const prompt = userGuidance ? 
+          buildDefaultSummaryPrompt(originalname, userGuidance) : 
+          buildDefaultSummaryPrompt(originalname);
+        
+        summary = await GeminiService.processDocument(
+          Buffer.from(extractedText, "utf8"),
+          "text/plain",
+          prompt
+        );
+
+        doc.extractedText = extractedText;
+        doc.summary = summary;
+      }
+
       doc.processingStatus = "completed";
       await doc.save();
 
       // 3) Create a chat with document attachment
       try {
-        const chatTitle = `${originalname} - Document`;
-        const messageContent = `I've processed your document "${originalname}". Here's a summary:\n\n${summary}\n\nYou can ask me questions about this document!`;
+        const attachmentType = isImage ? "image" : "document";
+        const chatTitle = `${originalname} - ${isImage ? "Image" : "Document"}`;
+        const messageContent = `I've processed your ${isImage ? "image" : "document"} "${originalname}". Here's a summary:\n\n${summary}\n\nYou can ask me questions about this ${isImage ? "image" : "document"}!`;
         
         await createChatWithAttachment(
           userId,
           chatTitle,
-          "document",
+          attachmentType,
           doc._id,
-          "Document",
-          "document",
+          isImage ? "Image" : "Document",
+          attachmentType,
           {
             documentId: doc._id,
             originalName: originalname,
             summary: summary,
             extractedText: extractedText.substring(0, 5000), // Limit text size in attachment
+            mimeType: mimetype,
+            isImage: isImage,
           },
           messageContent
         );

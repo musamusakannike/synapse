@@ -2,7 +2,6 @@ const {
   GoogleGenAI,
   HarmCategory,
   HarmBlockThreshold,
-  FunctionDeclarationSchemaType,
 } = require("@google/genai");
 
 let mime;
@@ -134,22 +133,22 @@ const functionCallingTools = [
         name: "generate_flashcards",
         description: "Generate flashcards for studying a topic or content. Use this when the user wants to create flashcards, study cards, or memory cards for learning.",
         parameters: {
-          type: FunctionDeclarationSchemaType.OBJECT,
+          type: "OBJECT",
           properties: {
             topic: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "The topic or subject to generate flashcards about",
             },
             numberOfCards: {
-              type: FunctionDeclarationSchemaType.INTEGER,
+              type: "INTEGER",
               description: "Number of flashcards to generate (default: 10)",
             },
             difficulty: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Difficulty level: easy, medium, or hard (default: medium)",
             },
             includeExamples: {
-              type: FunctionDeclarationSchemaType.BOOLEAN,
+              type: "BOOLEAN",
               description: "Whether to include examples in flashcards (default: false)",
             },
           },
@@ -160,30 +159,30 @@ const functionCallingTools = [
         name: "generate_course",
         description: "Generate a comprehensive course or learning material on a topic. Use this when the user wants to create a course, lesson plan, study guide, or structured learning content.",
         parameters: {
-          type: FunctionDeclarationSchemaType.OBJECT,
+          type: "OBJECT",
           properties: {
             title: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "The title or topic of the course",
             },
             description: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Optional description or specific focus areas for the course",
             },
             level: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Difficulty level: beginner, intermediate, or advanced (default: intermediate)",
             },
             detailLevel: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "How detailed the content should be: basic, moderate, or comprehensive (default: moderate)",
             },
             includeExamples: {
-              type: FunctionDeclarationSchemaType.BOOLEAN,
+              type: "BOOLEAN",
               description: "Whether to include examples (default: true)",
             },
             includePracticeQuestions: {
-              type: FunctionDeclarationSchemaType.BOOLEAN,
+              type: "BOOLEAN",
               description: "Whether to include practice questions (default: false)",
             },
           },
@@ -194,26 +193,26 @@ const functionCallingTools = [
         name: "generate_quiz",
         description: "Generate a quiz or test questions on a topic. Use this when the user wants to create a quiz, test, assessment, or practice questions.",
         parameters: {
-          type: FunctionDeclarationSchemaType.OBJECT,
+          type: "OBJECT",
           properties: {
             title: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "The title or topic of the quiz",
             },
             description: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Optional description or specific focus areas for the quiz",
             },
             numberOfQuestions: {
-              type: FunctionDeclarationSchemaType.INTEGER,
+              type: "INTEGER",
               description: "Number of questions to generate (default: 10)",
             },
             difficulty: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Difficulty level: easy, medium, hard, or mixed (default: mixed)",
             },
             includeCalculations: {
-              type: FunctionDeclarationSchemaType.BOOLEAN,
+              type: "BOOLEAN",
               description: "Whether to include calculation-based questions (default: false)",
             },
           },
@@ -224,14 +223,14 @@ const functionCallingTools = [
         name: "analyze_document",
         description: "Analyze or process an uploaded document. Use this ONLY when a document has been explicitly attached/uploaded by the user and they want to analyze, summarize, or extract information from it.",
         parameters: {
-          type: FunctionDeclarationSchemaType.OBJECT,
+          type: "OBJECT",
           properties: {
             analysisType: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Type of analysis: summary, key_points, questions, or detailed (default: summary)",
             },
             focusAreas: {
-              type: FunctionDeclarationSchemaType.STRING,
+              type: "STRING",
               description: "Specific areas or topics to focus on in the analysis",
             },
           },

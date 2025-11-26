@@ -2,6 +2,7 @@ const {
   GoogleGenAI,
   HarmCategory,
   HarmBlockThreshold,
+  FunctionDeclarationSchemaType,
 } = require("@google/genai");
 
 let mime;
@@ -124,6 +125,122 @@ function sanitizeJsonText(jsonText) {
     }
   }
 }
+
+// Function calling tool definitions for intent detection
+const functionCallingTools = [
+  {
+    functionDeclarations: [
+      {
+        name: "generate_flashcards",
+        description: "Generate flashcards for studying a topic or content. Use this when the user wants to create flashcards, study cards, or memory cards for learning.",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            topic: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "The topic or subject to generate flashcards about",
+            },
+            numberOfCards: {
+              type: FunctionDeclarationSchemaType.INTEGER,
+              description: "Number of flashcards to generate (default: 10)",
+            },
+            difficulty: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Difficulty level: easy, medium, or hard (default: medium)",
+            },
+            includeExamples: {
+              type: FunctionDeclarationSchemaType.BOOLEAN,
+              description: "Whether to include examples in flashcards (default: false)",
+            },
+          },
+          required: ["topic"],
+        },
+      },
+      {
+        name: "generate_course",
+        description: "Generate a comprehensive course or learning material on a topic. Use this when the user wants to create a course, lesson plan, study guide, or structured learning content.",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            title: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "The title or topic of the course",
+            },
+            description: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Optional description or specific focus areas for the course",
+            },
+            level: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Difficulty level: beginner, intermediate, or advanced (default: intermediate)",
+            },
+            detailLevel: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "How detailed the content should be: basic, moderate, or comprehensive (default: moderate)",
+            },
+            includeExamples: {
+              type: FunctionDeclarationSchemaType.BOOLEAN,
+              description: "Whether to include examples (default: true)",
+            },
+            includePracticeQuestions: {
+              type: FunctionDeclarationSchemaType.BOOLEAN,
+              description: "Whether to include practice questions (default: false)",
+            },
+          },
+          required: ["title"],
+        },
+      },
+      {
+        name: "generate_quiz",
+        description: "Generate a quiz or test questions on a topic. Use this when the user wants to create a quiz, test, assessment, or practice questions.",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            title: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "The title or topic of the quiz",
+            },
+            description: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Optional description or specific focus areas for the quiz",
+            },
+            numberOfQuestions: {
+              type: FunctionDeclarationSchemaType.INTEGER,
+              description: "Number of questions to generate (default: 10)",
+            },
+            difficulty: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Difficulty level: easy, medium, hard, or mixed (default: mixed)",
+            },
+            includeCalculations: {
+              type: FunctionDeclarationSchemaType.BOOLEAN,
+              description: "Whether to include calculation-based questions (default: false)",
+            },
+          },
+          required: ["title"],
+        },
+      },
+      {
+        name: "analyze_document",
+        description: "Analyze or process an uploaded document. Use this ONLY when a document has been explicitly attached/uploaded by the user and they want to analyze, summarize, or extract information from it.",
+        parameters: {
+          type: FunctionDeclarationSchemaType.OBJECT,
+          properties: {
+            analysisType: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Type of analysis: summary, key_points, questions, or detailed (default: summary)",
+            },
+            focusAreas: {
+              type: FunctionDeclarationSchemaType.STRING,
+              description: "Specific areas or topics to focus on in the analysis",
+            },
+          },
+          required: [],
+        },
+      },
+    ],
+  },
+];
 
 class GeminiService {
   constructor() {
@@ -596,6 +713,64 @@ class GeminiService {
     } catch (error) {
       console.error("Error generating section content:", error);
       throw new Error("Failed to generate section content");
+    }
+  }
+
+  /**
+   * Detect user intent using Gemini function calling.
+   * Returns an object with detected function calls or null if it's a regular chat.
+   * @param {string} userMessage - The user's message
+   * @param {boolean} hasDocument - Whether a document is attached to the chat
+   * @returns {Promise<{functionCalls: Array, isMultiAction: boolean} | null>}
+   */
+  async detectIntent(userMessage, hasDocument = false) {
+    try {
+      // Build a context-aware prompt for intent detection
+      let systemContext = `You are an intent detection system. Analyze the user's message and determine if they want to:
+1. Generate flashcards (study cards, memory cards)
+2. Generate a course (lesson plan, study guide, learning material)
+3. Generate a quiz (test, assessment, practice questions)
+4. Analyze a document (ONLY if a document is attached - hasDocument: ${hasDocument})
+
+IMPORTANT RULES:
+- Only call analyze_document if hasDocument is true AND the user explicitly wants to analyze/summarize/process the document
+- If the user just wants to chat or ask questions, do NOT call any function
+- If the user wants to do multiple actions at once (e.g., "create flashcards and a quiz"), call BOTH functions
+- For general questions, explanations, or conversations, do NOT call any function
+
+User message: "${userMessage}"`;
+
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: systemContext }] }],
+        config: {
+          tools: functionCallingTools,
+        },
+        safetySettings: this.safetySettings,
+      });
+
+      // Check if there are function calls in the response
+      const functionCalls = response.functionCalls;
+      
+      if (!functionCalls || functionCalls.length === 0) {
+        // No function calls detected - regular chat
+        return null;
+      }
+
+      // Check for multiple actions
+      const isMultiAction = functionCalls.length > 1;
+
+      return {
+        functionCalls: functionCalls.map(call => ({
+          name: call.name,
+          args: call.args || {},
+        })),
+        isMultiAction,
+      };
+    } catch (error) {
+      console.error("Error detecting intent:", error);
+      // On error, fall back to regular chat
+      return null;
     }
   }
 }

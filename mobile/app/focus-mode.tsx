@@ -259,7 +259,7 @@ export default function FocusModePage() {
             style={[
               styles.contentCard,
               {
-                backgroundColor: theme.surface,
+                backgroundColor: "transparent",
                 borderColor: theme.border,
               },
             ]}
@@ -384,7 +384,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingTop: 80,
     paddingBottom: 120,
   },
@@ -414,12 +413,6 @@ const styles = StyleSheet.create({
   contentCard: {
     borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
   },
   userText: {
     fontFamily: "Outfit_400Regular",

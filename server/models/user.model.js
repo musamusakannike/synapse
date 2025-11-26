@@ -27,6 +27,13 @@ const UserSchema = new mongoose.Schema(
         unique: true,
         sparse: true,
     },
+    expoPushToken: {
+        type: String,
+        sparse: true,
+    },
+    expoPushTokenUpdatedAt: {
+        type: Date,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,

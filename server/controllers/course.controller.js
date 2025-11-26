@@ -1,5 +1,6 @@
 const Course = require("../models/course.model");
 const GeminiService = require("../config/gemini.config");
+const { sendCourseGenerationStartedNotification, sendCourseGenerationCompletedNotification } = require("../config/notifications.config");
 const PDFDocument = require("pdfkit");
 const { createChatWithAttachment } = require("./chat.controller");
 
@@ -31,6 +32,11 @@ async function createCourse(req, res) {
 
     // Generate outline asynchronously
     generateCourseOutlineAsync(course._id, title, description, course.settings, userId);
+
+    // Send notification for course generation start
+    sendCourseGenerationStartedNotification(userId, title).catch(err => {
+      console.error('Failed to send course generation started notification:', err);
+    });
 
     return res.status(201).json(course);
   } catch (error) {
@@ -93,6 +99,11 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
     course.content = contentArray;
     course.status = "completed";
     await course.save();
+
+    // Send notification for course generation completion
+    sendCourseGenerationCompletedNotification(userId, course.title, course._id.toString()).catch(err => {
+      console.error('Failed to send course generation completed notification:', err);
+    });
 
     // Create a chat with course attachment
     try {
@@ -196,6 +207,11 @@ async function regenerateCourse(req, res) {
 
     // Regenerate asynchronously
     generateCourseOutlineAsync(course._id, course.title, course.description, course.settings, userId);
+
+    // Send notification for course regeneration start
+    sendCourseGenerationStartedNotification(userId, course.title).catch(err => {
+      console.error('Failed to send course regeneration started notification:', err);
+    });
 
     return res.status(200).json(course);
   } catch (error) {

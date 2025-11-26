@@ -45,6 +45,7 @@ import DocumentUploadModal, {
 } from "../components/DocumentUploadModal";
 import CourseAttachment from "../components/CourseAttachment";
 import QuizAttachment from "../components/QuizAttachment";
+import FlashcardAttachment from "../components/FlashcardAttachment";
 
 const AnimatedButton = memo(
   ({
@@ -126,6 +127,28 @@ interface Message {
         createdAt: string;
       };
     }
+    | {
+      type: "flashcard";
+      data: {
+        flashcardSetId: string;
+        title: string;
+        flashcards: {
+          front: string;
+          back: string;
+          difficulty: "easy" | "medium" | "hard";
+          tags?: string[];
+        }[];
+        settings?: {
+          numberOfCards: number;
+          difficulty: string;
+          includeDefinitions: boolean;
+          includeExamples: boolean;
+        };
+      };
+      metadata?: {
+        createdAt: string;
+      };
+    }
   )[];
 }
 
@@ -139,6 +162,7 @@ const MessageItem = memo(
     onExpandToggle,
     onViewCourse,
     onStartQuiz,
+    onStudyFlashcards,
   }: {
     message: Message;
     index: number;
@@ -151,6 +175,7 @@ const MessageItem = memo(
     onExpandToggle: (index: number) => void;
     onViewCourse: (courseId: string) => void;
     onStartQuiz: (quizId: string) => void;
+    onStudyFlashcards: (flashcardSetId: string) => void;
   }) => {
     const handleSwipeOpen = useCallback(() => {
       onMessagePress(message.content, index, message.role);
@@ -170,7 +195,7 @@ const MessageItem = memo(
       () => [
         styles.messageBubble,
         message.role === "user" ? styles.userMessage : styles.assistantMessage,
-        message.attachments?.some(att => att.type === "course" || att.type === "quiz") && { maxWidth: "100%" as any },
+        message.attachments?.some(att => att.type === "course" || att.type === "quiz" || att.type === "flashcard") && { maxWidth: "100%" as any },
       ],
       [message.role, message.attachments]
     );
@@ -248,6 +273,18 @@ const MessageItem = memo(
                             questions={attachment.data.questions}
                             settings={attachment.data.settings}
                             onStartQuiz={onStartQuiz}
+                          />
+                        );
+                      }
+                      if (attachment.type === "flashcard") {
+                        return (
+                          <FlashcardAttachment
+                            key={attachmentIndex}
+                            flashcardSetId={attachment.data.flashcardSetId}
+                            title={attachment.data.title}
+                            flashcards={attachment.data.flashcards}
+                            settings={attachment.data.settings}
+                            onStudyFlashcards={onStudyFlashcards}
                           />
                         );
                       }
@@ -750,6 +787,20 @@ export default function AIInterface() {
     router.push(`/quiz/${quizId}`);
   }, [router]);
 
+  // Handle study flashcards
+  const handleStudyFlashcards = useCallback((flashcardSetId: string) => {
+    router.push(`/flashcards/${flashcardSetId}`);
+  }, [router]);
+
+  // Handle create flashcards button press
+  const handleCreateFlashcardsPress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    router.push("/generate-flashcards");
+  }, [isAuthenticated, openAuthModal, router]);
+
   // Optimized message interaction handlers
   const handleMessagePress = useCallback(
     (content: string, index: number, role: "user" | "assistant") => {
@@ -908,9 +959,16 @@ export default function AIInterface() {
                 >
                   Take a Quiz
                 </AnimatedButton>
-                <AnimatedButton delay={800} icon="">
-                  Watch Tutorials
+                <AnimatedButton
+                  delay={800}
+                  icon="🃏"
+                  onPress={handleCreateFlashcardsPress}
+                >
+                  Create Flashcards
                 </AnimatedButton>
+                {/* <AnimatedButton delay={800} icon="">
+                  Watch Tutorials
+                </AnimatedButton> */}
               </View>
             </>
           ) : (
@@ -927,6 +985,7 @@ export default function AIInterface() {
                     onExpandToggle={handleExpandToggle}
                     onViewCourse={handleViewCourse}
                     onStartQuiz={handleStartQuiz}
+                    onStudyFlashcards={handleStudyFlashcards}
                   />
                 ))}
 

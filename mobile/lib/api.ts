@@ -170,4 +170,36 @@ export const QuizAPI = {
   }[]) => api.post(`/quizzes/${quizId}/attempt`, { answers }),
 };
 
+// Flashcard endpoints
+export const FlashcardAPI = {
+  generateFlashcards: (flashcardData: {
+    title?: string;
+    description?: string;
+    sourceType: "topic" | "document" | "website" | "course" | "manual";
+    sourceId?: string;
+    settings?: {
+      numberOfCards?: number;
+      difficulty?: "easy" | "medium" | "hard" | "mixed";
+      includeDefinitions?: boolean;
+      includeExamples?: boolean;
+      focusAreas?: string[];
+    };
+  }) => api.post("/flashcards/generate", flashcardData),
+  listFlashcardSets: (page: number = 1, limit: number = 20) => 
+    api.get("/flashcards", { params: { page, limit } }),
+  getFlashcardSet: (flashcardSetId: string) => 
+    api.get(`/flashcards/${flashcardSetId}`),
+  updateFlashcardSet: (flashcardSetId: string, data: {
+    title?: string;
+    description?: string;
+    flashcards?: any[];
+  }) => api.put(`/flashcards/${flashcardSetId}`, data),
+  deleteFlashcardSet: (flashcardSetId: string) => 
+    api.delete(`/flashcards/${flashcardSetId}`),
+  updateStudyStats: (flashcardSetId: string, stats: {
+    score: number;
+    sessionDuration?: number;
+  }) => api.post(`/flashcards/${flashcardSetId}/study-stats`, stats),
+};
+
 export default api;

@@ -780,6 +780,15 @@ export default function AIInterface() {
     documentUploadModalRef.current?.present();
   }, [isAuthenticated, openAuthModal]);
 
+  // Handle add button press (document generation with pre-filled text)
+  const handleAddButtonPress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    documentUploadModalRef.current?.present(inputText.trim());
+  }, [isAuthenticated, openAuthModal, inputText]);
+
   // Handle generate course button press
   const handleGenerateCoursePress = useCallback(() => {
     if (!isAuthenticated) {
@@ -1019,7 +1028,7 @@ export default function AIInterface() {
                 />
               </View>
               <View style={styles.inputButtons}>
-                <TouchableOpacity style={styles.addButton}>
+                <TouchableOpacity style={styles.addButton} onPress={handleAddButtonPress}>
                   <Text style={styles.addButtonText}>+</Text>
                 </TouchableOpacity>
 

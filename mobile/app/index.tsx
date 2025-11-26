@@ -46,6 +46,7 @@ import DocumentUploadModal, {
 import CourseAttachment from "../components/CourseAttachment";
 import QuizAttachment from "../components/QuizAttachment";
 import FlashcardAttachment from "../components/FlashcardAttachment";
+import { Ionicons } from "@expo/vector-icons";
 
 const AnimatedButton = memo(
   ({
@@ -338,6 +339,8 @@ export default function AIInterface() {
     Record<number, boolean>
   >({});
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const scrollToBottomOpacity = useSharedValue(0);
 
   // Document upload state
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -513,6 +516,9 @@ export default function AIInterface() {
       const y = event.nativeEvent.contentOffset?.y || 0;
       const lastY = lastScrollYRef.current || 0;
       const deltaY = y - lastY;
+      const contentHeight = event.nativeEvent.contentSize?.height || 0;
+      const layoutHeight = event.nativeEvent.layoutMeasurement?.height || 0;
+      const distanceFromBottom = contentHeight - layoutHeight - y;
 
       if (!isFocusMode && isChatMode && messages.length > 1) {
         if (deltaY > 5 && y > 0) {
@@ -524,9 +530,22 @@ export default function AIInterface() {
         headerTranslateY.value = withTiming(0, { duration: 200 });
       }
 
+      // Show scroll to bottom button when scrolled up more than 200px from bottom
+      if (isChatMode && messages.length > 0 && distanceFromBottom > 200) {
+        if (!showScrollToBottom) {
+          setShowScrollToBottom(true);
+          scrollToBottomOpacity.value = withTiming(1, { duration: 200 });
+        }
+      } else {
+        if (showScrollToBottom) {
+          scrollToBottomOpacity.value = withTiming(0, { duration: 200 });
+          setTimeout(() => setShowScrollToBottom(false), 200);
+        }
+      }
+
       lastScrollYRef.current = y;
     },
-    [isFocusMode, isChatMode, messages.length, headerTranslateY]
+    [isFocusMode, isChatMode, messages.length, headerTranslateY, showScrollToBottom, scrollToBottomOpacity]
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -791,6 +810,16 @@ export default function AIInterface() {
   const handleStudyFlashcards = useCallback((flashcardSetId: string) => {
     router.push(`/flashcards/${flashcardSetId}`);
   }, [router]);
+
+  // Handle scroll to bottom
+  const handleScrollToBottom = useCallback(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
+  const scrollToBottomButtonStyle = useAnimatedStyle(() => ({
+    opacity: scrollToBottomOpacity.value,
+    transform: [{ scale: scrollToBottomOpacity.value }],
+  }));
 
   // Handle create flashcards button press
   const handleCreateFlashcardsPress = useCallback(() => {
@@ -1094,6 +1123,19 @@ export default function AIInterface() {
           ref={documentUploadModalRef}
           onUploadSuccess={handleDocumentUpload}
         />
+
+        {/* Scroll to Bottom Button */}
+        {showScrollToBottom && !isFocusMode && (
+          <Animated.View style={[styles.scrollToBottomButton, scrollToBottomButtonStyle]}>
+            <TouchableOpacity
+              onPress={handleScrollToBottom}
+              style={styles.scrollToBottomTouchable}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chevron-down" color="#FFF" size={24} />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1499,5 +1541,29 @@ const styles = StyleSheet.create({
   },
   attachmentContainer: {
     marginTop: 12,
+  },
+  scrollToBottomButton: {
+    position: "absolute",
+    bottom: 140,
+    right: 20,
+    zIndex: 100,
+  },
+  scrollToBottomTouchable: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#4285F4",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  scrollToBottomIcon: {
+    color: "#fff",
+    fontSize: 22,
+    fontWeight: "600",
   },
 });

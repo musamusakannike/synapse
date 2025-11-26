@@ -31,6 +31,10 @@
         "READ_EXTERNAL_STORAGE",
         "READ_MEDIA_IMAGES",
         "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
         "READ_MEDIA_AUDIO"
       ]
     },
@@ -63,6 +67,12 @@
       "eas": {
         "projectId": "920134c0-c897-4578-8834-1699e3359725"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/920134c0-c897-4578-8834-1699e3359725"
     }
   }
 }

@@ -338,7 +338,6 @@ export default function AIInterface() {
   const [expandedUserMessages, setExpandedUserMessages] = useState<
     Record<number, boolean>
   >({});
-  const [isFocusMode, setIsFocusMode] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const scrollToBottomOpacity = useSharedValue(0);
 
@@ -520,7 +519,7 @@ export default function AIInterface() {
       const layoutHeight = event.nativeEvent.layoutMeasurement?.height || 0;
       const distanceFromBottom = contentHeight - layoutHeight - y;
 
-      if (!isFocusMode && isChatMode && messages.length > 1) {
+      if (isChatMode && messages.length > 1) {
         if (deltaY > 5 && y > 0) {
           headerTranslateY.value = withTiming(-80, { duration: 200 });
         } else if (deltaY < -5) {
@@ -545,7 +544,7 @@ export default function AIInterface() {
 
       lastScrollYRef.current = y;
     },
-    [isFocusMode, isChatMode, messages.length, headerTranslateY, showScrollToBottom, scrollToBottomOpacity]
+    [isChatMode, messages.length, headerTranslateY, showScrollToBottom, scrollToBottomOpacity]
   );
 
   const handleSendMessage = useCallback(async () => {
@@ -693,13 +692,16 @@ export default function AIInterface() {
   }, [selectedMessageIndex, currentChatId]);
 
   const handleEnterFocusMode = useCallback(() => {
-    if (selectedMessageIndex < 0) return;
-    setIsFocusMode(true);
-  }, [selectedMessageIndex]);
-
-  const handleExitFocusMode = useCallback(() => {
-    setIsFocusMode(false);
-  }, []);
+    if (selectedMessageIndex < 0 || !messages[selectedMessageIndex]) return;
+    const message = messages[selectedMessageIndex];
+    router.push({
+      pathname: "/focus-mode",
+      params: {
+        content: message.content,
+        role: message.role,
+      },
+    });
+  }, [selectedMessageIndex, messages, router]);
 
   // Document upload handlers (optimized polling)
   const handleDocumentUpload = useCallback(
@@ -856,8 +858,7 @@ export default function AIInterface() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Header */}
-        {!isFocusMode && (
-          <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, headerStyle]}>
             <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
               <View style={styles.menuLine} />
               <View style={styles.menuLine} />
@@ -883,13 +884,10 @@ export default function AIInterface() {
               </View>
             </TouchableOpacity>
           </Animated.View>
-        )}
 
         <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={
-            isFocusMode ? styles.focusContent : styles.content
-          }
+          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -898,66 +896,7 @@ export default function AIInterface() {
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
         >
-          {isFocusMode ? (
-            // Focus mode: show only the selected message in full-screen
-            <View style={styles.focusContainer}>
-              <TouchableOpacity
-                style={styles.focusCloseButton}
-                onPress={handleExitFocusMode}
-              >
-                <Text style={styles.focusCloseButtonText}>✕</Text>
-              </TouchableOpacity>
-
-              <View style={styles.focusHeader}>
-                <Text style={styles.focusTitle}>Focus Mode</Text>
-              </View>
-
-              {selectedMessageIndex >= 0 && messages[selectedMessageIndex] && (
-                <View
-                  style={[
-                    styles.focusMessageWrapper,
-                    messages[selectedMessageIndex].role === "user"
-                      ? styles.userMessageWrapper
-                      : styles.assistantMessageWrapper,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.messageBubble,
-                      styles.focusMessageBubble,
-                      messages[selectedMessageIndex].role === "user"
-                        ? styles.userMessage
-                        : styles.assistantMessage,
-                    ]}
-                  >
-                    {messages[selectedMessageIndex].role === "user" ? (
-                      <Text
-                        style={[
-                          styles.messageText,
-                          styles.userMessageText,
-                          styles.focusMessageText,
-                        ]}
-                      >
-                        {messages[selectedMessageIndex].content}
-                      </Text>
-                    ) : (
-                      <Markdown
-                        style={{
-                          body: StyleSheet.flatten([
-                            styles.messageText,
-                            styles.assistantMessageText,
-                            styles.focusMessageText,
-                          ]),
-                        }}
-                      >
-                        {messages[selectedMessageIndex].content}
-                      </Markdown>
-                    )}
-                  </View>
-                </View>
-              )}
-            </View>
-          ) : shouldShowHomepage ? (
+          {shouldShowHomepage ? (
             <>
               {/* Greeting Section */}
               <Animated.View style={titleStyle}>
@@ -1059,8 +998,7 @@ export default function AIInterface() {
         </ScrollView>
 
         {/* Bottom Input Bar */}
-        {!isFocusMode && (
-          <View
+        <View
             style={[
               styles.bottomBar,
               Platform.OS === "android" &&
@@ -1105,7 +1043,6 @@ export default function AIInterface() {
               </View>
             </View>
           </View>
-        )}
 
         {/* Message Options Modal */}
         <MessageOptionsModal
@@ -1125,7 +1062,7 @@ export default function AIInterface() {
         />
 
         {/* Scroll to Bottom Button */}
-        {showScrollToBottom && !isFocusMode && (
+        {showScrollToBottom && (
           <Animated.View style={[styles.scrollToBottomButton, scrollToBottomButtonStyle]}>
             <TouchableOpacity
               onPress={handleScrollToBottom}
@@ -1238,7 +1175,7 @@ const styles = StyleSheet.create({
     fontFamily: "Outfit_400Regular",
   },
   bottomBar: {
-    backgroundColor: "#fff",
+    backgroundColor: "transparent",
   },
   inputContainer: {
     flexDirection: "column",
@@ -1448,80 +1385,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontFamily: "Outfit_600SemiBold",
   },
-  focusContent: {
-    paddingTop: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 0,
-    backgroundColor: "#f8fafc",
-  },
-  focusContainer: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-    position: "relative",
-  },
-  focusCloseButton: {
-    position: "absolute",
-    top: 60,
-    right: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-    zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.05)",
-  },
-  focusCloseButtonText: {
-    fontSize: 20,
-    color: "#64748b",
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-  focusHeader: {
-    alignItems: "center",
-    paddingTop: 80,
-    paddingBottom: 32,
-    paddingHorizontal: 24,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
-  },
-  focusTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1e293b",
-    fontFamily: "Outfit_600SemiBold",
-    letterSpacing: -0.5,
-  },
-  focusMessageWrapper: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "stretch",
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-  },
-  focusMessageBubble: {
-    maxWidth: "100%",
-    width: "100%",
-    paddingHorizontal: 24,
-    paddingVertical: 28,
-    borderRadius: 20,
-    minHeight: 200,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.8)",
-  },
   expandIconButton: {
     marginLeft: 6,
     marginTop: 2,
@@ -1533,11 +1396,6 @@ const styles = StyleSheet.create({
   expandIconText: {
     color: "#fff",
     fontSize: 12,
-  },
-  focusMessageText: {
-    fontSize: 18,
-    lineHeight: 28,
-    letterSpacing: 0.2,
   },
   attachmentContainer: {
     marginTop: 12,

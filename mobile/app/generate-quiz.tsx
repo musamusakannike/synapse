@@ -42,6 +42,8 @@ interface CourseItem {
   status: string;
 }
 
+type SourceItem = DocumentItem | CourseItem;
+
 type SourceType = "topic" | "document" | "course";
 
 export default function GenerateQuizPage() {
@@ -417,7 +419,7 @@ export default function GenerateQuizPage() {
                     </TouchableOpacity>
                   )}
 
-                  <FlatList
+                  <FlatList<SourceItem>
                     data={sourceType === "document" ? documents : courses}
                     keyExtractor={(item) => item._id}
                     renderItem={({ item }) => (

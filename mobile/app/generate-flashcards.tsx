@@ -254,28 +254,28 @@ export default function GenerateFlashcardsPage() {
                   style={[styles.sourceTypeButton, sourceType === "topic" && styles.sourceTypeButtonSelected]}
                   onPress={() => { setSourceType("topic"); setSelectedSourceId(null); setSelectedSourceName(""); }}
                 >
-                  <Ionicons name="bulb-outline" size={20} color={sourceType === "topic" ? "#9C27B0" : "#666"} />
+                  <Ionicons name="bulb-outline" size={20} color={sourceType === "topic" ? "#4285F4" : "#666"} />
                   <Text style={[styles.sourceTypeText, sourceType === "topic" && styles.sourceTypeTextSelected]}>Topic</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.sourceTypeButton, sourceType === "document" && styles.sourceTypeButtonSelected]}
                   onPress={() => { setSourceType("document"); handleOpenSourceModal(); }}
                 >
-                  <Ionicons name="document-outline" size={20} color={sourceType === "document" ? "#9C27B0" : "#666"} />
+                  <Ionicons name="document-outline" size={20} color={sourceType === "document" ? "#4285F4" : "#666"} />
                   <Text style={[styles.sourceTypeText, sourceType === "document" && styles.sourceTypeTextSelected]}>Document</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.sourceTypeButton, sourceType === "course" && styles.sourceTypeButtonSelected]}
                   onPress={() => { setSourceType("course"); handleOpenSourceModal(); }}
                 >
-                  <Ionicons name="school-outline" size={20} color={sourceType === "course" ? "#9C27B0" : "#666"} />
+                  <Ionicons name="school-outline" size={20} color={sourceType === "course" ? "#4285F4" : "#666"} />
                   <Text style={[styles.sourceTypeText, sourceType === "course" && styles.sourceTypeTextSelected]}>Course</Text>
                 </TouchableOpacity>
               </View>
 
               {selectedSourceName && sourceType !== "topic" && (
                 <View style={styles.selectedSource}>
-                  <Ionicons name={sourceType === "document" ? "document" : "school"} size={18} color="#9C27B0" />
+                  <Ionicons name={sourceType === "document" ? "document" : "school"} size={18} color="#4285F4" />
                   <Text style={styles.selectedSourceText} numberOfLines={1}>{selectedSourceName}</Text>
                   <TouchableOpacity onPress={() => { setSelectedSourceId(null); setSelectedSourceName(""); }}>
                     <Ionicons name="close-circle" size={20} color="#999" />
@@ -285,7 +285,7 @@ export default function GenerateFlashcardsPage() {
 
               {sourceType !== "topic" && !selectedSourceId && (
                 <TouchableOpacity style={styles.selectSourceButton} onPress={handleOpenSourceModal}>
-                  <Ionicons name="add-circle-outline" size={20} color="#9C27B0" />
+                  <Ionicons name="add-circle-outline" size={20} color="#4285F4" />
                   <Text style={styles.selectSourceText}>Select {sourceType === "document" ? "Document" : "Course"}</Text>
                 </TouchableOpacity>
               )}
@@ -370,7 +370,7 @@ export default function GenerateFlashcardsPage() {
               </View>
 
               {isLoadingSources ? (
-                <ActivityIndicator size="large" color="#9C27B0" style={{ marginTop: 40 }} />
+                <ActivityIndicator size="large" color="#4285F4" style={{ marginTop: 40 }} />
               ) : (
                 <FlatList<SourceItem>
                   data={sourceType === "document" ? documents : courses}
@@ -387,7 +387,7 @@ export default function GenerateFlashcardsPage() {
                       <Ionicons
                         name={sourceType === "document" ? "document-text-outline" : "school-outline"}
                         size={24}
-                        color="#9C27B0"
+                        color="#4285F4"
                       />
                       <View style={styles.sourceItemContent}>
                         <Text style={styles.sourceItemTitle} numberOfLines={1}>
@@ -462,19 +462,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fafafa",
   },
-  sourceTypeButtonSelected: { borderColor: "#9C27B0", backgroundColor: "#f5f0ff" },
+  sourceTypeButtonSelected: { borderColor: "#4285F4", backgroundColor: "#f0f4ff" },
   sourceTypeText: { fontSize: 14, color: "#666", fontFamily: "Outfit_500Medium" },
-  sourceTypeTextSelected: { color: "#9C27B0" },
+  sourceTypeTextSelected: { color: "#4285F4" },
   selectedSource: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#f5f0ff",
+    backgroundColor: "#f0f4ff",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e0d4ff",
+    borderColor: "#d0e0ff",
   },
   selectedSourceText: { flex: 1, fontSize: 14, color: "#1f1f1f", fontFamily: "Outfit_400Regular" },
   selectSourceButton: {
@@ -484,11 +484,11 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#9C27B0",
+    borderColor: "#4285F4",
     borderRadius: 12,
     borderStyle: "dashed",
   },
-  selectSourceText: { fontSize: 14, color: "#9C27B0", fontFamily: "Outfit_500Medium" },
+  selectSourceText: { fontSize: 14, color: "#4285F4", fontFamily: "Outfit_500Medium" },
   countContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   countButton: {
     paddingHorizontal: 20,
@@ -498,9 +498,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fafafa",
   },
-  countButtonSelected: { borderColor: "#9C27B0", backgroundColor: "#f5f0ff" },
+  countButtonSelected: { borderColor: "#4285F4", backgroundColor: "#f0f4ff" },
   countButtonText: { fontSize: 16, fontWeight: "600", color: "#666", fontFamily: "Outfit_500Medium" },
-  countButtonTextSelected: { color: "#9C27B0" },
+  countButtonTextSelected: { color: "#4285F4" },
   optionsContainer: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   optionButton: {
     paddingHorizontal: 16,
@@ -510,9 +510,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#fafafa",
   },
-  optionButtonSelected: { borderColor: "#9C27B0", backgroundColor: "#f5f0ff" },
+  optionButtonSelected: { borderColor: "#4285F4", backgroundColor: "#f0f4ff" },
   optionLabel: { fontSize: 14, color: "#666", fontFamily: "Outfit_500Medium" },
-  optionLabelSelected: { color: "#9C27B0" },
+  optionLabelSelected: { color: "#4285F4" },
   toggleOption: {
     flexDirection: "row",
     alignItems: "center",
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 2,
   },
-  toggleActive: { backgroundColor: "#9C27B0" },
+  toggleActive: { backgroundColor: "#4285F4" },
   toggleThumb: {
     width: 24,
     height: 24,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#f0f0f0",
   },
   generateButton: {
-    backgroundColor: "#9C27B0",
+    backgroundColor: "#4285F4",
     paddingVertical: 16,
     borderRadius: 28,
     alignItems: "center",

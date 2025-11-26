@@ -38,11 +38,19 @@ async function extractTextFromFile(filePath, mimeType) {
   return content;
 }
 
-function buildDefaultSummaryPrompt(filename) {
-  return `You are an assistant that summarizes documents for study and quick review.\n` +
-    `Summarize the key points, highlight important definitions, formulas (if any), and provide a concise bullet list of takeaway.\n` +
-    `Keep it clear and structured.\n\n` +
+function buildDefaultSummaryPrompt(filename, userGuidance = "") {
+  let basePrompt = `You are an intelligent learning assistant that processes documents for study and quick review.\n` +
+    `Analyze the following document and provide a comprehensive summary.\n` +
+    `Focus on key points, important definitions, formulas (if any), and provide a structured bullet list of takeaways.\n` +
+    `Keep it clear, concise, and suitable for learning purposes.\n\n` +
     `Document: ${filename}`;
+    
+  if (userGuidance && userGuidance.trim()) {
+    basePrompt += `\n\nUser Instructions: ${userGuidance.trim()}\n` +
+      `Please follow these specific instructions while processing the document.`;
+  }
+  
+  return basePrompt;
 }
 
 // POST /api/documents  (with file)
@@ -74,7 +82,10 @@ async function uploadDocument(req, res) {
       const extractedText = await extractTextFromFile(savedPath, mimetype);
 
       // 2) Summarize with Gemini
-      const prompt = req.body?.prompt || buildDefaultSummaryPrompt(originalname);
+      const userGuidance = req.body?.prompt || "";
+      const prompt = userGuidance ? 
+        buildDefaultSummaryPrompt(originalname, userGuidance) : 
+        buildDefaultSummaryPrompt(originalname);
       // If we already have text, pass as plain text to Gemini
       const summary = await GeminiService.processDocument(
         Buffer.from(extractedText, "utf8"),
@@ -196,7 +207,10 @@ async function reprocessDocument(req, res) {
 
     try {
       const extractedText = await extractTextFromFile(doc.filePath, doc.mimeType);
-      const effectivePrompt = prompt || buildDefaultSummaryPrompt(doc.originalName);
+      const userGuidance = prompt || "";
+      const effectivePrompt = userGuidance ? 
+        buildDefaultSummaryPrompt(doc.originalName, userGuidance) : 
+        buildDefaultSummaryPrompt(doc.originalName);
       const summary = await GeminiService.processDocument(
         Buffer.from(extractedText, "utf8"),
         "text/plain",

@@ -6,6 +6,10 @@ import {
     TouchableOpacity,
     Alert,
     ActivityIndicator,
+    TextInput,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from "react-native";
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
@@ -27,7 +31,8 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
         const bottomSheetRef = React.useRef<BottomSheet>(null);
         const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
         const [isUploading, setIsUploading] = useState(false);
-        const snapPoints = useMemo(() => ["50%"], []);
+        const [guidanceText, setGuidanceText] = useState("");
+        const snapPoints = useMemo(() => ["65%"], []);
 
         useImperativeHandle(ref, () => ({
             present: () => bottomSheetRef.current?.expand(),
@@ -121,6 +126,11 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
 
                 console.log("File to upload:", fileToUpload);
                 formData.append("file", fileToUpload);
+                
+                // Add guidance text if provided
+                if (guidanceText.trim()) {
+                    formData.append("prompt", guidanceText.trim());
+                }
 
                 console.log("Uploading to server...");
                 // Upload document
@@ -131,6 +141,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
 
                 // Reset state
                 setSelectedFile(null);
+                setGuidanceText("");
                 setIsUploading(false);
 
                 // Dismiss modal
@@ -179,63 +190,96 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                 backgroundStyle={styles.bottomSheetBackground}
                 handleIndicatorStyle={styles.handleIndicator}
             >
-                <BottomSheetView style={styles.contentContainer}>
-                    <Text style={styles.title}>Upload Document</Text>
-                    <Text style={styles.subtitle}>
-                        Select a PDF, DOCX, or TXT file to upload
-                    </Text>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={styles.keyboardAvoidingView}
+                >
+                    <BottomSheetView style={styles.contentContainer}>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            <Text style={styles.title}>Upload Document</Text>
 
-                    {/* File Selection */}
-                    <TouchableOpacity
-                        style={styles.pickButton}
-                        onPress={handlePickDocument}
-                        disabled={isUploading}
-                    >
-                        <Text style={styles.pickButtonText}>
-                            {selectedFile ? "Change File" : "📄 Select File"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {/* Selected File Display */}
-                    {selectedFile && (
-                        <View style={styles.fileInfo}>
-                            <Text style={styles.fileName} numberOfLines={1}>
-                                {selectedFile.name}
+                            {/* Guidance Text Input */}
+                            <View style={styles.guidanceContainer}>
+                                <Text style={styles.guidanceLabel}>
+                                    What should I do with this document?
+                                </Text>
+                                <Text style={styles.guidanceSubtitle}>
+                                    (Optional) Add instructions for how to process this document
+                                </Text>
+                                <TextInput
+                                    style={styles.guidanceInput}
+                                    placeholder="e.g., 'Summarize the key points', 'Extract main formulas', 'Create study questions', etc."
+                                    placeholderTextColor="#999"
+                                    value={guidanceText}
+                                    onChangeText={setGuidanceText}
+                                    multiline
+                                    numberOfLines={3}
+                                    textAlignVertical="top"
+                                    editable={!isUploading}
+                                    maxLength={500}
+                                />
+                                <Text style={styles.characterCount}>
+                                    {guidanceText.length}/500
+                                </Text>
+                            </View>
+                            <Text style={styles.subtitle}>
+                                Select a PDF, DOCX, or TXT file to upload
                             </Text>
-                            <Text style={styles.fileSize}>
-                                {formatFileSize(selectedFile.size)}
-                            </Text>
-                        </View>
-                    )}
 
-                    {/* Upload Button */}
-                    <TouchableOpacity
-                        style={[
-                            styles.uploadButton,
-                            (!selectedFile || isUploading) && styles.uploadButtonDisabled,
-                        ]}
-                        onPress={handleUpload}
-                        disabled={!selectedFile || isUploading}
-                    >
-                        {isUploading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.uploadButtonText}>Upload</Text>
-                        )}
-                    </TouchableOpacity>
+                            {/* File Selection */}
+                            <TouchableOpacity
+                                style={styles.pickButton}
+                                onPress={handlePickDocument}
+                                disabled={isUploading}
+                            >
+                                <Text style={styles.pickButtonText}>
+                                    {selectedFile ? "Change File" : "📄 Select File"}
+                                </Text>
+                            </TouchableOpacity>
 
-                    {/* Cancel Button */}
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        onPress={() => {
-                            setSelectedFile(null);
-                            bottomSheetRef.current?.close();
-                        }}
-                        disabled={isUploading}
-                    >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
-                    </TouchableOpacity>
-                </BottomSheetView>
+                            {/* Selected File Display */}
+                            {selectedFile && (
+                                <View style={styles.fileInfo}>
+                                    <Text style={styles.fileName} numberOfLines={1}>
+                                        {selectedFile.name}
+                                    </Text>
+                                    <Text style={styles.fileSize}>
+                                        {formatFileSize(selectedFile.size)}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Upload Button */}
+                            <TouchableOpacity
+                                style={[
+                                    styles.uploadButton,
+                                    (!selectedFile || isUploading) && styles.uploadButtonDisabled,
+                                ]}
+                                onPress={handleUpload}
+                                disabled={!selectedFile || isUploading}
+                            >
+                                {isUploading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.uploadButtonText}>Upload</Text>
+                                )}
+                            </TouchableOpacity>
+
+                            {/* Cancel Button */}
+                            <TouchableOpacity
+                                style={styles.cancelButton}
+                                onPress={() => {
+                                    setSelectedFile(null);
+                                    setGuidanceText("");
+                                    bottomSheetRef.current?.close();
+                                }}
+                                disabled={isUploading}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+                    </BottomSheetView>
+                </KeyboardAvoidingView>
             </BottomSheet>
         );
     }
@@ -244,6 +288,9 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
 DocumentUploadModal.displayName = "DocumentUploadModal";
 
 const styles = StyleSheet.create({
+    keyboardAvoidingView: {
+        flex: 1,
+    },
     bottomSheetBackground: {
         backgroundColor: "#fff",
         borderTopLeftRadius: 24,
@@ -299,6 +346,41 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: "Outfit_400Regular",
         color: "#666",
+    },
+    guidanceContainer: {
+        marginBottom: 24,
+    },
+    guidanceLabel: {
+        fontSize: 16,
+        fontFamily: "Outfit_500Medium",
+        color: "#1f1f1f",
+        marginBottom: 4,
+    },
+    guidanceSubtitle: {
+        fontSize: 14,
+        fontFamily: "Outfit_400Regular",
+        color: "#666",
+        marginBottom: 12,
+    },
+    guidanceInput: {
+        backgroundColor: "#f8f9fa",
+        borderWidth: 1,
+        borderColor: "#e9ecef",
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        fontSize: 16,
+        fontFamily: "Outfit_400Regular",
+        color: "#1f1f1f",
+        minHeight: 80,
+        textAlignVertical: "top",
+    },
+    characterCount: {
+        fontSize: 12,
+        fontFamily: "Outfit_400Regular",
+        color: "#999",
+        textAlign: "right",
+        marginTop: 4,
     },
     uploadButton: {
         backgroundColor: "#4285F4",

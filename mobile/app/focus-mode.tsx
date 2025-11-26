@@ -17,6 +17,8 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
+  withSequence,
+  withSpring,
   FadeIn,
   SlideInUp,
 } from "react-native-reanimated";
@@ -34,6 +36,7 @@ export default function FocusModePage() {
   
   const controlsOpacity = useSharedValue(1);
   const timerRef = useRef<number | null>(null);
+  const badgeScale = useSharedValue(1);
 
   // Memoize word count and read time to avoid recalculating on every render
   const { wordCount, readTime } = useMemo(() => {
@@ -53,6 +56,12 @@ export default function FocusModePage() {
         forceUpdate(n => n + 1);
       }
     }, 5000);
+
+    // Animate badge to indicate it's clickable
+    badgeScale.value = withSequence(
+      withSpring(1.1, { damping: 15, stiffness: 300 }),
+      withSpring(1, { damping: 15, stiffness: 300 })
+    );
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -106,6 +115,10 @@ export default function FocusModePage() {
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
     pointerEvents: controlsOpacity.value > 0.5 ? "auto" : "none",
+  }));
+
+  const badgeAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
   }));
 
   const theme = useMemo(() => isDarkMode
@@ -243,10 +256,16 @@ export default function FocusModePage() {
               activeOpacity={0.7}
               onPress={toggleControls}
             >
-              <View style={[styles.focusBadge, { backgroundColor: theme.accent }]}>
+              <Animated.View 
+                style={[
+                  styles.focusBadge, 
+                  { backgroundColor: theme.accent },
+                  badgeAnimatedStyle
+                ]}
+              >
                 <Ionicons name="eye" size={14} color="#fff" />
                 <Text style={styles.focusBadgeText}>Focus Mode</Text>
-              </View>
+              </Animated.View>
             </TouchableOpacity>
             <Text style={[styles.roleLabel, { color: theme.textSecondary }]}>
               {role === "user" ? "Your Message" : "AI Response"}

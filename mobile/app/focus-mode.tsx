@@ -228,11 +228,7 @@ export default function FocusModePage() {
       />
 
       {/* Tap area to toggle controls */}
-      <TouchableOpacity
-        style={styles.tapArea}
-        activeOpacity={1}
-        onPress={toggleControls}
-      >
+      <View style={styles.tapArea}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -243,10 +239,15 @@ export default function FocusModePage() {
             entering={FadeIn.duration(200)}
             style={styles.focusHeader}
           >
-            <View style={[styles.focusBadge, { backgroundColor: theme.accent }]}>
-              <Ionicons name="eye" size={14} color="#fff" />
-              <Text style={styles.focusBadgeText}>Focus Mode</Text>
-            </View>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={toggleControls}
+            >
+              <View style={[styles.focusBadge, { backgroundColor: theme.accent }]}>
+                <Ionicons name="eye" size={14} color="#fff" />
+                <Text style={styles.focusBadgeText}>Focus Mode</Text>
+              </View>
+            </TouchableOpacity>
             <Text style={[styles.roleLabel, { color: theme.textSecondary }]}>
               {role === "user" ? "Your Message" : "AI Response"}
             </Text>
@@ -300,7 +301,7 @@ export default function FocusModePage() {
             </View>
           </Animated.View>
         </ScrollView>
-      </TouchableOpacity>
+      </View>
 
       {/* Top Controls */}
       <Animated.View style={[styles.topControls, controlsStyle]}>

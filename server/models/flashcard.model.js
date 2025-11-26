@@ -38,7 +38,7 @@ const flashcardSetSchema = new mongoose.Schema(
     },
     sourceType: {
       type: String,
-      enum: ["topic", "document", "website", "manual"],
+      enum: ["topic", "document", "website", "course", "manual"],
       required: true,
     },
     sourceId: {
@@ -47,7 +47,7 @@ const flashcardSetSchema = new mongoose.Schema(
     },
     sourceModel: {
       type: String,
-      enum: ["Topic", "Document", "Website"],
+      enum: ["Topic", "Document", "Website", "Course"],
     },
     flashcards: [flashcardItemSchema],
     settings: {

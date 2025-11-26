@@ -14,7 +14,7 @@ const router = express.Router();
 
 const generateFlashcardsValidation = [
   body("sourceType")
-    .isIn(["topic", "document", "website", "manual"])
+    .isIn(["topic", "document", "website", "course", "manual"])
     .withMessage("Invalid source type"),
   body("settings.numberOfCards")
     .optional()

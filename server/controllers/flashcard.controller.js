@@ -2,6 +2,7 @@ const FlashcardSet = require("../models/flashcard.model");
 const Topic = require("../models/topic.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
+const Course = require("../models/course.model");
 const geminiService = require("../config/gemini.config");
 const { validationResult } = require("express-validator");
 const { createChatWithAttachment } = require("./chat.controller");
@@ -124,6 +125,39 @@ const generateFlashcards = async (req, res) => {
           sourceTitle = site.title || site.url;
           sourceRef = site._id;
           sourceModel = "Website";
+          break;
+
+        case "course":
+          const course = await Course.findOne({ _id: sourceId, userId: req.user._id });
+          if (!course) return res.status(404).json({ error: "Course not found" });
+          // Build content from course outline and content
+          let courseContent = `Course: ${course.title}\n`;
+          if (course.description) courseContent += `Description: ${course.description}\n\n`;
+          if (course.content && course.content.length > 0) {
+            courseContent += "Course Content:\n";
+            course.content.forEach((section) => {
+              courseContent += `\n## ${section.section}\n`;
+              if (section.subsection) courseContent += `### ${section.subsection}\n`;
+              courseContent += section.explanation + "\n";
+            });
+          } else if (course.outline && course.outline.length > 0) {
+            courseContent += "Course Outline:\n";
+            course.outline.forEach((section) => {
+              courseContent += `\n## ${section.section}\n`;
+              if (section.subsections) {
+                section.subsections.forEach((sub) => {
+                  courseContent += `- ${sub}\n`;
+                });
+              }
+            });
+          }
+          sourceContent = courseContent;
+          sourceTitle = course.title;
+          sourceRef = course._id;
+          sourceModel = "Course";
+          if (!sourceContent || sourceContent.length < 50) {
+            return res.status(400).json({ error: "Course has insufficient content to generate flashcards from" });
+          }
           break;
 
         default:

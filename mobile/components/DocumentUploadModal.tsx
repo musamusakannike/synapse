@@ -80,21 +80,37 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                 console.log("Selected file:", JSON.stringify(file, null, 2));
 
                 // Validate file type
-                const validTypes = [
+                const validDocumentTypes = [
                     "application/pdf",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     "text/plain"
                 ];
 
-                const validExtensions = [".pdf", ".docx", ".txt"];
-                const fileName = file.name.toLowerCase();
-                const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
-                const hasValidMimeType = file.mimeType && validTypes.includes(file.mimeType);
+                const validImageTypes = [
+                    "image/jpeg",
+                    "image/png", 
+                    "image/webp",
+                    "image/gif",
+                    "image/bmp",
+                    "image/tiff"
+                ];
 
-                if (!hasValidExtension && !hasValidMimeType) {
+                const validDocumentExtensions = [".pdf", ".docx", ".txt"];
+                const validImageExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff"];
+                
+                const fileName = file.name.toLowerCase();
+                const hasValidDocumentExtension = validDocumentExtensions.some(ext => fileName.endsWith(ext));
+                const hasValidImageExtension = validImageExtensions.some(ext => fileName.endsWith(ext));
+                const hasValidDocumentMimeType = file.mimeType && validDocumentTypes.includes(file.mimeType);
+                const hasValidImageMimeType = file.mimeType && validImageTypes.includes(file.mimeType);
+
+                const isDocument = hasValidDocumentExtension || hasValidDocumentMimeType;
+                const isImage = hasValidImageExtension || hasValidImageMimeType;
+
+                if (!isDocument && !isImage) {
                     Alert.alert(
                         "Invalid File Type",
-                        "Please select a PDF, DOCX, or TXT file"
+                        "Please select a PDF, DOCX, TXT file, or an image (JPEG, PNG, WebP, GIF, BMP, TIFF)"
                     );
                     return;
                 }
@@ -231,7 +247,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                                 </Text>
                             </View>
                             <Text style={styles.subtitle}>
-                                Select a PDF, DOCX, or TXT file to upload
+                                Select a PDF, DOCX, TXT file, or an image (JPEG, PNG, WebP, GIF, BMP, TIFF) to upload
                             </Text>
 
                             {/* File Selection */}
@@ -241,7 +257,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                                 disabled={isUploading}
                             >
                                 <Text style={styles.pickButtonText}>
-                                    {selectedFile ? "Change File" : "📄 Select File"}
+                                    {selectedFile ? "Change File" : "📄 Select File or Image"}
                                 </Text>
                             </TouchableOpacity>
 

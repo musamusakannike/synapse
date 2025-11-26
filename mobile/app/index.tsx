@@ -46,6 +46,7 @@ import DocumentUploadModal, {
 import CourseAttachment from "../components/CourseAttachment";
 import QuizAttachment from "../components/QuizAttachment";
 import FlashcardAttachment from "../components/FlashcardAttachment";
+import ImageAttachment from "../components/ImageAttachment";
 import { Ionicons } from "@expo/vector-icons";
 
 const AnimatedButton = memo(
@@ -150,6 +151,20 @@ interface Message {
         createdAt: string;
       };
     }
+    | {
+      type: "image";
+      data: {
+        documentId: string;
+        originalName: string;
+        summary: string;
+        extractedText: string;
+        mimeType: string;
+        isImage: boolean;
+      };
+      metadata?: {
+        createdAt: string;
+      };
+    }
   )[];
 }
 
@@ -196,7 +211,7 @@ const MessageItem = memo(
       () => [
         styles.messageBubble,
         message.role === "user" ? styles.userMessage : styles.assistantMessage,
-        message.attachments?.some(att => att.type === "course" || att.type === "quiz" || att.type === "flashcard") && { maxWidth: "100%" as any },
+        message.attachments?.some(att => att.type === "course" || att.type === "quiz" || att.type === "flashcard" || att.type === "image") && { maxWidth: "100%" as any },
       ],
       [message.role, message.attachments]
     );
@@ -286,6 +301,19 @@ const MessageItem = memo(
                             flashcards={attachment.data.flashcards}
                             settings={attachment.data.settings}
                             onStudyFlashcards={onStudyFlashcards}
+                          />
+                        );
+                      }
+                      if (attachment.type === "image") {
+                        return (
+                          <ImageAttachment
+                            key={attachmentIndex}
+                            documentId={attachment.data.documentId}
+                            originalName={attachment.data.originalName}
+                            summary={attachment.data.summary}
+                            extractedText={attachment.data.extractedText}
+                            mimeType={attachment.data.mimeType}
+                            isImage={attachment.data.isImage}
                           />
                         );
                       }

@@ -395,6 +395,39 @@ class GeminiService {
     }
   }
 
+  // Process images using Gemini vision API with inline data approach
+  async processImage(base64Image, mimeType, prompt) {
+    try {
+      const contents = [
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Image,
+              },
+            },
+            { 
+              text: prompt
+            },
+          ],
+        },
+      ];
+
+      const response = await this.genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: contents,
+        safetySettings: this.safetySettings,
+      });
+
+      return response.text;
+    } catch (error) {
+      console.error("Error processing image:", error);
+      throw new Error("Failed to process image");
+    }
+  }
+
   // NOTE: This method remains valid with the new SDK. No changes needed.
   async generateQuiz(content, settings) {
     const prompt = this.buildQuizPrompt(content, settings);

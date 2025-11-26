@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -29,31 +29,48 @@ export default function FocusModePage() {
   
   const [fontSize, setFontSize] = useState(18);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [showControls, setShowControls] = useState(true);
+  const showControlsRef = useRef(true);
+  const [, forceUpdate] = useState(0);
   
   const controlsOpacity = useSharedValue(1);
+  const timerRef = useRef<number | null>(null);
+
+  // Memoize word count and read time to avoid recalculating on every render
+  const { wordCount, readTime } = useMemo(() => {
+    const words = content.split(/\s+/).filter(Boolean);
+    return {
+      wordCount: words.length,
+      readTime: Math.ceil(words.length / 200),
+    };
+  }, [content]);
 
   useEffect(() => {
-    // Auto-hide controls after 3 seconds
-    const timer = setTimeout(() => {
-      if (showControls) {
-        controlsOpacity.value = withTiming(0, { duration: 300 });
-        setShowControls(false);
+    // Auto-hide controls after 5 seconds - only run once on mount
+    timerRef.current = setTimeout(() => {
+      if (showControlsRef.current) {
+        controlsOpacity.value = withTiming(0, { duration: 150 });
+        showControlsRef.current = false;
+        forceUpdate(n => n + 1);
       }
     }, 5000);
 
-    return () => clearTimeout(timer);
-  }, [showControls, controlsOpacity]);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toggleControls = useCallback(() => {
-    if (showControls) {
-      controlsOpacity.value = withTiming(0, { duration: 200 });
-      setShowControls(false);
+    if (showControlsRef.current) {
+      controlsOpacity.value = withTiming(0, { duration: 100 });
+      showControlsRef.current = false;
     } else {
-      setShowControls(true);
-      controlsOpacity.value = withTiming(1, { duration: 200 });
+      showControlsRef.current = true;
+      controlsOpacity.value = withTiming(1, { duration: 100 });
     }
-  }, [showControls, controlsOpacity]);
+    forceUpdate(n => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleClose = useCallback(() => {
     router.back();
@@ -88,10 +105,10 @@ export default function FocusModePage() {
 
   const controlsStyle = useAnimatedStyle(() => ({
     opacity: controlsOpacity.value,
-    pointerEvents: showControls ? "auto" : "none",
+    pointerEvents: controlsOpacity.value > 0.5 ? "auto" : "none",
   }));
 
-  const theme = isDarkMode
+  const theme = useMemo(() => isDarkMode
     ? {
         background: "#0f172a",
         surface: "#1e293b",
@@ -107,9 +124,9 @@ export default function FocusModePage() {
         textSecondary: "#64748b",
         accent: "#4285F4",
         border: "#e2e8f0",
-      };
+      }, [isDarkMode]);
 
-  const markdownStyles = {
+  const markdownStyles = useMemo(() => ({
     body: {
       color: theme.text,
       fontSize: fontSize,
@@ -199,7 +216,7 @@ export default function FocusModePage() {
       fontStyle: "italic" as const,
       color: theme.text,
     },
-  };
+  }), [theme, fontSize]);
 
   return (
     <SafeAreaView
@@ -223,7 +240,7 @@ export default function FocusModePage() {
         >
           {/* Focus Mode Header */}
           <Animated.View
-            entering={FadeIn.duration(500)}
+            entering={FadeIn.duration(200)}
             style={styles.focusHeader}
           >
             <View style={[styles.focusBadge, { backgroundColor: theme.accent }]}>
@@ -237,7 +254,7 @@ export default function FocusModePage() {
 
           {/* Content */}
           <Animated.View
-            entering={SlideInUp.duration(400).delay(100)}
+            entering={SlideInUp.duration(200).delay(50)}
             style={[
               styles.contentCard,
               {
@@ -266,19 +283,19 @@ export default function FocusModePage() {
 
           {/* Reading Stats */}
           <Animated.View
-            entering={FadeIn.duration(500).delay(300)}
+            entering={FadeIn.duration(200).delay(100)}
             style={styles.statsContainer}
           >
             <View style={[styles.statItem, { backgroundColor: theme.surface }]}>
               <Ionicons name="text" size={16} color={theme.textSecondary} />
               <Text style={[styles.statText, { color: theme.textSecondary }]}>
-                {content.split(/\s+/).length} words
+                {wordCount} words
               </Text>
             </View>
             <View style={[styles.statItem, { backgroundColor: theme.surface }]}>
               <Ionicons name="time" size={16} color={theme.textSecondary} />
               <Text style={[styles.statText, { color: theme.textSecondary }]}>
-                ~{Math.ceil(content.split(/\s+/).length / 200)} min read
+                ~{readTime} min read
               </Text>
             </View>
           </Animated.View>

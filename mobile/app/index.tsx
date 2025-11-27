@@ -348,7 +348,7 @@ export default function AIInterface() {
   const sendButtonWidth = useSharedValue(0);
   const headerTranslateY = useSharedValue(0);
   const { openAuthModal, setOnChatSelect, isAuthenticated } = useAuth();
-  const { openSidebar, setOnChatSelect: setSidebarChatSelect } = useSidebar();
+  const { openSidebar, setOnChatSelect: setSidebarChatSelect, setOnNewChat } = useSidebar();
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -500,11 +500,27 @@ export default function AIInterface() {
     }
   }, []);
 
+  const handleNewChat = useCallback(() => {
+    // Reset AIInterface to fresh state
+    setCurrentChatId(null);
+    setMessages([]);
+    setIsChatMode(false);
+    setInputText("");
+    setIsLoading(false);
+    setSelectedMessageContent("");
+    setSelectedMessageIndex(-1);
+    setSelectedMessageRole("user");
+    setIsEditingMessage(false);
+    setEditedMessageContent("");
+    setExpandedUserMessages({});
+  }, []);
+
   // Register chat select handler
   useEffect(() => {
     setOnChatSelect(handleOpenChat);
     setSidebarChatSelect(handleOpenChat);
-  }, [setOnChatSelect, setSidebarChatSelect, handleOpenChat]);
+    setOnNewChat(handleNewChat);
+  }, [setOnChatSelect, setSidebarChatSelect, setOnNewChat, handleOpenChat, handleNewChat]);
 
   // Memoize expensive computations
   const memoizedMessages = useMemo(() => messages, [messages]);

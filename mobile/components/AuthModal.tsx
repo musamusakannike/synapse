@@ -13,7 +13,9 @@ import * as Linking from "expo-linking";
 import { UserAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
 import { useTheme, Theme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 // Configuration for web-based OAuth
 const FRONTEND_URL = "https://synapsebot.vercel.app";
@@ -44,6 +46,8 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loadingUser, setLoadingUser] = useState(false);
     const { colors, theme, setTheme } = useTheme();
+    const { isSubscribed } = useAuth();
+    const router = useRouter();
 
     // Snap points for the bottom sheet
     const snapPoints = useMemo(() => isAuthenticated ? ["55%"] : ["40%"], [isAuthenticated]);
@@ -230,6 +234,21 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                                             <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                                         </TouchableOpacity>
                                     </View>
+
+                                    {/* View Transactions Button - Only for subscribed users */}
+                                    {isSubscribed && (
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                bottomSheetRef.current?.close();
+                                                router.push('/transactions');
+                                            }}
+                                            style={[styles.transactionsButton, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}
+                                        >
+                                            <Ionicons name="receipt-outline" size={20} color={colors.primary} />
+                                            <Text style={[styles.transactionsButtonText, { color: colors.text }]}>View Transactions</Text>
+                                            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                                        </TouchableOpacity>
+                                    )}
 
                                     {/* Logout Button */}
                                     <TouchableOpacity
@@ -469,6 +488,23 @@ const styles = StyleSheet.create({
     themeToggleValue: {
         fontSize: 14,
         fontFamily: "Outfit_400Regular",
+    },
+    transactionsButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 8,
+    },
+    transactionsButtonText: {
+        flex: 1,
+        fontSize: 16,
+        fontFamily: "Outfit_500Medium",
+        marginLeft: 10,
     },
 });
 

@@ -59,8 +59,6 @@ const SubscriptionSchema = new mongoose.Schema(
 
 // Index for efficient queries
 SubscriptionSchema.index({ user: 1, status: 1 });
-SubscriptionSchema.index({ txRef: 1 });
-SubscriptionSchema.index({ flutterwaveTransactionId: 1 });
 
 const Subscription = mongoose.model("Subscription", SubscriptionSchema);
 module.exports = Subscription;

@@ -1,3 +1,4 @@
+const axios = require("axios");
 const User = require("../models/user.model");
 const Subscription = require("../models/subscription.model");
 const {
@@ -139,7 +140,7 @@ const initiatePayment = async (req, res) => {
       },
     };
 
-    if (!flw) {
+    if (!process.env.FLW_SECRET_KEY) {
       subscription.status = "failed";
       await subscription.save();
       return res.status(503).json({
@@ -148,9 +149,20 @@ const initiatePayment = async (req, res) => {
       });
     }
 
-    const response = await flw.Charge.card(payload);
+    const fwResponse = await axios.post(
+      "https://api.flutterwave.com/v3/payments",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    if (response.status === "success") {
+    const response = fwResponse.data;
+
+    if (response.status === "success" && response.data && response.data.link) {
       res.json({
         success: true,
         data: {
@@ -203,7 +215,7 @@ const verifyPayment = async (req, res) => {
       );
     }
 
-    if (status === "successful" || status === "completed") {
+    if (status === "completed" || status === "successful") {
       // Verify with Flutterwave
       if (!flw) {
         return res.redirect(

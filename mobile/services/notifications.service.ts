@@ -1,5 +1,5 @@
 import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
+// import * as Device from "expo-device";
 import Constants from "expo-constants";
 import api from "../lib/api";
 
@@ -7,10 +7,10 @@ import api from "../lib/api";
  * Request permission for push notifications
  */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!Device.isDevice) {
-    console.log("Push notifications are not supported on simulator/emulator");
-    return false;
-  }
+  // if (!Device.isDevice) {
+  //   console.log("Push notifications are not supported on simulator/emulator");
+  //   return false;
+  // }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;

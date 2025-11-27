@@ -148,7 +148,7 @@ const initiatePayment = async (req, res) => {
       });
     }
 
-    const response = await flw.Payment.standard(payload);
+    const response = await flw.Charge.card(payload);
 
     if (response.status === "success") {
       res.json({

@@ -34,6 +34,16 @@ const UserSchema = new mongoose.Schema(
     expoPushTokenUpdatedAt: {
         type: Date,
     },
+    // Subscription fields
+    subscriptionTier: {
+      type: String,
+      enum: ["FREE", "GURU"],
+      default: "FREE",
+    },
+    subscriptionExpiresAt: {
+      type: Date,
+      default: null,
+    },
     isEmailVerified: {
       type: Boolean,
       default: false,

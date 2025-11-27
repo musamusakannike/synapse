@@ -347,7 +347,7 @@ export default function AIInterface() {
   const titleOpacity = useSharedValue(0);
   const sendButtonWidth = useSharedValue(0);
   const headerTranslateY = useSharedValue(0);
-  const { openAuthModal, setOnChatSelect, isAuthenticated } = useAuth();
+  const { openAuthModal, setOnChatSelect, isAuthenticated, isSubscribed } = useAuth();
   const { openSidebar, setOnChatSelect: setSidebarChatSelect, setOnNewChat } = useSidebar();
   const { colors, isDark } = useTheme();
   const router = useRouter();
@@ -419,6 +419,7 @@ export default function AIInterface() {
     const fetchUser = async () => {
       try {
         const { data } = await UserAPI.getCurrentUser();
+        console.log(data)
         if (data?.name || data?.email) {
           const nameFromEmail = data.email ? data.email.split("@")[0] : "";
           const normalizedName = (data.name || nameFromEmail || "").trim();
@@ -1013,6 +1014,7 @@ export default function AIInterface() {
                 >
                   Create Flashcards
                 </AnimatedButton>
+{!isSubscribed && (
                 <AnimatedButton
                   delay={900}
                   icon="👑"
@@ -1021,6 +1023,7 @@ export default function AIInterface() {
                 >
                   Upgrade to GURU
                 </AnimatedButton>
+                )}
               </View>
             </>
           ) : (

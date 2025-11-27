@@ -17,6 +17,8 @@ const getCurrentUser = async (req, res) => {
             name: user.name,
             profilePicture: user.profilePicture,
             isEmailVerified: user.isEmailVerified,
+            subscriptionTier: user.subscriptionTier,
+            subscriptionExpiresAt: user.subscriptionExpiresAt,
             createdAt: user.createdAt,
             lastLogin: user.lastLogin,
         });

@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AuthModal, { AuthModalRef } from "../components/AuthModal";
 import * as SecureStore from "expo-secure-store";
 import { initializeNotifications } from "../services/notifications.service";
+import { UserAPI } from "../lib/api";
 
 type AuthContextShape = {
     openAuthModal: () => void;
@@ -13,6 +14,9 @@ type AuthContextShape = {
     checkAuth: () => Promise<boolean>;
     onChatSelect?: (chatId: string) => void;
     setOnChatSelect: (callback: (chatId: string) => void) => void;
+    isSubscribed: boolean;
+    subscriptionTier: string | null;
+    refreshSubscriptionStatus: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextShape>({
@@ -22,6 +26,9 @@ const AuthContext = createContext<AuthContextShape>({
     isAuthenticated: false,
     checkAuth: async () => false,
     setOnChatSelect: () => { },
+    isSubscribed: false,
+    subscriptionTier: null,
+    refreshSubscriptionStatus: async () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -31,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [onChatSelect, setOnChatSelect] = useState<((chatId: string) => void) | undefined>();
+    const [subscriptionTier, setSubscriptionTier] = useState<string | null>(null);
+    const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
 
     const openAuthModal = () => authModalRef.current?.present();
     const closeAuthModal = () => authModalRef.current?.dismiss();
@@ -52,14 +61,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
             await SecureStore.deleteItemAsync("accessToken");
             setIsAuthenticated(false);
+            setSubscriptionTier(null);
+            setSubscriptionExpiresAt(null);
             authModalRef.current?.present();
         } catch (error) {
             console.error("Error signing out:", error);
         }
     };
 
+    const refreshSubscriptionStatus = async () => {
+        try {
+            const { data } = await UserAPI.getCurrentUser();
+            if (data) {
+                setSubscriptionTier(data.subscriptionTier || null);
+                setSubscriptionExpiresAt(data.subscriptionExpiresAt || null);
+            }
+        } catch (error) {
+            console.error("Error fetching subscription status:", error);
+        }
+    };
+
+    // Check if user has an active subscription
+    const isSubscribed = (() => {
+        if (!subscriptionTier || subscriptionTier === 'FREE') return false;
+        if (!subscriptionExpiresAt) return false;
+        return new Date(subscriptionExpiresAt) > new Date();
+    })();
+
     const handleAuthSuccess = async () => {
         await checkAuth();
+        // Fetch subscription status after successful authentication
+        await refreshSubscriptionStatus();
         // Initialize notifications after successful authentication
         initializeNotifications().catch(error => {
             console.error('Failed to initialize notifications:', error);
@@ -72,6 +104,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setIsLoading(true);
             const authenticated = await checkAuth();
             if (authenticated) {
+                // Fetch subscription status for already-authenticated users
+                await refreshSubscriptionStatus();
                 // Initialize notifications for already-authenticated users
                 initializeNotifications().catch(error => {
                     console.error('Failed to initialize notifications on app start:', error);
@@ -107,7 +141,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                         isAuthenticated, 
                         checkAuth,
                         onChatSelect,
-                        setOnChatSelect: updateOnChatSelect
+                        setOnChatSelect: updateOnChatSelect,
+                        isSubscribed,
+                        subscriptionTier,
+                        refreshSubscriptionStatus
                     }}
                 >
                     {children}

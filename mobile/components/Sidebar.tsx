@@ -66,7 +66,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect, onNewChat 
 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-    const { isAuthenticated, openAuthModal } = useAuth();
+    const { isAuthenticated, openAuthModal, isSubscribed } = useAuth();
     const { colors } = useTheme();
 
     const translateX = useSharedValue(-SCREEN_WIDTH);
@@ -537,8 +537,8 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect, onNewChat 
                     )}
                 </ScrollView>
 
-                {/* Subscription Button */}
-                {!selectionMode && (
+                {/* Subscription Button - Only show for non-subscribed users */}
+                {!selectionMode && !isSubscribed && (
                     <View style={[styles.subscriptionContainer, { borderTopColor: colors.border }]}>
                         <TouchableOpacity
                             style={styles.subscriptionButton}

@@ -268,7 +268,11 @@ const MessageItem = memo(
               <>
                 <Markdown
                   style={{
-                    body: StyleSheet.flatten(messageTextStyle),
+                    body: {
+                      ...styles.messageText,
+                      ...styles.assistantMessageText,
+                      color: colors.text,
+                    },
                   }}
                 >
                   {message.content}
@@ -1333,18 +1337,23 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
   },
   messageBubble: {
-    maxWidth: "90%",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    maxWidth: "100%",
     borderRadius: 20,
   },
   userMessage: {
     backgroundColor: "#4285F4",
     borderBottomRightRadius: 4,
+    maxWidth: "90%",
+    alignSelf: "flex-end",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   assistantMessage: {
-    backgroundColor: "#f0f4f9",
     borderBottomLeftRadius: 4,
+    maxWidth: "100%",
+    alignSelf: "flex-start",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   messageText: {
     fontSize: 16,
@@ -1439,7 +1448,8 @@ const styles = StyleSheet.create({
     fontFamily: "Outfit_600SemiBold",
   },
   expandIconButton: {
-    marginLeft: 6,
+    marginLeft: 0,
+    marginRight: 16,
     marginTop: 2,
     paddingHorizontal: 4,
     paddingVertical: 2,

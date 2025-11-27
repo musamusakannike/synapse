@@ -20,6 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { QuizAPI } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface Question {
   questionText: string;
@@ -54,6 +55,7 @@ export default function QuizAttemptPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -312,15 +314,15 @@ export default function QuizAttemptPage() {
 
   if (isLoading || (quiz?.status === "generating" && quiz.questions.length === 0)) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4285F4" />
-          <Text style={styles.loadingText}>
+          <Text style={[styles.loadingText, { color: colors.text }]}>
             {quiz?.status === "generating" ? "Generating quiz questions..." : "Loading quiz..."}
           </Text>
           {quiz?.status === "generating" && (
-            <Text style={styles.loadingSubtext}>
+            <Text style={[styles.loadingSubtext, { color: colors.textSecondary }]}>
               {quiz.questions.length} / {quiz.settings.numberOfQuestions} questions generated
             </Text>
           )}
@@ -331,11 +333,11 @@ export default function QuizAttemptPage() {
 
   if (!quiz || quiz.status === "failed") {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.loadingContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#999" />
-          <Text style={styles.loadingText}>Quiz not found</Text>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Quiz not found</Text>
           <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -349,10 +351,10 @@ export default function QuizAttemptPage() {
     const isPassing = percentage >= 70;
 
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <ScrollView contentContainerStyle={styles.resultsContainer}>
-          <View style={styles.resultsCard}>
+          <View style={[styles.resultsCard, { backgroundColor: colors.card }]}>
             <View style={[styles.resultsBadge, isPassing ? styles.resultsBadgePass : styles.resultsBadgeFail]}>
               <Ionicons
                 name={isPassing ? "checkmark-circle" : "close-circle"}
@@ -361,36 +363,36 @@ export default function QuizAttemptPage() {
               />
             </View>
 
-            <Text style={styles.resultsTitle}>
+            <Text style={[styles.resultsTitle, { color: colors.text }]}>
               {isPassing ? "Congratulations!" : "Keep Practicing!"}
             </Text>
 
-            <Text style={styles.resultsSubtitle}>{quiz.title}</Text>
+            <Text style={[styles.resultsSubtitle, { color: colors.textSecondary }]}>{quiz.title}</Text>
 
             <View style={styles.scoreContainer}>
-              <Text style={styles.scoreText}>{score}</Text>
-              <Text style={styles.scoreDivider}>/</Text>
-              <Text style={styles.scoreTotalText}>{quiz.questions.length}</Text>
+              <Text style={[styles.scoreText, { color: colors.primary }]}>{score}</Text>
+              <Text style={[styles.scoreDivider, { color: colors.textSecondary }]}>/</Text>
+              <Text style={[styles.scoreTotalText, { color: colors.textSecondary }]}>{quiz.questions.length}</Text>
             </View>
 
-            <Text style={styles.percentageText}>{percentage}%</Text>
+            <Text style={[styles.percentageText, { color: colors.text }]}>{percentage}%</Text>
 
-            <View style={styles.statsContainer}>
+            <View style={[styles.statsContainer, { backgroundColor: colors.inputBackground }]}>
               <View style={styles.statItem}>
                 <Ionicons name="checkmark-circle" size={24} color="#34A853" />
-                <Text style={styles.statValue}>{score}</Text>
-                <Text style={styles.statLabel}>Correct</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{score}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Correct</Text>
               </View>
-              <View style={styles.statDivider} />
+              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <View style={styles.statItem}>
                 <Ionicons name="close-circle" size={24} color="#EA4335" />
-                <Text style={styles.statValue}>{quiz.questions.length - score}</Text>
-                <Text style={styles.statLabel}>Incorrect</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{quiz.questions.length - score}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Incorrect</Text>
               </View>
             </View>
 
             <View style={styles.resultsButtons}>
-              <TouchableOpacity style={styles.retakeButton} onPress={handleRetakeQuiz}>
+              <TouchableOpacity style={[styles.retakeButton, { borderColor: colors.primary }]} onPress={handleRetakeQuiz}>
                 <Ionicons name="refresh" size={20} color="#4285F4" />
                 <Text style={styles.retakeButtonText}>Retake Quiz</Text>
               </TouchableOpacity>
@@ -408,11 +410,11 @@ export default function QuizAttemptPage() {
   const currentQuestion = quiz.questions[currentQuestionIndex];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => {
@@ -426,14 +428,14 @@ export default function QuizAttemptPage() {
             );
           }}
         >
-          <Ionicons name="close" size={24} color="#000" />
+          <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
+          <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
             <Animated.View style={[styles.progressFill, progressStyle]} />
           </View>
-          <Text style={styles.progressText}>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>
             {currentQuestionIndex + 1} / {quiz.questions.length}
           </Text>
         </View>
@@ -450,7 +452,7 @@ export default function QuizAttemptPage() {
             </Text>
           </View>
 
-          <Text style={styles.questionText}>{currentQuestion.questionText}</Text>
+          <Text style={[styles.questionText, { color: colors.text }]}>{currentQuestion.questionText}</Text>
         </View>
 
         {/* Options */}
@@ -483,12 +485,12 @@ export default function QuizAttemptPage() {
 
         {/* Explanation */}
         {showExplanation && (
-          <View style={styles.explanationContainer}>
+          <View style={[styles.explanationContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.explanationHeader}>
               <Ionicons name="bulb" size={20} color="#FBBC04" />
-              <Text style={styles.explanationTitle}>Explanation</Text>
+              <Text style={[styles.explanationTitle, { color: colors.text }]}>Explanation</Text>
             </View>
-            <Text style={styles.explanationText}>{currentQuestion.explanation}</Text>
+            <Text style={[styles.explanationText, { color: colors.textSecondary }]}>{currentQuestion.explanation}</Text>
           </View>
         )}
       </ScrollView>

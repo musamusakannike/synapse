@@ -19,6 +19,7 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { CourseAPI, ChatAPI } from "../../lib/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface CourseOutlineItem {
   section: string;
@@ -43,6 +44,7 @@ interface Course {
 export default function CourseProgressPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors, isDark } = useTheme();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -203,18 +205,18 @@ export default function CourseProgressPage() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       {/* Header */}
-      <Animated.View style={[styles.header, headerStyle]}>
+      <Animated.View style={[styles.header, headerStyle, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={24} color="#000" />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Course Generation</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Course Generation</Text>
         <View style={styles.headerSpacer} />
       </Animated.View>
 
@@ -226,26 +228,26 @@ export default function CourseProgressPage() {
         {/* Title Section */}
         <View style={styles.titleSection}>
           <Text style={styles.greeting}>Generating Your Course</Text>
-          {course && <Text style={styles.courseTitle}>{course.title}</Text>}
+          {course && <Text style={[styles.courseTitle, { color: colors.textSecondary }]}>{course.title}</Text>}
         </View>
 
         {/* Progress Section */}
         <View style={styles.progressSection}>
           <View style={styles.progressHeader}>
-            <Text style={styles.statusText}>{getStatusText()}</Text>
-            <Text style={styles.progressPercentage}>
+            <Text style={[styles.statusText, { color: colors.text }]}>{getStatusText()}</Text>
+            <Text style={[styles.progressPercentage, { color: colors.textSecondary }]}>
               {getProgressPercentage()}%
             </Text>
           </View>
 
-          <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
             <Animated.View style={[styles.progressBar, progressBarStyle]} />
           </View>
 
           {isPolling && course?.status !== "completed" && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="#4285F4" />
-              <Text style={styles.loadingText}>
+              <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
                 This may take a few minutes...
               </Text>
             </View>
@@ -255,23 +257,23 @@ export default function CourseProgressPage() {
         {/* Course Outline Preview */}
         {course?.outline && course.outline.length > 0 && (
           <Animated.View style={[styles.outlineSection, outlineStyle]}>
-            <Text style={styles.outlineTitle}>Course Outline Preview</Text>
-            <View style={styles.outlineContainer}>
+            <Text style={[styles.outlineTitle, { color: colors.text }]}>Course Outline Preview</Text>
+            <View style={[styles.outlineContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {course.outline.map((section, index) => (
                 <View key={index} style={styles.outlineItem}>
                   <View style={styles.sectionHeader}>
                     <View style={styles.sectionNumber}>
                       <Text style={styles.sectionNumberText}>{index + 1}</Text>
                     </View>
-                    <Text style={styles.sectionTitle}>{section.section}</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.section}</Text>
                   </View>
 
                   {section.subsections && section.subsections.length > 0 && (
                     <View style={styles.subsectionsContainer}>
                       {section.subsections.map((subsection, subIndex) => (
                         <View key={subIndex} style={styles.subsectionItem}>
-                          <View style={styles.subsectionDot} />
-                          <Text style={styles.subsectionText}>
+                          <View style={[styles.subsectionDot, { backgroundColor: colors.textSecondary }]} />
+                          <Text style={[styles.subsectionText, { color: colors.textSecondary }]}>
                             {subsection}
                           </Text>
                         </View>
@@ -287,11 +289,11 @@ export default function CourseProgressPage() {
         {/* Course Settings */}
         {course && (
           <View style={styles.settingsSection}>
-            <Text style={styles.settingsTitle}>Course Configuration</Text>
-            <View style={styles.settingsGrid}>
+            <Text style={[styles.settingsTitle, { color: colors.text }]}>Course Configuration</Text>
+            <View style={[styles.settingsGrid, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.settingItem}>
-                <Text style={styles.settingLabel}>Level</Text>
-                <Text style={styles.settingValue}>
+                <Text style={[styles.settingLabel, { color: colors.textSecondary }]}>Level</Text>
+                <Text style={[styles.settingValue, { color: colors.text }]}>
                   {course.settings.level.charAt(0).toUpperCase() +
                     course.settings.level.slice(1)}
                 </Text>

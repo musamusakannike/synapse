@@ -28,6 +28,7 @@ import {
 } from "react-native-gesture-handler";
 import { FlashcardAPI } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -54,6 +55,7 @@ export default function FlashcardStudyPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -261,11 +263,11 @@ export default function FlashcardStudyPage() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4285F4" />
-          <Text style={styles.loadingText}>Loading flashcards...</Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading flashcards...</Text>
         </View>
       </SafeAreaView>
     );
@@ -273,11 +275,11 @@ export default function FlashcardStudyPage() {
 
   if (!flashcardSet || flashcardSet.flashcards.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.loadingContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#999" />
-          <Text style={styles.loadingText}>No flashcards found</Text>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textSecondary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>No flashcards found</Text>
           <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
@@ -291,10 +293,10 @@ export default function FlashcardStudyPage() {
     const isPassing = score >= 70;
 
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.resultsContainer}>
-          <View style={styles.resultsCard}>
+          <View style={[styles.resultsCard, { backgroundColor: colors.card }]}>
             <View style={[styles.resultsBadge, isPassing ? styles.resultsBadgePass : styles.resultsBadgeFail]}>
               <Ionicons
                 name={isPassing ? "checkmark-circle" : "refresh-circle"}
@@ -303,36 +305,36 @@ export default function FlashcardStudyPage() {
               />
             </View>
 
-            <Text style={styles.resultsTitle}>
+            <Text style={[styles.resultsTitle, { color: colors.text }]}>
               {isPassing ? "Great Job!" : "Keep Practicing!"}
             </Text>
 
-            <Text style={styles.resultsSubtitle}>{flashcardSet.title}</Text>
+            <Text style={[styles.resultsSubtitle, { color: colors.textSecondary }]}>{flashcardSet.title}</Text>
 
             <View style={styles.scoreContainer}>
-              <Text style={styles.scoreText}>{knownCards.size}</Text>
-              <Text style={styles.scoreDivider}>/</Text>
-              <Text style={styles.scoreTotalText}>{flashcardSet.flashcards.length}</Text>
+              <Text style={[styles.scoreText, { color: colors.primary }]}>{knownCards.size}</Text>
+              <Text style={[styles.scoreDivider, { color: colors.textSecondary }]}>/</Text>
+              <Text style={[styles.scoreTotalText, { color: colors.textSecondary }]}>{flashcardSet.flashcards.length}</Text>
             </View>
 
-            <Text style={styles.percentageText}>{score}% Mastered</Text>
+            <Text style={[styles.percentageText, { color: colors.text }]}>{score}% Mastered</Text>
 
-            <View style={styles.statsContainer}>
+            <View style={[styles.statsContainer, { backgroundColor: colors.inputBackground }]}>
               <View style={styles.statItem}>
                 <Ionicons name="checkmark-circle" size={24} color="#34A853" />
-                <Text style={styles.statValue}>{knownCards.size}</Text>
-                <Text style={styles.statLabel}>Known</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{knownCards.size}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Known</Text>
               </View>
-              <View style={styles.statDivider} />
+              <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <View style={styles.statItem}>
                 <Ionicons name="help-circle" size={24} color="#FBBC04" />
-                <Text style={styles.statValue}>{flashcardSet.flashcards.length - knownCards.size}</Text>
-                <Text style={styles.statLabel}>Review</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{flashcardSet.flashcards.length - knownCards.size}</Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Review</Text>
               </View>
             </View>
 
             <View style={styles.resultsButtons}>
-              <TouchableOpacity style={styles.retakeButton} onPress={handleRestartStudy}>
+              <TouchableOpacity style={[styles.retakeButton, { borderColor: colors.primary }]} onPress={handleRestartStudy}>
                 <Ionicons name="refresh" size={20} color="#4285F4" />
                 <Text style={styles.retakeButtonText}>Study Again</Text>
               </TouchableOpacity>
@@ -350,12 +352,12 @@ export default function FlashcardStudyPage() {
   const currentCard = flashcardSet.flashcards[currentIndex];
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => {
@@ -369,14 +371,14 @@ export default function FlashcardStudyPage() {
               );
             }}
           >
-            <Ionicons name="close" size={24} color="#000" />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
 
           <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
+            <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
               <Animated.View style={[styles.progressFill, progressStyle]} />
             </View>
-            <Text style={styles.progressText}>
+            <Text style={[styles.progressText, { color: colors.textSecondary }]}>
               {currentIndex + 1} / {flashcardSet.flashcards.length}
             </Text>
           </View>
@@ -386,7 +388,7 @@ export default function FlashcardStudyPage() {
 
         {/* Card Title */}
         <View style={styles.cardTitleContainer}>
-          <Text style={styles.cardTitle}>{flashcardSet.title}</Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>{flashcardSet.title}</Text>
           <View
             style={[
               styles.difficultyBadge,
@@ -409,14 +411,14 @@ export default function FlashcardStudyPage() {
           <GestureDetector gesture={combinedGesture}>
             <View style={styles.cardWrapper}>
               {/* Front of card */}
-              <Animated.View style={[styles.card, styles.cardFront, frontAnimatedStyle]}>
-                <Text style={styles.cardLabel}>Question</Text>
-                <Text style={styles.cardText}>{currentCard.front}</Text>
-                <Text style={styles.tapHint}>Tap to flip</Text>
+              <Animated.View style={[styles.card, styles.cardFront, { backgroundColor: colors.card }, frontAnimatedStyle]}>
+                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>Question</Text>
+                <Text style={[styles.cardText, { color: colors.text }]}>{currentCard.front}</Text>
+                <Text style={[styles.tapHint, { color: colors.placeholder }]}>Tap to flip</Text>
               </Animated.View>
 
               {/* Back of card */}
-              <Animated.View style={[styles.card, styles.cardBack, backAnimatedStyle]}>
+              <Animated.View style={[styles.card, styles.cardBack, { backgroundColor: colors.primary }, backAnimatedStyle]}>
                 <Text style={styles.cardLabel}>Answer</Text>
                 <Text style={styles.cardText}>{currentCard.back}</Text>
                 <Text style={styles.tapHint}>Tap to flip back</Text>
@@ -429,10 +431,10 @@ export default function FlashcardStudyPage() {
         <View style={styles.swipeHints}>
           <View style={styles.swipeHint}>
             <Ionicons name="arrow-back" size={20} color="#EA4335" />
-            <Text style={styles.swipeHintText}>Still Learning</Text>
+            <Text style={[styles.swipeHintText, { color: colors.textSecondary }]}>Still Learning</Text>
           </View>
           <View style={styles.swipeHint}>
-            <Text style={styles.swipeHintText}>Got It!</Text>
+            <Text style={[styles.swipeHintText, { color: colors.textSecondary }]}>Got It!</Text>
             <Ionicons name="arrow-forward" size={20} color="#34A853" />
           </View>
         </View>

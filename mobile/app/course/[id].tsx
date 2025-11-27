@@ -22,6 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import Markdown from "react-native-markdown-display";
 import { CourseAPI } from "../../lib/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -56,6 +57,7 @@ export default function CourseViewPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
+  const { colors, isDark } = useTheme();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -268,10 +270,10 @@ export default function CourseViewPage() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading course...</Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading course...</Text>
         </View>
       </SafeAreaView>
     );
@@ -279,10 +281,10 @@ export default function CourseViewPage() {
 
   if (!course) {
     return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Course not found</Text>
+          <Text style={[styles.errorText, { color: colors.text }]}>Course not found</Text>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
@@ -297,20 +299,20 @@ export default function CourseViewPage() {
   const currentContent = getCurrentContent();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       {/* Header */}
-      <Animated.View style={[styles.header, headerStyle]}>
+      <Animated.View style={[styles.header, headerStyle, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.headerButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="chevron-back" size={20} color="#1f1f1f" />
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
             {course.title}
           </Text>
         </View>
@@ -320,10 +322,10 @@ export default function CourseViewPage() {
             style={styles.headerButton}
             onPress={toggleTableOfContents}
           >
-            <MaterialIcons name="menu" size={20} color="#1f1f1f" />
+            <MaterialIcons name="menu" size={20} color={colors.text} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={shareCourse}>
-            <Ionicons name="share-outline" size={20} color="#1f1f1f" />
+            <Ionicons name="share-outline" size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -331,8 +333,8 @@ export default function CourseViewPage() {
       {/* Table of Contents Overlay */}
       {showTableOfContents && (
         <Animated.View style={[styles.tocOverlay, tocStyle]}>
-          <View style={styles.tocContainer}>
-            <Text style={styles.tocTitle}>Table of Contents</Text>
+          <View style={[styles.tocContainer, { backgroundColor: colors.card }]}>
+            <Text style={[styles.tocTitle, { color: colors.text }]}>Table of Contents</Text>
             <ScrollView
               style={styles.tocScrollView}
               showsVerticalScrollIndicator={false}

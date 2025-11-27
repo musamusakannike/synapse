@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface CourseOutlineItem {
   section: string;
@@ -29,6 +30,7 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
   outline,
   onViewCourse,
 }) => {
+  const { colors, isDark } = useTheme();
   const [isDownloading, setIsDownloading] = useState(false);
   const pulseAnim = new Animated.Value(1);
 
@@ -128,17 +130,17 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
   }, [courseId, onViewCourse]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? colors.card : '#f8f9ff', borderColor: colors.border }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>🎓</Text>
         </View>
         <View style={styles.headerContent}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
             {title}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Complete Course • {outline.length} sections
           </Text>
         </View>
@@ -146,7 +148,7 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
 
       {/* Course Outline */}
       <View style={styles.outlineContainer}>
-        <Text style={styles.outlineTitle}>Course Outline:</Text>
+        <Text style={[styles.outlineTitle, { color: colors.text }]}>Course Outline:</Text>
         <ScrollView 
           style={styles.outlineScrollView}
           showsVerticalScrollIndicator={false}
@@ -158,11 +160,11 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
                 <Text style={styles.sectionNumberText}>{index + 1}</Text>
               </View>
               <View style={styles.sectionContent}>
-                <Text style={styles.sectionTitle} numberOfLines={2}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={2}>
                   {section.section}
                 </Text>
                 {section.subsections && section.subsections.length > 0 && (
-                  <Text style={styles.subsectionCount}>
+                  <Text style={[styles.subsectionCount, { color: colors.textSecondary }]}>
                     {section.subsections.length} subsection{section.subsections.length > 1 ? 's' : ''}
                   </Text>
                 )}
@@ -186,7 +188,8 @@ const CourseAttachment: React.FC<CourseAttachmentProps> = ({
           style={[
             styles.actionButton, 
             styles.downloadButton,
-            isDownloading && styles.downloadButtonLoading
+            { backgroundColor: colors.background, borderColor: colors.primary },
+            isDownloading && [styles.downloadButtonLoading, { backgroundColor: isDark ? colors.card : '#f0f4ff' }]
           ]}
           onPress={handleDownloadPDF}
           disabled={isDownloading}

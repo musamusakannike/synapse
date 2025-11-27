@@ -9,6 +9,7 @@ import {
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/bottom-sheet";
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as Clipboard from "expo-clipboard";
+import { useTheme } from "../contexts/ThemeContext";
 
 type Props = {
     messageContent: string;
@@ -27,6 +28,7 @@ export type MessageOptionsModalRef = {
 
 const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
     ({ messageContent, messageRole, messageIndex, onOptionSelected, onEdit, onRegenerate, onFocusView }, ref) => {
+        const { colors } = useTheme();
         const bottomSheetRef = React.useRef<BottomSheet>(null);
 
         // Snap points for the bottom sheet
@@ -94,18 +96,18 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
                 snapPoints={snapPoints}
                 enablePanDownToClose={true}
                 backdropComponent={renderBackdrop}
-                backgroundStyle={styles.bottomSheetBackground}
-                handleIndicatorStyle={styles.handleIndicator}
+                backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.background }]}
+                handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.border }]}
             >
                 <BottomSheetView style={styles.container}>
                     {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Message Options</Text>
+                    <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>Message Options</Text>
                         <TouchableOpacity
                             onPress={() => bottomSheetRef.current?.close()}
                             style={styles.closeButton}
                         >
-                            <Text style={styles.closeButtonText}>✕</Text>
+                            <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -113,48 +115,48 @@ const MessageOptionsModal = forwardRef<MessageOptionsModalRef, Props>(
                     <View style={styles.optionsContainer}>
                         {messageRole === "user" && onEdit && (
                             <TouchableOpacity
-                                style={styles.optionButton}
+                                style={[styles.optionButton, { backgroundColor: colors.inputBackground }]}
                                 onPress={handleEdit}
                             >
                                 <Text style={styles.optionIcon}>✏️</Text>
-                                <Text style={styles.optionText}>Edit Message</Text>
+                                <Text style={[styles.optionText, { color: colors.text }]}>Edit Message</Text>
                             </TouchableOpacity>
                         )}
 
                         {onFocusView && (
                             <TouchableOpacity
-                                style={styles.optionButton}
+                                style={[styles.optionButton, { backgroundColor: colors.inputBackground }]}
                                 onPress={handleFocusView}
                             >
                                 <Text style={styles.optionIcon}>🔍</Text>
-                                <Text style={styles.optionText}>View in Focus Mode</Text>
+                                <Text style={[styles.optionText, { color: colors.text }]}>View in Focus Mode</Text>
                             </TouchableOpacity>
                         )}
 
                         {messageRole === "assistant" && onRegenerate && (
                             <TouchableOpacity
-                                style={styles.optionButton}
+                                style={[styles.optionButton, { backgroundColor: colors.inputBackground }]}
                                 onPress={handleRegenerate}
                             >
                                 <Text style={styles.optionIcon}>🔄</Text>
-                                <Text style={styles.optionText}>Regenerate Response</Text>
+                                <Text style={[styles.optionText, { color: colors.text }]}>Regenerate Response</Text>
                             </TouchableOpacity>
                         )}
 
                         <TouchableOpacity
-                            style={styles.optionButton}
+                            style={[styles.optionButton, { backgroundColor: colors.inputBackground }]}
                             onPress={handleCopyToClipboard}
                         >
                             <Text style={styles.optionIcon}>📋</Text>
-                            <Text style={styles.optionText}>Copy to Clipboard</Text>
+                            <Text style={[styles.optionText, { color: colors.text }]}>Copy to Clipboard</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.optionButton}
+                            style={[styles.optionButton, { backgroundColor: colors.inputBackground }]}
                             onPress={handleShare}
                         >
                             <Text style={styles.optionIcon}>📤</Text>
-                            <Text style={styles.optionText}>Share</Text>
+                            <Text style={[styles.optionText, { color: colors.text }]}>Share</Text>
                         </TouchableOpacity>
                     </View>
                 </BottomSheetView>

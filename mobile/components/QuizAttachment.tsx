@@ -5,6 +5,7 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface QuizSettings {
     numberOfQuestions: number;
@@ -28,6 +29,8 @@ const QuizAttachment: React.FC<QuizAttachmentProps> = ({
     settings,
     onStartQuiz,
 }) => {
+    const { colors, isDark } = useTheme();
+    
     const handleStartQuiz = useCallback(() => {
         onStartQuiz(quizId);
     }, [quizId, onStartQuiz]);
@@ -51,17 +54,17 @@ const QuizAttachment: React.FC<QuizAttachmentProps> = ({
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDark ? colors.card : '#f0f4ff', borderColor: colors.border }]}>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.iconContainer}>
                     <Text style={styles.icon}>📝</Text>
                 </View>
                 <View style={styles.headerContent}>
-                    <Text style={styles.title} numberOfLines={2}>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
                         {title}
                     </Text>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                         Quiz • {questions.length} question{questions.length !== 1 ? "s" : ""}
                     </Text>
                 </View>
@@ -71,7 +74,7 @@ const QuizAttachment: React.FC<QuizAttachmentProps> = ({
             <View style={styles.detailsContainer}>
                 <View style={styles.detailRow}>
                     <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Difficulty</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Difficulty</Text>
                         <View
                             style={[
                                 styles.difficultyBadge,
@@ -90,20 +93,20 @@ const QuizAttachment: React.FC<QuizAttachmentProps> = ({
                     </View>
 
                     <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Questions</Text>
-                        <Text style={styles.detailValue}>{questions.length}</Text>
+                        <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Questions</Text>
+                        <Text style={[styles.detailValue, { color: colors.text }]}>{questions.length}</Text>
                     </View>
                 </View>
 
                 {settings.includeCalculations && (
-                    <View style={styles.featureBadge}>
-                        <Text style={styles.featureText}>🧮 Includes Calculations</Text>
+                    <View style={[styles.featureBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>🧮 Includes Calculations</Text>
                     </View>
                 )}
 
                 {settings.timeLimit && (
-                    <View style={styles.featureBadge}>
-                        <Text style={styles.featureText}>
+                    <View style={[styles.featureBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>
                             ⏱️ Time Limit: {settings.timeLimit} minutes
                         </Text>
                     </View>

@@ -5,6 +5,7 @@ import {
     StyleSheet,
     TouchableOpacity,
 } from "react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface Flashcard {
     front: string;
@@ -35,6 +36,8 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
     settings,
     onStudyFlashcards,
 }) => {
+    const { colors, isDark } = useTheme();
+    
     const handleStudyFlashcards = useCallback(() => {
         onStudyFlashcards(flashcardSetId);
     }, [flashcardSetId, onStudyFlashcards]);
@@ -61,17 +64,17 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
     const previewCards = flashcards.slice(0, 3);
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: isDark ? colors.card : '#f0f4ff', borderColor: colors.border }]}>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.iconContainer}>
                     <Text style={styles.icon}>🃏</Text>
                 </View>
                 <View style={styles.headerContent}>
-                    <Text style={styles.title} numberOfLines={2}>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
                         {title}
                     </Text>
-                    <Text style={styles.subtitle}>
+                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                         Flashcards • {flashcards.length} card{flashcards.length !== 1 ? "s" : ""}
                     </Text>
                 </View>
@@ -80,9 +83,9 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
             {/* Flashcard Preview */}
             <View style={styles.previewContainer}>
                 {previewCards.map((card, index) => (
-                    <View key={index} style={styles.previewCard}>
+                    <View key={index} style={[styles.previewCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
                         <View style={styles.previewCardFront}>
-                            <Text style={styles.previewCardText} numberOfLines={2}>
+                            <Text style={[styles.previewCardText, { color: colors.text }]} numberOfLines={2}>
                                 {card.front}
                             </Text>
                         </View>
@@ -108,7 +111,7 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
                 <View style={styles.detailsContainer}>
                     <View style={styles.detailRow}>
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Difficulty</Text>
+                            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Difficulty</Text>
                             <View
                                 style={[
                                     styles.difficultyBadge,
@@ -127,20 +130,20 @@ const FlashcardAttachment: React.FC<FlashcardAttachmentProps> = ({
                         </View>
 
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Cards</Text>
-                            <Text style={styles.detailValue}>{flashcards.length}</Text>
+                            <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Cards</Text>
+                            <Text style={[styles.detailValue, { color: colors.text }]}>{flashcards.length}</Text>
                         </View>
                     </View>
 
                     <View style={styles.featuresRow}>
                         {settings.includeDefinitions && (
-                            <View style={styles.featureBadge}>
-                                <Text style={styles.featureText}>📖 Definitions</Text>
+                            <View style={[styles.featureBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                                <Text style={[styles.featureText, { color: colors.textSecondary }]}>📖 Definitions</Text>
                             </View>
                         )}
                         {settings.includeExamples && (
-                            <View style={styles.featureBadge}>
-                                <Text style={styles.featureText}>💡 Examples</Text>
+                            <View style={[styles.featureBadge, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                                <Text style={[styles.featureText, { color: colors.textSecondary }]}>💡 Examples</Text>
                             </View>
                         )}
                     </View>

@@ -40,7 +40,7 @@ export default function SubscriptionResultPage() {
   }, [status, message]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-6">
           <div
@@ -95,7 +95,7 @@ export default function SubscriptionResultPage() {
         <div className="space-y-4">
           <button
             onClick={handleOpenApp}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-linear-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
           >
             <svg
               className="w-5 h-5"

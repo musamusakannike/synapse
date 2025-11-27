@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import Animated, {
   useAnimatedStyle,
@@ -59,6 +59,9 @@ export default function SubscriptionPage() {
   const { isAuthenticated, openAuthModal } = useAuth();
   const { colors, isDark } = useTheme();
 
+  const { status: deeplinkStatus, message: deeplinkMessage } =
+    useLocalSearchParams<{ status?: string | string[]; message?: string | string[] }>();
+
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<Duration>("month");
@@ -79,6 +82,32 @@ export default function SubscriptionPage() {
     headerOpacity.value = withSpring(1, { duration: 800 });
     contentOpacity.value = withDelay(200, withSpring(1, { duration: 800 }));
   }, [isAuthenticated, openAuthModal, router, loadData, headerOpacity, contentOpacity]);
+
+  useEffect(() => {
+    if (!deeplinkStatus) return;
+
+    const rawStatus = Array.isArray(deeplinkStatus)
+      ? deeplinkStatus[0]
+      : deeplinkStatus;
+    const rawMessage = Array.isArray(deeplinkMessage)
+      ? deeplinkMessage?.[0]
+      : deeplinkMessage;
+
+    if (!rawStatus) return;
+
+    const normalizedStatus = rawStatus.toLowerCase();
+    const title =
+      normalizedStatus === "success"
+        ? "Subscription activated"
+        : "Subscription update";
+    const description =
+      rawMessage ||
+      (normalizedStatus === "success"
+        ? "Your subscription has been activated successfully."
+        : "There was an issue updating your subscription.");
+
+    Alert.alert(title, description);
+  }, [deeplinkStatus, deeplinkMessage]);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);

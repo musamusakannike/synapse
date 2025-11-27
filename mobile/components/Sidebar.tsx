@@ -43,11 +43,12 @@ export interface SidebarRef {
 
 interface SidebarProps {
     onChatSelect?: (chatId: string) => void;
+    onNewChat?: () => void;
 }
 
 type TabType = 'all' | 'favorites' | 'archived';
 
-const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => {
+const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect, onNewChat }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('all');
     const [chats, setChats] = useState<Chat[]>([]);
@@ -192,27 +193,12 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
         }
     };
 
-    const handleCreateNewChat = async () => {
-        try {
-            const response = await ChatAPI.createNewChat('New Chat', 'general');
-            const newChat = {
-                id: response.data.chat.id,
-                title: response.data.chat.title,
-                lastMessage: null,
-                lastActivity: response.data.chat.createdAt,
-                isArchived: false,
-                isFavorite: false,
-            };
-            setChats([newChat, ...chats]);
-            setFilteredChats([newChat, ...filteredChats]);
-
-            if (onChatSelect) {
-                onChatSelect(newChat.id);
-            }
-            close();
-        } catch (err: any) {
-            console.error('Error creating chat:', err);
+    const handleCreateNewChat = () => {
+        // Call the new chat callback to reset AIInterface and close sidebar
+        if (onNewChat) {
+            onNewChat();
         }
+        close();
     };
 
     const handleDeleteChat = async (chatId: string) => {

@@ -5,12 +5,14 @@ type SidebarContextShape = {
     openSidebar: () => void;
     closeSidebar: () => void;
     setOnChatSelect: (callback: (chatId: string) => void) => void;
+    setOnNewChat: (callback: () => void) => void;
 };
 
 const SidebarContext = createContext<SidebarContextShape>({
     openSidebar: () => { },
     closeSidebar: () => { },
     setOnChatSelect: () => { },
+    setOnNewChat: () => { },
 });
 
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -18,6 +20,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
     const sidebarRef = useRef<SidebarRef>(null);
     const [onChatSelect, setOnChatSelect] = React.useState<((chatId: string) => void) | undefined>();
+    const [onNewChat, setOnNewChat] = React.useState<(() => void) | undefined>();
 
     const openSidebar = () => sidebarRef.current?.open();
     const closeSidebar = () => sidebarRef.current?.close();
@@ -28,8 +31,18 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
+    const handleNewChat = () => {
+        if (onNewChat) {
+            onNewChat();
+        }
+    };
+
     const updateOnChatSelect = (callback: (chatId: string) => void) => {
         setOnChatSelect(() => callback);
+    };
+
+    const updateOnNewChat = (callback: () => void) => {
+        setOnNewChat(() => callback);
     };
 
     return (
@@ -37,11 +50,12 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
             value={{ 
                 openSidebar, 
                 closeSidebar,
-                setOnChatSelect: updateOnChatSelect
+                setOnChatSelect: updateOnChatSelect,
+                setOnNewChat: updateOnNewChat
             }}
         >
             {children}
-            <Sidebar ref={sidebarRef} onChatSelect={handleChatSelect} />
+            <Sidebar ref={sidebarRef} onChatSelect={handleChatSelect} onNewChat={handleNewChat} />
         </SidebarContext.Provider>
     );
 };

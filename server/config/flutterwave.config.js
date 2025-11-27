@@ -1,10 +1,21 @@
+const dotenv = require("dotenv");
 const Flutterwave = require("flutterwave-node-v3");
+dotenv.config();
 
-// Initialize Flutterwave SDK
-const flw = new Flutterwave(
-  process.env.FLW_PUBLIC_KEY,
-  process.env.FLW_SECRET_KEY
-);
+// Initialize Flutterwave SDK with error handling
+let flw = null;
+try {
+  if (process.env.FLW_PUBLIC_KEY && process.env.FLW_SECRET_KEY) {
+    flw = new Flutterwave(
+      process.env.FLW_PUBLIC_KEY,
+      process.env.FLW_SECRET_KEY
+    );
+  } else {
+    console.warn("Flutterwave API keys not configured. Payment features will be disabled.");
+  }
+} catch (error) {
+  console.error("Failed to initialize Flutterwave SDK:", error.message);
+}
 
 // Generate unique transaction reference
 const createTxRef = () => {

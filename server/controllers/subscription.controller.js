@@ -139,6 +139,15 @@ const initiatePayment = async (req, res) => {
       },
     };
 
+    if (!flw) {
+      subscription.status = "failed";
+      await subscription.save();
+      return res.status(503).json({
+        success: false,
+        message: "Payment service is not configured",
+      });
+    }
+
     const response = await flw.Payment.standard(payload);
 
     if (response.status === "success") {
@@ -196,6 +205,11 @@ const verifyPayment = async (req, res) => {
 
     if (status === "successful" || status === "completed") {
       // Verify with Flutterwave
+      if (!flw) {
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/subscription?status=error&message=Payment service not configured`
+        );
+      }
       const response = await flw.Transaction.verify({ id: transaction_id });
 
       if (
@@ -307,6 +321,10 @@ const handleWebhook = async (req, res) => {
       }
 
       // Verify transaction
+      if (!flw) {
+        console.warn("Flutterwave SDK not initialized, cannot verify webhook transaction");
+        return res.status(200).end();
+      }
       const response = await flw.Transaction.verify({ id: transactionId });
 
       if (

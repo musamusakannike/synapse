@@ -30,4 +30,7 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-module.exports = { authenticate };
+// Backwards-compatible alias for routes that import `{ protect }`
+const protect = authenticate;
+
+module.exports = { authenticate, protect };

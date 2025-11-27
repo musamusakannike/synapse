@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface ImageAttachmentProps {
   documentId: string;
@@ -25,6 +25,8 @@ const ImageAttachment: React.FC<ImageAttachmentProps> = ({
   mimeType,
   isImage,
 }) => {
+  const { colors, isDark } = useTheme();
+  
   const formatFileName = (fileName: string) => {
     if (fileName.length > 30) {
       return fileName.substring(0, 27) + "...";
@@ -40,11 +42,11 @@ const ImageAttachment: React.FC<ImageAttachmentProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDark ? colors.card : '#f8f9fa' }]}>
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={styles.icon}>{getFileIcon()}</Text>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
             {formatFileName(originalName)}
           </Text>
         </View>
@@ -56,14 +58,14 @@ const ImageAttachment: React.FC<ImageAttachmentProps> = ({
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.summaryLabel}>Analysis Summary:</Text>
-        <Text style={styles.summaryText} numberOfLines={4}>
+        <Text style={[styles.summaryLabel, { color: colors.textSecondary }]}>Analysis Summary:</Text>
+        <Text style={[styles.summaryText, { color: colors.text }]} numberOfLines={4}>
           {summary}
         </Text>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <Ionicons name="eye-outline" size={16} color="#4285F4" />
           <Text style={styles.actionButtonText}>View Analysis</Text>
         </TouchableOpacity>

@@ -15,6 +15,7 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from "@gorhom/botto
 import type { BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as DocumentPicker from "expo-document-picker";
 import { DocumentAPI } from "../lib/api";
+import { useTheme } from "../contexts/ThemeContext";
 
 export interface DocumentUploadModalRef {
     present: (initialGuidanceText?: string) => void;
@@ -29,6 +30,7 @@ interface DocumentUploadModalProps {
 
 const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadModalProps>(
     ({ onUploadSuccess, onUploadError, initialGuidanceText }, ref) => {
+        const { colors } = useTheme();
         const bottomSheetRef = React.useRef<BottomSheet>(null);
         const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
         const [isUploading, setIsUploading] = useState(false);
@@ -211,8 +213,8 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                 snapPoints={snapPoints}
                 enablePanDownToClose
                 backdropComponent={renderBackdrop}
-                backgroundStyle={styles.bottomSheetBackground}
-                handleIndicatorStyle={styles.handleIndicator}
+                backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.background }]}
+                handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.border }]}
             >
                 <KeyboardAvoidingView 
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -220,20 +222,20 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                 >
                     <BottomSheetView style={styles.contentContainer}>
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <Text style={styles.title}>Upload Document</Text>
+                            <Text style={[styles.title, { color: colors.text }]}>Upload Document</Text>
 
                             {/* Guidance Text Input */}
                             <View style={styles.guidanceContainer}>
-                                <Text style={styles.guidanceLabel}>
+                                <Text style={[styles.guidanceLabel, { color: colors.text }]}>
                                     What should I do with this document?
                                 </Text>
-                                <Text style={styles.guidanceSubtitle}>
+                                <Text style={[styles.guidanceSubtitle, { color: colors.textSecondary }]}>
                                     (Optional) Add instructions for how to process this document
                                 </Text>
                                 <TextInput
-                                    style={styles.guidanceInput}
+                                    style={[styles.guidanceInput, { backgroundColor: colors.inputBackground, borderColor: colors.border, color: colors.text }]}
                                     placeholder="e.g., 'Summarize the key points', 'Extract main formulas', 'Create study questions', etc."
-                                    placeholderTextColor="#999"
+                                    placeholderTextColor={colors.placeholder}
                                     value={guidanceText}
                                     onChangeText={setGuidanceText}
                                     multiline
@@ -242,32 +244,32 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                                     editable={!isUploading}
                                     maxLength={500}
                                 />
-                                <Text style={styles.characterCount}>
+                                <Text style={[styles.characterCount, { color: colors.placeholder }]}>
                                     {guidanceText.length}/500
                                 </Text>
                             </View>
-                            <Text style={styles.subtitle}>
+                            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                                 Select a PDF, DOCX, TXT file, or an image (JPEG, PNG, WebP, GIF, BMP, TIFF) to upload
                             </Text>
 
                             {/* File Selection */}
                             <TouchableOpacity
-                                style={styles.pickButton}
+                                style={[styles.pickButton, { backgroundColor: colors.inputBackground }]}
                                 onPress={handlePickDocument}
                                 disabled={isUploading}
                             >
-                                <Text style={styles.pickButtonText}>
+                                <Text style={[styles.pickButtonText, { color: colors.text }]}>
                                     {selectedFile ? "Change File" : "📄 Select File or Image"}
                                 </Text>
                             </TouchableOpacity>
 
                             {/* Selected File Display */}
                             {selectedFile && (
-                                <View style={styles.fileInfo}>
-                                    <Text style={styles.fileName} numberOfLines={1}>
+                                <View style={[styles.fileInfo, { backgroundColor: colors.inputBackground }]}>
+                                    <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
                                         {selectedFile.name}
                                     </Text>
-                                    <Text style={styles.fileSize}>
+                                    <Text style={[styles.fileSize, { color: colors.textSecondary }]}>
                                         {formatFileSize(selectedFile.size)}
                                     </Text>
                                 </View>
@@ -299,7 +301,7 @@ const DocumentUploadModal = forwardRef<DocumentUploadModalRef, DocumentUploadMod
                                 }}
                                 disabled={isUploading}
                             >
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                                <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                             </TouchableOpacity>
                         </ScrollView>
                     </BottomSheetView>

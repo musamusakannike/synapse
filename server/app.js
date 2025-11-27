@@ -19,6 +19,8 @@ const websiteRoutes = require("./routes/website.route");
 const wikipediaRoutes = require("./routes/wikipedia.route");
 const ttsRoutes = require("./routes/tts.route");
 const userRoutes = require("./routes/user.route");
+const subscriptionRoutes = require("./routes/subscription.route");
+const { initSubscriptionCron } = require("./config/subscriptionCron.config");
 
 const app = express();
 // Behind a proxy (Render/NGINX), trust X-Forwarded-* headers for correct IP detection
@@ -58,6 +60,10 @@ app.use("/api/websites", websiteRoutes);
 app.use("/api/wikipedia", wikipediaRoutes);
 app.use("/api/tts", ttsRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+
+// Initialize subscription cron job
+initSubscriptionCron();
 
 
 module.exports = app;

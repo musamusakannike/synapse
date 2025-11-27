@@ -26,6 +26,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { QuizAPI, DocumentAPI, CourseAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import * as DocumentPicker from "expo-document-picker";
 
 interface DocumentItem {
@@ -49,6 +50,7 @@ type SourceType = "topic" | "document" | "course";
 export default function GenerateQuizPage() {
   const router = useRouter();
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -209,10 +211,10 @@ export default function GenerateQuizPage() {
 
   const QuestionCountOption = ({ value }: { value: number }) => (
     <TouchableOpacity
-      style={[styles.countButton, numberOfQuestions === value && styles.countButtonSelected]}
+      style={[styles.countButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }, numberOfQuestions === value && [styles.countButtonSelected, { borderColor: colors.primary, backgroundColor: isDark ? 'rgba(66, 133, 244, 0.15)' : '#f0f4ff' }]]}
       onPress={() => setNumberOfQuestions(value)}
     >
-      <Text style={[styles.countButtonText, numberOfQuestions === value && styles.countButtonTextSelected]}>
+      <Text style={[styles.countButtonText, { color: colors.text }, numberOfQuestions === value && styles.countButtonTextSelected]}>
         {value}
       </Text>
     </TouchableOpacity>
@@ -220,25 +222,25 @@ export default function GenerateQuizPage() {
 
   const DifficultyOption = ({ value, label }: { value: typeof difficulty; label: string }) => (
     <TouchableOpacity
-      style={[styles.optionButton, difficulty === value && styles.optionButtonSelected]}
+      style={[styles.optionButton, { borderColor: colors.border, backgroundColor: colors.inputBackground }, difficulty === value && [styles.optionButtonSelected, { borderColor: colors.primary, backgroundColor: isDark ? 'rgba(66, 133, 244, 0.15)' : '#f0f4ff' }]]}
       onPress={() => setDifficulty(value)}
     >
-      <Text style={[styles.optionLabel, difficulty === value && styles.optionLabelSelected]}>
+      <Text style={[styles.optionLabel, { color: colors.text }, difficulty === value && styles.optionLabelSelected]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* Header */}
-        <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, headerStyle, { borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Generate Quiz</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Generate Quiz</Text>
           <View style={styles.headerSpacer} />
         </Animated.View>
 
@@ -250,17 +252,17 @@ export default function GenerateQuizPage() {
         >
           <Animated.View style={titleStyle}>
             <Text style={styles.greeting}>Create Your Quiz</Text>
-            <Text style={styles.question}>Test your knowledge</Text>
+            <Text style={[styles.question, { color: colors.textSecondary }]}>Test your knowledge</Text>
           </Animated.View>
 
           <Animated.View style={[styles.form, formStyle]}>
             {/* Quiz Title */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quiz Title *</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz Title *</Text>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="e.g., Machine Learning Fundamentals"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={title}
                 onChangeText={setTitle}
                 editable={!isGenerating}
@@ -270,11 +272,11 @@ export default function GenerateQuizPage() {
 
             {/* Description */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description (Optional)</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Description (Optional)</Text>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.textInput, styles.textArea, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="Additional context for quiz generation..."
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -287,7 +289,7 @@ export default function GenerateQuizPage() {
 
             {/* Source Selection */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Quiz Source</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Quiz Source</Text>
               <View style={styles.sourceTypeContainer}>
                 <TouchableOpacity
                   style={[styles.sourceTypeButton, sourceType === "topic" && styles.sourceTypeButtonSelected]}
@@ -332,7 +334,7 @@ export default function GenerateQuizPage() {
 
             {/* Number of Questions */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Number of Questions</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Number of Questions</Text>
               <View style={styles.countContainer}>
                 {[5, 10, 15, 20, 25, 30].map((count) => (
                   <QuestionCountOption key={count} value={count} />

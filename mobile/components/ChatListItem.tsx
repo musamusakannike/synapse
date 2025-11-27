@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'reac
 import { Swipeable } from 'react-native-gesture-handler';
 import Animated, { FadeInRight } from 'react-native-reanimated';
 import { FontAwesome } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ChatListItemProps {
     id: string;
@@ -50,6 +51,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
     const [editedTitle, setEditedTitle] = useState(title);
     const swipeableRef = useRef<Swipeable | null>(null);
     const hasRunPeekRef = useRef(false);
+    const { colors } = useTheme();
 
     const formatTimestamp = (timestamp: string) => {
         const date = new Date(timestamp);
@@ -165,7 +167,8 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                     <TouchableOpacity
                         style={[
                             styles.container,
-                            isSelected && styles.selectedContainer
+                            { backgroundColor: colors.background },
+                            isSelected && [styles.selectedContainer, { backgroundColor: colors.inputBackground }]
                         ]}
                         onPress={handleItemPress}
                         onLongPress={onLongPress || onSelect}
@@ -175,6 +178,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                             <View style={styles.checkboxContainer}>
                                 <View style={[
                                     styles.checkbox,
+                                    { borderColor: colors.border },
                                     isSelected && styles.checkboxSelected
                                 ]}>
                                     {isSelected && (
@@ -185,7 +189,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                         )}
                         <View style={styles.content}>
                             <View style={styles.titleRow}>
-                                <Text style={styles.title} numberOfLines={1}>
+                                <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                                     {title}
                                 </Text>
                                 <View style={styles.indicators}>
@@ -201,20 +205,20 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                                         <FontAwesome
                                             name="archive"
                                             size={14}
-                                            color="#999"
+                                            color={colors.textSecondary}
                                             style={styles.indicator}
                                         />
                                     )}
                                 </View>
                             </View>
                             {lastMessage && (
-                                <Text style={styles.preview} numberOfLines={2}>
+                                <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
                                     {lastMessage.content}
                                 </Text>
                             )}
                         </View>
                         {lastMessage && (
-                            <Text style={styles.timestamp}>
+                            <Text style={[styles.timestamp, { color: colors.placeholder }]}>
                                 {formatTimestamp(lastMessage.timestamp)}
                             </Text>
                         )}
@@ -230,26 +234,26 @@ const ChatListItem: React.FC<ChatListItemProps> = ({
                 onRequestClose={() => setShowEditModal(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Edit Chat Title</Text>
+                    <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>Edit Chat Title</Text>
                         <TextInput
-                            style={styles.modalInput}
+                            style={[styles.modalInput, { backgroundColor: colors.inputBackground, color: colors.text }]}
                             value={editedTitle}
                             onChangeText={setEditedTitle}
                             placeholder="Enter chat title"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={colors.placeholder}
                             autoFocus
                             onSubmitEditing={handleEditSubmit}
                         />
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
-                                style={[styles.modalButton, styles.modalButtonCancel]}
+                                style={[styles.modalButton, styles.modalButtonCancel, { backgroundColor: colors.inputBackground }]}
                                 onPress={() => {
                                     setEditedTitle(title);
                                     setShowEditModal(false);
                                 }}
                             >
-                                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+                                <Text style={[styles.modalButtonTextCancel, { color: colors.textSecondary }]}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.modalButtonSave]}

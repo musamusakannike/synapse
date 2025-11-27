@@ -12,6 +12,8 @@ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 import { UserAPI } from "../lib/api";
 import * as SecureStore from "expo-secure-store";
+import { useTheme, Theme } from "../contexts/ThemeContext";
+import { Ionicons } from "@expo/vector-icons";
 
 // Configuration for web-based OAuth
 const FRONTEND_URL = "https://synapsebot.vercel.app";
@@ -41,9 +43,10 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
     const [socialError, setSocialError] = useState("");
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loadingUser, setLoadingUser] = useState(false);
+    const { colors, theme, setTheme } = useTheme();
 
     // Snap points for the bottom sheet
-    const snapPoints = useMemo(() => ["40%"], []);
+    const snapPoints = useMemo(() => isAuthenticated ? ["55%"] : ["40%"], [isAuthenticated]);
 
     // Expose methods to parent component
     useImperativeHandle(ref, () => ({
@@ -136,6 +139,35 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
         []
     );
 
+    const getThemeIcon = () => {
+        switch (theme) {
+            case 'light':
+                return 'sunny';
+            case 'dark':
+                return 'moon';
+            default:
+                return 'phone-portrait-outline';
+        }
+    };
+
+    const getThemeLabel = () => {
+        switch (theme) {
+            case 'light':
+                return 'Light';
+            case 'dark':
+                return 'Dark';
+            default:
+                return 'System';
+        }
+    };
+
+    const cycleTheme = () => {
+        const themes: Theme[] = ['light', 'dark', 'system'];
+        const currentIndex = themes.indexOf(theme);
+        const nextIndex = (currentIndex + 1) % themes.length;
+        setTheme(themes[nextIndex]);
+    };
+
     return (
         <BottomSheet
             ref={bottomSheetRef}
@@ -143,15 +175,15 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
             snapPoints={snapPoints}
             enablePanDownToClose={true}
             backdropComponent={renderBackdrop}
-            backgroundStyle={styles.bottomSheetBackground}
-            handleIndicatorStyle={styles.handleIndicator}
+            backgroundStyle={[styles.bottomSheetBackground, { backgroundColor: colors.bottomSheet }]}
+            handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.bottomSheetHandle }]}
         >
             <BottomSheetView style={styles.container}>
                 {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>{isAuthenticated ? "Profile" : "Welcome"}</Text>
+                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>{isAuthenticated ? "Profile" : "Welcome"}</Text>
                     <TouchableOpacity onPress={() => bottomSheetRef.current?.close()} style={styles.closeButton}>
-                        <Text style={styles.closeButtonText}>✕</Text>
+                        <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -160,7 +192,7 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                         // Show profile when authenticated
                         <View style={styles.profileContainer}>
                             {loadingUser ? (
-                                <Text style={styles.loadingText}>Loading...</Text>
+                                <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading...</Text>
                             ) : userData ? (
                                 <>
                                     {/* Profile Picture */}
@@ -171,7 +203,7 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                                                 style={styles.profileImage}
                                             />
                                         ) : (
-                                            <View style={styles.profilePlaceholder}>
+                                            <View style={[styles.profilePlaceholder, { backgroundColor: colors.inputBackground }]}>
                                                 <Text style={styles.profilePlaceholderText}>
                                                     {userData.name?.charAt(0).toUpperCase() || userData.email.charAt(0).toUpperCase()}
                                                 </Text>
@@ -182,9 +214,21 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                                     {/* User Info */}
                                     <View style={styles.userInfo}>
                                         {userData.name && (
-                                            <Text style={styles.userName}>{userData.name}</Text>
+                                            <Text style={[styles.userName, { color: colors.text }]}>{userData.name}</Text>
                                         )}
-                                        <Text style={styles.userEmail}>{userData.email}</Text>
+                                        <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{userData.email}</Text>
+                                    </View>
+
+                                    {/* Theme Toggle */}
+                                    <View style={[styles.themeToggleContainer, { backgroundColor: colors.inputBackground, borderColor: colors.border }]}>
+                                        <View style={styles.themeToggleLeft}>
+                                            <Ionicons name={getThemeIcon() as any} size={20} color={colors.primary} />
+                                            <Text style={[styles.themeToggleLabel, { color: colors.text }]}>Theme</Text>
+                                        </View>
+                                        <TouchableOpacity onPress={cycleTheme} style={[styles.themeToggleButton, { backgroundColor: colors.card }]}>
+                                            <Text style={[styles.themeToggleValue, { color: colors.textSecondary }]}>{getThemeLabel()}</Text>
+                                            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                                        </TouchableOpacity>
                                     </View>
 
                                     {/* Logout Button */}
@@ -202,7 +246,7 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                     ) : (
                         // Show login options when not authenticated
                         <View style={styles.stepContainer}>
-                            <Text style={styles.subtitle}>
+                            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                                 Sign in or create an account to continue
                             </Text>
 
@@ -211,10 +255,10 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                                 <TouchableOpacity
                                     onPress={handleGoogleAuth}
                                     disabled={sending}
-                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
+                                    style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.card }, sending && styles.buttonDisabled]}
                                 >
-                                    <Text style={styles.googleIcon}>G</Text>
-                                    <Text style={styles.socialButtonText}>
+                                    <Text style={[styles.googleIcon, { color: colors.text }]}>G</Text>
+                                    <Text style={[styles.socialButtonText, { color: colors.text }]}>
                                         {sending ? "Connecting..." : "Continue with Google"}
                                     </Text>
                                 </TouchableOpacity>
@@ -222,10 +266,10 @@ const AuthModal = forwardRef<AuthModalRef, Props>(({ onSuccess, onLogout, isAuth
                                 <TouchableOpacity
                                     onPress={handleGithub}
                                     disabled={sending}
-                                    style={[styles.socialButton, sending && styles.buttonDisabled]}
+                                    style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.card }, sending && styles.buttonDisabled]}
                                 >
-                                    <Text style={styles.githubIcon}>⚙</Text>
-                                    <Text style={styles.socialButtonText}>
+                                    <Text style={[styles.githubIcon, { color: colors.text }]}>⚙</Text>
+                                    <Text style={[styles.socialButtonText, { color: colors.text }]}>
                                         Continue with GitHub
                                     </Text>
                                 </TouchableOpacity>
@@ -392,6 +436,38 @@ const styles = StyleSheet.create({
     loadingText: {
         fontSize: 16,
         color: "#666",
+        fontFamily: "Outfit_400Regular",
+    },
+    themeToggleContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        marginBottom: 8,
+    },
+    themeToggleLeft: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    themeToggleLabel: {
+        fontSize: 16,
+        fontFamily: "Outfit_500Medium",
+    },
+    themeToggleButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        gap: 4,
+    },
+    themeToggleValue: {
+        fontSize: 14,
         fontFamily: "Outfit_400Regular",
     },
 });

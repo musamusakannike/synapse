@@ -20,6 +20,7 @@ import { ChatAPI } from '../lib/api';
 import ChatListItem from './ChatListItem';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -63,6 +64,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const { isAuthenticated, openAuthModal } = useAuth();
+    const { colors } = useTheme();
 
     const translateX = useSharedValue(-SCREEN_WIDTH);
     const backdropOpacity = useSharedValue(0);
@@ -409,22 +411,22 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
             </Animated.View>
 
             {/* Sidebar */}
-            <Animated.View style={[styles.sidebar, sidebarStyle]}>
+            <Animated.View style={[styles.sidebar, sidebarStyle, { backgroundColor: colors.background }]}>
                 {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Chats</Text>
+                <View style={[styles.header, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Chats</Text>
                     <TouchableOpacity onPress={close} style={styles.closeButton}>
-                        <Text style={styles.closeButtonText}>✕</Text>
+                        <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Tabs */}
-                <View style={styles.tabsContainer}>
+                <View style={[styles.tabsContainer, { borderBottomColor: colors.border }]}>
                     <TouchableOpacity
                         style={[styles.tab, activeTab === 'all' && styles.tabActive]}
                         onPress={() => handleTabChange('all')}
                     >
-                        <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
+                        <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'all' && styles.tabTextActive]}>
                             All Chats
                         </Text>
                     </TouchableOpacity>
@@ -435,10 +437,10 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                         <FontAwesome
                             name="star"
                             size={14}
-                            color={activeTab === 'favorites' ? '#4285F4' : '#999'}
+                            color={activeTab === 'favorites' ? '#4285F4' : colors.textSecondary}
                             style={styles.tabIcon}
                         />
-                        <Text style={[styles.tabText, activeTab === 'favorites' && styles.tabTextActive]}>
+                        <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'favorites' && styles.tabTextActive]}>
                             Favorites
                         </Text>
                     </TouchableOpacity>
@@ -449,10 +451,10 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                         <FontAwesome
                             name="archive"
                             size={14}
-                            color={activeTab === 'archived' ? '#4285F4' : '#999'}
+                            color={activeTab === 'archived' ? '#4285F4' : colors.textSecondary}
                             style={styles.tabIcon}
                         />
-                        <Text style={[styles.tabText, activeTab === 'archived' && styles.tabTextActive]}>
+                        <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === 'archived' && styles.tabTextActive]}>
                             Archived
                         </Text>
                     </TouchableOpacity>
@@ -465,21 +467,21 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                             <TouchableOpacity onPress={exitSelectionMode}>
                                 <Text style={styles.selectionCancel}>Cancel</Text>
                             </TouchableOpacity>
-                            <Text style={styles.selectionCount}>
+                            <Text style={[styles.selectionCount, { color: colors.text }]}>
                                 {selectedChats.size} selected
                             </Text>
                         </View>
                     ) : (
                         <>
                             <TextInput
-                                style={styles.searchInput}
+                                style={[styles.searchInput, { backgroundColor: colors.inputBackground, color: colors.text }]}
                                 placeholder="Search chats..."
-                                placeholderTextColor="#999"
+                                placeholderTextColor={colors.placeholder}
                                 value={searchQuery}
                                 onChangeText={handleSearch}
                             />
                             <TouchableOpacity onPress={handleCreateNewChat} style={styles.newChatButton}>
-                                <FontAwesome name="pencil-square-o" size={24} color="#333" />
+                                <FontAwesome name="pencil-square-o" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </>
                     )}
@@ -503,13 +505,13 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                         </View>
                     ) : displayChats.length === 0 ? (
                         <View style={styles.centerContainer}>
-                            <Text style={styles.emptyText}>
+                            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                                 {searchQuery ? 'No chats found' :
                                     activeTab === 'favorites' ? 'No favorite chats' :
                                         activeTab === 'archived' ? 'No archived chats' : 'No chats yet'}
                             </Text>
                             {!searchQuery && activeTab === 'all' && (
-                                <Text style={styles.emptySubtext}>
+                                <Text style={[styles.emptySubtext, { color: colors.placeholder }]}>
                                     Create a new chat to get started
                                 </Text>
                             )}
@@ -549,7 +551,7 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
 
                 {/* Bulk Delete Button */}
                 {selectionMode && selectedChats.size > 0 && (
-                    <View style={styles.bulkActionContainer}>
+                    <View style={[styles.bulkActionContainer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
                         <TouchableOpacity
                             style={styles.bulkDeleteButton}
                             onPress={handleBulkDeletePress}
@@ -565,19 +567,19 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect }, ref) => 
                 {/* Delete Confirmation Modal */}
                 {showDeleteConfirm && (
                     <View style={styles.confirmOverlay}>
-                        <View style={styles.confirmSheet}>
+                        <View style={[styles.confirmSheet, { backgroundColor: colors.card }]}>
                             <View style={styles.confirmHeader}>
-                                <Text style={styles.confirmTitle}>Delete Chats?</Text>
-                                <Text style={styles.confirmMessage}>
+                                <Text style={[styles.confirmTitle, { color: colors.text }]}>Delete Chats?</Text>
+                                <Text style={[styles.confirmMessage, { color: colors.textSecondary }]}>
                                     Are you sure you want to delete {selectedChats.size} selected chat{selectedChats.size > 1 ? 's' : ''}? This action cannot be undone.
                                 </Text>
                             </View>
                             <View style={styles.confirmActions}>
                                 <TouchableOpacity
-                                    style={styles.cancelButton}
+                                    style={[styles.cancelButton, { backgroundColor: colors.inputBackground }]}
                                     onPress={() => setShowDeleteConfirm(false)}
                                 >
-                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                    <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.deleteConfirmButton}

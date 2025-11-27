@@ -23,6 +23,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { CourseAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 export interface CourseGenerationData {
   title: string;
@@ -38,6 +39,7 @@ export interface CourseGenerationData {
 export default function GenerateCoursePage() {
   const router = useRouter();
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { colors, isDark } = useTheme();
   
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -141,13 +143,15 @@ export default function GenerateCoursePage() {
     <TouchableOpacity
       style={[
         styles.optionButton,
-        level === value && styles.optionButtonSelected,
+        { borderColor: colors.border, backgroundColor: colors.inputBackground },
+        level === value && [styles.optionButtonSelected, { borderColor: colors.primary, backgroundColor: isDark ? 'rgba(66, 133, 244, 0.15)' : '#f0f4ff' }],
       ]}
       onPress={() => setLevel(value)}
     >
       <Text
         style={[
           styles.optionLabel,
+          { color: colors.text },
           level === value && styles.optionLabelSelected,
         ]}
       >
@@ -156,6 +160,7 @@ export default function GenerateCoursePage() {
       <Text
         style={[
           styles.optionDescription,
+          { color: colors.textSecondary },
           level === value && styles.optionDescriptionSelected,
         ]}
       >
@@ -176,13 +181,15 @@ export default function GenerateCoursePage() {
     <TouchableOpacity
       style={[
         styles.optionButton,
-        detailLevel === value && styles.optionButtonSelected,
+        { borderColor: colors.border, backgroundColor: colors.inputBackground },
+        detailLevel === value && [styles.optionButtonSelected, { borderColor: colors.primary, backgroundColor: isDark ? 'rgba(66, 133, 244, 0.15)' : '#f0f4ff' }],
       ]}
       onPress={() => setDetailLevel(value)}
     >
       <Text
         style={[
           styles.optionLabel,
+          { color: colors.text },
           detailLevel === value && styles.optionLabelSelected,
         ]}
       >
@@ -191,6 +198,7 @@ export default function GenerateCoursePage() {
       <Text
         style={[
           styles.optionDescription,
+          { color: colors.textSecondary },
           detailLevel === value && styles.optionDescriptionSelected,
         ]}
       >
@@ -210,30 +218,30 @@ export default function GenerateCoursePage() {
     value: boolean;
     onToggle: () => void;
   }) => (
-    <TouchableOpacity style={styles.toggleOption} onPress={onToggle}>
+    <TouchableOpacity style={[styles.toggleOption, { borderColor: colors.border, backgroundColor: colors.inputBackground }]} onPress={onToggle}>
       <View style={styles.toggleContent}>
-        <Text style={styles.toggleLabel}>{label}</Text>
-        <Text style={styles.toggleDescription}>{description}</Text>
+        <Text style={[styles.toggleLabel, { color: colors.text }]}>{label}</Text>
+        <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>{description}</Text>
       </View>
-      <View style={[styles.toggle, value && styles.toggleActive]}>
+      <View style={[styles.toggle, { backgroundColor: colors.border }, value && styles.toggleActive]}>
         <View style={[styles.toggleThumb, value && styles.toggleThumbActive]} />
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Header */}
-        <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, headerStyle, { borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Generate Course</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Generate Course</Text>
           <View style={styles.headerSpacer} />
         </Animated.View>
 
@@ -246,18 +254,18 @@ export default function GenerateCoursePage() {
           {/* Title Section */}
           <Animated.View style={titleStyle}>
             <Text style={styles.greeting}>Create Your Course</Text>
-            <Text style={styles.question}>Let&apos;s build something amazing together</Text>
+            <Text style={[styles.question, { color: colors.textSecondary }]}>Let&apos;s build something amazing together</Text>
           </Animated.View>
 
           {/* Form */}
           <Animated.View style={[styles.form, formStyle]}>
             {/* Course Title */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Course Title *</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Course Title *</Text>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="e.g., Introduction to Machine Learning"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={title}
                 onChangeText={setTitle}
                 editable={!isGenerating}
@@ -267,11 +275,11 @@ export default function GenerateCoursePage() {
 
             {/* Course Description */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Description (Optional)</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Description (Optional)</Text>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.textInput, styles.textArea, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="Provide additional context about what this course should cover..."
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -284,7 +292,7 @@ export default function GenerateCoursePage() {
 
             {/* Difficulty Level */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Difficulty Level</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Difficulty Level</Text>
               <View style={styles.optionsContainer}>
                 <LevelOption
                   value="beginner"
@@ -306,7 +314,7 @@ export default function GenerateCoursePage() {
 
             {/* Detail Level */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Content Detail Level</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Content Detail Level</Text>
               <View style={styles.optionsContainer}>
                 <DetailLevelOption
                   value="basic"
@@ -328,7 +336,7 @@ export default function GenerateCoursePage() {
 
             {/* Additional Options */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Additional Features</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Additional Features</Text>
               <View style={styles.toggleContainer}>
                 <ToggleOption
                   label="Include Examples"
@@ -348,7 +356,7 @@ export default function GenerateCoursePage() {
         </ScrollView>
 
         {/* Generate Button */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
               style={[

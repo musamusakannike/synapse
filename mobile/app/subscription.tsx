@@ -45,7 +45,7 @@ interface SubscriptionStatus {
 type Duration = "day" | "week" | "month";
 
 const FEATURES = [
-  { icon: "infinity", text: "Unlimited AI conversations" },
+  { icon: "infinite", text: "Unlimited AI conversations" },
   { icon: "school-outline", text: "Unlimited course generation" },
   { icon: "help-circle-outline", text: "Unlimited quiz creation" },
   { icon: "albums-outline", text: "Unlimited flashcards" },

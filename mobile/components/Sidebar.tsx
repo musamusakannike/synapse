@@ -18,9 +18,10 @@ import Animated, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ChatAPI } from '../lib/api';
 import ChatListItem from './ChatListItem';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useRouter } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ interface SidebarProps {
 type TabType = 'all' | 'favorites' | 'archived';
 
 const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect, onNewChat }, ref) => {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabType>('all');
     const [chats, setChats] = useState<Chat[]>([]);
@@ -535,6 +537,26 @@ const Sidebar = forwardRef<SidebarRef, SidebarProps>(({ onChatSelect, onNewChat 
                     )}
                 </ScrollView>
 
+                {/* Subscription Button */}
+                {!selectionMode && (
+                    <View style={[styles.subscriptionContainer, { borderTopColor: colors.border }]}>
+                        <TouchableOpacity
+                            style={styles.subscriptionButton}
+                            onPress={() => {
+                                close();
+                                router.push('/subscription');
+                            }}
+                        >
+                            <Ionicons name="diamond" size={20} color="#FFD700" />
+                            <View style={styles.subscriptionTextContainer}>
+                                <Text style={styles.subscriptionTitle}>Upgrade to GURU</Text>
+                                <Text style={[styles.subscriptionSubtitle, { color: colors.textSecondary }]}>Unlock unlimited features</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                        </TouchableOpacity>
+                    </View>
+                )}
+
                 {/* Bulk Delete Button */}
                 {selectionMode && selectedChats.size > 0 && (
                     <View style={[styles.bulkActionContainer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
@@ -817,6 +839,33 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Outfit_500Medium',
         color: '#fff',
+    },
+    subscriptionContainer: {
+        padding: 16,
+        borderTopWidth: 1,
+    },
+    subscriptionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF8E1',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        gap: 12,
+    },
+    subscriptionTextContainer: {
+        flex: 1,
+    },
+    subscriptionTitle: {
+        fontSize: 15,
+        fontFamily: 'Outfit_500Medium',
+        color: '#1f1f1f',
+    },
+    subscriptionSubtitle: {
+        fontSize: 12,
+        fontFamily: 'Outfit_400Regular',
+        color: '#666',
+        marginTop: 2,
     },
 });
 

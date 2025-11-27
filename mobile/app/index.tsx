@@ -898,6 +898,15 @@ export default function AIInterface() {
     router.push("/generate-flashcards");
   }, [isAuthenticated, openAuthModal, router]);
 
+  // Handle subscription button press
+  const handleSubscriptionPress = useCallback(() => {
+    if (!isAuthenticated) {
+      openAuthModal();
+      return;
+    }
+    router.push("/subscription");
+  }, [isAuthenticated, openAuthModal, router]);
+
   // Optimized message interaction handlers
   const handleMessagePress = useCallback(
     (content: string, index: number, role: "user" | "assistant") => {
@@ -1004,9 +1013,14 @@ export default function AIInterface() {
                 >
                   Create Flashcards
                 </AnimatedButton>
-                {/* <AnimatedButton delay={800} icon="">
-                  Watch Tutorials
-                </AnimatedButton> */}
+                <AnimatedButton
+                  delay={900}
+                  icon="👑"
+                  onPress={handleSubscriptionPress}
+                  colors={colors}
+                >
+                  Upgrade to GURU
+                </AnimatedButton>
               </View>
             </>
           ) : (

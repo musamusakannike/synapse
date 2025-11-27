@@ -202,4 +202,13 @@ export const FlashcardAPI = {
   }) => api.post(`/flashcards/${flashcardSetId}/study-stats`, stats),
 };
 
+// Subscription endpoints
+export const SubscriptionAPI = {
+  getPlans: () => api.get("/subscriptions/plans"),
+  getStatus: () => api.get("/subscriptions/status"),
+  initiatePayment: (plan: string, duration: "day" | "week" | "month") => 
+    api.post("/subscriptions/initiate", { plan, duration }),
+  getHistory: () => api.get("/subscriptions/history"),
+};
+
 export default api;

@@ -34,6 +34,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useAuth } from "../contexts/AuthContext";
 import { useSidebar } from "../contexts/SidebarContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { ChatAPI, UserAPI, DocumentAPI } from "../lib/api";
 import { useRouter } from "expo-router";
 import ChatSkeleton from "../components/ChatSkeleton";
@@ -55,11 +56,13 @@ const AnimatedButton = memo(
     delay,
     icon,
     onPress,
+    colors,
   }: {
     children: string;
     delay: number;
     icon: string;
     onPress?: () => void;
+    colors: any;
   }) => {
     const opacity = useSharedValue(0);
     const translateY = useSharedValue(20);
@@ -76,8 +79,8 @@ const AnimatedButton = memo(
 
     return (
       <Animated.View style={[styles.buttonContainer, animatedStyle]}>
-        <TouchableOpacity style={styles.button} onPress={onPress}>
-          <Text style={styles.buttonText}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: colors.inputBackground }]} onPress={onPress}>
+          <Text style={[styles.buttonText, { color: colors.text }]}>
             {icon} {children}
           </Text>
         </TouchableOpacity>
@@ -179,6 +182,7 @@ const MessageItem = memo(
     onViewCourse,
     onStartQuiz,
     onStudyFlashcards,
+    colors,
   }: {
     message: Message;
     index: number;
@@ -192,6 +196,7 @@ const MessageItem = memo(
     onViewCourse: (courseId: string) => void;
     onStartQuiz: (quizId: string) => void;
     onStudyFlashcards: (flashcardSetId: string) => void;
+    colors: any;
   }) => {
     const handleSwipeOpen = useCallback(() => {
       onMessagePress(message.content, index, message.role);
@@ -210,10 +215,12 @@ const MessageItem = memo(
     const messageBubbleStyle = useMemo(
       () => [
         styles.messageBubble,
-        message.role === "user" ? styles.userMessage : styles.assistantMessage,
+        message.role === "user" 
+          ? [styles.userMessage, { backgroundColor: colors.primary }] 
+          : [styles.assistantMessage, { backgroundColor: colors.inputBackground }],
         message.attachments?.some(att => att.type === "course" || att.type === "quiz" || att.type === "flashcard" || att.type === "image") && { maxWidth: "100%" as any },
       ],
-      [message.role, message.attachments]
+      [message.role, message.attachments, colors]
     );
 
     const messageTextStyle = useMemo(
@@ -221,9 +228,9 @@ const MessageItem = memo(
         styles.messageText,
         message.role === "user"
           ? styles.userMessageText
-          : styles.assistantMessageText,
+          : [styles.assistantMessageText, { color: colors.text }],
       ],
-      [message.role]
+      [message.role, colors]
     );
 
     return (
@@ -338,6 +345,7 @@ export default function AIInterface() {
   const headerTranslateY = useSharedValue(0);
   const { openAuthModal, setOnChatSelect, isAuthenticated } = useAuth();
   const { openSidebar, setOnChatSelect: setSidebarChatSelect } = useSidebar();
+  const { colors, isDark } = useTheme();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const messageOptionsModalRef = useRef<MessageOptionsModalRef>(null);
@@ -530,6 +538,7 @@ export default function AIInterface() {
         translateY: interpolate(titleOpacity.value, [0, 1], [30, 0]),
       },
     ],
+    paddingTop: 35
   }));
 
   const sendButtonStyle = useAnimatedStyle(() => ({
@@ -888,21 +897,21 @@ export default function AIInterface() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         {/* Header */}
-        <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, headerStyle, { backgroundColor: colors.background }]}>
             <TouchableOpacity style={styles.menuButton} onPress={openSidebar}>
-              <View style={styles.menuLine} />
-              <View style={styles.menuLine} />
-              <View style={styles.menuLine} />
+              <View style={[styles.menuLine, { backgroundColor: colors.text }]} />
+              <View style={[styles.menuLine, { backgroundColor: colors.text }]} />
+              <View style={[styles.menuLine, { backgroundColor: colors.text }]} />
             </TouchableOpacity>
 
-            <Text style={styles.headerTitle}>Synapse</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Synapse</Text>
 
             <TouchableOpacity onPress={openAuthModal}>
               <View style={styles.profileCircle}>
@@ -912,8 +921,8 @@ export default function AIInterface() {
                     style={styles.profileImageHeader}
                   />
                 ) : (
-                  <View style={styles.profileInner}>
-                    <Text style={styles.profileText}>
+                  <View style={[styles.profileInner, { backgroundColor: colors.inputBackground }]}>
+                    <Text style={[styles.profileText, { color: colors.text }]}>
                       {(userName || "?").trim().charAt(0).toUpperCase()}
                     </Text>
                   </View>
@@ -938,7 +947,7 @@ export default function AIInterface() {
               {/* Greeting Section */}
               <Animated.View style={titleStyle}>
                 <Text style={styles.greeting}>{greeting}</Text>
-                <Text style={styles.question}>Where should we start?</Text>
+                <Text style={[styles.question, { color: colors.textSecondary }]}>Where should we start?</Text>
               </Animated.View>
 
               {/* Action Buttons */}
@@ -947,6 +956,7 @@ export default function AIInterface() {
                   delay={400}
                   icon="✍️"
                   onPress={handleUploadDocumentPress}
+                  colors={colors}
                 >
                   Upload Document
                 </AnimatedButton>
@@ -954,6 +964,7 @@ export default function AIInterface() {
                   delay={500}
                   icon="🎓"
                   onPress={handleGenerateCoursePress}
+                  colors={colors}
                 >
                   Generate a complete course
                 </AnimatedButton>
@@ -961,6 +972,7 @@ export default function AIInterface() {
                   delay={600}
                   icon="📝"
                   onPress={handleTakeQuizPress}
+                  colors={colors}
                 >
                   Take a Quiz
                 </AnimatedButton>
@@ -968,6 +980,7 @@ export default function AIInterface() {
                   delay={800}
                   icon="🃏"
                   onPress={handleCreateFlashcardsPress}
+                  colors={colors}
                 >
                   Create Flashcards
                 </AnimatedButton>
@@ -991,30 +1004,31 @@ export default function AIInterface() {
                     onViewCourse={handleViewCourse}
                     onStartQuiz={handleStartQuiz}
                     onStudyFlashcards={handleStudyFlashcards}
+                    colors={colors}
                   />
                 ))}
 
                 {/* Edit Mode UI */}
                 {isEditingMessage && (
-                  <View style={styles.editModeContainer}>
+                  <View style={[styles.editModeContainer, { backgroundColor: colors.card, borderColor: colors.primary }]}>
                     <View style={styles.editHeader}>
                       <Text style={styles.editHeaderText}>Edit Message</Text>
                     </View>
                     <TextInput
-                      style={styles.editInput}
+                      style={[styles.editInput, { backgroundColor: colors.inputBackground, color: colors.text }]}
                       value={editedMessageContent}
                       onChangeText={setEditedMessageContent}
                       multiline
                       autoFocus
                       placeholder="Edit your message..."
-                      placeholderTextColor="#666"
+                      placeholderTextColor={colors.placeholder}
                     />
                     <View style={styles.editButtons}>
                       <TouchableOpacity
-                        style={[styles.editButton, styles.cancelButton]}
+                        style={[styles.editButton, styles.cancelButton, { backgroundColor: colors.inputBackground }]}
                         onPress={handleCancelEdit}
                       >
-                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                        <Text style={[styles.cancelButtonText, { color: colors.textSecondary }]}>Cancel</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.editButton, styles.saveButton]}
@@ -1042,12 +1056,12 @@ export default function AIInterface() {
               keyboardHeight > 0 && { marginBottom: keyboardHeight },
             ]}
           >
-            <View style={styles.inputContainer}>
+            <View style={[styles.inputContainer, { backgroundColor: colors.inputBackground }]}>
               <View>
                 <TextInput
                   placeholder="Ask Synapse"
-                  placeholderTextColor={"#666"}
-                  style={styles.input}
+                  placeholderTextColor={colors.placeholder}
+                  style={[styles.input, { color: colors.text }]}
                   numberOfLines={7}
                   multiline={true}
                   value={inputText}
@@ -1057,12 +1071,12 @@ export default function AIInterface() {
               </View>
               <View style={styles.inputButtons}>
                 <TouchableOpacity style={styles.addButton} onPress={handleAddButtonPress}>
-                  <Text style={styles.addButtonText}>+</Text>
+                  <Text style={[styles.addButtonText, { color: colors.textSecondary }]}>+</Text>
                 </TouchableOpacity>
 
                 <View style={styles.rightButtons}>
-                  <TouchableOpacity style={styles.thinkingButton}>
-                    <Text style={styles.thinkingText}>Fast</Text>
+                  <TouchableOpacity style={[styles.thinkingButton, { backgroundColor: colors.card }]}>
+                    <Text style={[styles.thinkingText, { color: colors.textSecondary }]}>Fast</Text>
                   </TouchableOpacity>
 
                   <Animated.View

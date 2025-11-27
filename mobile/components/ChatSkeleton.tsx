@@ -7,9 +7,11 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ChatSkeleton = () => {
   const opacity = useSharedValue(0.3);
+  const { colors } = useTheme();
 
   useEffect(() => {
     opacity.value = withRepeat(
@@ -27,22 +29,24 @@ const ChatSkeleton = () => {
     opacity: opacity.value,
   }));
 
+  const skeletonColor = colors.border;
+
   return (
     <View style={styles.container}>
       {/* Message bubble skeleton */}
       <View style={styles.messageContainer}>
-        <Animated.View style={[styles.avatarSkeleton, animatedStyle]} />
+        <Animated.View style={[styles.avatarSkeleton, { backgroundColor: skeletonColor }, animatedStyle]} />
         <View style={styles.contentContainer}>
-          <Animated.View style={[styles.lineLong, animatedStyle]} />
-          <Animated.View style={[styles.lineMedium, animatedStyle]} />
-          <Animated.View style={[styles.lineShort, animatedStyle]} />
+          <Animated.View style={[styles.lineLong, { backgroundColor: skeletonColor }, animatedStyle]} />
+          <Animated.View style={[styles.lineMedium, { backgroundColor: skeletonColor }, animatedStyle]} />
+          <Animated.View style={[styles.lineShort, { backgroundColor: skeletonColor }, animatedStyle]} />
         </View>
       </View>
 
       {/* Additional lines */}
       <View style={styles.additionalLines}>
-        <Animated.View style={[styles.lineMedium, animatedStyle]} />
-        <Animated.View style={[styles.lineLong, animatedStyle]} />
+        <Animated.View style={[styles.lineMedium, { backgroundColor: skeletonColor }, animatedStyle]} />
+        <Animated.View style={[styles.lineLong, { backgroundColor: skeletonColor }, animatedStyle]} />
       </View>
     </View>
   );

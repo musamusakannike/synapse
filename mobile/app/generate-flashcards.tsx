@@ -26,6 +26,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { FlashcardAPI, DocumentAPI, CourseAPI } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface DocumentItem {
   _id: string;
@@ -48,6 +49,7 @@ type SourceType = "topic" | "document" | "course";
 export default function GenerateFlashcardsPage() {
   const router = useRouter();
   const { isAuthenticated, openAuthModal } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -191,15 +193,15 @@ export default function GenerateFlashcardsPage() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* Header */}
-        <Animated.View style={[styles.header, headerStyle]}>
+        <Animated.View style={[styles.header, headerStyle, { borderBottomColor: colors.border }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="chevron-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Flashcards</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Create Flashcards</Text>
           <View style={styles.headerSpacer} />
         </Animated.View>
 
@@ -211,17 +213,17 @@ export default function GenerateFlashcardsPage() {
         >
           <Animated.View style={titleStyle}>
             <Text style={styles.greeting}>Create Flashcards</Text>
-            <Text style={styles.question}>Master any topic with spaced repetition</Text>
+            <Text style={[styles.question, { color: colors.textSecondary }]}>Master any topic with spaced repetition</Text>
           </Animated.View>
 
           <Animated.View style={[styles.form, formStyle]}>
             {/* Flashcard Set Title */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Title (Optional)</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Title (Optional)</Text>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="e.g., Biology Key Terms"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={title}
                 onChangeText={setTitle}
                 editable={!isGenerating}
@@ -231,11 +233,11 @@ export default function GenerateFlashcardsPage() {
 
             {/* Description */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Topic / Description</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Topic / Description</Text>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                style={[styles.textInput, styles.textArea, { borderColor: colors.border, backgroundColor: colors.inputBackground, color: colors.text }]}
                 placeholder="What topic should the flashcards cover?"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.placeholder}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -248,7 +250,7 @@ export default function GenerateFlashcardsPage() {
 
             {/* Source Selection */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Source</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Source</Text>
               <View style={styles.sourceTypeContainer}>
                 <TouchableOpacity
                   style={[styles.sourceTypeButton, sourceType === "topic" && styles.sourceTypeButtonSelected]}
@@ -293,7 +295,7 @@ export default function GenerateFlashcardsPage() {
 
             {/* Number of Cards */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Number of Cards</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Number of Cards</Text>
               <View style={styles.countContainer}>
                 {[5, 10, 15, 20, 25, 30].map((count) => (
                   <CardCountOption key={count} value={count} />

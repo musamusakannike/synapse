@@ -1,35 +1,32 @@
-import { Puff } from 'react-loader-spinner';
+"use client";
 
-type LoaderSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+import React from "react";
 
 interface LoaderProps {
-  size?: LoaderSize;
+  size?: "xs" | "sm" | "md" | "lg";
   color?: string;
 }
 
-const sizeMap: Record<LoaderSize, string> = {
-  xs: '16',
-  sm: '20',
-  md: '28',
-  lg: '40',
-  xl: '50',
+const sizeMap = {
+  xs: "w-4 h-4 border-2",
+  sm: "w-6 h-6 border-2",
+  md: "w-8 h-8 border-3",
+  lg: "w-12 h-12 border-4",
 };
 
-const Loader = ({ size = 'md', color = "#155dfc" }: LoaderProps) => {
-  const dimension = sizeMap[size];
-  
+export default function Loader({ size = "md", color }: LoaderProps) {
+  const sizeClass = sizeMap[size];
+  const borderColor = color || "var(--color-primary)";
+
   return (
-    <Puff
-      height={dimension}
-      width={dimension}
-      radius={1}
-      color={color}
-      ariaLabel="puff-loading"
-      wrapperStyle={{}}
-      wrapperClass=""
-      visible={true}
+    <div
+      className={`${sizeClass} rounded-full border-solid animate-spin`}
+      style={{
+        borderColor: `${borderColor}40`,
+        borderTopColor: borderColor,
+      }}
+      role="status"
+      aria-label="Loading"
     />
   );
-};
-
-export default Loader;
+}

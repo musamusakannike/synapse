@@ -10,6 +10,7 @@ import MessageItem from "@/components/MessageItem";
 import ChatInput from "@/components/ChatInput";
 import ChatSkeleton from "@/components/ChatSkeleton";
 import Sidebar from "@/components/Sidebar";
+import ProfileModal from "@/components/ProfileModal";
 
 export default function ChatPage() {
     const router = useRouter();
@@ -18,6 +19,7 @@ export default function ChatPage() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [greeting, setGreeting] = useState("Hi there");
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     // Fetch user info
     useEffect(() => {
@@ -94,6 +96,12 @@ export default function ChatPage() {
             {/* Sidebar */}
             <Sidebar open={sidebarOpen} onClose={closeSidebar} />
 
+            {/* Profile Modal */}
+            <ProfileModal
+                isOpen={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
+            />
+
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
@@ -109,6 +117,7 @@ export default function ChatPage() {
                     <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100">Synapse</h1>
 
                     <button
+                        onClick={() => setIsProfileModalOpen(true)}
                         className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center
                        bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                         aria-label="User profile"

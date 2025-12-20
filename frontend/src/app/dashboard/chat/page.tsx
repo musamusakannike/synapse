@@ -11,6 +11,7 @@ import ChatInput from "@/components/ChatInput";
 import ChatSkeleton from "@/components/ChatSkeleton";
 import Sidebar from "@/components/Sidebar";
 import ProfileModal from "@/components/ProfileModal";
+import DocumentUploadModal from "@/components/DocumentUploadModal";
 
 export default function ChatPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function ChatPage() {
     const [userName, setUserName] = useState<string | null>(null);
     const [greeting, setGreeting] = useState("Hi there");
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isDocumentUploadModalOpen, setIsDocumentUploadModalOpen] = useState(false);
 
     // Fetch user info
     useEffect(() => {
@@ -102,6 +104,16 @@ export default function ChatPage() {
                 onClose={() => setIsProfileModalOpen(false)}
             />
 
+            {/* Document Upload Modal */}
+            <DocumentUploadModal
+                isOpen={isDocumentUploadModalOpen}
+                onClose={() => setIsDocumentUploadModalOpen(false)}
+                onUploadSuccess={(documentId) => {
+                    console.log("Document uploaded:", documentId);
+                    router.push("/dashboard/documents");
+                }}
+            />
+
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
@@ -145,7 +157,7 @@ export default function ChatPage() {
                                 <AnimatedButton
                                     delay={400}
                                     icon="✍️"
-                                    onClick={() => router.push("/dashboard/documents")}
+                                    onClick={() => setIsDocumentUploadModalOpen(true)}
                                 >
                                     Upload Document
                                 </AnimatedButton>

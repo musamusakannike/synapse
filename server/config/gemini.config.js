@@ -327,7 +327,7 @@ class GeminiService {
 
     try {
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         safetySettings: this.safetySettings,
       });
@@ -348,7 +348,7 @@ class GeminiService {
           : String(fileBuffer || "");
 
         const response = await this.genAI.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-3-flash-preview",
           contents: [
             { role: "user", parts: [{ text: prompt }] },
             { role: "user", parts: [{ text: textContent }] },
@@ -367,7 +367,7 @@ class GeminiService {
         });
 
         const result = await this.genAI.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-3-flash-preview",
           contents: [
             {
               role: "user",
@@ -416,7 +416,7 @@ class GeminiService {
       ];
 
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: contents,
         safetySettings: this.safetySettings,
       });
@@ -434,7 +434,7 @@ class GeminiService {
 
     try {
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           responseMimeType: "application/json",
@@ -455,7 +455,7 @@ class GeminiService {
 
     try {
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           responseMimeType: "application/json",
@@ -516,7 +516,7 @@ class GeminiService {
       // Stateless call using full history + latest user message
       const contents = [...conversationHistory, latestMessage];
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents,
         safetySettings: this.safetySettings,
       });
@@ -532,7 +532,7 @@ class GeminiService {
       const prompt = `Generate a short, descriptive title (maximum 50 characters) for a chat conversation that starts with this message: "${message}"\n\nReturn only the title, nothing else. Make it concise and informative.`;
       
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         safetySettings: this.safetySettings,
       });
@@ -697,7 +697,7 @@ class GeminiService {
 
     try {
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           responseMimeType: "application/json",
@@ -737,7 +737,7 @@ class GeminiService {
 
     try {
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         safetySettings: this.safetySettings,
       });
@@ -773,7 +773,7 @@ IMPORTANT RULES:
 User message: "${userMessage}"`;
 
       const response = await this.genAI.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3-flash-preview",
         contents: [{ role: "user", parts: [{ text: systemContext }] }],
         config: {
           tools: functionCallingTools,

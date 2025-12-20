@@ -179,7 +179,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Panel */}
       <aside
-        className={`absolute left-0 top-0 h-full w-full sm:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-xl transform transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"
+        className={`absolute left-0 top-0 h-full w-full sm:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-xl transform transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         {/* Header */}
@@ -195,8 +195,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={() => setActiveTab("all")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "all"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
           >
             All Chats
@@ -204,8 +204,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={() => setActiveTab("favorites")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "favorites"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
           >
             <Star className="w-4 h-4" />
@@ -214,8 +214,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={() => setActiveTab("archived")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "archived"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
           >
             <Archive className="w-4 h-4" />
@@ -284,7 +284,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               )}
             </div>
           ) : (
-            <div className="space-y-1 px-3 overflow-y-scroll">
+            <div className="space-y-1 px-3">
               {filteredChats.map((chat) => (
                 <div
                   key={chat.id}
@@ -297,8 +297,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                     }
                   }}
                   className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${selectedChats.has(chat.id)
-                      ? "bg-blue-50 dark:bg-blue-900/20"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "bg-blue-50 dark:bg-blue-900/20"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
                     }`}
                 >
                   <div className="flex items-start gap-3">
@@ -306,8 +306,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                       <div className="flex-shrink-0 mt-1">
                         <div
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedChats.has(chat.id)
-                              ? "bg-blue-600 border-blue-600"
-                              : "border-gray-300 dark:border-gray-600"
+                            ? "bg-blue-600 border-blue-600"
+                            : "border-gray-300 dark:border-gray-600"
                             }`}
                         >
                           {selectedChats.has(chat.id) && (

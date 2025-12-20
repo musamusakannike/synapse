@@ -55,7 +55,7 @@ api.interceptors.response.use(
         if (typeof window !== "undefined") {
           localStorage.removeItem("accessToken");
         }
-      } catch {}
+      } catch { }
 
       // Mark last time we prompted
       // @ts-ignore
@@ -112,10 +112,34 @@ export const DocumentAPI = {
 export const ChatAPI = {
   list: () => api.get("/chats"),
   get: (id: string) => api.get(`/chats/${id}`),
+  getUserChats: (page: number = 1, limit: number = 20) =>
+    api.get("/chats", { params: { page, limit } }),
+  getChatWithMessages: (chatId: string) =>
+    api.get(`/chats/${chatId}`),
   create: (data?: any) => api.post("/chats/new", data || {}),
+  createNewChat: (title?: string, type: string = "general", sourceId?: string) =>
+    api.post("/chats/new", { title, type, sourceId }),
   sendMessage: (id: string, content: string) => api.post(`/chats/${id}/message`, { content }),
   updateTitle: (id: string, title: string) => api.put(`/chats/${id}/title`, { title }),
   delete: (id: string) => api.delete(`/chats/${id}`),
+  bulkDeleteChats: (chatIds: string[]) =>
+    api.post("/chats/bulk-delete", { chatIds }),
+  archiveChat: (chatId: string) =>
+    api.put(`/chats/${chatId}/archive`),
+  unarchiveChat: (chatId: string) =>
+    api.put(`/chats/${chatId}/unarchive`),
+  getArchivedChats: (page: number = 1, limit: number = 20) =>
+    api.get("/chats/archived", { params: { page, limit } }),
+  favoriteChat: (chatId: string) =>
+    api.put(`/chats/${chatId}/favorite`),
+  unfavoriteChat: (chatId: string) =>
+    api.put(`/chats/${chatId}/unfavorite`),
+  getFavoriteChats: (page: number = 1, limit: number = 20) =>
+    api.get("/chats/favorites", { params: { page, limit } }),
+  editMessage: (chatId: string, messageIndex: number, newContent: string) =>
+    api.put(`/chats/${chatId}/message/${messageIndex}`, { content: newContent }),
+  regenerateResponse: (chatId: string, messageIndex: number) =>
+    api.post(`/chats/${chatId}/message/${messageIndex}/regenerate`),
 };
 
 // Topic endpoints (align with server: { title, description?, content?, customizations? })
@@ -234,7 +258,7 @@ export const CourseAPI = {
     const url = `${API_BASE_URL}/courses/${id}/pdf`;
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
-    
+
     return fetch(url, { headers })
       .then(res => {
         if (!res.ok) throw new Error("Failed to download PDF");

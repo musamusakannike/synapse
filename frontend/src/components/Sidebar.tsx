@@ -284,7 +284,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               )}
             </div>
           ) : (
-            <div className="space-y-1 px-3">
+            <div className="space-y-1 px-3 overflow-y-scroll">
               {filteredChats.map((chat) => (
                 <div
                   key={chat.id}

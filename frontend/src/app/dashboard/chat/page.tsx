@@ -164,7 +164,7 @@ export default function ChatPage() {
                                 <AnimatedButton
                                     delay={500}
                                     icon="🎓"
-                                    onClick={() => router.push("/dashboard/courses")}
+                                    onClick={() => router.push("/dashboard/courses/generate")}
                                 >
                                     Generate a complete course
                                 </AnimatedButton>

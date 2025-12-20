@@ -39,28 +39,28 @@ export default function StyledMarkdown({ children, className = "" }: StyledMarkd
           },
           // Headings with better spacing and styling
           h1: ({ children }) => (
-            <h1 className="text-2xl font-bold text-gray-900 mt-6 mb-4 pb-2 border-b-2 border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-300 mt-6 mb-4 pb-2 border-b-2 border-gray-200">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-xl font-bold text-gray-900 mt-5 mb-3 pb-1 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-300 mt-5 mb-3 pb-1 border-b border-gray-200">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-semibold text-gray-900 mt-4 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mt-4 mb-2">
               {children}
             </h3>
           ),
           h4: ({ children }) => (
-            <h4 className="text-base font-semibold text-gray-800 mt-3 mb-2">
+            <h4 className="text-base font-semibold text-gray-800 dark:text-gray-300 mt-3 mb-2">
               {children}
             </h4>
           ),
           // Paragraphs
           p: ({ children }) => (
-            <p className="text-gray-700 leading-relaxed my-3">
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed my-3">
               {children}
             </p>
           ),
@@ -76,7 +76,7 @@ export default function StyledMarkdown({ children, className = "" }: StyledMarkd
             </ol>
           ),
           li: ({ children }) => (
-            <li className="leading-relaxed pl-1">
+            <li className="leading-relaxed pl-1 dark:text-gray-300">
               {children}
             </li>
           ),
@@ -95,22 +95,22 @@ export default function StyledMarkdown({ children, className = "" }: StyledMarkd
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               {children}
             </thead>
           ),
           tbody: ({ children }) => (
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-700">
               {children}
             </tbody>
           ),
           tr: ({ children }) => (
-            <tr className="hover:bg-gray-50 transition-colors">
+            <tr className="hover:bg-gray-50 transition-colors dark:hover:bg-gray-700">
               {children}
             </tr>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider dark:text-gray-300">
               {children}
             </th>
           ),
@@ -125,13 +125,13 @@ export default function StyledMarkdown({ children, className = "" }: StyledMarkd
           ),
           // Strong/Bold
           strong: ({ children }) => (
-            <strong className="font-semibold text-gray-900">
+            <strong className="font-semibold text-gray-900 dark:text-gray-300">
               {children}
             </strong>
           ),
           // Emphasis/Italic
           em: ({ children }) => (
-            <em className="italic text-gray-800">
+            <em className="italic text-gray-800 dark:text-gray-300">
               {children}
             </em>
           ),

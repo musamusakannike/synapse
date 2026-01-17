@@ -8,7 +8,7 @@ const CTA: React.FC = () => {
   return (
     <section id="cta" className="bg-white">
       <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="relative overflow-hidden rounded border border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+        <div className="relative overflow-hidden rounded border border-blue-200 bg-linear-to-br from-blue-50 to-white">
           {/* Decorative background */}
           <div
             className="absolute inset-0 opacity-40"

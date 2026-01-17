@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChatAPI } from "@/lib/api";
 import { useChat } from "@/contexts/ChatContext";
-import { X, MessageSquare, Search, Star, Archive, PenSquare, Trash2, Edit2 } from "lucide-react";
+import { X, MessageSquare, Search, Star, Archive, PenSquare, Trash2, Edit2, BookOpen, HelpCircle, Layers, Crown } from "lucide-react";
 
 interface SidebarProps {
   open: boolean;
@@ -20,6 +20,13 @@ interface ChatListItem {
 }
 
 type TabType = "all" | "favorites" | "archived";
+
+const QUICK_LINKS = [
+  { label: "Courses", href: "/dashboard/courses", icon: BookOpen, color: "text-green-400 bg-green-400/15" },
+  { label: "Quizzes", href: "/dashboard/quizzes", icon: HelpCircle, color: "text-purple-400 bg-purple-400/15" },
+  { label: "Flashcards", href: "/dashboard/flashcards", icon: Layers, color: "text-blue-400 bg-blue-400/15" },
+  { label: "Subscription", href: "/dashboard/subscription", icon: Crown, color: "text-yellow-400 bg-yellow-400/15" },
+];
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const router = useRouter();
@@ -169,8 +176,13 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const handleQuickLinkClick = (href: string) => {
+    router.push(href);
+    onClose();
+  };
+
   return (
-    <div className={`fixed inset-0 z-[100] ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
+    <div className={`fixed inset-0 z-100 ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
       {/* Backdrop */}
       <div
         className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
@@ -188,6 +200,27 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <button onClick={onClose} className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Close sidebar">
             <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
           </button>
+        </div>
+
+        {/* Quick Links */}
+        <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-800">
+          <div className="grid grid-cols-4 gap-2">
+            {QUICK_LINKS.map((link) => {
+              const Icon = link.icon;
+              return (
+                <button
+                  key={link.href}
+                  onClick={() => handleQuickLinkClick(link.href)}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{link.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -303,7 +336,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 >
                   <div className="flex items-start gap-3">
                     {selectionMode && (
-                      <div className="flex-shrink-0 mt-1">
+                      <div className="shrink-0 mt-1">
                         <div
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedChats.has(chat.id)
                             ? "bg-blue-600 border-blue-600"
@@ -327,7 +360,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {chat.title}
                         </h3>
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
                           {chat.isFavorite && <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />}
                           {chat.isArchived && <Archive className="w-4 h-4 text-gray-400" />}
                         </div>
@@ -337,7 +370,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {chat.lastMessage.content}
                           </p>
-                          <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
                             {formatTimestamp(chat.lastMessage.timestamp)}
                           </span>
                         </div>

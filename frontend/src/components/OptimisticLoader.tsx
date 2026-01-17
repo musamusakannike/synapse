@@ -71,7 +71,7 @@ export default function OptimisticLoader({ messages = defaultMessages, interval 
       {/* Animated icon */}
       <div className="relative">
         <div className="absolute inset-0 bg-blue-400 rounded-full blur-xl opacity-30 animate-pulse"></div>
-        <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-4 rounded-full animate-bounce-slow">
+        <div className="relative bg-linear-to-br from-blue-500 to-purple-600 p-4 rounded-full animate-bounce-slow">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
       </div>
@@ -83,7 +83,7 @@ export default function OptimisticLoader({ messages = defaultMessages, interval 
         >
           {messages[currentIndex]}
         </p>
-        
+
         {/* Loading dots */}
         <div className="flex items-center justify-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce [animation-delay:-0.3s]"></span>

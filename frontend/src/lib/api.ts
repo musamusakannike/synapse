@@ -169,10 +169,11 @@ export const TopicAPI = {
 export const QuizAPI = {
   list: () => api.get("/quizzes"),
   get: (id: string) => api.get(`/quizzes/${id}`),
+  getQuiz: (id: string) => api.get(`/quizzes/${id}`),
   create: (data: {
     title: string;
     description?: string;
-    sourceType?: "topic" | "document" | "website";
+    sourceType?: "topic" | "document" | "website" | "course";
     sourceId?: string;
     sourceModel?: string;
     content?: string;
@@ -203,10 +204,11 @@ export const WebsiteAPI = {
 export const FlashcardAPI = {
   list: () => api.get("/flashcards"),
   get: (id: string) => api.get(`/flashcards/${id}`),
+  getFlashcardSet: (id: string) => api.get(`/flashcards/${id}`),
   generate: (data: {
     title?: string;
     description?: string;
-    sourceType: "topic" | "document" | "website" | "manual";
+    sourceType: "topic" | "document" | "website" | "course" | "manual";
     sourceId?: string;
     settings?: {
       numberOfCards?: number;
@@ -230,8 +232,8 @@ export const FlashcardAPI = {
     }
   ) => api.put(`/flashcards/${id}`, data),
   delete: (id: string) => api.delete(`/flashcards/${id}`),
-  updateStudyStats: (id: string, score: number, sessionDuration?: number) =>
-    api.post(`/flashcards/${id}/study-stats`, { score, sessionDuration }),
+  updateStudyStats: (id: string, data: { score: number; sessionDuration?: number }) =>
+    api.post(`/flashcards/${id}/study-stats`, data),
 };
 
 // Wikipedia endpoints
@@ -283,6 +285,15 @@ export const CourseAPI = {
         window.URL.revokeObjectURL(blobUrl);
       });
   },
+};
+
+// Subscription endpoints
+export const SubscriptionAPI = {
+  getPlans: () => api.get("/subscriptions/plans"),
+  getStatus: () => api.get("/subscriptions/status"),
+  initiatePayment: (plan: string, duration: "day" | "week" | "month") =>
+    api.post("/subscriptions/initiate", { plan, duration }),
+  getHistory: () => api.get("/subscriptions/history"),
 };
 
 export default api;

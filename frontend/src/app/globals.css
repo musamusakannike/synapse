@@ -1,6 +1,17 @@
 @import "tailwindcss";
 
-/* Theme CSS Variables */
+/* =============================================
+   SATOSHI FONT (via Fontshare)
+   ============================================= */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
+  font-display: swap;
+}
+
+/* =============================================
+   THEME CSS VARIABLES (Dashboard — preserved)
+   ============================================= */
 :root {
   --color-primary: #4285F4;
   --color-background: #ffffff;
@@ -33,6 +44,35 @@
   --color-overlay: rgba(0, 0, 0, 0.7);
 }
 
+/* =============================================
+   LANDING PAGE TOKENS
+   Always dark, scoped under .landing
+   ============================================= */
+.landing {
+  --l-bg: #0a0e1a;
+  --l-bg-elevated: #111827;
+  --l-surface: #1a2035;
+  --l-accent: #4285F4;
+  --l-accent-glow: rgba(66, 133, 244, 0.15);
+  --l-accent-bright: #6ea8fe;
+  --l-text: #e8ecf4;
+  --l-text-heading: #f8fafc;
+  --l-muted: #8494b2;
+  --l-border: #1f2b42;
+  --l-border-hover: #2d3f5e;
+  --l-gradient-start: #4285F4;
+  --l-gradient-end: #2563eb;
+
+  background-color: var(--l-bg);
+  color: var(--l-text);
+  font-family: 'Satoshi', var(--font-poppins), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =============================================
+   GLOBAL TRANSITION (Dashboard — preserved)
+   ============================================= */
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
@@ -41,7 +81,216 @@ button {
   @apply cursor-pointer;
 }
 
-/* Mobile-inspired animations */
+/* =============================================
+   LANDING TYPOGRAPHY
+   ============================================= */
+.landing h1,
+.landing h2,
+.landing h3,
+.landing h4 {
+  color: var(--l-text-heading);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.landing p {
+  line-height: 1.65;
+}
+
+/* =============================================
+   LANDING UTILITIES
+   ============================================= */
+.landing-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (min-width: 768px) {
+  .landing-container {
+    padding: 0 40px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .landing-container {
+    padding: 0 64px;
+  }
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--l-border);
+}
+
+.glass-card {
+  background: rgba(26, 32, 53, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--l-border);
+  border-radius: 16px;
+}
+
+/* Accent glow */
+.glow-accent {
+  box-shadow: 0 0 40px var(--l-accent-glow), 0 0 80px rgba(66, 133, 244, 0.05);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, var(--l-gradient-start), var(--l-gradient-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle noise texture overlay */
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* GSAP reveal helpers */
+.gsap-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  will-change: opacity, transform;
+}
+
+.gsap-reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  will-change: opacity, transform;
+}
+
+.gsap-reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  will-change: opacity, transform;
+}
+
+.gsap-reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  will-change: opacity, transform;
+}
+
+/* Landing selection color */
+.landing ::selection {
+  background: rgba(66, 133, 244, 0.3);
+  color: var(--l-text-heading);
+}
+
+/* Landing scrollbar */
+.landing ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.landing ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.landing ::-webkit-scrollbar-thumb {
+  background: var(--l-border);
+  border-radius: 3px;
+}
+
+.landing ::-webkit-scrollbar-thumb:hover {
+  background: var(--l-muted);
+}
+
+/* Landing link hover */
+.landing-link {
+  position: relative;
+  color: var(--l-muted);
+  transition: color 0.2s ease;
+}
+
+.landing-link:hover {
+  color: var(--l-text);
+}
+
+.landing-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--l-accent);
+  transition: width 0.3s ease;
+}
+
+.landing-link:hover::after {
+  width: 100%;
+}
+
+/* Landing button styles */
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--l-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-btn-primary:hover {
+  background: #3b78e0;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(66, 133, 244, 0.3);
+}
+
+.landing-btn-primary:active {
+  transform: translateY(0);
+}
+
+.landing-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--l-text);
+  font-weight: 500;
+  font-size: 15px;
+  border-radius: 10px;
+  border: 1px solid var(--l-border);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.landing-btn-secondary:hover {
+  border-color: var(--l-border-hover);
+  background: var(--l-bg-elevated);
+}
+
+/* =============================================
+   DASHBOARD ANIMATIONS (preserved)
+   ============================================= */
 @keyframes fadeIn {
   from {
     opacity: 0;

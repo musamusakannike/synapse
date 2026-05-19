@@ -45,14 +45,26 @@ async function createCourse(req, res) {
   }
 }
 
+// Helper for retrying async operations with backoff
+async function retryWithBackoff(fn, retries = 3, delay = 2000) {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries <= 0) throw error;
+    console.warn(`DeepSeek API call failed, retrying in ${delay}ms... (Retries left: ${retries})`, error.message || error);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return retryWithBackoff(fn, retries - 1, delay * 2);
+  }
+}
+
 // Async function to generate outline and content
 async function generateCourseOutlineAsync(courseId, title, description, settings, userId) {
   try {
     // Generate outline
-    const outlineData = await deepseekService.generateCourseOutline(
-      title,
-      description,
-      settings
+    const outlineData = await retryWithBackoff(() => 
+      deepseekService.generateCourseOutline(title, description, settings),
+      3,
+      2000
     );
 
     const course = await Course.findById(courseId);
@@ -62,40 +74,78 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
     course.status = "generating_content";
     await course.save();
 
-    // Generate content for each section and subsection
-    const contentArray = [];
+    // Prepare list of content generation tasks
+    const tasks = [];
     for (const section of course.outline) {
-      // Generate content for main section
-      const sectionContent = await deepseekService.generateSectionContent(
-        title,
-        section.section,
-        null,
-        settings
-      );
-      contentArray.push({
-        section: section.section,
-        subsection: null,
-        explanation: sectionContent,
-      });
-
-      // Generate content for each subsection
+      tasks.push({ section: section.section, subsection: null });
       if (section.subsections && section.subsections.length > 0) {
         for (const subsection of section.subsections) {
-          const subsectionContent = await deepseekService.generateSectionContent(
-            title,
-            section.section,
-            subsection,
-            settings
+          tasks.push({ section: section.section, subsection });
+        }
+      }
+    }
+
+    const contentArray = [];
+    const concurrencyLimit = 3;
+    const taskQueue = [...tasks];
+
+    // Clear any existing content from database before generation starts
+    course.content = [];
+    await course.save();
+
+    // Worker function to process tasks concurrently
+    async function worker() {
+      while (taskQueue.length > 0) {
+        const task = taskQueue.shift();
+        if (!task) continue;
+
+        try {
+          const content = await retryWithBackoff(() =>
+            deepseekService.generateSectionContent(
+              title,
+              task.section,
+              task.subsection,
+              settings
+            ),
+            3,
+            2000
           );
-          contentArray.push({
-            section: section.section,
-            subsection: subsection,
-            explanation: subsectionContent,
+
+          const contentItem = {
+            section: task.section,
+            subsection: task.subsection,
+            explanation: content,
+          };
+          contentArray.push(contentItem);
+
+          // Push content incrementally to MONGODB so frontend shows real-time progress
+          await Course.findByIdAndUpdate(courseId, {
+            $push: { content: contentItem }
+          });
+        } catch (taskError) {
+          console.error(`Failed to generate content for ${task.section} - ${task.subsection || "Main"}:`, taskError);
+          const contentItem = {
+            section: task.section,
+            subsection: task.subsection,
+            explanation: `*Content generation failed for this section. Please try regenerating the course.*`,
+          };
+          contentArray.push(contentItem);
+
+          await Course.findByIdAndUpdate(courseId, {
+            $push: { content: contentItem }
           });
         }
       }
     }
 
+    // Run workers concurrently
+    const workers = [];
+    for (let i = 0; i < Math.min(concurrencyLimit, tasks.length); i++) {
+      workers.push(worker());
+    }
+    await Promise.all(workers);
+
+    // Save completed content array order and update status to completed
     course.content = contentArray;
     course.status = "completed";
     await course.save();

@@ -15,13 +15,27 @@ import DocumentUploadModal from "@/components/DocumentUploadModal";
 
 export default function ChatPage() {
     const router = useRouter();
-    const { messages, isLoading, isChatMode, sendMessage, createNewChat } = useChat();
+    const { messages, isLoading, isChatMode, sendMessage, createNewChat, openChat } = useChat();
     const { openSidebar, isOpen: sidebarOpen, closeSidebar } = useSidebar();
     const scrollRef = useRef<HTMLDivElement>(null);
     const [userName, setUserName] = useState<string | null>(null);
     const [greeting, setGreeting] = useState("Hi there");
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isDocumentUploadModalOpen, setIsDocumentUploadModalOpen] = useState(false);
+
+    // Auto-open chat from query parameter
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            const chatId = params.get("chatId");
+            if (chatId) {
+                openChat(chatId);
+                // Clean query params so refreshing/revisiting doesn't keep reopening it
+                const newUrl = window.location.pathname;
+                window.history.replaceState({ path: newUrl }, "", newUrl);
+            }
+        }
+    }, [openChat]);
 
     // Fetch user info
     useEffect(() => {
@@ -94,7 +108,7 @@ export default function ChatPage() {
     const shouldShowHomepage = !isChatMode || messages.length === 0;
 
     return (
-        <div className="flex h-screen bg-white dark:bg-gray-900">
+        <div className="flex h-screen bg-[#f9f8f6]">
             {/* Sidebar */}
             <Sidebar open={sidebarOpen} onClose={closeSidebar} />
 
@@ -117,37 +131,37 @@ export default function ChatPage() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+                <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-10">
                     <button
                         onClick={openSidebar}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        className="p-2 hover:bg-gray-50 rounded-xl transition-colors"
                         aria-label="Open menu"
                     >
-                        <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                        <Menu className="w-5 h-5 text-gray-700" />
                     </button>
 
-                    <h1 className="text-xl font-medium text-gray-900 dark:text-gray-100">Synapse</h1>
+                    <h1 className="text-xl font-semibold text-gray-800 tracking-tight">Synapse</h1>
 
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-10 h-10 rounded-full border-2 border-blue-500 flex items-center justify-center
-                       bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center
+                       bg-white hover:bg-gray-50 transition-all shadow-sm"
                         aria-label="User profile"
                     >
-                        <User className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                        <User className="w-5 h-5 text-gray-600" />
                     </button>
                 </header>
 
                 {/* Content Area */}
-                <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6">
                     {shouldShowHomepage ? (
                         <div className="max-w-3xl mx-auto pt-8">
                             {/* Greeting */}
                             <div className="mb-12 animate-fade-in">
-                                <h2 className="text-4xl font-medium text-blue-600 dark:text-blue-400 mb-2">
+                                <h2 className="text-4xl font-semibold text-gray-950 mb-2">
                                     {greeting}
                                 </h2>
-                                <p className="text-4xl font-normal text-gray-400 dark:text-gray-500">
+                                <p className="text-4xl font-light text-gray-400/80">
                                     Where should we start?
                                 </p>
                             </div>

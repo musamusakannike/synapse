@@ -72,20 +72,18 @@ export default function TransactionsPage() {
             default:
                 return duration;
         }
-    };
-
-    const getStatusColor = (status: string) => {
+    };    const getStatusColor = (status: string) => {
         switch (status) {
             case "successful":
-                return "text-green-400 bg-green-400/20";
+                return "text-green-700 bg-green-50 border border-green-200/50";
             case "pending":
-                return "text-yellow-400 bg-yellow-400/20";
+                return "text-yellow-700 bg-yellow-50 border border-yellow-200/50";
             case "failed":
-                return "text-red-400 bg-red-400/20";
+                return "text-red-650 bg-red-50 border border-red-200/50";
             case "cancelled":
-                return "text-slate-400 bg-slate-400/20";
+                return "text-gray-500 bg-gray-50 border border-gray-200/55";
             default:
-                return "text-slate-400 bg-slate-400/20";
+                return "text-gray-500 bg-gray-50 border border-gray-200/55";
         }
     };
 
@@ -106,49 +104,50 @@ export default function TransactionsPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                    <p className="text-slate-400">Loading transactions...</p>
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-gray-500 text-sm font-semibold">Loading transactions...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+                <div className="w-full max-w-2xl mx-auto px-6 flex items-center">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                        aria-label="Back"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <h1 className="flex-1 text-center text-lg font-semibold text-white">
+                    <h1 className="flex-1 text-center text-base font-bold text-gray-800">
                         Transaction History
                     </h1>
-                    <div className="w-10" /> {/* Spacer for centering */}
+                    <div className="w-8" /> {/* Spacer for centering */}
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8">
+            <main className="max-w-2xl mx-auto px-6 py-10">
                 {transactions.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-24 h-24 rounded-full bg-blue-500/15 flex items-center justify-center mb-6">
-                            <Crown className="w-12 h-12 text-blue-400" />
+                    <div className="flex flex-col items-center justify-center py-20 bg-white border border-gray-200/60 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100/30 flex items-center justify-center mb-4">
+                            <Crown className="w-8 h-8 text-blue-600" />
                         </div>
-                        <h2 className="text-xl font-semibold text-white mb-3">
+                        <h2 className="text-base font-bold text-gray-850 mb-2">
                             No Transactions Yet
                         </h2>
-                        <p className="text-slate-400 text-center max-w-sm mb-6">
+                        <p className="text-gray-500 text-center max-w-xs text-xs font-semibold mb-6">
                             Your subscription transactions will appear here once you make a
                             purchase.
                         </p>
                         <button
                             onClick={() => router.push("/dashboard/subscription")}
-                            className="px-8 py-3 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors"
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all text-xs shadow-sm"
                         >
                             View Plans
                         </button>
@@ -161,58 +160,62 @@ export default function TransactionsPage() {
                             return (
                                 <div
                                     key={transaction._id}
-                                    className="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden"
+                                    className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-xs"
                                     style={{
-                                        animation: `fadeInUp 0.4s ease-out ${index * 0.1}s both`,
+                                        animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
                                     }}
                                 >
                                     {/* Transaction Header */}
                                     <div className="p-4 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <Crown className="w-6 h-6 text-yellow-400" />
+                                            <div className="p-2 bg-yellow-50 rounded-xl">
+                                                <Crown className="w-5 h-5 text-yellow-600" />
+                                            </div>
                                             <div>
-                                                <p className="font-semibold text-white">
+                                                <p className="font-bold text-gray-800 text-sm">
                                                     {transaction.plan} Plan
                                                 </p>
-                                                <p className="text-sm text-slate-400">
+                                                <p className="text-xs text-gray-500 font-semibold">
                                                     {getDurationLabel(transaction.duration)}
                                                 </p>
                                             </div>
                                         </div>
                                         <span
-                                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase ${getStatusColor(
                                                 transaction.status
                                             )}`}
                                         >
-                                            <StatusIcon className="w-3.5 h-3.5" />
-                                            {transaction.status.charAt(0).toUpperCase() +
-                                                transaction.status.slice(1)}
+                                            <StatusIcon className="w-3 h-3" />
+                                            <span>
+                                                {transaction.status.charAt(0).toUpperCase() +
+                                                    transaction.status.slice(1)}
+                                            </span>
                                         </span>
                                     </div>
 
                                     {/* Transaction Details */}
-                                    <div className="p-4 pt-0 border-t border-slate-700/50 space-y-2.5">
-                                        <div className="flex justify-between">
-                                            <span className="text-sm text-slate-400">Amount</span>
-                                            <span className="text-sm font-medium text-white">
+                                    <div className="p-4 pt-3 border-t border-gray-100 space-y-2.5">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-500 font-semibold">Amount</span>
+                                            <span className="text-xs font-bold text-gray-800">
                                                 {formatPrice(transaction.amount, transaction.currency)}
                                             </span>
                                         </div>
 
-                                        <div className="flex justify-between">
-                                            <span className="text-sm text-slate-400">Date</span>
-                                            <span className="text-sm font-medium text-white">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-500 font-semibold">Date</span>
+                                            <span className="text-xs font-bold text-gray-800">
                                                 {formatDate(transaction.createdAt)} at{" "}
                                                 {formatTime(transaction.createdAt)}
                                             </span>
                                         </div>
 
                                         {transaction.paymentMethod && (
-                                            <div className="flex justify-between">
-                                                <span className="text-sm text-slate-400">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-gray-500 font-semibold">
                                                     Payment Method
                                                 </span>
-                                                <span className="text-sm font-medium text-white">
+                                                <span className="text-xs font-bold text-gray-800">
                                                     {transaction.paymentMethod.charAt(0).toUpperCase() +
                                                         transaction.paymentMethod.slice(1)}
                                                 </span>
@@ -223,28 +226,28 @@ export default function TransactionsPage() {
                                             transaction.startsAt &&
                                             transaction.expiresAt && (
                                                 <>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-sm text-slate-400">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs text-gray-500 font-semibold">
                                                             Valid From
                                                         </span>
-                                                        <span className="text-sm font-medium text-white">
+                                                        <span className="text-xs font-bold text-gray-800">
                                                             {formatDate(transaction.startsAt)}
                                                         </span>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-sm text-slate-400">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-xs text-gray-500 font-semibold">
                                                             Valid Until
                                                         </span>
-                                                        <span className="text-sm font-medium text-white">
+                                                        <span className="text-xs font-bold text-gray-800">
                                                             {formatDate(transaction.expiresAt)}
                                                         </span>
                                                     </div>
                                                 </>
                                             )}
 
-                                        <div className="flex justify-between">
-                                            <span className="text-sm text-slate-400">Reference</span>
-                                            <span className="text-xs text-slate-500 truncate max-w-[60%]">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-gray-500 font-semibold">Reference</span>
+                                            <span className="text-[10px] font-mono text-gray-405 truncate max-w-[60%]">
                                                 {transaction.txRef}
                                             </span>
                                         </div>
@@ -257,17 +260,17 @@ export default function TransactionsPage() {
             </main>
 
             <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(6px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
         </div>
     );
 }

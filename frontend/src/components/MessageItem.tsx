@@ -48,9 +48,9 @@ export default function MessageItem({ message, index }: MessageItemProps) {
     return (
         <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
             <div
-                className={`max-w-full md:max-w-[85%] rounded-2xl px-4 py-3 ${isUser
+                className={`max-w-full md:max-w-[85%] rounded-2xl px-5 py-4 ${isUser
                     ? "bg-blue-600 text-white rounded-br-sm max-w-[85%]"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm w-full md:w-auto"
+                    : "bg-white border border-gray-200/50 shadow-xs text-gray-800 rounded-bl-sm w-full md:w-auto"
                     }`}
             >
                 {isUser ? (

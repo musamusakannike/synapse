@@ -22,35 +22,21 @@ interface ThemeColors {
 
 const lightColors: ThemeColors = {
     primary: "#4285F4",
-    background: "#ffffff",
+    background: "#f9f8f6",
     card: "#ffffff",
-    text: "#1f1f1f",
-    textSecondary: "#666666",
-    border: "#e0e0e0",
+    text: "#3d4654",
+    textSecondary: "#7c8698",
+    border: "#e6e9ee",
     error: "#f44336",
     success: "#4caf50",
     warning: "#ff9800",
-    inputBackground: "#f8f9fa",
-    placeholder: "#9e9e9e",
-    shadow: "#000000",
+    inputBackground: "#ffffff",
+    placeholder: "#7c8698",
+    shadow: "rgba(0, 0, 0, 0.04)",
     overlay: "rgba(0, 0, 0, 0.5)",
 };
 
-const darkColors: ThemeColors = {
-    primary: "#4285F4",
-    background: "#0f172a",
-    card: "#1e293b",
-    text: "#f1f5f9",
-    textSecondary: "#94a3b8",
-    border: "#334155",
-    error: "#f44336",
-    success: "#4caf50",
-    warning: "#ff9800",
-    inputBackground: "#1e293b",
-    placeholder: "#64748b",
-    shadow: "#000000",
-    overlay: "rgba(0, 0, 0, 0.7)",
-};
+const darkColors: ThemeColors = lightColors;
 
 interface ThemeContextType {
     theme: Theme;
@@ -65,29 +51,19 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = "app_theme";
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [theme, setThemeState] = useState<Theme>("system");
-    const [isLoading, setIsLoading] = useState(true);
+    const [theme, setThemeState] = useState<Theme>("light");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const getEffectiveTheme = (currentTheme: Theme): "light" | "dark" => {
-        if (currentTheme === "system") {
-            if (typeof window !== "undefined") {
-                return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-            }
-            return "light";
-        }
-        return currentTheme;
-    };
-
-    const isDark = getEffectiveTheme(theme) === "dark";
-    const colors = isDark ? darkColors : lightColors;
+    const isDark = false;
+    const colors = lightColors;
 
     const setTheme = (newTheme: Theme) => {
-        setThemeState(newTheme);
+        // Lock to light
+        setThemeState("light");
         if (typeof window !== "undefined") {
             try {
-                localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-                // Update document class for CSS
-                document.documentElement.classList.toggle("dark", getEffectiveTheme(newTheme) === "dark");
+                localStorage.setItem(THEME_STORAGE_KEY, "light");
+                document.documentElement.classList.remove("dark");
             } catch (error) {
                 console.error("Error saving theme preference:", error);
             }
@@ -95,46 +71,26 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     const toggleTheme = () => {
-        if (theme === "light") {
-            setTheme("dark");
-        } else if (theme === "dark") {
-            setTheme("system");
-        } else {
-            setTheme("light");
-        }
+        setTheme("light");
     };
 
     useEffect(() => {
         if (typeof window !== "undefined") {
             try {
-                const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-                if (savedTheme && ["light", "dark", "system"].includes(savedTheme)) {
-                    setThemeState(savedTheme as Theme);
-                }
+                document.documentElement.classList.remove("dark");
+                localStorage.setItem(THEME_STORAGE_KEY, "light");
             } catch (error) {
-                console.error("Error loading theme preference:", error);
-            } finally {
-                setIsLoading(false);
+                console.error("Error setting light theme on load:", error);
             }
-
-            // Listen for system theme changes
-            const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-            const handleChange = () => {
-                if (theme === "system") {
-                    document.documentElement.classList.toggle("dark", mediaQuery.matches);
-                }
-            };
-            mediaQuery.addEventListener("change", handleChange);
-            return () => mediaQuery.removeEventListener("change", handleChange);
         }
-    }, [theme]);
+    }, []);
 
     // Apply theme class on mount and when theme changes
     useEffect(() => {
-        if (typeof window !== "undefined" && !isLoading) {
-            document.documentElement.classList.toggle("dark", isDark);
+        if (typeof window !== "undefined") {
+            document.documentElement.classList.remove("dark");
         }
-    }, [isDark, isLoading]);
+    }, []);
 
     if (isLoading) {
         return null;

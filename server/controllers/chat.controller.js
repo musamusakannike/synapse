@@ -1,6 +1,6 @@
 const User = require("../models/user.model");
 const Chat = require("../models/chat.model");
-const geminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const Topic = require("../models/topic.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
@@ -26,7 +26,7 @@ const executeFlashcardGeneration = async (args, userId, chatId) => {
   };
 
   // Generate flashcards using the gemini service
-  const generatedData = await geminiService.generateFlashcards(topic, settings);
+  const generatedData = await deepseekService.generateFlashcards(topic, settings);
 
   // Create flashcard set
   const flashcardSet = new FlashcardSet({
@@ -105,7 +105,7 @@ const executeCourseGeneration = async (args, userId) => {
 // Async function to generate course outline and content (copied from course.controller.js)
 async function generateCourseOutlineAsync(courseId, title, description, settings, userId) {
   try {
-    const outlineData = await geminiService.generateCourseOutline(title, description, settings);
+    const outlineData = await deepseekService.generateCourseOutline(title, description, settings);
 
     const course = await Course.findById(courseId);
     if (!course) return;
@@ -116,7 +116,7 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
 
     const contentArray = [];
     for (const section of course.outline) {
-      const sectionContent = await geminiService.generateSectionContent(
+      const sectionContent = await deepseekService.generateSectionContent(
         title,
         section.section,
         null,
@@ -130,7 +130,7 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
 
       if (section.subsections && section.subsections.length > 0) {
         for (const subsection of section.subsections) {
-          const subsectionContent = await geminiService.generateSectionContent(
+          const subsectionContent = await deepseekService.generateSectionContent(
             title,
             section.section,
             subsection,
@@ -254,7 +254,7 @@ async function generateQuizAsync(quizId, content, settings, numberOfQuestions, u
       }
       
       const batchSettings = { ...settings, numberOfQuestions: questionsInBatch };
-      const batchResult = await geminiService.generateQuiz(batchContent, batchSettings);
+      const batchResult = await deepseekService.generateQuiz(batchContent, batchSettings);
       
       if (batchResult.questions && batchResult.questions.length > 0) {
         allQuestions = [...allQuestions, ...batchResult.questions];
@@ -332,7 +332,7 @@ const executeDocumentAnalysis = async (args, documentContent, documentName) => {
 
   prompt += `\n\nDocument: ${documentName}\nContent: ${documentContent}`;
 
-  const analysis = await geminiService.generateChatResponse(
+  const analysis = await deepseekService.generateChatResponse(
     [{ role: "user", content: prompt }],
     ""
   );
@@ -452,7 +452,7 @@ const sendMessage = async (req, res) => {
     // Detect user intent using function calling
     let intentResult = null;
     try {
-      intentResult = await geminiService.detectIntent(content, hasDocument);
+      intentResult = await deepseekService.detectIntent(content, hasDocument);
     } catch (intentError) {
       console.error("Intent detection error:", intentError);
       // Continue with normal chat if intent detection fails
@@ -569,7 +569,7 @@ const sendMessage = async (req, res) => {
 
           default:
             // Unknown function, fall back to regular chat
-            aiResponse = await geminiService.generateChatResponse(
+            aiResponse = await deepseekService.generateChatResponse(
               chat.messages.slice(-10),
               ""
             );
@@ -594,7 +594,7 @@ const sendMessage = async (req, res) => {
       // Auto-generate title if this is the first message
       if (chat.messages.length === 2 && (chat.title === "New Chat" || chat.title.includes("Chat"))) {
         try {
-          const generatedTitle = await geminiService.generateChatTitle(content);
+          const generatedTitle = await deepseekService.generateChatTitle(content);
           chat.title = generatedTitle;
         } catch (titleError) {
           console.error("Failed to generate chat title:", titleError);
@@ -650,7 +650,7 @@ const sendMessage = async (req, res) => {
     }
 
     // Generate AI response
-    const aiResponse = await geminiService.generateChatResponse(
+    const aiResponse = await deepseekService.generateChatResponse(
       chat.messages.slice(-10), // Last 10 messages for context
       context
     );
@@ -664,7 +664,7 @@ const sendMessage = async (req, res) => {
     // Auto-generate title if this is the first message (only user message + AI response)
     if (chat.messages.length === 2 && (chat.title === "New Chat" || chat.title.includes("Chat"))) {
       try {
-        const generatedTitle = await geminiService.generateChatTitle(content);
+        const generatedTitle = await deepseekService.generateChatTitle(content);
         chat.title = generatedTitle;
       } catch (titleError) {
         console.error("Failed to generate chat title:", titleError);
@@ -1107,7 +1107,7 @@ const editMessage = async (req, res) => {
     // Detect user intent using function calling
     let intentResult = null;
     try {
-      intentResult = await geminiService.detectIntent(content, hasDocument);
+      intentResult = await deepseekService.detectIntent(content, hasDocument);
     } catch (intentError) {
       console.error("Intent detection error:", intentError);
     }
@@ -1202,7 +1202,7 @@ const editMessage = async (req, res) => {
             break;
 
           default:
-            aiResponse = await geminiService.generateChatResponse(
+            aiResponse = await deepseekService.generateChatResponse(
               chat.messages.slice(-10),
               ""
             );
@@ -1260,7 +1260,7 @@ const editMessage = async (req, res) => {
     }
 
     // Generate new AI response
-    const aiResponse = await geminiService.generateChatResponse(
+    const aiResponse = await deepseekService.generateChatResponse(
       chat.messages.slice(-10), // Last 10 messages for context
       context
     );
@@ -1333,7 +1333,7 @@ const regenerateResponse = async (req, res) => {
     }
 
     // Generate new AI response
-    const aiResponse = await geminiService.generateChatResponse(
+    const aiResponse = await deepseekService.generateChatResponse(
       chat.messages.slice(-10), // Last 10 messages for context
       context
     );

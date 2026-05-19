@@ -1,5 +1,5 @@
 const Website = require("../models/website.model");
-const GeminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const axios = require("axios");
 const cheerio = require("cheerio");
 const { createChatWithAttachment } = require("./chat.controller");
@@ -41,7 +41,7 @@ async function createWebsite(req, res) {
       const { title, text } = extractReadableText(response.data);
 
       const prompt = buildWebsiteSummaryPrompt(url, title);
-      const summary = await GeminiService.processDocument(
+      const summary = await deepseekService.processDocument(
         Buffer.from(text || "", "utf8"),
         "text/plain",
         prompt
@@ -150,7 +150,7 @@ async function rescrapeWebsite(req, res) {
       const response = await axios.get(site.url, { timeout: 20000 });
       const { title, text } = extractReadableText(response.data);
       const prompt = buildWebsiteSummaryPrompt(site.url, title);
-      const summary = await GeminiService.processDocument(
+      const summary = await deepseekService.processDocument(
         Buffer.from(text || "", "utf8"),
         "text/plain",
         prompt

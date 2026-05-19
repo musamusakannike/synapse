@@ -2,7 +2,7 @@ const Quiz = require("../models/quiz.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
 const Course = require("../models/course.model");
-const GeminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const { createChatWithAttachment } = require("./chat.controller");
 
 // Async function to generate quiz questions in parts
@@ -34,7 +34,7 @@ async function generateQuizAsync(quizId, content, settings, numberOfQuestions, u
       }
       
       const batchSettings = { ...settings, numberOfQuestions: questionsInBatch };
-      const batchResult = await GeminiService.generateQuiz(batchContent, batchSettings);
+      const batchResult = await deepseekService.generateQuiz(batchContent, batchSettings);
       
       if (batchResult.questions && batchResult.questions.length > 0) {
         allQuestions = [...allQuestions, ...batchResult.questions];

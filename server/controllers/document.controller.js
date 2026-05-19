@@ -1,7 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const Document = require("../models/document.model");
-const GeminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const { createChatWithAttachment } = require("./chat.controller");
 
 // Lazy-load heavy libs only when needed
@@ -136,7 +136,7 @@ async function uploadDocument(req, res) {
           buildImageAnalysisPrompt(originalname, userGuidance) : 
           buildImageAnalysisPrompt(originalname);
         
-        summary = await GeminiService.processImage(
+        summary = await deepseekService.processImage(
           imageData.base64Data,
           imageData.mimeType,
           prompt
@@ -151,7 +151,7 @@ async function uploadDocument(req, res) {
           buildDefaultSummaryPrompt(originalname, userGuidance) : 
           buildDefaultSummaryPrompt(originalname);
         
-        summary = await GeminiService.processDocument(
+        summary = await deepseekService.processDocument(
           Buffer.from(extractedText, "utf8"),
           "text/plain",
           prompt
@@ -280,7 +280,7 @@ async function reprocessDocument(req, res) {
       const effectivePrompt = userGuidance ? 
         buildDefaultSummaryPrompt(doc.originalName, userGuidance) : 
         buildDefaultSummaryPrompt(doc.originalName);
-      const summary = await GeminiService.processDocument(
+      const summary = await deepseekService.processDocument(
         Buffer.from(extractedText, "utf8"),
         "text/plain",
         effectivePrompt

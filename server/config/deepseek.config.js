@@ -47,6 +47,7 @@ class DeepSeekService {
     this.openai = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY || "",
       baseURL: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
+      timeout: 180000, // 3 minutes timeout
     });
 
     // Default to deepseek-v4-flash for cost-effectiveness and speed

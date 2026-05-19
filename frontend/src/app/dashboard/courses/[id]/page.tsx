@@ -46,16 +46,48 @@ export default function CourseDetailPage() {
     const [activeSection, setActiveSection] = useState<string>("");
     const [activeSubsection, setActiveSubsection] = useState<string>("");
     const [isDownloading, setIsDownloading] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
+    // Initial course fetch
     useEffect(() => {
         if (id) {
-            fetchCourse();
+            fetchCourse(true);
         }
     }, [id]);
 
-    const fetchCourse = async () => {
+    // Real-time polling to retrieve generated contents incrementally
+    useEffect(() => {
+        if (!course || course.status === "completed" || course.status === "failed") {
+            return;
+        }
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const response = await CourseAPI.get(id);
+                const updatedCourse: Course = response.data;
+                
+                setCourse((prevCourse) => {
+                    // Update active section / subsection if they aren't initialized yet
+                    if (!activeSection && updatedCourse.outline && updatedCourse.outline.length > 0) {
+                        const firstSection = updatedCourse.outline[0];
+                        setActiveSection(firstSection.section);
+                        if (firstSection.subsections && firstSection.subsections.length > 0) {
+                            setActiveSubsection(firstSection.subsections[0]);
+                        }
+                    }
+                    return updatedCourse;
+                });
+            } catch (error) {
+                console.error("Error polling course details:", error);
+            }
+        }, 3000);
+
+        return () => clearInterval(pollInterval);
+    }, [id, course?.status, activeSection]);
+
+    const fetchCourse = async (showSpinner = false) => {
         try {
-            setLoading(true);
+            if (showSpinner) setLoading(true);
             const response = await CourseAPI.get(id);
             const data: Course = response.data;
             setCourse(data);
@@ -71,7 +103,7 @@ export default function CourseDetailPage() {
         } catch (error) {
             console.error("Error fetching course details:", error);
         } finally {
-            setLoading(false);
+            if (showSpinner) setLoading(false);
         }
     };
 
@@ -100,6 +132,22 @@ export default function CourseDetailPage() {
         }
     };
 
+    const handleRegenerate = async () => {
+        try {
+            setIsRegenerating(true);
+            const response = await CourseAPI.regenerate(id, course?.settings);
+            setCourse(response.data);
+            // Reset active sections so they will be re-initialized
+            setActiveSection("");
+            setActiveSubsection("");
+        } catch (error) {
+            console.error("Error regenerating course:", error);
+            alert("Failed to regenerate course");
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
+
     // Find current content
     const getCurrentExplanation = () => {
         if (!course || !course.content) return "";
@@ -108,6 +156,14 @@ export default function CourseDetailPage() {
         );
         return match ? match.explanation : "Select a topic from the outline on the left to start reading.";
     };
+
+    // Calculate generation progress stats
+    const totalSections = course?.outline ? course.outline.reduce(
+        (acc, sect) => acc + 1 + (sect.subsections ? sect.subsections.length : 0),
+        0
+    ) : 0;
+    const generatedSections = course?.content ? course.content.length : 0;
+    const percentComplete = totalSections > 0 ? Math.round((generatedSections / totalSections) * 100) : 0;
 
     if (loading) {
         return (
@@ -133,6 +189,27 @@ export default function CourseDetailPage() {
                     >
                         Back to Courses
                     </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (course.status === "generating_outline") {
+        return (
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center p-6">
+                <div className="max-w-md w-full bg-white border border-gray-200/60 rounded-3xl p-8 text-center shadow-xs flex flex-col items-center gap-5">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-blue-100/50 rounded-full blur-xl animate-pulse"></div>
+                        <div className="relative p-4 bg-blue-50/80 rounded-2xl text-blue-600">
+                            <Loader2 className="w-10 h-10 animate-spin" />
+                        </div>
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800">🎓 Planning Course Outline...</h2>
+                        <p className="text-gray-505 text-xs mt-2 leading-relaxed max-w-sm">
+                            We are designing a comprehensive structured syllabus for <strong>"{course.title}"</strong> customized to your specifications. This will take just a moment.
+                        </p>
+                    </div>
                 </div>
             </div>
         );
@@ -236,22 +313,60 @@ export default function CourseDetailPage() {
                 {/* Right Reading Panel */}
                 <main className="flex-1 bg-[#f9f8f6] p-8 md:p-12 overflow-y-auto h-[calc(100vh-64px)]">
                     <div className="max-w-3xl mx-auto bg-white border border-gray-200/60 rounded-2xl p-8 sm:p-10 shadow-xs min-h-full flex flex-col">
-                        {/* Selected Topic Title Header */}
-                        <div className="border-b border-gray-150 pb-6 mb-8">
-                            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
-                                {activeSection}
-                            </span>
-                            <h2 className="text-2xl font-bold text-gray-900 mt-1">
-                                {activeSubsection}
-                            </h2>
-                        </div>
+                        {course.status === "failed" ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-red-50/10 border border-dashed border-red-200/60 rounded-2xl my-auto">
+                                <div className="p-3 bg-red-50 rounded-2xl text-red-600 mb-4">
+                                    <BookOpen className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-800 mb-1">Content Generation Failed</h3>
+                                <p className="text-sm text-gray-500 max-w-sm mb-6 leading-relaxed">
+                                    Something went wrong while generating the course materials. Don't worry, you can try regenerating it.
+                                </p>
+                                <button
+                                    onClick={handleRegenerate}
+                                    disabled={isRegenerating}
+                                    className="flex items-center gap-1.5 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-sm text-sm disabled:opacity-50 transition-all active:scale-[0.98]"
+                                >
+                                    {isRegenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                                    <span>Regenerate Course</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Selected Topic Title Header */}
+                                <div className="border-b border-gray-150 pb-6 mb-8">
+                                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                                        {activeSection || "Getting Started"}
+                                    </span>
+                                    <h2 className="text-2xl font-bold text-gray-900 mt-1">
+                                        {activeSubsection || "Course Overview"}
+                                    </h2>
+                                </div>
 
-                        {/* Content Viewer */}
-                        <div className="flex-1">
-                            <StyledMarkdown className="prose-blue">
-                                {getCurrentExplanation()}
-                            </StyledMarkdown>
-                        </div>
+                                {/* Content Viewer */}
+                                <div className="flex-1 flex flex-col">
+                                    {course.status === "generating_content" && !course.content.some(c => c.section === activeSection && c.subsection === activeSubsection) ? (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-blue-50/20 border border-dashed border-blue-100 rounded-2xl my-4">
+                                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3.5" />
+                                            <h3 className="text-base font-bold text-gray-800 mb-1">Generating Lesson Content...</h3>
+                                            <p className="text-xs text-gray-555 max-w-xs leading-relaxed">
+                                                We are currently writing the lesson explanation for <strong>{activeSubsection || activeSection}</strong>.
+                                            </p>
+                                            <div className="w-full max-w-[240px] bg-gray-100 rounded-full h-1.5 mt-5 overflow-hidden">
+                                                <div className="bg-blue-600 h-1.5 transition-all duration-500" style={{ width: `${percentComplete}%` }}></div>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 mt-2 font-semibold tracking-wider uppercase">
+                                                {generatedSections} of {totalSections} lessons written ({percentComplete}%)
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <StyledMarkdown className="prose-blue">
+                                            {getCurrentExplanation()}
+                                        </StyledMarkdown>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </main>
             </div>

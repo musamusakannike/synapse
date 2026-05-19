@@ -140,217 +140,216 @@ export default function GenerateQuizPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
+                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
+                        <span className="font-medium text-sm">Back</span>
                     </button>
-                    <h1 className="flex-1 text-center text-lg font-semibold text-white">
-                        Generate Quiz
-                    </h1>
+                    <h1 className="text-lg font-semibold text-gray-800">Generate Quiz</h1>
                     <div className="w-10" />
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-                {/* Title Input */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Quiz Title
-                    </label>
-                    <input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Enter quiz title..."
-                        className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-                    />
-                </div>
+            <main className="max-w-4xl mx-auto px-4 py-8">
+                <div className="space-y-6 bg-white border border-gray-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+                    {/* Title Input */}
+                    <div>
+                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                            Quiz Title
+                        </label>
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Enter quiz title..."
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                        />
+                    </div>
 
-                {/* Source Type Selection */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Source Type
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {(
-                            [
-                                { value: "topic", label: "Topic", icon: Sparkles },
-                                { value: "document", label: "Document", icon: FileText },
-                                { value: "course", label: "Course", icon: BookOpen },
-                            ] as const
-                        ).map(({ value, label, icon: Icon }) => (
-                            <button
-                                key={value}
-                                onClick={() => {
-                                    setSourceType(value);
-                                    setSelectedSourceId("");
-                                }}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${sourceType === value
-                                        ? "border-blue-500 bg-blue-500/10"
-                                        : "border-slate-700 hover:border-slate-600"
-                                    }`}
-                            >
-                                <Icon
-                                    className={`w-6 h-6 ${sourceType === value ? "text-blue-400" : "text-slate-400"
+                    {/* Source Type Selection */}
+                    <div>
+                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                            Source Type
+                        </label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {(
+                                [
+                                    { value: "topic", label: "Topic", icon: Sparkles },
+                                    { value: "document", label: "Document", icon: FileText },
+                                    { value: "course", label: "Course", icon: BookOpen },
+                                ] as const
+                            ).map(({ value, label, icon: Icon }) => (
+                                <button
+                                    key={value}
+                                    onClick={() => {
+                                        setSourceType(value);
+                                        setSelectedSourceId("");
+                                    }}
+                                    className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${sourceType === value
+                                            ? "border-blue-600 bg-blue-50/50"
+                                            : "border-gray-200 bg-white hover:border-gray-300"
                                         }`}
-                                />
+                                >
+                                    <Icon
+                                        className={`w-5 h-5 ${sourceType === value ? "text-blue-600" : "text-gray-500"
+                                            }`}
+                                    />
+                                    <span
+                                        className={`text-sm font-semibold ${sourceType === value ? "text-blue-600" : "text-gray-600"
+                                            }`}
+                                    >
+                                        {label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Source Content/Selection */}
+                    {sourceType === "topic" ? (
+                        <div>
+                            <label className="block text-base font-semibold text-gray-800 mb-2">
+                                Topic Content
+                            </label>
+                            <textarea
+                                value={topicContent}
+                                onChange={(e) => setTopicContent(e.target.value)}
+                                placeholder="Enter the topic content or paste text to generate quiz questions from..."
+                                rows={6}
+                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-base font-semibold text-gray-800 mb-2">
+                                Select {sourceType === "document" ? "Document" : "Course"}
+                            </label>
+                            <button
+                                onClick={() => setShowSourcePicker(true)}
+                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-colors"
+                            >
                                 <span
-                                    className={`text-sm font-medium ${sourceType === value ? "text-blue-400" : "text-slate-400"
+                                    className={`text-sm font-medium ${selectedSourceId ? "text-gray-800 font-semibold" : "text-gray-400"}`}
+                                >
+                                    {getSelectedSourceName()}
+                                </span>
+                                <ChevronLeft className="w-5 h-5 text-gray-400 rotate-180" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Number of Questions */}
+                    <div>
+                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                            Number of Questions
+                        </label>
+                        <div className="flex gap-2 flex-wrap">
+                            {questionCounts.map((count) => (
+                                <button
+                                    key={count}
+                                    onClick={() => setNumberOfQuestions(count)}
+                                    className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${numberOfQuestions === count
+                                            ? "border-blue-600 bg-blue-50/50 text-blue-600"
+                                            : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+                                        }`}
+                                >
+                                    {count}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Difficulty */}
+                    <div>
+                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                            Difficulty
+                        </label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {difficulties.map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    onClick={() => setDifficulty(value)}
+                                    className={`px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all ${difficulty === value
+                                            ? "border-blue-600 bg-blue-50/50 text-blue-600"
+                                            : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
                                         }`}
                                 >
                                     {label}
-                                </span>
-                            </button>
-                        ))}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Source Content/Selection */}
-                {sourceType === "topic" ? (
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Topic Content
-                        </label>
-                        <textarea
-                            value={topicContent}
-                            onChange={(e) => setTopicContent(e.target.value)}
-                            placeholder="Enter the topic content or paste text to generate quiz questions from..."
-                            rows={6}
-                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors resize-none"
-                        />
-                    </div>
-                ) : (
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Select {sourceType === "document" ? "Document" : "Course"}
-                        </label>
+                    {/* Include Calculations Toggle */}
+                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                        <div>
+                            <p className="font-semibold text-gray-800 text-sm sm:text-base">Include Calculations</p>
+                            <p className="text-xs sm:text-sm text-gray-550">
+                                Add questions that require mathematical calculations
+                            </p>
+                        </div>
                         <button
-                            onClick={() => setShowSourcePicker(true)}
-                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-left flex items-center justify-between hover:border-slate-600 transition-colors"
+                            onClick={() => setIncludeCalculations(!includeCalculations)}
+                            className={`w-12 h-6 rounded-full transition-colors ${includeCalculations ? "bg-blue-600" : "bg-gray-250"
+                                }`}
                         >
-                            <span
-                                className={
-                                    selectedSourceId ? "text-white" : "text-slate-500"
-                                }
-                            >
-                                {getSelectedSourceName()}
-                            </span>
-                            <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
+                            <div
+                                className={`w-5 h-5 bg-white rounded-full shadow-xs transition-transform ${includeCalculations ? "translate-x-6" : "translate-x-0.5"
+                                    }`}
+                            />
                         </button>
                     </div>
-                )}
 
-                {/* Number of Questions */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Number of Questions
-                    </label>
-                    <div className="flex gap-2 flex-wrap">
-                        {questionCounts.map((count) => (
-                            <button
-                                key={count}
-                                onClick={() => setNumberOfQuestions(count)}
-                                className={`px-4 py-2 rounded-lg border transition-all ${numberOfQuestions === count
-                                        ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                                        : "border-slate-700 text-slate-400 hover:border-slate-600"
-                                    }`}
-                            >
-                                {count}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Difficulty */}
-                <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Difficulty
-                    </label>
-                    <div className="grid grid-cols-4 gap-2">
-                        {difficulties.map(({ value, label }) => (
-                            <button
-                                key={value}
-                                onClick={() => setDifficulty(value)}
-                                className={`px-4 py-2 rounded-lg border transition-all ${difficulty === value
-                                        ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                                        : "border-slate-700 text-slate-400 hover:border-slate-600"
-                                    }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Include Calculations Toggle */}
-                <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                    <div>
-                        <p className="font-medium text-white">Include Calculations</p>
-                        <p className="text-sm text-slate-400">
-                            Add questions that require mathematical calculations
-                        </p>
-                    </div>
+                    {/* Generate Button */}
                     <button
-                        onClick={() => setIncludeCalculations(!includeCalculations)}
-                        className={`w-12 h-6 rounded-full transition-colors ${includeCalculations ? "bg-blue-500" : "bg-slate-600"
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                        className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 ${isGenerating
+                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
                             }`}
                     >
-                        <div
-                            className={`w-5 h-5 bg-white rounded-full transition-transform ${includeCalculations ? "translate-x-6" : "translate-x-0.5"
-                                }`}
-                        />
+                        {isGenerating ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span>Generating Quiz...</span>
+                            </>
+                        ) : (
+                            "Generate Quiz"
+                        )}
                     </button>
                 </div>
-
-                {/* Generate Button */}
-                <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className={`w-full py-4 rounded-full font-semibold text-lg transition-all ${isGenerating
-                            ? "bg-slate-600 text-slate-400 cursor-not-allowed"
-                            : "bg-linear-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/25"
-                        }`}
-                >
-                    {isGenerating ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Generating...
-                        </span>
-                    ) : (
-                        "Generate Quiz"
-                    )}
-                </button>
             </main>
 
             {/* Source Picker Modal */}
             {showSourcePicker && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="w-full max-w-md bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-                        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="p-4 border-b border-gray-150 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-gray-800">
                                 Select {sourceType === "document" ? "Document" : "Course"}
                             </h2>
                             <button
                                 onClick={() => setShowSourcePicker(false)}
-                                className="text-slate-400 hover:text-white"
+                                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
                             >
                                 ✕
                             </button>
                         </div>
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
                             {isLoadingSources ? (
                                 <div className="p-8 flex justify-center">
                                     <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
                                 </div>
                             ) : sourceType === "document" ? (
                                 documents.length === 0 ? (
-                                    <p className="p-8 text-center text-slate-400">
+                                    <p className="p-8 text-center text-gray-400 text-sm font-medium">
                                         No documents found
                                     </p>
                                 ) : (
@@ -361,24 +360,24 @@ export default function GenerateQuizPage() {
                                                 setSelectedSourceId(doc._id);
                                                 setShowSourcePicker(false);
                                             }}
-                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-500/10" : ""
+                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
                                                 }`}
                                         >
-                                            <FileText className="w-5 h-5 text-slate-400" />
+                                            <FileText className="w-5 h-5 text-gray-400" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-white truncate">{doc.originalName}</p>
-                                                <p className="text-xs text-slate-500">
+                                                <p className="text-gray-800 font-semibold truncate text-sm">{doc.originalName}</p>
+                                                <p className="text-xs text-gray-400">
                                                     {new Date(doc.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
                                             {selectedSourceId === doc._id && (
-                                                <Check className="w-5 h-5 text-blue-400" />
+                                                <Check className="w-4 h-4 text-blue-600" />
                                             )}
                                         </button>
                                     ))
                                 )
                             ) : courses.length === 0 ? (
-                                <p className="p-8 text-center text-slate-400">
+                                <p className="p-8 text-center text-gray-400 text-sm font-medium">
                                     No courses found
                                 </p>
                             ) : (
@@ -389,18 +388,18 @@ export default function GenerateQuizPage() {
                                             setSelectedSourceId(course._id);
                                             setShowSourcePicker(false);
                                         }}
-                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${selectedSourceId === course._id ? "bg-blue-500/10" : ""
+                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
                                             }`}
                                     >
-                                        <BookOpen className="w-5 h-5 text-slate-400" />
+                                        <BookOpen className="w-5 h-5 text-gray-400" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white truncate">{course.title}</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-gray-800 font-semibold truncate text-sm">{course.title}</p>
+                                            <p className="text-xs text-gray-400">
                                                 {new Date(course.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                         {selectedSourceId === course._id && (
-                                            <Check className="w-5 h-5 text-blue-400" />
+                                            <Check className="w-4 h-4 text-blue-600" />
                                         )}
                                     </button>
                                 ))

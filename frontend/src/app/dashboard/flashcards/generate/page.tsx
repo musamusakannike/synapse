@@ -147,61 +147,62 @@ export default function GenerateFlashcardsPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+                <div className="w-full max-w-2xl mx-auto px-6 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Back</span>
                     </button>
-                    <h1 className="flex-1 text-center text-lg font-semibold text-white">
+                    <h1 className="text-base font-bold text-gray-800">
                         Generate Flashcards
                     </h1>
-                    <div className="w-10" />
+                    <div className="w-8" />
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+            <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
                 {/* Title Input */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Flashcard Set Title
                     </label>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Enter flashcard set title..."
-                        className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                        placeholder="e.g. Immunology Midterm Prep"
+                        className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
                     />
                 </div>
 
                 {/* Description Input */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Description (Optional)
                     </label>
                     <input
                         type="text"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Brief description of the flashcard set..."
-                        className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                        placeholder="e.g. Chapter 4 to 8 vocabulary and core concepts"
+                        className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
                     />
                 </div>
 
                 {/* Source Type Selection */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Source Type
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Source Material
                     </label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-4">
                         {(
                             [
-                                { value: "topic", label: "Topic", icon: Sparkles },
+                                { value: "topic", label: "Custom Topic", icon: Sparkles },
                                 { value: "document", label: "Document", icon: FileText },
                                 { value: "course", label: "Course", icon: BookOpen },
                             ] as const
@@ -212,19 +213,15 @@ export default function GenerateFlashcardsPage() {
                                     setSourceType(value);
                                     setSelectedSourceId("");
                                 }}
-                                className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${sourceType === value
-                                    ? "border-blue-500 bg-blue-500/10"
-                                    : "border-slate-700 hover:border-slate-600"
+                                className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer shadow-xs ${sourceType === value
+                                    ? "border-blue-600 bg-blue-50/50 text-blue-600"
+                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
                                     }`}
                             >
                                 <Icon
-                                    className={`w-6 h-6 ${sourceType === value ? "text-blue-400" : "text-slate-400"
-                                        }`}
+                                    className="w-5 h-5"
                                 />
-                                <span
-                                    className={`text-sm font-medium ${sourceType === value ? "text-blue-400" : "text-slate-400"
-                                        }`}
-                                >
+                                <span className="text-xs font-bold">
                                     {label}
                                 </span>
                             </button>
@@ -235,41 +232,37 @@ export default function GenerateFlashcardsPage() {
                 {/* Source Content/Selection */}
                 {sourceType === "topic" ? (
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                             Topic Content
                         </label>
                         <textarea
                             value={topicContent}
                             onChange={(e) => setTopicContent(e.target.value)}
-                            placeholder="Enter the topic content or paste text to generate flashcards from..."
-                            rows={6}
-                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                            placeholder="Enter the topic keywords, content description, or paste study text to extract flashcards..."
+                            rows={5}
+                            className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs resize-none"
                         />
                     </div>
                 ) : (
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
-                            Select {sourceType === "document" ? "Document" : "Course"}
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Select Source {sourceType === "document" ? "Document" : "Course"}
                         </label>
                         <button
                             onClick={() => setShowSourcePicker(true)}
-                            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-left flex items-center justify-between hover:border-slate-600 transition-colors"
+                            className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-all font-semibold text-xs text-gray-800 shadow-xs cursor-pointer"
                         >
-                            <span
-                                className={
-                                    selectedSourceId ? "text-white" : "text-slate-500"
-                                }
-                            >
-                                {getSelectedSourceName()}
+                            <span className={selectedSourceId ? "text-gray-850" : "text-gray-400"}>
+                                {selectedSourceId ? getSelectedSourceName() : `Select a ${sourceType}...`}
                             </span>
-                            <ChevronLeft className="w-5 h-5 text-slate-400 rotate-180" />
+                            <ChevronLeft className="w-4 h-4 text-gray-400 rotate-180" />
                         </button>
                     </div>
                 )}
 
                 {/* Number of Cards */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                         Number of Cards
                     </label>
                     <div className="flex gap-2 flex-wrap">
@@ -277,12 +270,12 @@ export default function GenerateFlashcardsPage() {
                             <button
                                 key={count}
                                 onClick={() => setNumberOfCards(count)}
-                                className={`px-4 py-2 rounded-lg border transition-all ${numberOfCards === count
-                                    ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                                    : "border-slate-700 text-slate-400 hover:border-slate-600"
+                                className={`px-4 py-2 rounded-xl border transition-all text-xs shadow-xs cursor-pointer ${numberOfCards === count
+                                    ? "border-blue-600 bg-blue-50/50 text-blue-600 font-bold"
+                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 font-semibold"
                                     }`}
                             >
-                                {count}
+                                {count} cards
                             </button>
                         ))}
                     </div>
@@ -290,17 +283,17 @@ export default function GenerateFlashcardsPage() {
 
                 {/* Difficulty */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                        Difficulty
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Difficulty Level
                     </label>
                     <div className="grid grid-cols-4 gap-2">
                         {difficulties.map(({ value, label }) => (
                             <button
                                 key={value}
                                 onClick={() => setDifficulty(value)}
-                                className={`px-4 py-2 rounded-lg border transition-all ${difficulty === value
-                                    ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                                    : "border-slate-700 text-slate-400 hover:border-slate-600"
+                                className={`px-3 py-2 rounded-xl border transition-all text-xs shadow-xs cursor-pointer ${difficulty === value
+                                    ? "border-blue-600 bg-blue-50/50 text-blue-600 font-bold"
+                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 font-semibold"
                                     }`}
                             >
                                 {label}
@@ -310,40 +303,40 @@ export default function GenerateFlashcardsPage() {
                 </div>
 
                 {/* Include Definitions Toggle */}
-                <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200/60 shadow-xs">
                     <div>
-                        <p className="font-medium text-white">Include Definitions</p>
-                        <p className="text-sm text-slate-400">
-                            Add definition-based flashcards for key terms
+                        <p className="font-bold text-gray-800 text-xs">Include Definitions</p>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                            Add definition-based flashcards for core vocabulary and terminology
                         </p>
                     </div>
                     <button
                         onClick={() => setIncludeDefinitions(!includeDefinitions)}
-                        className={`w-12 h-6 rounded-full transition-colors ${includeDefinitions ? "bg-blue-500" : "bg-slate-600"
+                        className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer ${includeDefinitions ? "bg-blue-600" : "bg-gray-200"
                             }`}
                     >
                         <div
-                            className={`w-5 h-5 bg-white rounded-full transition-transform ${includeDefinitions ? "translate-x-6" : "translate-x-0.5"
+                            className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform ${includeDefinitions ? "translate-x-5" : "translate-x-0.5"
                                 }`}
                         />
                     </button>
                 </div>
 
                 {/* Include Examples Toggle */}
-                <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200/60 shadow-xs">
                     <div>
-                        <p className="font-medium text-white">Include Examples</p>
-                        <p className="text-sm text-slate-400">
-                            Add example-based flashcards for better understanding
+                        <p className="font-bold text-gray-800 text-xs">Include Examples</p>
+                        <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                            Create scenario or context-based flashcards to reinforce understanding
                         </p>
                     </div>
                     <button
                         onClick={() => setIncludeExamples(!includeExamples)}
-                        className={`w-12 h-6 rounded-full transition-colors ${includeExamples ? "bg-blue-500" : "bg-slate-600"
+                        className={`w-10 h-5.5 rounded-full transition-colors relative cursor-pointer relative ${includeExamples ? "bg-blue-600" : "bg-gray-200"
                             }`}
                     >
                         <div
-                            className={`w-5 h-5 bg-white rounded-full transition-transform ${includeExamples ? "translate-x-6" : "translate-x-0.5"
+                            className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform ${includeExamples ? "translate-x-5" : "translate-x-0.5"
                                 }`}
                         />
                     </button>
@@ -353,20 +346,20 @@ export default function GenerateFlashcardsPage() {
                 <button
                     onClick={handleGenerate}
                     disabled={isGenerating}
-                    className={`w-full py-4 rounded-full font-semibold text-lg flex items-center justify-center gap-2 transition-all ${isGenerating
-                        ? "bg-slate-600 text-slate-400 cursor-not-allowed"
-                        : "bg-linear-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/25"
+                    className={`w-full py-3 rounded-xl font-bold transition-all text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${isGenerating
+                        ? "bg-gray-150 text-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
                         }`}
                 >
                     {isGenerating ? (
                         <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Generating...
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Generating Sets...</span>
                         </>
                     ) : (
                         <>
-                            <Layers className="w-5 h-5" />
-                            Generate Flashcards
+                            <Layers className="w-4 h-4" />
+                            <span>Generate Flashcard Set</span>
                         </>
                     )}
                 </button>
@@ -374,27 +367,27 @@ export default function GenerateFlashcardsPage() {
 
             {/* Source Picker Modal */}
             {showSourcePicker && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="w-full max-w-md bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-                        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">
+                <div className="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-md">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                            <h2 className="text-xs font-bold text-gray-805 uppercase tracking-wider">
                                 Select {sourceType === "document" ? "Document" : "Course"}
                             </h2>
                             <button
                                 onClick={() => setShowSourcePicker(false)}
-                                className="text-slate-400 hover:text-white"
+                                className="text-gray-400 hover:text-gray-700 text-sm"
                             >
                                 ✕
                             </button>
                         </div>
-                        <div className="max-h-96 overflow-y-auto">
+                        <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
                             {isLoadingSources ? (
                                 <div className="p-8 flex justify-center">
-                                    <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                                    <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
                                 </div>
                             ) : sourceType === "document" ? (
                                 documents.length === 0 ? (
-                                    <p className="p-8 text-center text-slate-400">
+                                    <p className="p-8 text-center text-xs text-gray-400 font-semibold">
                                         No documents found
                                     </p>
                                 ) : (
@@ -405,24 +398,24 @@ export default function GenerateFlashcardsPage() {
                                                 setSelectedSourceId(doc._id);
                                                 setShowSourcePicker(false);
                                             }}
-                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-500/10" : ""
+                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50/50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
                                                 }`}
                                         >
-                                            <FileText className="w-5 h-5 text-slate-400" />
+                                            <FileText className="w-4 h-4 text-gray-400" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-white truncate">{doc.originalName}</p>
-                                                <p className="text-xs text-slate-500">
-                                                    {new Date(doc.createdAt).toLocaleDateString()}
+                                                <p className="text-xs font-bold text-gray-800 truncate">{doc.originalName}</p>
+                                                <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                                                    Uploaded {new Date(doc.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
                                             {selectedSourceId === doc._id && (
-                                                <Check className="w-5 h-5 text-blue-400" />
+                                                <Check className="w-4 h-4 text-blue-600" />
                                             )}
                                         </button>
                                     ))
                                 )
                             ) : courses.length === 0 ? (
-                                <p className="p-8 text-center text-slate-400">
+                                <p className="p-8 text-center text-xs text-gray-400 font-semibold">
                                     No courses found
                                 </p>
                             ) : (
@@ -433,18 +426,18 @@ export default function GenerateFlashcardsPage() {
                                             setSelectedSourceId(course._id);
                                             setShowSourcePicker(false);
                                         }}
-                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-700/50 transition-colors ${selectedSourceId === course._id ? "bg-blue-500/10" : ""
+                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50/50 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
                                             }`}
                                     >
-                                        <BookOpen className="w-5 h-5 text-slate-400" />
+                                        <BookOpen className="w-4 h-4 text-gray-400" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-white truncate">{course.title}</p>
-                                            <p className="text-xs text-slate-500">
-                                                {new Date(course.createdAt).toLocaleDateString()}
+                                            <p className="text-xs font-bold text-gray-800 truncate">{course.title}</p>
+                                            <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
+                                                Created {new Date(course.createdAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                         {selectedSourceId === course._id && (
-                                            <Check className="w-5 h-5 text-blue-400" />
+                                            <Check className="w-4 h-4 text-blue-600" />
                                         )}
                                     </button>
                                 ))

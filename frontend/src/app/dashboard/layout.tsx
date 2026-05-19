@@ -22,7 +22,9 @@ export default function DashboardLayout({
     return (
         <ChatProvider>
             <SidebarProvider>
-                {children}
+                <div className="landing font-sans min-h-screen">
+                    {children}
+                </div>
             </SidebarProvider>
         </ChatProvider>
     );

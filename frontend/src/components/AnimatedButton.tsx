@@ -33,9 +33,9 @@ export default function AnimatedButton({
         >
             <button
                 onClick={onClick}
-                className={`w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 py-4 px-6 rounded-3xl text-left transition-colors ${className}`}
+                className={`w-full bg-white hover:bg-[#f4f2ee] border border-gray-200/60 text-gray-800 py-4.5 px-6 rounded-2xl text-left transition-all shadow-sm duration-200 ${className}`}
             >
-                <span className="text-base">
+                <span className="text-base font-medium">
                     {icon && <span className="mr-2">{icon}</span>}
                     {children}
                 </span>

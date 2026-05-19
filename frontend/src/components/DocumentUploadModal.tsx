@@ -152,24 +152,24 @@ export default function DocumentUploadModal({
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center sm:justify-center">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/50 transition-opacity"
+                className="absolute inset-0 bg-black/45 backdrop-blur-xs transition-opacity"
                 onClick={handleClose}
             />
 
             {/* Modal */}
-            <div className="relative w-full sm:w-[500px] bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-2xl shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full sm:w-[500px] bg-white rounded-t-3xl sm:rounded-2xl border border-gray-200/80 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-200 max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
-                    <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150 sticky top-0 bg-white z-10">
+                    <h2 className="text-lg font-bold text-gray-800">
                         Upload Document
                     </h2>
                     <button
                         onClick={handleClose}
                         disabled={isUploading}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+                        className="p-1.5 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                     </button>
                 </div>
 
@@ -177,10 +177,10 @@ export default function DocumentUploadModal({
                 <div className="p-6 space-y-6">
                     {/* Guidance Text Input */}
                     <div>
-                        <label className="block text-base font-medium text-gray-900 dark:text-gray-100 mb-1">
+                        <label className="block text-sm font-bold text-gray-800 mb-1">
                             What should I do with this document?
                         </label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                        <p className="text-xs text-gray-500 font-semibold mb-3">
                             (Optional) Add instructions for how to process this document
                         </p>
                         <textarea
@@ -189,17 +189,15 @@ export default function DocumentUploadModal({
                             placeholder="e.g., 'Summarize the key points', 'Extract main formulas', 'Create study questions', etc."
                             maxLength={500}
                             disabled={isUploading}
-                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 
-                       rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:opacity-50"
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:opacity-50 text-sm"
                             rows={3}
                         />
-                        <div className="text-xs text-gray-400 dark:text-gray-500 text-right mt-1">
+                        <div className="text-xs text-gray-400 font-semibold text-right mt-1">
                             {guidanceText.length}/500
                         </div>
                     </div>
 
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs font-semibold text-gray-500">
                         Select a PDF, DOCX, TXT file, or an image (JPEG, PNG, WebP, GIF, BMP, TIFF) to upload
                     </p>
 
@@ -216,30 +214,30 @@ export default function DocumentUploadModal({
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-100 dark:bg-gray-800 
-                     hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 
-                     rounded-xl transition-colors disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 text-gray-700 font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
                     >
-                        <FileText className="w-5 h-5" />
-                        {selectedFile ? "Change File" : "📄 Select File or Image"}
+                        <FileText className="w-4 h-4 text-gray-500" />
+                        {selectedFile ? "Change File" : "Select File or Image"}
                     </button>
 
                     {/* Selected File Display */}
                     {selectedFile && (
-                        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <p className="text-base font-medium text-gray-900 dark:text-gray-100 truncate mb-1">
-                                {selectedFile.name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {formatFileSize(selectedFile.size)}
-                            </p>
+                        <div className="p-4 bg-blue-50/30 rounded-xl border border-blue-100 flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-blue-900 truncate">
+                                    {selectedFile.name}
+                                </p>
+                                <p className="text-xs text-blue-600 font-medium">
+                                    {formatFileSize(selectedFile.size)}
+                                </p>
+                            </div>
                         </div>
                     )}
 
                     {/* Error Message */}
                     {error && (
-                        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                        <div className="p-3 bg-red-50 border border-red-200/50 rounded-xl">
+                            <p className="text-xs font-semibold text-red-650">{error}</p>
                         </div>
                     )}
 
@@ -247,19 +245,17 @@ export default function DocumentUploadModal({
                     <button
                         onClick={handleUpload}
                         disabled={!selectedFile || isUploading}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 
-                     text-white font-medium rounded-xl transition-colors disabled:bg-gray-300 dark:disabled:bg-gray-700 
-                     disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed shadow-sm text-sm"
                     >
                         {isUploading ? (
                             <>
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                Uploading...
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <span>Uploading...</span>
                             </>
                         ) : (
                             <>
-                                <Upload className="w-5 h-5" />
-                                Upload
+                                <Upload className="w-4 h-4" />
+                                <span>Upload Document</span>
                             </>
                         )}
                     </button>
@@ -268,8 +264,7 @@ export default function DocumentUploadModal({
                     <button
                         onClick={handleClose}
                         disabled={isUploading}
-                        className="w-full py-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 
-                     transition-colors disabled:opacity-50"
+                        className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors disabled:opacity-50 font-semibold text-sm"
                     >
                         Cancel
                     </button>

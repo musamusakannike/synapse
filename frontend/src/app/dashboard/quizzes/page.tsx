@@ -56,26 +56,26 @@ export default function QuizzesPage() {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case "generating":
-                return <Clock className="w-4 h-4 text-yellow-400" />;
+                return <Clock className="w-3.5 h-3.5 text-yellow-600" />;
             case "completed":
-                return <CheckCircle className="w-4 h-4 text-green-400" />;
+                return <CheckCircle className="w-3.5 h-3.5 text-green-600" />;
             case "failed":
-                return <XCircle className="w-4 h-4 text-red-400" />;
+                return <XCircle className="w-3.5 h-3.5 text-red-600" />;
             default:
-                return <HelpCircle className="w-4 h-4 text-slate-400" />;
+                return <HelpCircle className="w-3.5 h-3.5 text-gray-400" />;
         }
     };
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case "generating":
-                return "bg-yellow-500/20 text-yellow-400";
+                return "bg-yellow-50 text-yellow-700 border border-yellow-250/30";
             case "completed":
-                return "bg-green-500/20 text-green-400";
+                return "bg-green-50 text-green-700 border border-green-250/30";
             case "failed":
-                return "bg-red-500/20 text-red-400";
+                return "bg-red-50 text-red-700 border border-red-250/30";
             default:
-                return "bg-slate-500/20 text-slate-400";
+                return "bg-gray-50 text-gray-600 border border-gray-250/30";
         }
     };
 
@@ -89,52 +89,52 @@ export default function QuizzesPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <button
                         onClick={() => router.push("/dashboard/chat")}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
-                        <span>Back</span>
+                        <span className="font-medium text-sm">Back</span>
                     </button>
-                    <h1 className="text-lg font-semibold text-white">My Quizzes</h1>
+                    <h1 className="text-lg font-semibold text-gray-800">My Quizzes</h1>
                     <button
                         onClick={() => router.push("/dashboard/quizzes/generate")}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full text-sm font-medium hover:bg-blue-600 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
-                        New
+                        New Quiz
                     </button>
                 </div>
             </header>
 
             <main className="max-w-4xl mx-auto px-4 py-8">
                 {quizzes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20">
-                        <div className="w-24 h-24 rounded-full bg-blue-500/15 flex items-center justify-center mb-6">
-                            <HelpCircle className="w-12 h-12 text-blue-400" />
+                    <div className="flex flex-col items-center justify-center py-16 bg-white border border-gray-200/60 rounded-2xl p-8 text-center max-w-md mx-auto shadow-sm">
+                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
+                            <HelpCircle className="w-6 h-6 text-blue-600" />
                         </div>
-                        <h2 className="text-xl font-semibold text-white mb-3">
+                        <h2 className="text-xl font-bold text-gray-900 mb-2">
                             No Quizzes Yet
                         </h2>
-                        <p className="text-slate-400 text-center max-w-sm mb-6">
+                        <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
                             Create your first quiz to test your knowledge on any topic.
                         </p>
                         <button
                             onClick={() => router.push("/dashboard/quizzes/generate")}
-                            className="px-8 py-3 bg-blue-500 text-white rounded-full font-semibold hover:bg-blue-600 transition-colors flex items-center gap-2"
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm text-sm"
                         >
-                            <Plus className="w-5 h-5" />
+                            <Plus className="w-4 h-4" />
                             Create Quiz
                         </button>
                     </div>
@@ -143,13 +143,13 @@ export default function QuizzesPage() {
                         {quizzes.map((quiz, index) => (
                             <div
                                 key={quiz._id}
-                                className="bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-hidden group"
+                                className="bg-white rounded-xl border border-gray-200/60 overflow-hidden shadow-xs hover:shadow-sm hover:border-gray-300 transition-all duration-200 group relative"
                                 style={{
                                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
                                 }}
                             >
                                 <div
-                                    className="p-4 cursor-pointer hover:bg-slate-700/30 transition-colors"
+                                    className="p-5 cursor-pointer"
                                     onClick={() => {
                                         if (quiz.status === "completed") {
                                             router.push(`/dashboard/quizzes/${quiz._id}`);
@@ -158,25 +158,23 @@ export default function QuizzesPage() {
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-white truncate mb-1">
+                                            <h3 className="font-semibold text-gray-900 truncate mb-1 pr-12 text-base">
                                                 {quiz.title}
                                             </h3>
-                                            <div className="flex items-center gap-3 text-sm text-slate-400">
+                                            <div className="flex items-center gap-3 text-sm text-gray-400 font-medium">
                                                 <span>{formatDate(quiz.createdAt)}</span>
                                                 {quiz.questions && (
-                                                    <span>{quiz.questions.length} questions</span>
+                                                    <span>• {quiz.questions.length} questions</span>
                                                 )}
                                                 {quiz.settings?.difficulty && (
-                                                    <span className="capitalize">
-                                                        {quiz.settings.difficulty}
-                                                    </span>
+                                                    <span className="capitalize">• {quiz.settings.difficulty}</span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 shrink-0">
                                             <span
-                                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(
                                                     quiz.status
                                                 )}`}
                                             >
@@ -190,10 +188,10 @@ export default function QuizzesPage() {
                                                     handleDeleteQuiz(quiz._id);
                                                 }}
                                                 disabled={deletingId === quiz._id}
-                                                className="p-2 text-slate-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                             >
                                                 {deletingId === quiz._id ? (
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                                                 ) : (
                                                     <Trash2 className="w-4 h-4" />
                                                 )}

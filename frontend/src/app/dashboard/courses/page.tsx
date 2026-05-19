@@ -90,23 +90,23 @@ export default function CoursesPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+            <div className="bg-white border-b border-gray-200/60">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                            <h1 className="text-3xl font-bold text-gray-900">
                                 Courses
                             </h1>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <p className="mt-1 text-sm text-gray-500">
                                 Generate and manage your AI-powered courses
                             </p>
                         </div>
                         <button
                             onClick={() => router.push("/dashboard/courses/generate")}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white 
-                       rounded-lg transition-colors font-medium"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white 
+                       rounded-xl transition-colors font-medium shadow-sm"
                         >
                             <Plus className="w-5 h-5" />
                             Generate Course
@@ -119,21 +119,21 @@ export default function CoursesPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <div className="text-gray-500 dark:text-gray-400">Loading courses...</div>
+                        <div className="text-gray-500">Loading courses...</div>
                     </div>
                 ) : courses.length === 0 ? (
-                    <div className="text-center py-12">
-                        <BookOpen className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                    <div className="text-center py-16 bg-white border border-gray-200/60 rounded-2xl p-8 max-w-lg mx-auto shadow-sm">
+                        <BookOpen className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
                             No courses yet
                         </h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        <p className="text-gray-500 mb-6 max-w-sm mx-auto text-sm">
                             Generate your first AI-powered course to get started
                         </p>
                         <button
                             onClick={() => router.push("/dashboard/courses/generate")}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 
-                       text-white rounded-lg transition-colors font-medium"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 
+                       text-white rounded-xl transition-colors font-medium shadow-sm"
                         >
                             <Plus className="w-5 h-5" />
                             Generate Course
@@ -144,8 +144,8 @@ export default function CoursesPage() {
                         {courses.map((course) => (
                             <div
                                 key={course._id}
-                                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 
-                         rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer group"
+                                className="bg-white border border-gray-200/60 
+                         rounded-2xl p-6 hover:shadow-md transition-all duration-200 cursor-pointer group relative hover:border-gray-300"
                                 onClick={() => {
                                     if (course.status === "completed") {
                                         router.push(`/dashboard/courses/${course._id}`);
@@ -154,12 +154,12 @@ export default function CoursesPage() {
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                            <BookOpen className="w-6 h-6 text-blue-600" />
+                                        <div className="p-2.5 bg-blue-50 rounded-xl">
+                                            <BookOpen className="w-5 h-5 text-blue-600" />
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {getStatusIcon(course.status)}
-                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                                 {getStatusText(course.status)}
                                             </span>
                                         </div>
@@ -169,20 +169,20 @@ export default function CoursesPage() {
                                             e.stopPropagation();
                                             handleDeleteCourse(course._id);
                                         }}
-                                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/20 
-                             rounded transition-opacity"
+                                        className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-50 
+                              rounded-lg transition-all absolute right-4 top-4"
                                         title="Delete"
                                     >
                                         <Trash2 className="w-4 h-4 text-red-500" />
                                     </button>
                                 </div>
 
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2 line-clamp-2">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 pr-6">
                                     {course.title}
                                 </h3>
 
-                                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                                    <span className="capitalize">
+                                <div className="flex items-center justify-between text-sm text-gray-400 font-medium pt-2 border-t border-gray-50 mt-4">
+                                    <span className="capitalize px-2.5 py-1 bg-gray-50 rounded-lg text-xs font-semibold border border-gray-200/40 text-gray-600">
                                         {course.settings?.level || "Course"}
                                     </span>
                                     <span>{formatDate(course.createdAt)}</span>

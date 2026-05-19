@@ -121,10 +121,10 @@ export default function SubscriptionPage() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                    <p className="text-slate-400">Loading subscription info...</p>
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-gray-500 text-sm font-semibold">Loading subscription info...</p>
                 </div>
             </div>
         );
@@ -133,59 +133,59 @@ export default function SubscriptionPage() {
     const currentPlan = plans[0];
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+                <div className="w-full max-w-2xl mx-auto px-6 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4" />
                         <span>Back</span>
                     </button>
-                    <h1 className="text-lg font-semibold text-white">Subscription</h1>
+                    <h1 className="text-base font-bold text-gray-800">Subscription</h1>
                     <button
                         onClick={() => router.push("/dashboard/transactions")}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-800 rounded-xl transition-all"
                         title="Transaction History"
                     >
-                        <Receipt className="w-5 h-5" />
+                        <Receipt className="w-4 h-4" />
                     </button>
                 </div>
             </header>
 
-            <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+            <main className="max-w-2xl mx-auto px-6 py-10 space-y-8">
                 {/* Current Status Card */}
                 {status && (
                     <div
                         className={`p-6 rounded-2xl border ${status.isActive
-                            ? "bg-green-500/10 border-green-500/30"
-                            : "bg-slate-800/50 border-slate-700/50"
-                            }`}
+                            ? "bg-green-50/50 border-green-200/80"
+                            : "bg-white border-gray-200/60"
+                            } shadow-xs`}
                     >
                         <div className="flex items-center gap-3 mb-2">
                             <span
-                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${status.isActive
-                                    ? "bg-green-500/20 text-green-400"
-                                    : "bg-slate-600/50 text-slate-300"
+                                className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold tracking-wider uppercase ${status.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-gray-100 text-gray-550"
                                     }`}
                             >
                                 {status.isActive ? "ACTIVE" : "FREE"}
                             </span>
                             <span
-                                className={`text-xl font-bold ${status.isActive ? "text-green-400" : "text-white"
+                                className={`text-base font-bold ${status.isActive ? "text-green-800" : "text-gray-800"
                                     }`}
                             >
                                 {status.tier} Plan
                             </span>
                         </div>
                         {status.isActive && status.expiresAt ? (
-                            <p className="text-green-400/80 text-sm">
+                            <p className="text-green-755 text-xs font-semibold">
                                 Expires on {formatDate(status.expiresAt)}
                             </p>
                         ) : (
-                            <p className="text-slate-400 text-sm">
+                            <p className="text-gray-500 text-xs font-semibold">
                                 Upgrade to GURU for unlimited access
                             </p>
                         )}
@@ -194,20 +194,20 @@ export default function SubscriptionPage() {
 
                 {/* Plan Card */}
                 {currentPlan && (
-                    <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-gray-200/60 shadow-xs overflow-hidden">
                         {/* Plan Header */}
-                        <div className="p-6 border-b border-slate-700/50">
-                            <div className="flex items-center gap-3 mb-2">
-                                <Crown className="w-7 h-7 text-yellow-400" />
-                                <span className="text-2xl font-bold text-white">
+                        <div className="p-6 border-b border-gray-150">
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                                <Crown className="w-6 h-6 text-yellow-500" />
+                                <span className="text-lg font-bold text-gray-800">
                                     {currentPlan.name}
                                 </span>
                             </div>
-                            <p className="text-slate-400">{currentPlan.description}</p>
+                            <p className="text-xs text-gray-500 font-semibold">{currentPlan.description}</p>
                         </div>
 
                         {/* Duration Selection */}
-                        <div className="p-4 flex gap-3">
+                        <div className="p-6 grid grid-cols-3 gap-4 border-b border-gray-100">
                             {(["day", "week", "month"] as Duration[]).map((duration) => {
                                 const isSelected = selectedDuration === duration;
                                 const savings = getSavingsPercentage(duration);
@@ -216,31 +216,31 @@ export default function SubscriptionPage() {
                                     <button
                                         key={duration}
                                         onClick={() => setSelectedDuration(duration)}
-                                        className={`relative flex-1 p-4 rounded-xl border-2 transition-all ${isSelected
-                                            ? "border-blue-500 bg-blue-500/10"
-                                            : "border-slate-600 hover:border-slate-500 bg-slate-700/30"
+                                        className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${isSelected
+                                            ? "border-blue-600 bg-blue-50/30"
+                                            : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50/50"
                                             }`}
                                     >
                                         {savings > 0 && (
-                                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
+                                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 text-white text-[9px] font-bold rounded-lg shadow-sm whitespace-nowrap">
                                                 Save {savings}%
                                             </span>
                                         )}
                                         <p
-                                            className={`text-xs font-medium mb-1 ${isSelected ? "text-blue-400" : "text-slate-400"
+                                            className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? "text-blue-700" : "text-gray-400"
                                                 }`}
                                         >
                                             {getDurationLabel(duration)}
                                         </p>
                                         <p
-                                            className={`text-lg font-bold ${isSelected ? "text-blue-400" : "text-white"
+                                            className={`text-base font-bold ${isSelected ? "text-blue-700" : "text-gray-800"
                                                 }`}
                                         >
                                             {formatPrice(currentPlan.pricing[duration])}
                                         </p>
                                         {isSelected && (
-                                            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <Check className="w-3 h-3 text-white" />
+                                            <div className="absolute top-2 right-2 w-4 h-4 bg-blue-650 rounded-full flex items-center justify-center shadow-xs">
+                                                <Check className="w-2.5 h-2.5 text-white" />
                                             </div>
                                         )}
                                     </button>
@@ -249,11 +249,11 @@ export default function SubscriptionPage() {
                         </div>
 
                         {/* Features List */}
-                        <div className="p-6 pt-2">
-                            <h3 className="text-sm font-semibold text-white mb-4">
+                        <div className="p-6 space-y-4">
+                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                                 What&apos;s included:
                             </h3>
-                            <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {FEATURES.map((feature, index) => {
                                     const Icon = feature.icon;
                                     return (
@@ -264,10 +264,10 @@ export default function SubscriptionPage() {
                                                 animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
                                             }}
                                         >
-                                            <div className="w-9 h-9 rounded-full bg-blue-500/15 flex items-center justify-center">
-                                                <Icon className="w-4 h-4 text-blue-400" />
+                                            <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-100/30 flex items-center justify-center shrink-0">
+                                                <Icon className="w-3.5 h-3.5 text-blue-600" />
                                             </div>
-                                            <span className="text-sm text-slate-300">
+                                            <span className="text-xs text-gray-650 font-semibold leading-snug">
                                                 {feature.text}
                                             </span>
                                         </div>
@@ -282,16 +282,16 @@ export default function SubscriptionPage() {
                 <button
                     onClick={handleSubscribe}
                     disabled={isProcessing}
-                    className={`w-full py-4 rounded-full font-semibold text-lg transition-all ${isProcessing
-                        ? "bg-slate-600 text-slate-400 cursor-not-allowed"
-                        : "bg-linear-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/25 hover:scale-[1.02]"
+                    className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${isProcessing
+                        ? "bg-gray-200 text-gray-450 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
                         }`}
                 >
                     {isProcessing ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Processing...
-                        </span>
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Processing...</span>
+                        </>
                     ) : status?.isActive ? (
                         "Extend Subscription"
                     ) : (
@@ -300,24 +300,24 @@ export default function SubscriptionPage() {
                 </button>
 
                 {/* Terms */}
-                <p className="text-xs text-slate-500 text-center leading-relaxed">
+                <p className="text-[10px] font-semibold text-gray-400 text-center leading-relaxed max-w-md mx-auto">
                     By subscribing, you agree to our Terms of Service and Privacy Policy.
                     Subscription will be charged immediately upon confirmation.
                 </p>
             </main>
 
             <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(6px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
         </div>
     );
 }

@@ -122,22 +122,22 @@ export default function FlashcardStudyPage() {
     const getDifficultyColor = (difficulty: string) => {
         switch (difficulty) {
             case "easy":
-                return "bg-green-500/20 text-green-400";
+                return "bg-green-50 border border-green-200/50 text-green-700";
             case "medium":
-                return "bg-yellow-500/20 text-yellow-400";
+                return "bg-yellow-50 border border-yellow-200/50 text-yellow-750";
             case "hard":
-                return "bg-red-500/20 text-red-400";
+                return "bg-red-50 border border-red-200/50 text-red-755";
             default:
-                return "bg-blue-500/20 text-blue-400";
+                return "bg-blue-50 border border-blue-200/50 text-blue-700";
         }
     };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-                    <p className="text-white text-lg">Loading flashcards...</p>
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-gray-500 text-sm font-semibold">Loading flashcard set...</p>
                 </div>
             </div>
         );
@@ -145,13 +145,14 @@ export default function FlashcardStudyPage() {
 
     if (!flashcardSet || flashcardSet.flashcards.length === 0) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-center">
-                    <HelpCircle className="w-12 h-12 text-slate-400" />
-                    <p className="text-white text-lg">No flashcards found</p>
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-center max-w-sm p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                    <HelpCircle className="w-12 h-12 text-gray-300" />
+                    <h2 className="text-xl font-bold text-gray-805">No Flashcards Found</h2>
+                    <p className="text-gray-550 text-xs font-semibold">We couldn't retrieve the flashcards inside this set.</p>
                     <button
                         onClick={() => router.back()}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-full font-medium hover:bg-blue-600 transition-colors"
+                        className="px-6 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-xl font-semibold text-xs shadow-sm"
                     >
                         Go Back
                     </button>
@@ -167,62 +168,64 @@ export default function FlashcardStudyPage() {
         const isPassing = score >= 70;
 
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-slate-800/50 rounded-2xl p-8 border border-slate-700/50 text-center">
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center p-6">
+                <div className="w-full max-w-md bg-white rounded-2xl p-8 border border-gray-200/60 text-center shadow-xs">
                     <div
-                        className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${isPassing ? "bg-green-500/20" : "bg-yellow-500/20"
+                        className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${isPassing
+                            ? "bg-green-50 border border-green-150 text-green-600"
+                            : "bg-yellow-50 border border-yellow-150 text-yellow-600"
                             }`}
                     >
                         {isPassing ? (
-                            <CheckCircle className="w-16 h-16 text-green-400" />
+                            <CheckCircle className="w-8 h-8" />
                         ) : (
-                            <RefreshCw className="w-16 h-16 text-yellow-400" />
+                            <RefreshCw className="w-8 h-8 animate-spin-slow" />
                         )}
                     </div>
 
-                    <h1 className="text-2xl font-bold text-white mb-2">
+                    <h1 className="text-base font-bold text-gray-800 mb-1">
                         {isPassing ? "Great Job!" : "Keep Practicing!"}
                     </h1>
-                    <p className="text-slate-400 mb-6">{flashcardSet.title}</p>
+                    <p className="text-xs text-gray-500 font-semibold mb-6">{flashcardSet.title}</p>
 
-                    <div className="flex items-baseline justify-center gap-1 mb-2">
-                        <span className="text-6xl font-bold text-blue-400">
+                    <div className="flex items-baseline justify-center gap-1 mb-1">
+                        <span className="text-4xl font-extrabold text-blue-650">
                             {knownCards.size}
                         </span>
-                        <span className="text-4xl text-slate-500">/</span>
-                        <span className="text-3xl text-slate-400">
+                        <span className="text-2xl text-gray-300 font-bold">/</span>
+                        <span className="text-xl text-gray-400 font-semibold">
                             {flashcardSet.flashcards.length}
                         </span>
                     </div>
-                    <p className="text-xl text-slate-300 mb-8">{score}% Mastered</p>
+                    <p className="text-xs text-gray-550 font-bold mb-6">{score}% Mastered</p>
 
-                    <div className="flex items-center justify-center gap-8 mb-8 p-4 bg-slate-700/30 rounded-xl">
+                    <div className="flex items-center justify-center gap-6 mb-8 p-4 bg-gray-50/50 border border-gray-100 rounded-xl">
                         <div className="text-center">
-                            <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                            <p className="text-2xl font-bold text-white">{knownCards.size}</p>
-                            <p className="text-sm text-slate-400">Known</p>
+                            <CheckCircle className="w-5 h-5 text-green-650 mx-auto mb-1" />
+                            <p className="text-lg font-bold text-gray-800">{knownCards.size}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Known</p>
                         </div>
-                        <div className="w-px h-12 bg-slate-600" />
+                        <div className="w-px h-10 bg-gray-200" />
                         <div className="text-center">
-                            <HelpCircle className="w-6 h-6 text-yellow-400 mx-auto mb-1" />
-                            <p className="text-2xl font-bold text-white">
+                            <HelpCircle className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
+                            <p className="text-lg font-bold text-gray-800">
                                 {flashcardSet.flashcards.length - knownCards.size}
                             </p>
-                            <p className="text-sm text-slate-400">Review</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Review</p>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <button
                             onClick={handleRestartStudy}
-                            className="w-full py-4 rounded-full border-2 border-blue-500 text-blue-400 font-medium flex items-center justify-center gap-2 hover:bg-blue-500/10 transition-colors"
+                            className="w-full py-2.5 rounded-xl border border-blue-200 hover:bg-blue-50/30 text-blue-600 font-bold transition-all text-xs flex items-center justify-center gap-1.5"
                         >
-                            <RefreshCw className="w-5 h-5" />
-                            Study Again
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            <span>Study Again</span>
                         </button>
                         <button
                             onClick={handleFinishStudy}
-                            className="w-full py-4 rounded-full bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+                            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all text-xs"
                         >
                             Done
                         </button>
@@ -237,10 +240,10 @@ export default function FlashcardStudyPage() {
         ((currentIndex + 1) / flashcardSet.flashcards.length) * 100;
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+        <div className="min-h-screen bg-[#f9f8f6] flex flex-col">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+                <div className="w-full max-w-4xl mx-auto px-6 flex items-center gap-4">
                     <button
                         onClick={() => {
                             if (
@@ -251,44 +254,43 @@ export default function FlashcardStudyPage() {
                                 handleFinishStudy();
                             }
                         }}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-gray-800 hover:bg-gray-50 rounded-xl transition-all"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                     </button>
 
                     <div className="flex-1">
-                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-gray-150 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                                className="h-full bg-blue-600 rounded-full transition-all duration-300"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <p className="text-center text-sm text-slate-400 mt-1">
-                            {currentIndex + 1} / {flashcardSet.flashcards.length}
+                        <p className="text-center text-[10px] text-gray-400 font-bold mt-1 uppercase">
+                            {currentIndex + 1} of {flashcardSet.flashcards.length}
                         </p>
                     </div>
 
-                    <div className="w-10" /> {/* Spacer */}
+                    <div className="w-8" /> {/* Spacer */}
                 </div>
             </header>
 
             {/* Card Title */}
-            <div className="max-w-4xl mx-auto w-full px-4 py-4 flex items-center justify-between">
-                <h1 className="text-lg font-semibold text-white flex-1 truncate">
+            <div className="max-w-xl mx-auto w-full px-6 py-4 mt-4 flex items-center justify-between gap-4">
+                <h1 className="text-sm font-bold text-gray-805 truncate flex-1" title={flashcardSet.title}>
                     {flashcardSet.title}
                 </h1>
                 <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(
+                    className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${getDifficultyColor(
                         currentCard.difficulty
                     )}`}
                 >
-                    {currentCard.difficulty.charAt(0).toUpperCase() +
-                        currentCard.difficulty.slice(1)}
+                    {currentCard.difficulty}
                 </span>
             </div>
 
             {/* Card Container */}
-            <main className="flex-1 flex items-center justify-center px-4 py-8">
+            <main className="flex-1 flex items-center justify-center px-6 py-4">
                 <div
                     className="relative w-full max-w-xl aspect-4/3 cursor-pointer perspective-1000"
                     onClick={handleFlipCard}
@@ -304,35 +306,35 @@ export default function FlashcardStudyPage() {
                     >
                         {/* Front */}
                         <div
-                            className="absolute inset-0 bg-slate-800/80 rounded-2xl border-2 border-blue-500/30 p-8 flex flex-col items-center justify-center"
+                            className="absolute inset-0 bg-white rounded-2xl border border-gray-200/60 p-8 flex flex-col items-center justify-center shadow-xs"
                             style={{ backfaceVisibility: "hidden" }}
                         >
-                            <span className="absolute top-4 left-4 text-xs text-slate-500 uppercase tracking-wider">
+                            <span className="absolute top-4 left-4 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                                 Question
                             </span>
-                            <p className="text-xl text-white text-center leading-relaxed">
+                            <p className="text-base font-bold text-gray-800 text-center leading-relaxed">
                                 {currentCard.front}
                             </p>
-                            <span className="absolute bottom-4 text-xs text-slate-500">
+                            <span className="absolute bottom-4 text-[10px] text-gray-400 font-semibold bg-gray-50 border border-gray-100 px-3 py-1 rounded-lg">
                                 Tap to flip
                             </span>
                         </div>
 
                         {/* Back */}
                         <div
-                            className="absolute inset-0 bg-linear-to-br from-blue-600 to-purple-600 rounded-2xl p-8 flex flex-col items-center justify-center"
+                            className="absolute inset-0 bg-blue-600 rounded-2xl p-8 flex flex-col items-center justify-center shadow-sm"
                             style={{
                                 backfaceVisibility: "hidden",
                                 transform: "rotateY(180deg)",
                             }}
                         >
-                            <span className="absolute top-4 left-4 text-xs text-white/60 uppercase tracking-wider">
+                            <span className="absolute top-4 left-4 text-[9px] font-bold text-white/70 uppercase tracking-wider">
                                 Answer
                             </span>
-                            <p className="text-xl text-white text-center leading-relaxed">
+                            <p className="text-base font-bold text-white text-center leading-relaxed">
                                 {currentCard.back}
                             </p>
-                            <span className="absolute bottom-4 text-xs text-white/60">
+                            <span className="absolute bottom-4 text-[10px] text-white/70 font-semibold bg-blue-700 border border-blue-500/35 px-3 py-1 rounded-lg">
                                 Tap to flip back
                             </span>
                         </div>
@@ -341,81 +343,83 @@ export default function FlashcardStudyPage() {
             </main>
 
             {/* Swipe hints */}
-            <div className="flex justify-between px-10 py-2">
-                <div className="flex items-center gap-2 text-slate-500">
-                    <ArrowLeft className="w-5 h-5 text-red-400" />
-                    <span className="text-sm">Still Learning</span>
+            <div className="flex justify-between max-w-xl mx-auto w-full px-6 py-2">
+                <div className="flex items-center gap-1.5 text-red-500 font-bold text-xs">
+                    <ArrowLeft className="w-4 h-4 animate-pulse" />
+                    <span>Still Learning</span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-500">
-                    <span className="text-sm">Got It!</span>
-                    <ArrowRight className="w-5 h-5 text-green-400" />
+                <div className="flex items-center gap-1.5 text-green-650 font-bold text-xs">
+                    <span>Got It!</span>
+                    <ArrowRight className="w-4 h-4 animate-pulse" />
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="px-4 py-4 flex justify-center gap-4">
+            <div className="px-6 py-4 flex justify-center gap-4 max-w-xl mx-auto w-full">
                 <button
                     onClick={markAsUnknown}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-red-500 bg-red-500/10 text-red-400 font-medium hover:bg-red-500/20 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-red-200 bg-red-50/50 hover:bg-red-55/60 text-red-650 font-bold transition-all text-xs"
                 >
-                    <X className="w-6 h-6" />
-                    Still Learning
+                    <X className="w-4 h-4" />
+                    <span>Still Learning</span>
                 </button>
                 <button
                     onClick={markAsKnown}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full border-2 border-green-500 bg-green-500/10 text-green-400 font-medium hover:bg-green-500/20 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-green-200 bg-green-50/50 hover:bg-green-55/60 text-green-755 font-bold transition-all text-xs"
                 >
-                    <CheckCircle className="w-6 h-6" />
-                    Got It!
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Got It!</span>
                 </button>
             </div>
 
             {/* Navigation */}
-            <footer className="border-t border-slate-700/50 p-4">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <footer className="border-t border-gray-150 p-4">
+                <div className="max-w-xl mx-auto flex items-center justify-between">
                     <button
                         onClick={goToPrevCard}
                         disabled={currentIndex === 0}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${currentIndex === 0
-                            ? "bg-slate-700/30 text-slate-600 cursor-not-allowed"
-                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${currentIndex === 0
+                            ? "bg-gray-50 border-gray-150 text-gray-350 cursor-not-allowed"
+                            : "bg-white border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50/50 shadow-xs"
                             }`}
+                        aria-label="Previous card"
                     >
-                        <ChevronLeft className="w-6 h-6" />
+                        <ChevronLeft className="w-5 h-5" />
                     </button>
 
                     <button
                         onClick={handleFlipCard}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100/50 transition-all font-bold text-xs"
                     >
-                        <RotateCcw className="w-5 h-5" />
-                        Flip Card
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Flip Card</span>
                     </button>
 
                     <button
                         onClick={goToNextCard}
                         disabled={currentIndex === flashcardSet.flashcards.length - 1}
-                        className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${currentIndex === flashcardSet.flashcards.length - 1
-                            ? "bg-slate-700/30 text-slate-600 cursor-not-allowed"
-                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                        className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${currentIndex === flashcardSet.flashcards.length - 1
+                            ? "bg-gray-50 border-gray-150 text-gray-350 cursor-not-allowed"
+                            : "bg-white border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50/50 shadow-xs"
                             }`}
+                        aria-label="Next card"
                     >
-                        <ChevronRight className="w-6 h-6" />
+                        <ChevronRight className="w-5 h-5" />
                     </button>
                 </div>
             </footer>
 
             <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .transform-style-3d {
-          transform-style: preserve-3d;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
+                .perspective-1000 {
+                    perspective: 1000px;
+                }
+                .transform-style-3d {
+                    transform-style: preserve-3d;
+                }
+                .rotate-y-180 {
+                    transform: rotateY(180deg);
+                }
+            `}</style>
         </div>
     );
 }

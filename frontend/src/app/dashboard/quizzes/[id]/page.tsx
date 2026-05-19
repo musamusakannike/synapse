@@ -220,55 +220,72 @@ export default function QuizAttemptPage() {
     }, [quiz, shuffleOptions]);
 
     const getOptionStyle = (optionIndex: number) => {
-        const baseStyle = "w-full p-4 rounded-xl border-2 flex items-center gap-3 transition-all text-left";
+        const baseStyle = "w-full p-4 rounded-xl border flex items-center gap-3 transition-all text-left";
 
         if (!showExplanation) {
             return selectedOption === optionIndex
-                ? `${baseStyle} border-blue-500 bg-blue-500/10`
-                : `${baseStyle} border-slate-600 hover:border-slate-500 bg-slate-700/30`;
+                ? `${baseStyle} border-blue-600 bg-blue-50/50`
+                : `${baseStyle} border-gray-200 hover:border-gray-300 hover:bg-gray-50 bg-white`;
         }
 
         const currentQuestion = quiz?.questions[currentQuestionIndex];
-        if (!currentQuestion) return `${baseStyle} border-slate-600 bg-slate-700/30`;
+        if (!currentQuestion) return `${baseStyle} border-gray-200 bg-white`;
 
         if (optionIndex === currentQuestion.correctOption) {
-            return `${baseStyle} border-green-500 bg-green-500/10`;
+            return `${baseStyle} border-green-600 bg-green-50/50`;
         }
         if (optionIndex === selectedOption && optionIndex !== currentQuestion.correctOption) {
-            return `${baseStyle} border-red-500 bg-red-500/10`;
+            return `${baseStyle} border-red-600 bg-red-50/50`;
         }
-        return `${baseStyle} border-slate-600 bg-slate-700/30`;
+        return `${baseStyle} border-gray-200 opacity-60 bg-white`;
     };
 
     const getOptionTextColor = (optionIndex: number) => {
         if (!showExplanation) {
-            return selectedOption === optionIndex ? "text-blue-400" : "text-white";
+            return selectedOption === optionIndex ? "text-blue-800 font-semibold" : "text-gray-700";
         }
 
         const currentQuestion = quiz?.questions[currentQuestionIndex];
-        if (!currentQuestion) return "text-white";
+        if (!currentQuestion) return "text-gray-750";
 
         if (optionIndex === currentQuestion.correctOption) {
-            return "text-green-400";
+            return "text-green-800 font-semibold";
         }
         if (optionIndex === selectedOption && optionIndex !== currentQuestion.correctOption) {
-            return "text-red-400";
+            return "text-red-800 font-semibold";
         }
-        return "text-white";
+        return "text-gray-500";
+    };
+
+    const getBadgeStyle = (optionIndex: number) => {
+        const base = "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold transition-all shrink-0 ";
+        if (!showExplanation) {
+            return selectedOption === optionIndex
+                ? base + "bg-blue-100 text-blue-700"
+                : base + "bg-gray-100 text-gray-500";
+        }
+        const currentQuestion = quiz?.questions[currentQuestionIndex];
+        if (optionIndex === currentQuestion?.correctOption) {
+            return base + "bg-green-100 text-green-700";
+        }
+        if (optionIndex === selectedOption) {
+            return base + "bg-red-100 text-red-700";
+        }
+        return base + "bg-gray-100 text-gray-400";
     };
 
     if (isLoading || (quiz?.status === "generating" && quiz.questions.length === 0)) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
-                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-                    <p className="text-white text-lg">
+                    <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                    <p className="text-gray-800 text-lg font-semibold animate-pulse">
                         {quiz?.status === "generating"
                             ? "Generating quiz questions..."
                             : "Loading quiz..."}
                     </p>
                     {quiz?.status === "generating" && (
-                        <p className="text-slate-400">
+                        <p className="text-gray-500 text-sm">
                             {quiz.questions.length} / {quiz.settings.numberOfQuestions} questions generated
                         </p>
                     )}
@@ -279,13 +296,13 @@ export default function QuizAttemptPage() {
 
     if (!quiz || quiz.status === "failed") {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
-                    <XCircle className="w-12 h-12 text-slate-400" />
-                    <p className="text-white text-lg">Quiz not found</p>
+                    <XCircle className="w-12 h-12 text-red-500" />
+                    <p className="text-gray-800 text-lg font-bold">Quiz not found</p>
                     <button
                         onClick={() => router.back()}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-full font-medium hover:bg-blue-600 transition-colors"
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-sm"
                     >
                         Go Back
                     </button>
@@ -299,56 +316,56 @@ export default function QuizAttemptPage() {
         const isPassing = percentage >= 70;
 
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-slate-800/50 rounded-2xl p-8 border border-slate-700/50 text-center">
+            <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center p-6 animate-fade-in">
+                <div className="w-full max-w-md bg-white rounded-2xl p-8 border border-gray-200/60 text-center shadow-lg">
                     <div
-                        className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${isPassing ? "bg-green-500/20" : "bg-red-500/20"
+                        className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 ${isPassing ? "bg-green-50" : "bg-red-50"
                             }`}
                     >
                         {isPassing ? (
-                            <CheckCircle className="w-16 h-16 text-green-400" />
+                            <CheckCircle className="w-12 h-12 text-green-600" />
                         ) : (
-                            <XCircle className="w-16 h-16 text-red-400" />
+                            <XCircle className="w-12 h-12 text-red-600" />
                         )}
                     </div>
 
-                    <h1 className="text-2xl font-bold text-white mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
                         {isPassing ? "Congratulations!" : "Keep Practicing!"}
                     </h1>
-                    <p className="text-slate-400 mb-6">{quiz.title}</p>
+                    <p className="text-gray-555 text-sm font-medium mb-6">{quiz.title}</p>
 
                     <div className="flex items-baseline justify-center gap-1 mb-2">
-                        <span className="text-6xl font-bold text-blue-400">{score}</span>
-                        <span className="text-4xl text-slate-500">/</span>
-                        <span className="text-3xl text-slate-400">{quiz.questions.length}</span>
+                        <span className="text-6xl font-bold text-blue-600">{score}</span>
+                        <span className="text-4xl text-gray-300">/</span>
+                        <span className="text-3xl text-gray-400 font-semibold">{quiz.questions.length}</span>
                     </div>
-                    <p className="text-xl text-slate-300 mb-8">{percentage}%</p>
+                    <p className="text-xl font-bold text-gray-700 mb-8">{percentage}%</p>
 
-                    <div className="flex items-center justify-center gap-8 mb-8 p-4 bg-slate-700/30 rounded-xl">
+                    <div className="flex items-center justify-center gap-8 mb-8 p-4 bg-gray-50 border border-gray-250/20 rounded-xl">
                         <div className="text-center">
-                            <CheckCircle className="w-6 h-6 text-green-400 mx-auto mb-1" />
-                            <p className="text-2xl font-bold text-white">{score}</p>
-                            <p className="text-sm text-slate-400">Correct</p>
+                            <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
+                            <p className="text-xl font-bold text-gray-800">{score}</p>
+                            <p className="text-xs text-gray-500 font-semibold">Correct</p>
                         </div>
-                        <div className="w-px h-12 bg-slate-600" />
+                        <div className="w-px h-10 bg-gray-200" />
                         <div className="text-center">
-                            <XCircle className="w-6 h-6 text-red-400 mx-auto mb-1" />
-                            <p className="text-2xl font-bold text-white">{quiz.questions.length - score}</p>
-                            <p className="text-sm text-slate-400">Incorrect</p>
+                            <XCircle className="w-5 h-5 text-red-500 mx-auto mb-1" />
+                            <p className="text-xl font-bold text-gray-800">{quiz.questions.length - score}</p>
+                            <p className="text-xs text-gray-500 font-semibold">Incorrect</p>
                         </div>
                     </div>
 
                     <div className="space-y-3">
                         <button
                             onClick={handleRetakeQuiz}
-                            className="w-full py-4 rounded-full border-2 border-blue-500 text-blue-400 font-medium flex items-center justify-center gap-2 hover:bg-blue-500/10 transition-colors"
+                            className="w-full py-3.5 rounded-xl border border-blue-600 text-blue-600 font-semibold flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors"
                         >
-                            <RefreshCw className="w-5 h-5" />
+                            <RefreshCw className="w-4 h-4" />
                             Retake Quiz
                         </button>
                         <button
                             onClick={() => router.back()}
-                            className="w-full py-4 rounded-full bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+                            className="w-full py-3.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors shadow-sm"
                         >
                             Done
                         </button>
@@ -362,9 +379,9 @@ export default function QuizAttemptPage() {
     const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+        <div className="min-h-screen bg-[#f9f8f6] flex flex-col animate-fade-in">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
                     <button
                         onClick={() => {
@@ -372,20 +389,20 @@ export default function QuizAttemptPage() {
                                 router.back();
                             }
                         }}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
+                        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
 
                     <div className="flex-1">
-                        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-2 bg-gray-200/60 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                                className="h-full bg-blue-600 rounded-full transition-all duration-300"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <p className="text-center text-sm text-slate-400 mt-1">
-                            {currentQuestionIndex + 1} / {quiz.questions.length}
+                        <p className="text-center text-xs font-semibold text-gray-400 mt-1.5">
+                            {currentQuestionIndex + 1} / {quiz.questions.length} Questions
                         </p>
                     </div>
 
@@ -397,11 +414,11 @@ export default function QuizAttemptPage() {
             <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
                 {/* Question */}
                 <div className="mb-8">
-                    <span className="inline-block px-3 py-1 bg-blue-500/15 text-blue-400 text-xs font-medium rounded-full mb-4">
+                    <span className="inline-block px-3 py-1 bg-blue-50 border border-blue-205/30 text-blue-600 text-xs font-bold uppercase tracking-wider rounded-lg mb-4">
                         {currentQuestion.difficulty.charAt(0).toUpperCase() +
                             currentQuestion.difficulty.slice(1)}
                     </span>
-                    <h2 className="text-xl font-medium text-white leading-relaxed">
+                    <h2 className="text-xl font-bold text-gray-900 leading-relaxed">
                         {currentQuestion.questionText}
                     </h2>
                 </div>
@@ -418,20 +435,20 @@ export default function QuizAttemptPage() {
                                     disabled={showExplanation}
                                     className={getOptionStyle(originalIndex)}
                                 >
-                                    <span className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-sm font-medium text-slate-300">
+                                    <span className={getBadgeStyle(originalIndex)}>
                                         {String.fromCharCode(65 + displayIndex)}
                                     </span>
-                                    <span className={`flex-1 ${getOptionTextColor(originalIndex)}`}>
+                                    <span className={`flex-1 text-sm font-semibold leading-relaxed ${getOptionTextColor(originalIndex)}`}>
                                         {option}
                                     </span>
                                     {showExplanation &&
                                         originalIndex === currentQuestion.correctOption && (
-                                            <CheckCircle className="w-6 h-6 text-green-400" />
+                                            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
                                         )}
                                     {showExplanation &&
                                         originalIndex === selectedOption &&
                                         originalIndex !== currentQuestion.correctOption && (
-                                            <XCircle className="w-6 h-6 text-red-400" />
+                                            <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                                         )}
                                 </button>
                             );
@@ -441,26 +458,26 @@ export default function QuizAttemptPage() {
 
                 {/* Explanation */}
                 {showExplanation && (
-                    <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-8">
+                    <div className="p-5 bg-amber-50/50 border border-amber-200/60 rounded-xl mb-8 animate-in fade-in duration-200">
                         <div className="flex items-center gap-2 mb-2">
-                            <Lightbulb className="w-5 h-5 text-amber-400" />
-                            <span className="font-medium text-amber-400">Explanation</span>
+                            <Lightbulb className="w-5 h-5 text-amber-600" />
+                            <span className="font-bold text-sm text-amber-700 uppercase tracking-wider">Explanation</span>
                         </div>
-                        <p className="text-amber-200/80">{currentQuestion.explanation}</p>
+                        <p className="text-gray-700 text-sm leading-relaxed font-medium">{currentQuestion.explanation}</p>
                     </div>
                 )}
             </main>
 
             {/* Footer */}
-            <footer className="sticky bottom-0 bg-slate-900/80 backdrop-blur-xl border-t border-slate-700/50 p-4">
+            <footer className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200/60 p-4">
                 <div className="max-w-4xl mx-auto">
                     {!showExplanation ? (
                         <button
                             onClick={handleConfirmAnswer}
                             disabled={selectedOption === null}
-                            className={`w-full py-4 rounded-full font-semibold transition-all ${selectedOption === null
-                                ? "bg-slate-600 text-slate-400 cursor-not-allowed"
-                                : "bg-blue-500 text-white hover:bg-blue-600"
+                            className={`w-full py-3.5 rounded-xl font-bold transition-all text-sm shadow-sm ${selectedOption === null
+                                ? "bg-gray-150 text-gray-400 cursor-not-allowed"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
                                 }`}
                         >
                             Confirm Answer
@@ -469,17 +486,17 @@ export default function QuizAttemptPage() {
                         <button
                             onClick={handleNextQuestion}
                             disabled={isSubmitting}
-                            className="w-full py-4 rounded-full bg-green-500 text-white font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors"
+                            className="w-full py-3.5 rounded-xl bg-green-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors shadow-sm text-sm"
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    Submitting...
+                                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                    <span>Submitting...</span>
                                 </>
                             ) : currentQuestionIndex < quiz.questions.length - 1 ? (
                                 <>
-                                    Next Question
-                                    <ArrowRight className="w-5 h-5" />
+                                    <span>Next Question</span>
+                                    <ArrowRight className="w-4 h-4" />
                                 </>
                             ) : (
                                 "Finish Quiz"

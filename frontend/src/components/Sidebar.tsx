@@ -191,19 +191,19 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Panel */}
       <aside
-        className={`absolute left-0 top-0 h-full w-full sm:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-xl transform transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"
+        className={`absolute left-0 top-0 h-full w-full sm:w-96 bg-white border-r border-gray-200/60 shadow-xl transform transition-transform duration-300 flex flex-col ${open ? "translate-x-0" : "-translate-x-full"
           }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100">Chats</h2>
-          <button onClick={onClose} className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Close sidebar">
-            <X className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900">Chats</h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-50" aria-label="Close sidebar">
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         {/* Quick Links */}
-        <div className="px-5 py-3 border-b border-gray-200 dark:border-gray-800">
+        <div className="px-5 py-3 border-b border-gray-100">
           <div className="grid grid-cols-4 gap-2">
             {QUICK_LINKS.map((link) => {
               const Icon = link.icon;
@@ -211,12 +211,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 <button
                   key={link.href}
                   onClick={() => handleQuickLinkClick(link.href)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${link.color}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400">{link.label}</span>
+                  <span className="text-[10px] font-medium text-gray-600">{link.label}</span>
                 </button>
               );
             })}
@@ -224,12 +224,12 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-800 px-5">
+        <div className="flex border-b border-gray-100 px-5">
           <button
             onClick={() => setActiveTab("all")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "all"
               ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
           >
             All Chats
@@ -238,7 +238,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             onClick={() => setActiveTab("favorites")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "favorites"
               ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
           >
             <Star className="w-4 h-4" />
@@ -248,7 +248,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             onClick={() => setActiveTab("archived")}
             className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "archived"
               ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
           >
             <Archive className="w-4 h-4" />
@@ -267,15 +267,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                   placeholder="Search chats..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full text-sm
-                           text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200/50 rounded-xl text-sm
+                           text-gray-900 placeholder-gray-400
+                           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
                 />
               </div>
               <button
                 onClick={handleNewChat}
-                className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700
-                         text-white rounded-full transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700
+                         text-white rounded-xl transition-colors font-medium shadow-sm"
               >
                 <PenSquare className="w-4 h-4" />
                 New Chat
@@ -292,7 +292,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               >
                 Cancel
               </button>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <span className="text-gray-700 font-medium">
                 {selectedChats.size} selected
               </span>
             </div>
@@ -303,15 +303,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="flex-1 overflow-y-auto">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500 dark:text-gray-400">Loading...</div>
+              <div className="text-gray-500">Loading...</div>
             </div>
           ) : filteredChats.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-5 text-center">
-              <p className="text-gray-500 dark:text-gray-400 font-medium mb-1">
+              <p className="text-gray-500 font-medium mb-1">
                 {searchQuery ? "No chats found" : activeTab === "favorites" ? "No favorite chats" : activeTab === "archived" ? "No archived chats" : "No chats yet"}
               </p>
               {!searchQuery && activeTab === "all" && (
-                <p className="text-gray-400 dark:text-gray-500 text-sm">
+                <p className="text-gray-400 text-sm">
                   Create a new chat to get started
                 </p>
               )}
@@ -329,9 +329,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                       setSelectedChats(new Set([chat.id]));
                     }
                   }}
-                  className={`group relative p-3 rounded-lg cursor-pointer transition-colors ${selectedChats.has(chat.id)
-                    ? "bg-blue-50 dark:bg-blue-900/20"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className={`group relative p-3 rounded-xl cursor-pointer transition-colors ${selectedChats.has(chat.id)
+                    ? "bg-blue-50"
+                    : "hover:bg-gray-50"
                     }`}
                 >
                   <div className="flex items-start gap-3">
@@ -340,7 +340,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                         <div
                           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedChats.has(chat.id)
                             ? "bg-blue-600 border-blue-600"
-                            : "border-gray-300 dark:border-gray-600"
+                            : "border-gray-300"
                             }`}
                         >
                           {selectedChats.has(chat.id) && (
@@ -357,7 +357,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
                           {chat.title}
                         </h3>
                         <div className="flex items-center gap-1 shrink-0 ml-2">
@@ -367,10 +367,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                       </div>
                       {chat.lastMessage && (
                         <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <p className="text-xs text-gray-500 truncate">
                             {chat.lastMessage.content}
                           </p>
-                          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                          <span className="text-xs text-gray-400 shrink-0">
                             {formatTimestamp(chat.lastMessage.timestamp)}
                           </span>
                         </div>
@@ -384,30 +384,30 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                           e.stopPropagation();
                           handleFavoriteChat(chat.id, chat.isFavorite || false);
                         }}
-                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg"
                         title={chat.isFavorite ? "Unfavorite" : "Favorite"}
                       >
-                        <Star className={`w-4 h-4 ${chat.isFavorite ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
+                        <Star className={`w-3.5 h-3.5 ${chat.isFavorite ? "text-yellow-500 fill-yellow-500" : "text-gray-400"}`} />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleArchiveChat(chat.id, chat.isArchived || false);
                         }}
-                        className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
+                        className="p-1.5 hover:bg-gray-100 rounded-lg"
                         title={chat.isArchived ? "Unarchive" : "Archive"}
                       >
-                        <Archive className="w-4 h-4 text-gray-400" />
+                        <Archive className="w-3.5 h-3.5 text-gray-400" />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteChat(chat.id);
                         }}
-                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/20 rounded"
+                        className="p-1.5 hover:bg-red-50 rounded-lg"
                         title="Delete"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
                       </button>
                     </div>
                   )}
@@ -419,11 +419,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
         {/* Bulk Delete Button */}
         {selectionMode && selectedChats.size > 0 && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="p-4 border-t border-gray-100">
             <button
               onClick={handleBulkDelete}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 hover:bg-red-700
-                       text-white rounded-lg transition-colors"
+                       text-white rounded-xl transition-colors font-medium shadow-sm"
             >
               <Trash2 className="w-4 h-4" />
               Delete {selectedChats.size} chat{selectedChats.size > 1 ? "s" : ""}

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function SubscriptionResultPage() {
+function SubscriptionResultContent() {
   const searchParams = useSearchParams();
   const status = (searchParams.get("status") || "").toLowerCase();
   const message = searchParams.get("message") || "";
@@ -126,5 +126,17 @@ export default function SubscriptionResultPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SubscriptionResultPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-gray-500 font-semibold">Loading subscription status...</div>
+      </div>
+    }>
+      <SubscriptionResultContent />
+    </Suspense>
   );
 }

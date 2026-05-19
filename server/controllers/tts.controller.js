@@ -1,4 +1,4 @@
-const geminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 
 const generateTTS = async (req, res) => {
   try {
@@ -8,9 +8,9 @@ const generateTTS = async (req, res) => {
       return res.status(400).json({ error: "Text is required" });
     }
 
-    const audioBuffer = await geminiService.generateTTS(text);
+    const audioBuffer = await deepseekService.generateTTS(text);
 
-    res.setHeader("Content-Type", "audio/wav");
+    res.setHeader("Content-Type", "audio/mpeg");
     res.send(audioBuffer);
   } catch (error) {
     console.error("TTS generation error:", error);

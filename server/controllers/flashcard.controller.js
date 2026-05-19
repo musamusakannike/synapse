@@ -3,7 +3,7 @@ const Topic = require("../models/topic.model");
 const Document = require("../models/document.model");
 const Website = require("../models/website.model");
 const Course = require("../models/course.model");
-const geminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const { validationResult } = require("express-validator");
 const { createChatWithAttachment } = require("./chat.controller");
 
@@ -175,7 +175,7 @@ const generateFlashcards = async (req, res) => {
     };
 
     // Generate flashcards using AI
-    const generatedData = await geminiService.generateFlashcards(
+    const generatedData = await deepseekService.generateFlashcards(
       sourceContent,
       flashcardSettings
     );

@@ -1,5 +1,5 @@
 const Course = require("../models/course.model");
-const GeminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 const { sendCourseGenerationStartedNotification, sendCourseGenerationCompletedNotification } = require("../config/notifications.config");
 const PDFDocument = require("pdfkit");
 const { createChatWithAttachment } = require("./chat.controller");
@@ -49,7 +49,7 @@ async function createCourse(req, res) {
 async function generateCourseOutlineAsync(courseId, title, description, settings, userId) {
   try {
     // Generate outline
-    const outlineData = await GeminiService.generateCourseOutline(
+    const outlineData = await deepseekService.generateCourseOutline(
       title,
       description,
       settings
@@ -66,7 +66,7 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
     const contentArray = [];
     for (const section of course.outline) {
       // Generate content for main section
-      const sectionContent = await GeminiService.generateSectionContent(
+      const sectionContent = await deepseekService.generateSectionContent(
         title,
         section.section,
         null,
@@ -81,7 +81,7 @@ async function generateCourseOutlineAsync(courseId, title, description, settings
       // Generate content for each subsection
       if (section.subsections && section.subsections.length > 0) {
         for (const subsection of section.subsections) {
-          const subsectionContent = await GeminiService.generateSectionContent(
+          const subsectionContent = await deepseekService.generateSectionContent(
             title,
             section.section,
             subsection,

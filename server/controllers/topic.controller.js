@@ -1,5 +1,5 @@
 const Topic = require("../models/topic.model");
-const GeminiService = require("../config/gemini.config");
+const deepseekService = require("../config/deepseek.config");
 
 // POST /api/topics
 // Body: { title, description?, content?, customizations? }
@@ -14,7 +14,7 @@ async function createTopic(req, res) {
     // If content missing, generate via Gemini from title/customizations
     let generatedContent = undefined;
     if (!content) {
-      generatedContent = await GeminiService.generateTopicExplanation(title, customizations);
+      generatedContent = await deepseekService.generateTopicExplanation(title, customizations);
     }
 
     const topic = await Topic.create({
@@ -106,7 +106,7 @@ async function regenerateTopicContent(req, res) {
     const topic = await Topic.findOne({ _id: id, userId });
     if (!topic) return res.status(404).json({ message: "Topic not found" });
 
-    const generated = await GeminiService.generateTopicExplanation(
+    const generated = await deepseekService.generateTopicExplanation(
       topic.title,
       Object.keys(customizations).length ? customizations : topic.customizations || {}
     );

@@ -1,15 +1,6 @@
 @import "tailwindcss";
 
 /* =============================================
-   SATOSHI FONT (via Fontshare)
-   ============================================= */
-@font-face {
-  font-family: 'Satoshi';
-  src: url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
-  font-display: swap;
-}
-
-/* =============================================
    THEME CSS VARIABLES (Dashboard — preserved)
    ============================================= */
 :root {
@@ -46,22 +37,26 @@
 
 /* =============================================
    LANDING PAGE TOKENS
-   Always dark, scoped under .landing
+   Light edtech palette — warm, inviting, clean
    ============================================= */
 .landing {
-  --l-bg: #0a0e1a;
-  --l-bg-elevated: #111827;
-  --l-surface: #1a2035;
+  --l-bg: #f9f8f6;
+  --l-bg-elevated: #ffffff;
+  --l-surface: #ffffff;
+  --l-surface-tinted: #f0f4ff;
   --l-accent: #4285F4;
-  --l-accent-glow: rgba(66, 133, 244, 0.15);
-  --l-accent-bright: #6ea8fe;
-  --l-text: #e8ecf4;
-  --l-text-heading: #f8fafc;
-  --l-muted: #8494b2;
-  --l-border: #1f2b42;
-  --l-border-hover: #2d3f5e;
-  --l-gradient-start: #4285F4;
-  --l-gradient-end: #2563eb;
+  --l-accent-soft: rgba(66, 133, 244, 0.08);
+  --l-accent-medium: rgba(66, 133, 244, 0.14);
+  --l-accent-bright: #2b6de0;
+  --l-accent-gradient-end: #5ba0f5;
+  --l-text: #3d4654;
+  --l-text-heading: #1a1d2b;
+  --l-muted: #7c8698;
+  --l-border: #e6e9ee;
+  --l-border-hover: #cdd3dc;
+  --l-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --l-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --l-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
 
   background-color: var(--l-bg);
   color: var(--l-text);
@@ -89,12 +84,12 @@ button {
 .landing h3,
 .landing h4 {
   color: var(--l-text-heading);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
 }
 
 .landing p {
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 /* =============================================
@@ -123,44 +118,47 @@ button {
   }
 }
 
-/* Glassmorphism utility */
+/* Glass for light — frosted white */
 .glass {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--l-border);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid var(--l-border);
 }
 
-.glass-card {
-  background: rgba(26, 32, 53, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* Edtech card — warm white with soft shadow */
+.edu-card {
+  background: var(--l-surface);
   border: 1px solid var(--l-border);
+  border-radius: 16px;
+  box-shadow: var(--l-shadow-sm);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+
+.edu-card:hover {
+  box-shadow: var(--l-shadow-md);
+  border-color: var(--l-border-hover);
+}
+
+/* Tinted surface card — light blue tint */
+.edu-card-tinted {
+  background: var(--l-surface-tinted);
+  border: 1px solid rgba(66, 133, 244, 0.1);
   border-radius: 16px;
 }
 
-/* Accent glow */
-.glow-accent {
-  box-shadow: 0 0 40px var(--l-accent-glow), 0 0 80px rgba(66, 133, 244, 0.05);
-}
-
-/* Text gradient */
-.text-gradient {
-  background: linear-gradient(135deg, var(--l-gradient-start), var(--l-gradient-end));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Subtle noise texture overlay */
-.noise-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
+/* Accent badge */
+.accent-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 100px;
+  color: var(--l-accent);
+  background: var(--l-accent-soft);
+  border: 1px solid rgba(66, 133, 244, 0.1);
 }
 
 /* GSAP reveal helpers */
@@ -190,7 +188,7 @@ button {
 
 /* Landing selection color */
 .landing ::selection {
-  background: rgba(66, 133, 244, 0.3);
+  background: rgba(66, 133, 244, 0.18);
   color: var(--l-text-heading);
 }
 
@@ -220,7 +218,7 @@ button {
 }
 
 .landing-link:hover {
-  color: var(--l-text);
+  color: var(--l-text-heading);
 }
 
 .landing-link::after {
@@ -229,8 +227,9 @@ button {
   bottom: -2px;
   left: 0;
   width: 0;
-  height: 1px;
+  height: 1.5px;
   background: var(--l-accent);
+  border-radius: 1px;
   transition: width 0.3s ease;
 }
 
@@ -249,22 +248,24 @@ button {
   color: #fff;
   font-weight: 600;
   font-size: 15px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.25), 0 1px 2px rgba(66, 133, 244, 0.15);
 }
 
 .landing-btn-primary:hover {
-  background: #3b78e0;
+  background: var(--l-accent-bright);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(66, 133, 244, 0.3);
+  box-shadow: 0 4px 16px rgba(66, 133, 244, 0.35), 0 2px 4px rgba(66, 133, 244, 0.2);
 }
 
 .landing-btn-primary:active {
   transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.2);
 }
 
 .landing-btn-secondary {
@@ -273,19 +274,21 @@ button {
   justify-content: center;
   gap: 8px;
   padding: 14px 32px;
-  background: transparent;
-  color: var(--l-text);
+  background: var(--l-surface);
+  color: var(--l-text-heading);
   font-weight: 500;
   font-size: 15px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--l-border);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--l-shadow-sm);
 }
 
 .landing-btn-secondary:hover {
   border-color: var(--l-border-hover);
-  background: var(--l-bg-elevated);
+  background: var(--l-bg);
+  box-shadow: var(--l-shadow-md);
 }
 
 /* =============================================

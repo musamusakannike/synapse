@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { X, Sun, Moon, Minus, Plus, Copy, Share2, Eye, Check } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 
 interface FocusModeProps {
     content: string;
@@ -144,9 +145,11 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                                     lineHeight: 1.7,
                                 }}
                             >
-                                <ReactMarkdown
+                                <Streamdown
+                                    mode="static"
+                                    plugins={{ code }}
                                     components={{
-                                        h1: ({ children }) => (
+                                        h1: ({ children }: any) => (
                                             <h1
                                                 className={`${theme.text} font-bold mb-4 mt-6`}
                                                 style={{ fontSize: `${fontSize + 10}px` }}
@@ -154,7 +157,7 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                                                 {children}
                                             </h1>
                                         ),
-                                        h2: ({ children }) => (
+                                        h2: ({ children }: any) => (
                                             <h2
                                                 className={`${theme.text} font-semibold mb-3 mt-5`}
                                                 style={{ fontSize: `${fontSize + 6}px` }}
@@ -162,7 +165,7 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                                                 {children}
                                             </h2>
                                         ),
-                                        h3: ({ children }) => (
+                                        h3: ({ children }: any) => (
                                             <h3
                                                 className={`${theme.text} font-semibold mb-2 mt-4`}
                                                 style={{ fontSize: `${fontSize + 4}px` }}
@@ -170,53 +173,43 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                                                 {children}
                                             </h3>
                                         ),
-                                        p: ({ children }) => (
+                                        p: ({ children }: any) => (
                                             <p className={`${theme.text} mb-4`}>{children}</p>
                                         ),
-                                        code: ({ children, className }) => {
+                                        code: ({ children, className }: any) => {
                                             const isInline = !className;
-                                            return isInline ? (
-                                                <code
-                                                    className={`${theme.surface} ${theme.accent} px-1.5 py-0.5 rounded text-sm font-mono`}
-                                                >
-                                                    {children}
-                                                </code>
-                                            ) : (
-                                                <code
-                                                    className={`block ${theme.surface} p-4 rounded-xl my-3 overflow-x-auto font-mono text-sm ${theme.border} border`}
-                                                >
-                                                    {children}
-                                                </code>
-                                            );
+                                            if (isInline) {
+                                                return (
+                                                    <code
+                                                        className={`${theme.surface} ${theme.accent} px-1.5 py-0.5 rounded text-sm font-mono`}
+                                                    >
+                                                        {children}
+                                                    </code>
+                                                );
+                                            }
+                                            return <code className={className}>{children}</code>;
                                         },
-                                        pre: ({ children }) => (
-                                            <pre
-                                                className={`${theme.surface} p-4 rounded-xl my-3 overflow-x-auto ${theme.border} border`}
-                                            >
-                                                {children}
-                                            </pre>
-                                        ),
-                                        blockquote: ({ children }) => (
+                                        blockquote: ({ children }: any) => (
                                             <blockquote
                                                 className={`border-l-4 border-blue-500 ${theme.surface} pl-4 py-2 my-3 rounded-r`}
                                             >
                                                 {children}
                                             </blockquote>
                                         ),
-                                        ul: ({ children }) => (
+                                        ul: ({ children }: any) => (
                                             <ul className={`${theme.text} list-disc list-inside mb-4`}>
                                                 {children}
                                             </ul>
                                         ),
-                                        ol: ({ children }) => (
+                                        ol: ({ children }: any) => (
                                             <ol className={`${theme.text} list-decimal list-inside mb-4`}>
                                                 {children}
                                             </ol>
                                         ),
-                                        li: ({ children }) => (
+                                        li: ({ children }: any) => (
                                             <li className="mb-2">{children}</li>
                                         ),
-                                        a: ({ href, children }) => (
+                                        a: ({ href, children }: any) => (
                                             <a
                                                 href={href}
                                                 target="_blank"
@@ -226,18 +219,18 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                                                 {children}
                                             </a>
                                         ),
-                                        strong: ({ children }) => (
+                                        strong: ({ children }: any) => (
                                             <strong className={`font-bold ${theme.text}`}>
                                                 {children}
                                             </strong>
                                         ),
-                                        em: ({ children }) => (
+                                        em: ({ children }: any) => (
                                             <em className={`italic ${theme.text}`}>{children}</em>
                                         ),
                                     }}
                                 >
                                     {content}
-                                </ReactMarkdown>
+                                </Streamdown>
                             </div>
                         )}
                     </div>

@@ -7,6 +7,7 @@ import CourseAttachment from "./CourseAttachment";
 import QuizAttachment from "./QuizAttachment";
 import FlashcardAttachment from "./FlashcardAttachment";
 import ImageAttachment from "./ImageAttachment";
+import { useChat } from "@/contexts/ChatContext";
 
 interface Message {
     role: "user" | "assistant";
@@ -26,8 +27,12 @@ interface MessageItemProps {
 
 export default function MessageItem({ message, index }: MessageItemProps) {
     const router = useRouter();
+    const { messages, isLoading } = useChat();
     const [isExpanded, setIsExpanded] = useState(false);
     const isUser = message.role === "user";
+
+    const isLastMessage = index === messages.length - 1;
+    const isAnimating = isLoading && isLastMessage && message.role === "assistant";
 
     const handleToggleExpand = () => {
         setIsExpanded(!isExpanded);
@@ -61,7 +66,7 @@ export default function MessageItem({ message, index }: MessageItemProps) {
                         >
                             {message.content}
                         </p>
-                        {message.content.length > 200 && (
+                        {message.content.length > 300 && (
                             <button
                                 onClick={handleToggleExpand}
                                 className="text-white/80 hover:text-white text-sm shrink-0"
@@ -72,7 +77,7 @@ export default function MessageItem({ message, index }: MessageItemProps) {
                     </div>
                 ) : (
                     <div>
-                        <StyledMarkdown>{message.content}</StyledMarkdown>
+                        <StyledMarkdown isAnimating={isAnimating}>{message.content}</StyledMarkdown>
                         {message.attachments && message.attachments.length > 0 && (
                             <div className="mt-3 space-y-3 w-full max-w-md">
                                 {message.attachments.map((attachment, idx) => {

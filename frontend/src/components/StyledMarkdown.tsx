@@ -34,7 +34,7 @@ export default function StyledMarkdown({ children, className = "", isAnimating =
             const isInline = !className;
             if (isInline) {
               return (
-                <code className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-800 border border-gray-200 text-[0.9em] font-mono dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700" {...props}>
+                <code className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-900 border border-gray-200 text-[0.9em] font-mono dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700" {...props}>
                   {children}
                 </code>
               );
@@ -59,24 +59,24 @@ export default function StyledMarkdown({ children, className = "", isAnimating =
             </h3>
           ),
           h4: ({ children, ...props }: any) => (
-            <h4 className="text-base font-semibold text-gray-800 dark:text-gray-300 mt-3 mb-2" {...props}>
+            <h4 className="text-base font-semibold text-gray-900 dark:text-gray-300 mt-3 mb-2" {...props}>
               {children}
             </h4>
           ),
           // Paragraphs
           p: ({ children, ...props }: any) => (
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed my-3" {...props}>
+            <p className="text-gray-900 dark:text-gray-300 leading-relaxed my-3" {...props}>
               {children}
             </p>
           ),
           // Lists with better styling
           ul: ({ children, ...props }: any) => (
-            <ul className="list-disc list-outside ml-5 my-3 space-y-1 text-gray-700" {...props}>
+            <ul className="list-disc list-outside ml-5 my-3 space-y-1 text-gray-900" {...props}>
               {children}
             </ul>
           ),
           ol: ({ children, ...props }: any) => (
-            <ol className="list-decimal list-outside ml-5 my-3 space-y-1 text-gray-700" {...props}>
+            <ol className="list-decimal list-outside ml-5 my-3 space-y-1 text-gray-900" {...props}>
               {children}
             </ol>
           ),
@@ -87,7 +87,7 @@ export default function StyledMarkdown({ children, className = "", isAnimating =
           ),
           // Blockquotes
           blockquote: ({ children, ...props }: any) => (
-            <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50/50 text-gray-700 italic dark:bg-slate-800 dark:text-gray-300" {...props}>
+            <blockquote className="border-l-4 border-blue-500 pl-4 py-2 my-4 bg-blue-50/50 text-gray-900 italic dark:bg-slate-800 dark:text-gray-300" {...props}>
               {children}
             </blockquote>
           ),
@@ -115,12 +115,12 @@ export default function StyledMarkdown({ children, className = "", isAnimating =
             </tr>
           ),
           th: ({ children, ...props }: any) => (
-            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider dark:text-gray-300" {...props}>
+            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider dark:text-gray-300" {...props}>
               {children}
             </th>
           ),
           td: ({ children, ...props }: any) => (
-            <td className="px-4 py-2 text-sm text-gray-700" {...props}>
+            <td className="px-4 py-2 text-sm text-gray-900" {...props}>
               {children}
             </td>
           ),
@@ -136,7 +136,7 @@ export default function StyledMarkdown({ children, className = "", isAnimating =
           ),
           // Emphasis/Italic
           em: ({ children, ...props }: any) => (
-            <em className="italic text-gray-800 dark:text-gray-300" {...props}>
+            <em className="italic text-gray-900 dark:text-gray-300" {...props}>
               {children}
             </em>
           ),

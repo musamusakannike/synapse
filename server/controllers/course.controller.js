@@ -3,6 +3,9 @@ const deepseekService = require("../config/deepseek.config");
 const { sendCourseGenerationStartedNotification, sendCourseGenerationCompletedNotification } = require("../config/notifications.config");
 const PDFDocument = require("pdfkit");
 const { createChatWithAttachment } = require("./chat.controller");
+const { renderVideo, deleteVideo, getVideoPath } = require("../config/remotion.config");
+const fs = require("fs");
+const path = require("path");
 
 // POST /api/courses
 // Body: { title, description?, settings? }
@@ -559,6 +562,147 @@ async function generateCoursePDF(req, res) {
   }
 }
 
+// POST /api/courses/:id/video — Kick off async video generation
+async function generateCourseVideo(req, res) {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    const course = await Course.findOne({ _id: id, userId });
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    if (course.status !== "completed") {
+      return res.status(400).json({ message: "Course must be completed before generating a video" });
+    }
+    if (course.videoStatus === "rendering" || course.videoStatus === "generating_script") {
+      return res.status(409).json({ message: "Video generation already in progress", videoStatus: course.videoStatus });
+    }
+
+    // Mark as starting
+    course.videoStatus = "generating_script";
+    course.videoPath = null;
+    await course.save();
+
+    // Respond immediately so the client can start polling
+    res.status(202).json({ message: "Video generation started", videoStatus: "generating_script" });
+
+    // Run generation async
+    generateVideoAsync(id, course);
+  } catch (error) {
+    console.error("Error initiating video generation:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+async function generateVideoAsync(courseId, course) {
+  try {
+    // Step 1: Generate video script with AI
+    console.log(`[Video] Generating script for course: ${course.title}`);
+    const scriptResult = await deepseekService.generateVideoScript(
+      course.title,
+      course.outline,
+      course.content
+    );
+
+    const scenes = scriptResult.scenes;
+    if (!scenes || scenes.length === 0) {
+      throw new Error("AI returned empty video script");
+    }
+
+    await Course.findByIdAndUpdate(courseId, {
+      videoStatus: "rendering",
+      videoScript: scenes,
+    });
+
+    // Step 2: Render with Remotion
+    console.log(`[Video] Rendering ${scenes.length} scenes for course: ${course.title}`);
+    const outputPath = await renderVideo(
+      courseId.toString(),
+      scenes,
+      (progress) => {
+        // We don't await DB updates during render to keep it non-blocking
+        Course.findByIdAndUpdate(courseId, {
+          videoStatus: "rendering",
+        }).catch(() => {});
+      }
+    );
+
+    // Step 3: Mark complete
+    await Course.findByIdAndUpdate(courseId, {
+      videoStatus: "completed",
+      videoPath: outputPath,
+    });
+
+    console.log(`[Video] Completed for course: ${course.title}`);
+  } catch (error) {
+    console.error(`[Video] Generation failed for course ${courseId}:`, error);
+    await Course.findByIdAndUpdate(courseId, {
+      videoStatus: "failed",
+      videoPath: null,
+    }).catch(() => {});
+  }
+}
+
+// GET /api/courses/:id/video — Poll video status
+async function getCourseVideoStatus(req, res) {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    const course = await Course.findOne({ _id: id, userId }).select(
+      "videoStatus videoPath title"
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    return res.status(200).json({
+      videoStatus: course.videoStatus || "idle",
+      hasVideo: course.videoStatus === "completed" && !!course.videoPath,
+      title: course.title,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// GET /api/courses/:id/video/download — Stream the .mp4
+async function downloadCourseVideo(req, res) {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params;
+
+    const course = await Course.findOne({ _id: id, userId }).select(
+      "videoStatus videoPath title"
+    );
+    if (!course) return res.status(404).json({ message: "Course not found" });
+    if (course.videoStatus !== "completed" || !course.videoPath) {
+      return res.status(400).json({ message: "Video is not ready yet" });
+    }
+
+    const filePath = course.videoPath;
+    if (!fs.existsSync(filePath)) {
+      // Mark as failed so user can regenerate
+      await Course.findByIdAndUpdate(id, { videoStatus: "failed", videoPath: null });
+      return res.status(404).json({ message: "Video file not found. Please regenerate." });
+    }
+
+    const stat = fs.statSync(filePath);
+    const safeTitle = course.title.replace(/[^a-z0-9]/gi, "_").substring(0, 60);
+
+    res.setHeader("Content-Type", "video/mp4");
+    res.setHeader("Content-Length", stat.size);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${safeTitle}.mp4"`
+    );
+
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
   createCourse,
   listCourses,
@@ -566,4 +710,7 @@ module.exports = {
   deleteCourse,
   regenerateCourse,
   generateCoursePDF,
+  generateCourseVideo,
+  getCourseVideoStatus,
+  downloadCourseVideo,
 };

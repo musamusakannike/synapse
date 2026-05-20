@@ -285,6 +285,35 @@ export const CourseAPI = {
         window.URL.revokeObjectURL(blobUrl);
       });
   },
+  /** Start async video generation — returns immediately with 202 */
+  generateVideo: (id: string) => api.post(`/courses/${id}/video`),
+  /** Poll video generation status */
+  getVideoStatus: (id: string) =>
+    api.get<{ videoStatus: "idle" | "generating_script" | "rendering" | "completed" | "failed"; hasVideo: boolean; title: string }>(`/courses/${id}/video`),
+  /** Download the rendered .mp4 */
+  downloadVideo: (id: string, title: string) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+    const url = `${API_BASE_URL}/courses/${id}/video/download`;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    return fetch(url, { headers })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to download video");
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        const safeTitle = title.replace(/[^a-z0-9]/gi, "_").substring(0, 60);
+        a.download = `${safeTitle}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(blobUrl);
+      });
+  },
 };
 
 // Subscription endpoints

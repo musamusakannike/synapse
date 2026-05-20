@@ -49,6 +49,20 @@ const courseSchema = new mongoose.Schema(
         default: "moderate",
       },
     },
+    // Video generation fields
+    videoStatus: {
+      type: String,
+      enum: ["idle", "generating_script", "rendering", "completed", "failed"],
+      default: "idle",
+    },
+    videoPath: {
+      type: String,
+      default: null,
+    },
+    videoScript: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   {
     timestamps: true,

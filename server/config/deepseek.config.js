@@ -53,6 +53,21 @@ const courseOutlineSchema = z.object({
   ),
 });
 
+// Schema for video script generation
+const videoScriptSchema = z.object({
+  scenes: z.array(
+    z.object({
+      sectionTitle: z.string().optional().describe("Chapter or section badge label shown on slide"),
+      title: z.string().describe("Concise slide headline (max 10 words)"),
+      body: z.string().describe("Engaging explanation paragraph (2-4 sentences, plain language)"),
+      durationSeconds: z.number().int().min(4).max(20).describe("How many seconds this slide should show (4-20)"),
+      math: z.string().optional().describe("LaTeX expression for the key formula (NO $ delimiters, raw LaTeX only)"),
+      code: z.string().optional().describe("Short code snippet demonstrating the concept"),
+      language: z.string().optional().describe("Programming language of the code snippet"),
+    })
+  ),
+});
+
 class DeepSeekService {
   constructor() {
     this.openai = new OpenAI({
@@ -307,6 +322,60 @@ class DeepSeekService {
     } catch (error) {
       console.error("Error generating section content:", error);
       throw new Error("Failed to generate section content");
+    }
+  }
+
+  async generateVideoScript(courseTitle, outline, contentArray) {
+    // Build a concise content summary so the AI can script slides
+    let contentSummary = `Course Title: ${courseTitle}\n\n`;
+    for (const section of outline) {
+      contentSummary += `### ${section.section}\n`;
+      const sectionContent = contentArray.find(
+        (c) => c.section === section.section && !c.subsection
+      );
+      if (sectionContent) {
+        // Truncate to avoid overflowing context
+        contentSummary += sectionContent.explanation.substring(0, 600) + "\n";
+      }
+      for (const sub of (section.subsections || [])) {
+        const subContent = contentArray.find(
+          (c) => c.section === section.section && c.subsection === sub
+        );
+        if (subContent) {
+          contentSummary += `#### ${sub}\n`;
+          contentSummary += subContent.explanation.substring(0, 500) + "\n";
+        }
+      }
+    }
+
+    const prompt = `You are a world-class instructional video scriptwriter. Convert this course content into a sequence of engaging video slides.
+
+Course Content:
+${contentSummary}
+
+Rules for the video script:
+1. Generate 6 to 15 slides total. Start with an intro slide, end with a conclusion slide.
+2. Each slide has a "title" (punchy, max 10 words), and a "body" (engaging 2-4 sentence explanation).
+3. For mathematical topics, include a "math" field with a clean LaTeX expression (NO dollar signs, raw LaTeX only). Examples: \\frac{d}{dx}[x^n] = nx^{n-1} or E = mc^2
+4. For programming topics, include short "code" snippets with the "language" field.
+5. Set "durationSeconds" based on content complexity: intro/outro = 5s, math/code slides = 8-12s, text slides = 6-8s.
+6. Use "sectionTitle" as the chapter badge (use the course section name).
+7. Make the language engaging, clear, and educational — as if a great teacher is explaining it.
+8. Do NOT include math AND code in the same slide.
+9. The final slide should have the title "Course Complete!" and an encouraging body message.
+
+Return a valid JSON object with the scenes array.`;
+
+    try {
+      const response = await generateText({
+        model: this.sdkModel,
+        prompt,
+        output: Output.object({ schema: videoScriptSchema }),
+      });
+      return response.output;
+    } catch (error) {
+      console.error("Error generating video script:", error);
+      throw new Error("Failed to generate video script");
     }
   }
 

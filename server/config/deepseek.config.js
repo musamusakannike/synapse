@@ -82,7 +82,7 @@ class DeepSeekService {
     });
 
     this.model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
-    this.sdkModel = this.openaiProvider(this.model);
+    this.sdkModel = this.openaiProvider.chat(this.model);
   }
 
   // Backup Google Translate TTS implementation

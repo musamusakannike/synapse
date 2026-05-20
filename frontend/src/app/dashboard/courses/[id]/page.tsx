@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, BookOpen, Download, Trash2, Loader2, Award, BookOpenCheck } from "lucide-react";
+import { ChevronLeft, BookOpen, Download, Trash2, Loader2, Award, BookOpenCheck, Video } from "lucide-react";
 import { CourseAPI } from "@/lib/api";
 import StyledMarkdown from "@/components/StyledMarkdown";
+import VideoGenerationModal from "@/components/VideoGenerationModal";
 
 interface Subsection {
     type: string;
@@ -47,6 +48,10 @@ export default function CourseDetailPage() {
     const [activeSubsection, setActiveSubsection] = useState<string>("");
     const [isDownloading, setIsDownloading] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [videoModalOpen, setVideoModalOpen] = useState(false);
+    const [videoStatus, setVideoStatus] = useState<"idle" | "generating_script" | "rendering" | "completed" | "failed">("idle");
+    const [hasVideo, setHasVideo] = useState(false);
+    const videoPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Initial course fetch
     useEffect(() => {
@@ -54,6 +59,46 @@ export default function CourseDetailPage() {
             fetchCourse(true);
         }
     }, [id]);
+
+    // Fetch video status when course is loaded
+    useEffect(() => {
+        if (id && course?.status === "completed") {
+            CourseAPI.getVideoStatus(id)
+                .then((res) => {
+                    setVideoStatus(res.data.videoStatus ?? "idle");
+                    setHasVideo(res.data.hasVideo ?? false);
+                    // If already in progress, start background polling
+                    if (res.data.videoStatus === "generating_script" || res.data.videoStatus === "rendering") {
+                        startVideoStatusPolling();
+                    }
+                })
+                .catch(() => {});
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, course?.status]);
+
+    // Cleanup video polling on unmount
+    useEffect(() => {
+        return () => {
+            if (videoPollingRef.current) clearInterval(videoPollingRef.current);
+        };
+    }, []);
+
+    function startVideoStatusPolling() {
+        if (videoPollingRef.current) clearInterval(videoPollingRef.current);
+        videoPollingRef.current = setInterval(async () => {
+            try {
+                const res = await CourseAPI.getVideoStatus(id);
+                const s = res.data.videoStatus ?? "idle";
+                setVideoStatus(s);
+                setHasVideo(res.data.hasVideo ?? false);
+                if (s === "completed" || s === "failed") {
+                    clearInterval(videoPollingRef.current!);
+                    videoPollingRef.current = null;
+                }
+            } catch {}
+        }, 5000);
+    }
 
     // Real-time polling to retrieve generated contents incrementally
     useEffect(() => {
@@ -243,6 +288,45 @@ export default function CourseDetailPage() {
                                 </span>
                             </div>
                         )}
+
+                        {/* Generate Video button */}
+                        <button
+                            onClick={() => setVideoModalOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all font-semibold text-xs border"
+                            style={{
+                                background: videoStatus === "completed"
+                                    ? "rgba(52,211,153,0.1)"
+                                    : videoStatus === "generating_script" || videoStatus === "rendering"
+                                    ? "rgba(129,140,248,0.1)"
+                                    : "rgba(99,102,241,0.08)",
+                                borderColor: videoStatus === "completed"
+                                    ? "rgba(52,211,153,0.3)"
+                                    : videoStatus === "generating_script" || videoStatus === "rendering"
+                                    ? "rgba(129,140,248,0.3)"
+                                    : "rgba(99,102,241,0.2)",
+                                color: videoStatus === "completed"
+                                    ? "#34d399"
+                                    : videoStatus === "generating_script" || videoStatus === "rendering"
+                                    ? "#818cf8"
+                                    : "#6366f1",
+                            }}
+                        >
+                            {videoStatus === "generating_script" || videoStatus === "rendering" ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <Video className="w-3.5 h-3.5" />
+                            )}
+                            <span>
+                                {videoStatus === "completed"
+                                    ? "Video Ready"
+                                    : videoStatus === "generating_script"
+                                    ? "Writing Script..."
+                                    : videoStatus === "rendering"
+                                    ? "Rendering..."
+                                    : "Generate Video"}
+                            </span>
+                        </button>
+
                         <button
                             onClick={handleDownloadPDF}
                             disabled={isDownloading}
@@ -370,6 +454,23 @@ export default function CourseDetailPage() {
                     </div>
                 </main>
             </div>
+
+            {/* Video Generation Modal */}
+            <VideoGenerationModal
+                courseId={id}
+                courseTitle={course.title}
+                open={videoModalOpen}
+                onClose={() => setVideoModalOpen(false)}
+                initialStatus={videoStatus}
+                hasExistingVideo={hasVideo}
+                onStatusChange={(s, hasVid) => {
+                    setVideoStatus(s);
+                    setHasVideo(hasVid);
+                    if (s === "generating_script" || s === "rendering") {
+                        startVideoStatusPolling();
+                    }
+                }}
+            />
         </div>
     );
 }

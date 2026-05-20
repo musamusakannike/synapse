@@ -79,6 +79,7 @@ class DeepSeekService {
     this.openaiProvider = createOpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY || "",
       baseURL: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
+      strictJsonSchema: false,
     });
 
     this.model = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
@@ -281,6 +282,7 @@ class DeepSeekService {
     prompt += `- Level: ${settings.level || "intermediate"}\n`;
     prompt += `- Detail Level: ${settings.detailLevel || "moderate"}\n`;
     prompt += `\nCreate a structured outline with main sections and subsections. The outline should be logical, progressive, and cover all essential aspects of the topic.\n`;
+    prompt += `\nReturn the output in JSON format.\n`;
 
     try {
       const response = await generateText({
@@ -391,7 +393,9 @@ IMPORTANT RULES:
 - Only call analyze_document if hasDocument is true AND the user explicitly wants to analyze/summarize/process the document
 - If the user just wants to chat or ask questions, do NOT call any function
 - If the user wants to do multiple actions at once (e.g., "create flashcards and a quiz"), call BOTH functions
-- For general questions, explanations, or conversations, do NOT call any function`;
+- For general questions, explanations, or conversations, do NOT call any function
+
+Return the output in JSON format.`;
 
       const intentSchema = z.object({
         isMultiAction: z.boolean().describe("True if user wants to perform multiple actions at once"),
@@ -473,6 +477,7 @@ IMPORTANT RULES:
     prompt += `Quiz Requirements:\n`;
     prompt += `- Difficulty: ${settings.difficulty}\n`;
     prompt += `- Include calculations: ${settings.includeCalculations ? "Yes" : "No"}\n`;
+    prompt += `\nReturn the output in JSON format.`;
     return prompt;
   }
 
@@ -486,6 +491,7 @@ IMPORTANT RULES:
     if (settings.focusAreas && settings.focusAreas.length > 0) {
       prompt += `- Focus specifically on these areas: ${settings.focusAreas.join(", ")}\n`;
     }
+    prompt += `\nReturn the output in JSON format.`;
     return prompt;
   }
 }

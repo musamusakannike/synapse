@@ -94,7 +94,7 @@ export default function FocusMode({ content, role, onClose }: FocusModeProps) {
                 }
                 : {
                     background: "bg-slate-50",
-                    surface: "bg-white",
+                    surface: "bg-white dark:bg-slate-900",
                     text: "text-slate-900",
                     textSecondary: "text-slate-500",
                     accent: "text-blue-600",

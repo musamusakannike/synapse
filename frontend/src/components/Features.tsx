@@ -48,13 +48,13 @@ const features = [
 
 const Features: React.FC = () => {
   return (
-    <section className="bg-white">
+    <section className="bg-white dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-10">
-          <p className="text-sm uppercase tracking-wider text-gray-500">
+          <p className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Features
           </p>
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
+          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white mt-2">
             Everything you need to learn faster
           </h2>
         </div>
@@ -72,12 +72,12 @@ const Features: React.FC = () => {
             {features.map(({ title, description, image }) => (
               <div
                 key={title}
-                className="min-w-[260px] md:min-w-[330px] lg:min-w-[500px] snap-start bg-gray-100 border border-gray-200 rounded p-5 transition-shadow"
+                className="min-w-[260px] md:min-w-[330px] lg:min-w-[500px] snap-start bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded p-5 transition-shadow"
               >
                 <h3 className="text-lg lg:text-xl font-semibold text-blue-800">
                   {title}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   {description}
                 </p>
                 <div>
@@ -86,7 +86,7 @@ const Features: React.FC = () => {
                     alt={title}
                     width={600}
                     height={400}
-                    className="w-full h-full mt-2 border border-gray-200 rounded-xs"
+                    className="w-full h-full mt-2 border border-gray-200 dark:border-gray-700 rounded-xs"
                     unoptimized
                   />
                 </div>

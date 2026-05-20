@@ -124,7 +124,7 @@ export default function SubscriptionPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    <p className="text-gray-500 text-sm font-semibold">Loading subscription info...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold">Loading subscription info...</p>
                 </div>
             </div>
         );
@@ -135,19 +135,19 @@ export default function SubscriptionPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 h-16 flex items-center">
                 <div className="w-full max-w-2xl mx-auto px-6 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                        className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors font-medium text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Back</span>
                     </button>
-                    <h1 className="text-base font-bold text-gray-800">Subscription</h1>
+                    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200">Subscription</h1>
                     <button
                         onClick={() => router.push("/dashboard/transactions")}
-                        className="p-2 text-gray-400 hover:text-gray-800 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-gray-800 dark:text-gray-200 rounded-xl transition-all"
                         title="Transaction History"
                     >
                         <Receipt className="w-4 h-4" />
@@ -161,20 +161,20 @@ export default function SubscriptionPage() {
                     <div
                         className={`p-6 rounded-2xl border ${status.isActive
                             ? "bg-green-50/50 border-green-200/80"
-                            : "bg-white border-gray-200/60"
+                            : "bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700/60"
                             } shadow-xs`}
                     >
                         <div className="flex items-center gap-3 mb-2">
                             <span
                                 className={`px-2.5 py-0.5 rounded-lg text-[10px] font-bold tracking-wider uppercase ${status.isActive
                                     ? "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-550"
+                                    : "bg-gray-100 dark:bg-slate-800 text-gray-550"
                                     }`}
                             >
                                 {status.isActive ? "ACTIVE" : "FREE"}
                             </span>
                             <span
-                                className={`text-base font-bold ${status.isActive ? "text-green-800" : "text-gray-800"
+                                className={`text-base font-bold ${status.isActive ? "text-green-800" : "text-gray-800 dark:text-gray-200"
                                     }`}
                             >
                                 {status.tier} Plan
@@ -185,7 +185,7 @@ export default function SubscriptionPage() {
                                 Expires on {formatDate(status.expiresAt)}
                             </p>
                         ) : (
-                            <p className="text-gray-500 text-xs font-semibold">
+                            <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold">
                                 Upgrade to GURU for unlimited access
                             </p>
                         )}
@@ -194,20 +194,20 @@ export default function SubscriptionPage() {
 
                 {/* Plan Card */}
                 {currentPlan && (
-                    <div className="bg-white rounded-2xl border border-gray-200/60 shadow-xs overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700/60 shadow-xs overflow-hidden">
                         {/* Plan Header */}
                         <div className="p-6 border-b border-gray-150">
                             <div className="flex items-center gap-2.5 mb-1.5">
                                 <Crown className="w-6 h-6 text-yellow-500" />
-                                <span className="text-lg font-bold text-gray-800">
+                                <span className="text-lg font-bold text-gray-800 dark:text-gray-200">
                                     {currentPlan.name}
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-500 font-semibold">{currentPlan.description}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">{currentPlan.description}</p>
                         </div>
 
                         {/* Duration Selection */}
-                        <div className="p-6 grid grid-cols-3 gap-4 border-b border-gray-100">
+                        <div className="p-6 grid grid-cols-3 gap-4 border-b border-gray-100 dark:border-gray-800">
                             {(["day", "week", "month"] as Duration[]).map((duration) => {
                                 const isSelected = selectedDuration === duration;
                                 const savings = getSavingsPercentage(duration);
@@ -218,7 +218,7 @@ export default function SubscriptionPage() {
                                         onClick={() => setSelectedDuration(duration)}
                                         className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${isSelected
                                             ? "border-blue-600 bg-blue-50/30"
-                                            : "border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50/50"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:bg-slate-800/50"
                                             }`}
                                     >
                                         {savings > 0 && (
@@ -233,7 +233,7 @@ export default function SubscriptionPage() {
                                             {getDurationLabel(duration)}
                                         </p>
                                         <p
-                                            className={`text-base font-bold ${isSelected ? "text-blue-700" : "text-gray-800"
+                                            className={`text-base font-bold ${isSelected ? "text-blue-700" : "text-gray-800 dark:text-gray-200"
                                                 }`}
                                         >
                                             {formatPrice(currentPlan.pricing[duration])}

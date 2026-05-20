@@ -20,16 +20,16 @@ export default function CourseAttachment({
     onViewCourse,
 }: CourseAttachmentProps) {
     return (
-        <div className="mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
+        <div className="mt-3 bg-white dark:bg-slate-900 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
             <div className="flex items-start gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
                     <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white dark:text-gray-100 mb-1">
                         {title}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
                         {outline.length} {outline.length === 1 ? "section" : "sections"}
                     </p>
                 </div>
@@ -42,14 +42,14 @@ export default function CourseAttachment({
                             {index + 1}. {item.section}
                         </p>
                         {item.subsections && item.subsections.length > 0 && (
-                            <p className="text-gray-500 dark:text-gray-500 text-xs ml-4 mt-1">
+                            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 text-xs ml-4 mt-1">
                                 {item.subsections.length} subsections
                             </p>
                         )}
                     </div>
                 ))}
                 {outline.length > 3 && (
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400">
                         +{outline.length - 3} more sections
                     </p>
                 )}

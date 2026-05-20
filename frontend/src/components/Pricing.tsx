@@ -63,14 +63,14 @@ const plans: Plan[] = [
 
 const Pricing: React.FC = () => {
   return (
-    <section id="pricing" className="bg-white">
+    <section id="pricing" className="bg-white dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
-          <p className="text-sm uppercase tracking-wider text-gray-500">Pricing</p>
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 mt-2">
+          <p className="text-sm uppercase tracking-wider text-gray-500 dark:text-gray-400">Pricing</p>
+          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white mt-2">
             Simple, student-friendly pricing
           </h2>
-          <p className="text-gray-600 mt-3 max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-400 mt-3 max-w-2xl mx-auto">
             Prices are in Nigerian Naira. Student discounts apply automatically for
             verified academic emails (e.g., your active student mail).
           </p>
@@ -81,23 +81,23 @@ const Pricing: React.FC = () => {
             <div
               key={plan.name}
               className={[
-                "rounded border bg-gray-50 border-gray-200 p-6 flex flex-col",
+                "rounded border bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-gray-700 p-6 flex flex-col",
                 plan.featured
-                  ? "ring-2 ring-blue-500 shadow-md bg-white"
+                  ? "ring-2 ring-blue-500 shadow-md bg-white dark:bg-slate-900"
                   : "shadow-sm",
               ].join(" ")}
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-                  <p className="text-sm text-gray-600">{plan.tagline}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{plan.name}</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{plan.tagline}</p>
                 </div>
               </div>
 
               <div className="flex items-end gap-1">
-                <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">{plan.price}</span>
                 {plan.period && (
-                  <span className="text-sm text-gray-500 mb-1">{plan.period}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">{plan.period}</span>
                 )}
               </div>
 
@@ -112,12 +112,12 @@ const Pricing: React.FC = () => {
                     <span
                       className={[
                         "text-sm",
-                        f.available ? "text-gray-800" : "text-gray-400",
+                        f.available ? "text-gray-800 dark:text-gray-200" : "text-gray-400",
                       ].join(" ")}
                     >
                       {f.label}
                       {f.note && (
-                        <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full border inline-block align-middle text-gray-600 border-gray-300 bg-white">
+                        <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full border inline-block align-middle text-gray-600 dark:text-gray-400 border-gray-300 bg-white dark:bg-slate-900">
                           {f.note}
                         </span>
                       )}
@@ -131,7 +131,7 @@ const Pricing: React.FC = () => {
                   "mt-6 w-full py-2.5 rounded text-sm font-semibold transition-colors",
                   plan.featured
                     ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-white text-blue-600 border border-blue-200 hover:bg-blue-50",
+                    : "bg-white dark:bg-slate-900 text-blue-600 border border-blue-200 hover:bg-blue-50",
                 ].join(" ")}
               >
                 {plan.cta}
@@ -140,7 +140,7 @@ const Pricing: React.FC = () => {
           ))}
         </div>
 
-        <div className="mt-8 text-center text-xs text-gray-500">
+        <div className="mt-8 text-center text-xs text-gray-500 dark:text-gray-400">
           Student discounts are available for verified academic emails. If your
           school uses a different domain, you can request manual verification after
           sign-up.

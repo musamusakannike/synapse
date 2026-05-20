@@ -59,7 +59,7 @@ export default function MobileAuthPage() {
 
     return (
         <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md p-8">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-linear-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -77,10 +77,10 @@ export default function MobileAuthPage() {
                             />
                         </svg>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Synapse AI
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                         Sign in to continue to the mobile app
                     </p>
                 </div>
@@ -105,10 +105,10 @@ export default function MobileAuthPage() {
                                 </svg>
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
                                     Authentication Successful!
                                 </h3>
-                                <p className="text-sm text-gray-600">
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
                                     Returning to the app...
                                 </p>
                             </div>
@@ -116,14 +116,14 @@ export default function MobileAuthPage() {
                     ) : loading ? (
                         <div className="text-center space-y-4 py-8">
                             <Loader />
-                            <p className="text-gray-600">Authenticating...</p>
+                            <p className="text-gray-600 dark:text-gray-400">Authenticating...</p>
                         </div>
                     ) : (
                         <>
                             <button
                                 onClick={handleGoogleSignIn}
                                 disabled={loading}
-                                className="w-full flex items-center justify-center gap-3 px-4 py-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all group disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="w-full flex items-center justify-center gap-3 px-4 py-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:bg-slate-800 hover:border-gray-300 transition-all group disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 <svg
                                     className="w-6 h-6"
@@ -147,7 +147,7 @@ export default function MobileAuthPage() {
                                         fill="#EA4335"
                                     />
                                 </svg>
-                                <span className="font-medium text-gray-700 group-hover:text-gray-900">
+                                <span className="font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:text-white">
                                     Continue with Google
                                 </span>
                             </button>
@@ -159,7 +159,7 @@ export default function MobileAuthPage() {
                             )}
 
                             <div className="text-center pt-4">
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     By continuing, you agree to our Terms of Service and Privacy Policy
                                 </p>
                             </div>

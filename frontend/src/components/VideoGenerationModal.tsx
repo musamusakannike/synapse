@@ -248,7 +248,7 @@ export default function VideoGenerationModal({
                 {!isActive && (
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-xl transition-colors hover:bg-white/10"
+                    className="p-2 rounded-xl transition-colors hover:bg-white dark:bg-slate-900/10"
                     style={{ color: "#64748b" }}
                   >
                     <X className="w-4 h-4" />
@@ -480,7 +480,7 @@ export default function VideoGenerationModal({
 
                     <button
                       onClick={handleRetry}
-                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-semibold transition-all hover:bg-white/5"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs font-semibold transition-all hover:bg-white dark:bg-slate-900/5"
                       style={{ color: "#64748b" }}
                     >
                       <RefreshCw className="w-3.5 h-3.5" />

@@ -149,16 +149,16 @@ export default function GenerateFlashcardsPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 h-16 flex items-center">
                 <div className="w-full max-w-2xl mx-auto px-6 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                        className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors font-medium text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Back</span>
                     </button>
-                    <h1 className="text-base font-bold text-gray-800">
+                    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200">
                         Generate Flashcards
                     </h1>
                     <div className="w-8" />
@@ -168,7 +168,7 @@ export default function GenerateFlashcardsPage() {
             <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
                 {/* Title Input */}
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Flashcard Set Title
                     </label>
                     <input
@@ -176,13 +176,13 @@ export default function GenerateFlashcardsPage() {
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g. Immunology Midterm Prep"
-                        className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
                     />
                 </div>
 
                 {/* Description Input */}
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Description (Optional)
                     </label>
                     <input
@@ -190,13 +190,13 @@ export default function GenerateFlashcardsPage() {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="e.g. Chapter 4 to 8 vocabulary and core concepts"
-                        className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
+                        className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs"
                     />
                 </div>
 
                 {/* Source Type Selection */}
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Source Material
                     </label>
                     <div className="grid grid-cols-3 gap-4">
@@ -215,7 +215,7 @@ export default function GenerateFlashcardsPage() {
                                 }}
                                 className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer shadow-xs ${sourceType === value
                                     ? "border-blue-600 bg-blue-50/50 text-blue-600"
-                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300"
+                                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:border-gray-300"
                                     }`}
                             >
                                 <Icon
@@ -232,7 +232,7 @@ export default function GenerateFlashcardsPage() {
                 {/* Source Content/Selection */}
                 {sourceType === "topic" ? (
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Topic Content
                         </label>
                         <textarea
@@ -240,17 +240,17 @@ export default function GenerateFlashcardsPage() {
                             onChange={(e) => setTopicContent(e.target.value)}
                             placeholder="Enter the topic keywords, content description, or paste study text to extract flashcards..."
                             rows={5}
-                            className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs resize-none"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all text-xs font-semibold shadow-xs resize-none"
                         />
                     </div>
                 ) : (
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                             Select Source {sourceType === "document" ? "Document" : "Course"}
                         </label>
                         <button
                             onClick={() => setShowSourcePicker(true)}
-                            className="w-full px-4 py-3 bg-white border border-gray-200/60 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-all font-semibold text-xs text-gray-800 shadow-xs cursor-pointer"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-all font-semibold text-xs text-gray-800 dark:text-gray-200 shadow-xs cursor-pointer"
                         >
                             <span className={selectedSourceId ? "text-gray-850" : "text-gray-400"}>
                                 {selectedSourceId ? getSelectedSourceName() : `Select a ${sourceType}...`}
@@ -262,7 +262,7 @@ export default function GenerateFlashcardsPage() {
 
                 {/* Number of Cards */}
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Number of Cards
                     </label>
                     <div className="flex gap-2 flex-wrap">
@@ -272,7 +272,7 @@ export default function GenerateFlashcardsPage() {
                                 onClick={() => setNumberOfCards(count)}
                                 className={`px-4 py-2 rounded-xl border transition-all text-xs shadow-xs cursor-pointer ${numberOfCards === count
                                     ? "border-blue-600 bg-blue-50/50 text-blue-600 font-bold"
-                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 font-semibold"
+                                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:border-gray-300 font-semibold"
                                     }`}
                             >
                                 {count} cards
@@ -283,7 +283,7 @@ export default function GenerateFlashcardsPage() {
 
                 {/* Difficulty */}
                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Difficulty Level
                     </label>
                     <div className="grid grid-cols-4 gap-2">
@@ -293,7 +293,7 @@ export default function GenerateFlashcardsPage() {
                                 onClick={() => setDifficulty(value)}
                                 className={`px-3 py-2 rounded-xl border transition-all text-xs shadow-xs cursor-pointer ${difficulty === value
                                     ? "border-blue-600 bg-blue-50/50 text-blue-600 font-bold"
-                                    : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 font-semibold"
+                                    : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-gray-500 dark:text-gray-400 hover:border-gray-300 font-semibold"
                                     }`}
                             >
                                 {label}
@@ -303,9 +303,9 @@ export default function GenerateFlashcardsPage() {
                 </div>
 
                 {/* Include Definitions Toggle */}
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200/60 shadow-xs">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700/60 shadow-xs">
                     <div>
-                        <p className="font-bold text-gray-800 text-xs">Include Definitions</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-200 text-xs">Include Definitions</p>
                         <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
                             Add definition-based flashcards for core vocabulary and terminology
                         </p>
@@ -316,16 +316,16 @@ export default function GenerateFlashcardsPage() {
                             }`}
                     >
                         <div
-                            className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform ${includeDefinitions ? "translate-x-5" : "translate-x-0.5"
+                            className={`w-4.5 h-4.5 bg-white dark:bg-slate-900 rounded-full absolute top-0.5 transition-transform ${includeDefinitions ? "translate-x-5" : "translate-x-0.5"
                                 }`}
                         />
                     </button>
                 </div>
 
                 {/* Include Examples Toggle */}
-                <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200/60 shadow-xs">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700/60 shadow-xs">
                     <div>
-                        <p className="font-bold text-gray-800 text-xs">Include Examples</p>
+                        <p className="font-bold text-gray-800 dark:text-gray-200 text-xs">Include Examples</p>
                         <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
                             Create scenario or context-based flashcards to reinforce understanding
                         </p>
@@ -336,7 +336,7 @@ export default function GenerateFlashcardsPage() {
                             }`}
                     >
                         <div
-                            className={`w-4.5 h-4.5 bg-white rounded-full absolute top-0.5 transition-transform ${includeExamples ? "translate-x-5" : "translate-x-0.5"
+                            className={`w-4.5 h-4.5 bg-white dark:bg-slate-900 rounded-full absolute top-0.5 transition-transform ${includeExamples ? "translate-x-5" : "translate-x-0.5"
                                 }`}
                         />
                     </button>
@@ -368,14 +368,14 @@ export default function GenerateFlashcardsPage() {
             {/* Source Picker Modal */}
             {showSourcePicker && (
                 <div className="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-md">
-                        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700/60 overflow-hidden shadow-md">
+                        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
                             <h2 className="text-xs font-bold text-gray-805 uppercase tracking-wider">
                                 Select {sourceType === "document" ? "Document" : "Course"}
                             </h2>
                             <button
                                 onClick={() => setShowSourcePicker(false)}
-                                className="text-gray-400 hover:text-gray-700 text-sm"
+                                className="text-gray-400 hover:text-gray-700 dark:text-gray-300 text-sm"
                             >
                                 ✕
                             </button>
@@ -398,12 +398,12 @@ export default function GenerateFlashcardsPage() {
                                                 setSelectedSourceId(doc._id);
                                                 setShowSourcePicker(false);
                                             }}
-                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50/50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
+                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 dark:bg-slate-800/50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
                                                 }`}
                                         >
                                             <FileText className="w-4 h-4 text-gray-400" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-bold text-gray-800 truncate">{doc.originalName}</p>
+                                                <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{doc.originalName}</p>
                                                 <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
                                                     Uploaded {new Date(doc.createdAt).toLocaleDateString()}
                                                 </p>
@@ -426,12 +426,12 @@ export default function GenerateFlashcardsPage() {
                                             setSelectedSourceId(course._id);
                                             setShowSourcePicker(false);
                                         }}
-                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50/50 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
+                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 dark:bg-slate-800/50 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
                                             }`}
                                     >
                                         <BookOpen className="w-4 h-4 text-gray-400" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-bold text-gray-800 truncate">{course.title}</p>
+                                            <p className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{course.title}</p>
                                             <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
                                                 Created {new Date(course.createdAt).toLocaleDateString()}
                                             </p>

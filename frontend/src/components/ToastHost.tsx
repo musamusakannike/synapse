@@ -37,10 +37,10 @@ export default function ToastHost() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="shadow-xl rounded overflow-hidden border border-black/5 bg-white"
+          className="shadow-xl rounded overflow-hidden border border-black/5 bg-white dark:bg-slate-900"
         >
           <div className={`h-1 ${typeStyles[t.type || "info"]}`} />
-          <div className="p-3 text-sm text-gray-800">
+          <div className="p-3 text-sm text-gray-800 dark:text-gray-200">
             {t.message}
           </div>
         </div>

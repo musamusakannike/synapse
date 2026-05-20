@@ -75,7 +75,7 @@ export default function QuizzesPage() {
             case "failed":
                 return "bg-red-50 text-red-700 border border-red-250/30";
             default:
-                return "bg-gray-50 text-gray-600 border border-gray-250/30";
+                return "bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-400 border border-gray-250/30";
         }
     };
 
@@ -98,16 +98,16 @@ export default function QuizzesPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <button
                         onClick={() => router.push("/dashboard/chat")}
-                        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+                        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
                         <span className="font-medium text-sm">Back</span>
                     </button>
-                    <h1 className="text-lg font-semibold text-gray-800">My Quizzes</h1>
+                    <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-200">My Quizzes</h1>
                     <button
                         onClick={() => router.push("/dashboard/quizzes/generate")}
                         className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm"
@@ -120,14 +120,14 @@ export default function QuizzesPage() {
 
             <main className="max-w-4xl mx-auto px-4 py-8">
                 {quizzes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 bg-white border border-gray-200/60 rounded-2xl p-8 text-center max-w-md mx-auto shadow-sm">
+                    <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-8 text-center max-w-md mx-auto shadow-sm">
                         <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
                             <HelpCircle className="w-6 h-6 text-blue-600" />
                         </div>
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                             No Quizzes Yet
                         </h2>
-                        <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-xs mx-auto">
                             Create your first quiz to test your knowledge on any topic.
                         </p>
                         <button
@@ -143,7 +143,7 @@ export default function QuizzesPage() {
                         {quizzes.map((quiz, index) => (
                             <div
                                 key={quiz._id}
-                                className="bg-white rounded-xl border border-gray-200/60 overflow-hidden shadow-xs hover:shadow-sm hover:border-gray-300 transition-all duration-200 group relative"
+                                className="bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-gray-700/60 overflow-hidden shadow-xs hover:shadow-sm hover:border-gray-300 transition-all duration-200 group relative"
                                 style={{
                                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
                                 }}
@@ -158,7 +158,7 @@ export default function QuizzesPage() {
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-gray-900 truncate mb-1 pr-12 text-base">
+                                            <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1 pr-12 text-base">
                                                 {quiz.title}
                                             </h3>
                                             <div className="flex items-center gap-3 text-sm text-gray-400 font-medium">

@@ -76,17 +76,17 @@ export default function GenerateCoursePage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <div className="bg-white border-b border-gray-200/60 sticky top-0 z-10">
+            <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => router.back()}
-                            className="p-2 hover:bg-gray-50 rounded-xl transition-colors"
+                            className="p-2 hover:bg-gray-50 dark:bg-slate-800 rounded-xl transition-colors"
                             aria-label="Go back"
                         >
-                            <ChevronLeft className="w-5 h-5 text-gray-700" />
+                            <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                         </button>
-                        <h1 className="text-xl font-semibold text-gray-800">
+                        <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
                             Generate Course
                         </h1>
                     </div>
@@ -97,19 +97,19 @@ export default function GenerateCoursePage() {
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-36">
                 {/* Title Section */}
                 <div className="mb-10 animate-fade-in">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                         Create Your Course
                     </h2>
-                    <p className="text-lg font-medium text-gray-500">
+                    <p className="text-lg font-medium text-gray-500 dark:text-gray-400">
                         Let's build a custom-tailored course for you
                     </p>
                 </div>
 
                 {/* Form */}
-                <div className="space-y-8 animate-fade-in bg-white p-6 sm:p-8 rounded-2xl border border-gray-200/60 shadow-sm">
+                <div className="space-y-8 animate-fade-in bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-gray-200 dark:border-gray-700/60 shadow-sm">
                     {/* Course Title */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Course Title *
                         </label>
                         <input
@@ -119,14 +119,14 @@ export default function GenerateCoursePage() {
                             placeholder="e.g., Introduction to Machine Learning"
                             maxLength={100}
                             disabled={isGenerating}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 transition-all"
                         />
                     </div>
 
                     {/* Course Description */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Description (Optional)
                         </label>
                         <textarea
@@ -136,14 +136,14 @@ export default function GenerateCoursePage() {
                             maxLength={500}
                             rows={4}
                             disabled={isGenerating}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400
                        focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:opacity-50 transition-all"
                         />
                     </div>
 
                     {/* Difficulty Level */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Difficulty Level
                         </label>
                         <div className="space-y-3">
@@ -176,7 +176,7 @@ export default function GenerateCoursePage() {
 
                     {/* Detail Level */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Content Detail Level
                         </label>
                         <div className="space-y-3">
@@ -209,7 +209,7 @@ export default function GenerateCoursePage() {
 
                     {/* Additional Features */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Additional Features
                         </label>
                         <div className="space-y-4">
@@ -240,7 +240,7 @@ export default function GenerateCoursePage() {
             </div>
 
             {/* Fixed Footer with Generate Button */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200/60 p-4 sm:p-6 z-20">
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700/60 p-4 sm:p-6 z-20">
                 <div className="max-w-4xl mx-auto">
                     <button
                         onClick={handleGenerateCourse}
@@ -279,13 +279,13 @@ function LevelOption({
             disabled={disabled}
             className={`w-full p-4 border rounded-xl text-left transition-all disabled:opacity-50 ${selected
                 ? "border-blue-600 bg-blue-50/50"
-                : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 hover:border-gray-300 hover:bg-gray-50 dark:bg-slate-800"
                 }`}
         >
-            <div className={`text-base font-semibold mb-1 ${selected ? "text-blue-600" : "text-gray-800"}`}>
+            <div className={`text-base font-semibold mb-1 ${selected ? "text-blue-600" : "text-gray-800 dark:text-gray-200"}`}>
                 {label}
             </div>
-            <div className={`text-sm ${selected ? "text-blue-500" : "text-gray-500"}`}>
+            <div className={`text-sm ${selected ? "text-blue-500" : "text-gray-500 dark:text-gray-400"}`}>
                 {description}
             </div>
         </button>
@@ -310,15 +310,15 @@ function ToggleOption({
         <button
             onClick={onChange}
             disabled={disabled}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 
-               bg-white rounded-xl hover:border-gray-300 hover:bg-gray-50 
+            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 
+               bg-white dark:bg-slate-900 rounded-xl hover:border-gray-300 hover:bg-gray-50 dark:bg-slate-800 
                transition-all disabled:opacity-50"
         >
             <div className="flex-1 text-left">
-                <div className="text-base font-semibold text-gray-800 mb-1">
+                <div className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-1">
                     {label}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                     {description}
                 </div>
             </div>
@@ -327,7 +327,7 @@ function ToggleOption({
                     }`}
             >
                 <div
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-xs transition-transform ${value ? "translate-x-6" : "translate-x-0"
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white dark:bg-slate-900 rounded-full shadow-xs transition-transform ${value ? "translate-x-6" : "translate-x-0"
                         }`}
                 />
             </div>

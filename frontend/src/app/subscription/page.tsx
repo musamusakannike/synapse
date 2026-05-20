@@ -41,7 +41,7 @@ function SubscriptionResultContent() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-8">
+      <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-6">
           <div
             className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
@@ -81,10 +81,10 @@ function SubscriptionResultContent() {
             )}
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
             {isSuccess ? "Subscription updated" : "Subscription issue"}
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {message ||
               (isSuccess
                 ? "Your subscription has been activated successfully."
@@ -113,7 +113,7 @@ function SubscriptionResultContent() {
             <span>Open in Synapse mobile app</span>
           </button>
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
             If you are viewing this page inside your mobile browser, tapping the
             button above should return you to the Synapse app.
           </p>
@@ -133,7 +133,7 @@ export default function SubscriptionResultPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-gray-500 font-semibold">Loading subscription status...</div>
+        <div className="text-gray-500 dark:text-gray-400 font-semibold">Loading subscription status...</div>
       </div>
     }>
       <SubscriptionResultContent />

@@ -137,7 +137,7 @@ export default function FlashcardStudyPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    <p className="text-gray-500 text-sm font-semibold">Loading flashcard set...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold">Loading flashcard set...</p>
                 </div>
             </div>
         );
@@ -146,7 +146,7 @@ export default function FlashcardStudyPage() {
     if (!flashcardSet || flashcardSet.flashcards.length === 0) {
         return (
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-center max-w-sm p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div className="flex flex-col items-center gap-4 text-center max-w-sm p-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
                     <HelpCircle className="w-12 h-12 text-gray-300" />
                     <h2 className="text-xl font-bold text-gray-805">No Flashcards Found</h2>
                     <p className="text-gray-550 text-xs font-semibold">We couldn't retrieve the flashcards inside this set.</p>
@@ -169,7 +169,7 @@ export default function FlashcardStudyPage() {
 
         return (
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center p-6">
-                <div className="w-full max-w-md bg-white rounded-2xl p-8 border border-gray-200/60 text-center shadow-xs">
+                <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-700/60 text-center shadow-xs">
                     <div
                         className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 ${isPassing
                             ? "bg-green-50 border border-green-150 text-green-600"
@@ -183,10 +183,10 @@ export default function FlashcardStudyPage() {
                         )}
                     </div>
 
-                    <h1 className="text-base font-bold text-gray-800 mb-1">
+                    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 mb-1">
                         {isPassing ? "Great Job!" : "Keep Practicing!"}
                     </h1>
-                    <p className="text-xs text-gray-500 font-semibold mb-6">{flashcardSet.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-6">{flashcardSet.title}</p>
 
                     <div className="flex items-baseline justify-center gap-1 mb-1">
                         <span className="text-4xl font-extrabold text-blue-650">
@@ -199,16 +199,16 @@ export default function FlashcardStudyPage() {
                     </div>
                     <p className="text-xs text-gray-550 font-bold mb-6">{score}% Mastered</p>
 
-                    <div className="flex items-center justify-center gap-6 mb-8 p-4 bg-gray-50/50 border border-gray-100 rounded-xl">
+                    <div className="flex items-center justify-center gap-6 mb-8 p-4 bg-gray-50 dark:bg-slate-800/50 border border-gray-100 dark:border-gray-800 rounded-xl">
                         <div className="text-center">
                             <CheckCircle className="w-5 h-5 text-green-650 mx-auto mb-1" />
-                            <p className="text-lg font-bold text-gray-800">{knownCards.size}</p>
+                            <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{knownCards.size}</p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase">Known</p>
                         </div>
                         <div className="w-px h-10 bg-gray-200" />
                         <div className="text-center">
                             <HelpCircle className="w-5 h-5 text-yellow-600 mx-auto mb-1" />
-                            <p className="text-lg font-bold text-gray-800">
+                            <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
                                 {flashcardSet.flashcards.length - knownCards.size}
                             </p>
                             <p className="text-[10px] text-gray-400 font-bold uppercase">Review</p>
@@ -242,7 +242,7 @@ export default function FlashcardStudyPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6] flex flex-col">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 h-16 flex items-center">
                 <div className="w-full max-w-4xl mx-auto px-6 flex items-center gap-4">
                     <button
                         onClick={() => {
@@ -254,7 +254,7 @@ export default function FlashcardStudyPage() {
                                 handleFinishStudy();
                             }
                         }}
-                        className="p-1.5 text-gray-400 hover:text-gray-800 hover:bg-gray-50 rounded-xl transition-all"
+                        className="p-1.5 text-gray-400 hover:text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:bg-slate-800 rounded-xl transition-all"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -306,16 +306,16 @@ export default function FlashcardStudyPage() {
                     >
                         {/* Front */}
                         <div
-                            className="absolute inset-0 bg-white rounded-2xl border border-gray-200/60 p-8 flex flex-col items-center justify-center shadow-xs"
+                            className="absolute inset-0 bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700/60 p-8 flex flex-col items-center justify-center shadow-xs"
                             style={{ backfaceVisibility: "hidden" }}
                         >
                             <span className="absolute top-4 left-4 text-[9px] font-bold text-gray-400 uppercase tracking-wider">
                                 Question
                             </span>
-                            <p className="text-base font-bold text-gray-800 text-center leading-relaxed">
+                            <p className="text-base font-bold text-gray-800 dark:text-gray-200 text-center leading-relaxed">
                                 {currentCard.front}
                             </p>
-                            <span className="absolute bottom-4 text-[10px] text-gray-400 font-semibold bg-gray-50 border border-gray-100 px-3 py-1 rounded-lg">
+                            <span className="absolute bottom-4 text-[10px] text-gray-400 font-semibold bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-800 px-3 py-1 rounded-lg">
                                 Tap to flip
                             </span>
                         </div>
@@ -379,8 +379,8 @@ export default function FlashcardStudyPage() {
                         onClick={goToPrevCard}
                         disabled={currentIndex === 0}
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${currentIndex === 0
-                            ? "bg-gray-50 border-gray-150 text-gray-350 cursor-not-allowed"
-                            : "bg-white border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50/50 shadow-xs"
+                            ? "bg-gray-50 dark:bg-slate-800 border-gray-150 text-gray-350 cursor-not-allowed"
+                            : "bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-slate-800/50 shadow-xs"
                             }`}
                         aria-label="Previous card"
                     >
@@ -399,8 +399,8 @@ export default function FlashcardStudyPage() {
                         onClick={goToNextCard}
                         disabled={currentIndex === flashcardSet.flashcards.length - 1}
                         className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${currentIndex === flashcardSet.flashcards.length - 1
-                            ? "bg-gray-50 border-gray-150 text-gray-350 cursor-not-allowed"
-                            : "bg-white border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50/50 shadow-xs"
+                            ? "bg-gray-50 dark:bg-slate-800 border-gray-150 text-gray-350 cursor-not-allowed"
+                            : "bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-slate-800/50 shadow-xs"
                             }`}
                         aria-label="Next card"
                     >

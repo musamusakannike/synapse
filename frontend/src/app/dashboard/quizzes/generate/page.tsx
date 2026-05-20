@@ -142,25 +142,25 @@ export default function GenerateQuizPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <button
                         onClick={() => router.back()}
-                        className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+                        className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors"
                     >
                         <ChevronLeft className="w-5 h-5" />
                         <span className="font-medium text-sm">Back</span>
                     </button>
-                    <h1 className="text-lg font-semibold text-gray-800">Generate Quiz</h1>
+                    <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Generate Quiz</h1>
                     <div className="w-10" />
                 </div>
             </header>
 
             <main className="max-w-4xl mx-auto px-4 py-8">
-                <div className="space-y-6 bg-white border border-gray-200/60 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <div className="space-y-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 sm:p-8 shadow-sm">
                     {/* Title Input */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Quiz Title
                         </label>
                         <input
@@ -168,13 +168,13 @@ export default function GenerateQuizPage() {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Enter quiz title..."
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                         />
                     </div>
 
                     {/* Source Type Selection */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Source Type
                         </label>
                         <div className="grid grid-cols-3 gap-3">
@@ -193,15 +193,15 @@ export default function GenerateQuizPage() {
                                     }}
                                     className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${sourceType === value
                                             ? "border-blue-600 bg-blue-50/50"
-                                            : "border-gray-200 bg-white hover:border-gray-300"
+                                            : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 hover:border-gray-300"
                                         }`}
                                 >
                                     <Icon
-                                        className={`w-5 h-5 ${sourceType === value ? "text-blue-600" : "text-gray-500"
+                                        className={`w-5 h-5 ${sourceType === value ? "text-blue-600" : "text-gray-500 dark:text-gray-400"
                                             }`}
                                     />
                                     <span
-                                        className={`text-sm font-semibold ${sourceType === value ? "text-blue-600" : "text-gray-600"
+                                        className={`text-sm font-semibold ${sourceType === value ? "text-blue-600" : "text-gray-600 dark:text-gray-400"
                                             }`}
                                     >
                                         {label}
@@ -214,7 +214,7 @@ export default function GenerateQuizPage() {
                     {/* Source Content/Selection */}
                     {sourceType === "topic" ? (
                         <div>
-                            <label className="block text-base font-semibold text-gray-800 mb-2">
+                            <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                 Topic Content
                             </label>
                             <textarea
@@ -222,20 +222,20 @@ export default function GenerateQuizPage() {
                                 onChange={(e) => setTopicContent(e.target.value)}
                                 placeholder="Enter the topic content or paste text to generate quiz questions from..."
                                 rows={6}
-                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
                             />
                         </div>
                     ) : (
                         <div>
-                            <label className="block text-base font-semibold text-gray-800 mb-2">
+                            <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                 Select {sourceType === "document" ? "Document" : "Course"}
                             </label>
                             <button
                                 onClick={() => setShowSourcePicker(true)}
-                                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-colors"
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-colors"
                             >
                                 <span
-                                    className={`text-sm font-medium ${selectedSourceId ? "text-gray-800 font-semibold" : "text-gray-400"}`}
+                                    className={`text-sm font-medium ${selectedSourceId ? "text-gray-800 dark:text-gray-200 font-semibold" : "text-gray-400"}`}
                                 >
                                     {getSelectedSourceName()}
                                 </span>
@@ -246,7 +246,7 @@ export default function GenerateQuizPage() {
 
                     {/* Number of Questions */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Number of Questions
                         </label>
                         <div className="flex gap-2 flex-wrap">
@@ -256,7 +256,7 @@ export default function GenerateQuizPage() {
                                     onClick={() => setNumberOfQuestions(count)}
                                     className={`px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${numberOfQuestions === count
                                             ? "border-blue-600 bg-blue-50/50 text-blue-600"
-                                            : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+                                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 bg-white dark:bg-slate-900 hover:border-gray-300"
                                         }`}
                                 >
                                     {count}
@@ -267,7 +267,7 @@ export default function GenerateQuizPage() {
 
                     {/* Difficulty */}
                     <div>
-                        <label className="block text-base font-semibold text-gray-800 mb-2">
+                        <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                             Difficulty
                         </label>
                         <div className="grid grid-cols-4 gap-2">
@@ -277,7 +277,7 @@ export default function GenerateQuizPage() {
                                     onClick={() => setDifficulty(value)}
                                     className={`px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all ${difficulty === value
                                             ? "border-blue-600 bg-blue-50/50 text-blue-600"
-                                            : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+                                            : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 bg-white dark:bg-slate-900 hover:border-gray-300"
                                         }`}
                                 >
                                     {label}
@@ -287,9 +287,9 @@ export default function GenerateQuizPage() {
                     </div>
 
                     {/* Include Calculations Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-xl">
                         <div>
-                            <p className="font-semibold text-gray-800 text-sm sm:text-base">Include Calculations</p>
+                            <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm sm:text-base">Include Calculations</p>
                             <p className="text-xs sm:text-sm text-gray-550">
                                 Add questions that require mathematical calculations
                             </p>
@@ -300,7 +300,7 @@ export default function GenerateQuizPage() {
                                 }`}
                         >
                             <div
-                                className={`w-5 h-5 bg-white rounded-full shadow-xs transition-transform ${includeCalculations ? "translate-x-6" : "translate-x-0.5"
+                                className={`w-5 h-5 bg-white dark:bg-slate-900 rounded-full shadow-xs transition-transform ${includeCalculations ? "translate-x-6" : "translate-x-0.5"
                                     }`}
                             />
                         </button>
@@ -330,14 +330,14 @@ export default function GenerateQuizPage() {
             {/* Source Picker Modal */}
             {showSourcePicker && (
                 <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                         <div className="p-4 border-b border-gray-150 flex items-center justify-between">
-                            <h2 className="text-lg font-bold text-gray-800">
+                            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">
                                 Select {sourceType === "document" ? "Document" : "Course"}
                             </h2>
                             <button
                                 onClick={() => setShowSourcePicker(false)}
-                                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-50"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-400 p-1 rounded-lg hover:bg-gray-50 dark:bg-slate-800"
                             >
                                 ✕
                             </button>
@@ -360,12 +360,12 @@ export default function GenerateQuizPage() {
                                                 setSelectedSourceId(doc._id);
                                                 setShowSourcePicker(false);
                                             }}
-                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
+                                            className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 dark:bg-slate-800 transition-colors ${selectedSourceId === doc._id ? "bg-blue-50/30" : ""
                                                 }`}
                                         >
                                             <FileText className="w-5 h-5 text-gray-400" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-gray-800 font-semibold truncate text-sm">{doc.originalName}</p>
+                                                <p className="text-gray-800 dark:text-gray-200 font-semibold truncate text-sm">{doc.originalName}</p>
                                                 <p className="text-xs text-gray-400">
                                                     {new Date(doc.createdAt).toLocaleDateString()}
                                                 </p>
@@ -388,12 +388,12 @@ export default function GenerateQuizPage() {
                                             setSelectedSourceId(course._id);
                                             setShowSourcePicker(false);
                                         }}
-                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
+                                        className={`w-full p-4 text-left flex items-center gap-3 hover:bg-gray-50 dark:bg-slate-800 transition-colors ${selectedSourceId === course._id ? "bg-blue-50/30" : ""
                                             }`}
                                     >
                                         <BookOpen className="w-5 h-5 text-gray-400" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-gray-800 font-semibold truncate text-sm">{course.title}</p>
+                                            <p className="text-gray-800 dark:text-gray-200 font-semibold truncate text-sm">{course.title}</p>
                                             <p className="text-xs text-gray-400">
                                                 {new Date(course.createdAt).toLocaleDateString()}
                                             </p>

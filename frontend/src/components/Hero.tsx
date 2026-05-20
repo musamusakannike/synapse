@@ -15,7 +15,7 @@ import { useAuthModal } from "../contexts/AuthModalContext";
 const SynapseHero = () => {
   const { openModal } = useAuthModal();
   return (
-    <div className="min-h-screen lg:min-h-[calc(100vh-64px)] bg-gray-50 relative overflow-hidden">
+    <div className="min-h-screen lg:min-h-[calc(100vh-64px)] bg-gray-50 dark:bg-slate-800 relative overflow-hidden">
       {/* Grid Background */}
       <div
         className="absolute inset-0 opacity-30"
@@ -31,7 +31,7 @@ const SynapseHero = () => {
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between p-6 max-w-7xl mx-auto">
         <div className="flex items-center space-x-2">
-          <Link href="/" className="text-2xl font-bold text-gray-800 font-mono">
+          <Link href="/" className="text-2xl font-bold text-gray-800 dark:text-gray-200 font-mono">
             SYNAPSE
           </Link>
         </div>
@@ -39,19 +39,19 @@ const SynapseHero = () => {
         <div className="hidden md:flex items-center space-x-8">
           <Link
             href="/blog"
-            className="text-gray-600 hover:text-green-600 transition-colors flex items-center"
+            className="text-gray-600 dark:text-gray-400 hover:text-green-600 transition-colors flex items-center"
           >
             Blog <ArrowRight className="w-4 h-4 ml-1" />
           </Link>
           <Link
             href="#pricing"
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
           >
             Pricing
           </Link>
           <Link
             href="#mission"
-            className="text-gray-600 hover:text-blue-600 transition-colors"
+            className="text-gray-600 dark:text-gray-400 hover:text-blue-600 transition-colors"
           >
             Our Mission
           </Link>
@@ -62,7 +62,7 @@ const SynapseHero = () => {
             Get Started
           </button>
           <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-            <span className="text-gray-600 font-medium">
+            <span className="text-gray-600 dark:text-gray-400 font-medium">
               <User className="w-6 h-6" />
             </span>
           </div>
@@ -78,8 +78,8 @@ const SynapseHero = () => {
 
         {/* Formula */}
         <div className="absolute top-64 left-16 transform -rotate-12">
-          <div className="bg-white p-4 rounded-lg shadow-lg border">
-            <span className="text-gray-700 font-mono text-lg">∂f/∂x = lim</span>
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-lg shadow-lg border">
+            <span className="text-gray-700 dark:text-gray-300 font-mono text-lg">∂f/∂x = lim</span>
           </div>
         </div>
 
@@ -103,7 +103,7 @@ const SynapseHero = () => {
 
         {/* Calculator */}
         <div className="absolute bottom-40 left-24">
-          <Calculator className="w-14 h-14 text-gray-500 opacity-50 transform rotate-12" />
+          <Calculator className="w-14 h-14 text-gray-500 dark:text-gray-400 opacity-50 transform rotate-12" />
         </div>
 
         {/* DNA Helix */}
@@ -117,12 +117,12 @@ const SynapseHero = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[70vh] px-6 text-center max-w-5xl mx-auto">
-        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
           The AI tutor that lives in your{" "}
           <span className="text-blue-600">mind</span>.
         </h1>
 
-        <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl leading-relaxed">
+        <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-400 mb-8 max-w-3xl leading-relaxed">
           Accelerate your learning with AI that adapts to your thinking. No
           context switching, no cognitive overload.
         </p>

@@ -42,7 +42,7 @@ const TTSButton = ({ text }: TTSButtonProps) => {
   return (
     <button
       onClick={handleToggleSpeech}
-      className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 hover:bg-gray-50"
+      className="text-sm inline-flex items-center gap-2 px-3 py-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-slate-800"
     >
       {isSpeaking ? <Pause className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
       {isSpeaking ? "Stop" : "Speak"}

@@ -114,14 +114,14 @@ export default function DocumentsPage() {
             />
 
             {/* Header */}
-            <div className="bg-white border-b border-gray-200/60 sticky top-0 z-10">
+            <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800">
+                            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
                                 Documents
                             </h1>
-                            <p className="mt-1 text-sm font-medium text-gray-500">
+                            <p className="mt-1 text-sm font-medium text-gray-500 dark:text-gray-400">
                                 Upload and manage your documents for reference
                             </p>
                         </div>
@@ -143,16 +143,16 @@ export default function DocumentsPage() {
                     <div className="flex items-center justify-center py-20">
                         <div className="flex flex-col items-center gap-3">
                             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                            <div className="text-gray-500 text-sm font-medium">Loading documents...</div>
+                            <div className="text-gray-500 dark:text-gray-400 text-sm font-medium">Loading documents...</div>
                         </div>
                     </div>
                 ) : documents.length === 0 ? (
-                    <div className="text-center py-20 max-w-md mx-auto bg-white border border-gray-200/60 rounded-2xl p-8 shadow-sm">
+                    <div className="text-center py-20 max-w-md mx-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-8 shadow-sm">
                         <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-gray-850 mb-2">
                             No documents yet
                         </h3>
-                        <p className="text-gray-500 text-sm font-medium mb-6">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-6">
                             Upload your first document to reference in conversations and quizzes
                         </p>
                         <button
@@ -169,7 +169,7 @@ export default function DocumentsPage() {
                         {documents.map((doc) => (
                             <div
                                 key={doc._id}
-                                className="bg-white border border-gray-200/60 rounded-2xl p-6 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group flex flex-col justify-between h-[160px]"
+                                className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-6 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group flex flex-col justify-between h-[160px]"
                                 onClick={() => {
                                     if (doc.status === "completed") {
                                         router.push(`/dashboard/documents/${doc._id}`);
@@ -181,21 +181,21 @@ export default function DocumentsPage() {
                                         <div className="p-2 bg-blue-50 rounded-xl">
                                             <FileText className="w-5 h-5 text-blue-600" />
                                         </div>
-                                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-2.5 py-1 rounded-lg">
+                                        <div className="flex items-center gap-1.5 bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-800 px-2.5 py-1 rounded-lg">
                                             {getStatusIcon(doc.status)}
-                                            <span className="text-xs font-bold text-gray-600">
+                                            <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
                                                 {getStatusText(doc.status)}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <h3 className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors mb-1 truncate" title={doc.title}>
+                                    <h3 className="text-base font-bold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 transition-colors mb-1 truncate" title={doc.title}>
                                         {doc.title}
                                     </h3>
                                 </div>
 
-                                <div className="flex items-center justify-between text-xs font-semibold text-gray-450 border-t border-gray-100 pt-3">
-                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md uppercase tracking-wider text-[10px]">
+                                <div className="flex items-center justify-between text-xs font-semibold text-gray-450 border-t border-gray-100 dark:border-gray-800 pt-3">
+                                    <span className="px-2 py-0.5 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-md uppercase tracking-wider text-[10px]">
                                         {doc.fileType || "PDF"}
                                     </span>
                                     <div className="flex items-center gap-3">
@@ -207,10 +207,10 @@ export default function DocumentsPage() {
                                                         e.stopPropagation();
                                                         handleReprocess(doc._id);
                                                     }}
-                                                    className="p-1 hover:bg-gray-100 rounded-lg"
+                                                    className="p-1 hover:bg-gray-100 dark:bg-slate-800 rounded-lg"
                                                     title="Reprocess"
                                                 >
-                                                    <RefreshCw className="w-3.5 h-3.5 text-gray-500" />
+                                                    <RefreshCw className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
                                                 </button>
                                             )}
                                             <button

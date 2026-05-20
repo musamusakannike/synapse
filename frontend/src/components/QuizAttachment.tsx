@@ -24,16 +24,16 @@ export default function QuizAttachment({
     onStartQuiz,
 }: QuizAttachmentProps) {
     return (
-        <div className="mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
+        <div className="mt-3 bg-white dark:bg-slate-900 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
             <div className="flex items-start gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0">
                     <PenTool className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white dark:text-gray-100 mb-1">
                         {title}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
                         {questions.length} {questions.length === 1 ? "question" : "questions"}
                     </p>
                 </div>
@@ -41,21 +41,21 @@ export default function QuizAttachment({
 
             <div className="space-y-2 mb-3">
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Difficulty:</span>
-                    <span className="text-gray-900 dark:text-gray-100 font-medium capitalize">
+                    <span className="text-gray-600 dark:text-gray-400 dark:text-gray-400">Difficulty:</span>
+                    <span className="text-gray-900 dark:text-white dark:text-gray-100 font-medium capitalize">
                         {settings.difficulty}
                     </span>
                 </div>
                 {settings.timeLimit && (
                     <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400">Time Limit:</span>
-                        <span className="text-gray-900 dark:text-gray-100 font-medium">
+                        <span className="text-gray-600 dark:text-gray-400 dark:text-gray-400">Time Limit:</span>
+                        <span className="text-gray-900 dark:text-white dark:text-gray-100 font-medium">
                             {settings.timeLimit} minutes
                         </span>
                     </div>
                 )}
                 {settings.includeCalculations && (
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400">
                         Includes calculations
                     </div>
                 )}

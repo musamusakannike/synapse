@@ -91,7 +91,7 @@ export default function DocumentDetailPage() {
     const highlightedText = useMemo(() => {
         if (!doc?.extractedText) return null;
         if (!searchQuery.trim()) {
-            return <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 font-sans">{doc.extractedText}</div>;
+            return <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans">{doc.extractedText}</div>;
         }
 
         const query = searchQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"); // escape regex
@@ -99,7 +99,7 @@ export default function DocumentDetailPage() {
         const parts = doc.extractedText.split(regex);
 
         return (
-            <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 font-sans">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans">
                 {parts.map((part, i) =>
                     regex.test(part) ? (
                         <mark key={i} className="bg-yellow-100 text-yellow-900 px-0.5 rounded font-medium">
@@ -118,7 +118,7 @@ export default function DocumentDetailPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-                    <p className="text-gray-800 text-lg font-semibold animate-pulse">Loading document contents...</p>
+                    <p className="text-gray-800 dark:text-gray-200 text-lg font-semibold animate-pulse">Loading document contents...</p>
                 </div>
             </div>
         );
@@ -127,9 +127,9 @@ export default function DocumentDetailPage() {
     if (!doc) {
         return (
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4 text-center max-w-sm p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div className="flex flex-col items-center gap-4 text-center max-w-sm p-6 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm">
                     <FileText className="w-12 h-12 text-gray-300" />
-                    <h2 className="text-xl font-bold text-gray-800">Document Not Found</h2>
+                    <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Document Not Found</h2>
                     <p className="text-gray-550 text-sm">We couldn't retrieve the details for this document.</p>
                     <button
                         onClick={() => router.push("/dashboard/documents")}
@@ -145,18 +145,18 @@ export default function DocumentDetailPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6] flex flex-col">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 h-16 flex items-center">
                 <div className="w-full max-w-[1400px] mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-4 min-w-0">
                         <button
                             onClick={() => router.push("/dashboard/documents")}
-                            className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                            className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors font-medium text-sm"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             <span>Documents</span>
                         </button>
                         <div className="h-4 w-px bg-gray-200" />
-                        <h1 className="text-base font-bold text-gray-800 truncate" title={doc.originalName}>
+                        <h1 className="text-base font-bold text-gray-800 dark:text-gray-200 truncate" title={doc.originalName}>
                             {doc.originalName}
                         </h1>
                     </div>
@@ -174,12 +174,12 @@ export default function DocumentDetailPage() {
             {/* Content body split panel */}
             <div className="flex-1 w-full max-w-[1400px] mx-auto flex items-stretch">
                 {/* Left Metadata panel */}
-                <aside className="w-80 border-r border-gray-200/60 bg-white flex flex-col shrink-0 h-[calc(100vh-64px)] sticky top-16 overflow-y-auto p-6 space-y-6">
-                    <div className="flex flex-col items-center text-center p-4 bg-gray-50/50 rounded-2xl border border-gray-100">
+                <aside className="w-80 border-r border-gray-200 dark:border-gray-700/60 bg-white dark:bg-slate-900 flex flex-col shrink-0 h-[calc(100vh-64px)] sticky top-16 overflow-y-auto p-6 space-y-6">
+                    <div className="flex flex-col items-center text-center p-4 bg-gray-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
                         <div className="p-3.5 bg-blue-50 rounded-2xl mb-3">
                             <FileText className="w-8 h-8 text-blue-600" />
                         </div>
-                        <h2 className="text-sm font-bold text-gray-800 max-w-full truncate" title={doc.originalName}>
+                        <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200 max-w-full truncate" title={doc.originalName}>
                             {doc.originalName}
                         </h2>
                         <span className="text-xs font-semibold text-gray-400 mt-1 uppercase">
@@ -200,7 +200,7 @@ export default function DocumentDetailPage() {
                     </div>
 
                     {/* Chat Action */}
-                    <div className="pt-4 border-t border-gray-100">
+                    <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                         <button
                             onClick={handleStartChat}
                             disabled={isCreatingChat || doc.processingStatus !== "completed"}
@@ -223,7 +223,7 @@ export default function DocumentDetailPage() {
 
                 {/* Right Document Text Reader */}
                 <main className="flex-1 bg-[#f9f8f6] p-8 md:p-12 overflow-y-auto h-[calc(100vh-64px)]">
-                    <div className="max-w-3xl mx-auto bg-white border border-gray-200/60 rounded-2xl p-8 sm:p-10 shadow-xs min-h-full flex flex-col">
+                    <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-8 sm:p-10 shadow-xs min-h-full flex flex-col">
                         {/* Search Input bar */}
                         <div className="flex items-center gap-3 border-b border-gray-150 pb-6 mb-8">
                             <div className="relative flex-1">
@@ -233,7 +233,7 @@ export default function DocumentDetailPage() {
                                     placeholder="Search document text..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                 />
                             </div>
                         </div>

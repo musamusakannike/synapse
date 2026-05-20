@@ -21,10 +21,12 @@ const { body } = require("express-validator");
 const router = express.Router();
 
 const sendMessageValidation = [
-  body("content")
-    .trim()
-    .isLength({ min: 1 })
-    .withMessage("Message content is required"),
+  body().custom((value, { req }) => {
+    if (!req.body.content && (!req.body.messages || !Array.isArray(req.body.messages))) {
+      throw new Error("Either content or messages (array) is required");
+    }
+    return true;
+  }),
 ];
 
 const updateChatTitleValidation = [

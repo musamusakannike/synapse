@@ -8,6 +8,8 @@ const Course = require("../models/course.model");
 const Quiz = require("../models/quiz.model");
 const FlashcardSet = require("../models/flashcard.model");
 const { validationResult } = require("express-validator");
+const { ToolLoopAgent, pipeAgentUIStreamToResponse, tool } = require("ai");
+const { z } = require("zod");
 
 // Helper functions for executing function calling actions
 
@@ -428,6 +430,50 @@ const getChatWithMessages = async (req, res) => {
   }
 };
 
+// Helper function to map Vercel AI SDK UIMessage array back to database schema
+const mapUIMessagesToDbMessages = (uiMessages) => {
+  return uiMessages
+    .filter((msg) => msg.role !== "system")
+    .map((msg) => {
+      const dbMsg = {
+        role: msg.role,
+        content: msg.content || "",
+        timestamp: msg.createdAt ? new Date(msg.createdAt) : new Date(),
+        attachments: [],
+      };
+
+      if (msg.attachments) {
+        dbMsg.attachments = [...msg.attachments];
+      }
+
+      if (msg.toolInvocations) {
+        for (const invocation of msg.toolInvocations) {
+          if (invocation.state === "result" && invocation.result) {
+            const res = invocation.result;
+            if (["flashcard", "quiz", "course"].includes(res.type)) {
+              // Check if already in attachments to avoid duplicates
+              const exists = dbMsg.attachments.some(
+                (att) =>
+                  att.type === res.type &&
+                  String(att.data?.flashcardSetId || att.data?.quizId || att.data?.courseId) ===
+                    String(res.data?.flashcardSetId || res.data?.quizId || res.data?.courseId)
+              );
+              if (!exists) {
+                dbMsg.attachments.push({
+                  type: res.type,
+                  data: res.data,
+                  metadata: { createdAt: new Date() },
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return dbMsg;
+    });
+};
+
 const sendMessage = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -435,7 +481,7 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { content } = req.body;
+    const { content, messages } = req.body;
 
     const chat = await Chat.findOne({
       _id: req.params.id,
@@ -448,190 +494,75 @@ const sendMessage = async (req, res) => {
 
     // Check if the chat has a document attached (for document analysis detection)
     const hasDocument = chat.type === "document" && chat.sourceId;
-    
-    // Detect user intent using function calling
-    let intentResult = null;
-    try {
-      intentResult = await deepseekService.detectIntent(content, hasDocument);
-    } catch (intentError) {
-      console.error("Intent detection error:", intentError);
-      // Continue with normal chat if intent detection fails
-    }
 
-    // Handle multi-action requests
-    if (intentResult && intentResult.isMultiAction) {
-      // Add user message
-      chat.messages.push({
-        role: "user",
-        content,
-      });
-
-      // Add rejection response
-      const rejectionMessage = "I can only perform one action at a time. Please ask me to do one of the following separately:\n\n" +
-        "- Generate flashcards\n" +
-        "- Create a course\n" +
-        "- Generate a quiz\n" +
-        "- Analyze a document\n\n" +
-        "Which one would you like me to do first?";
-
-      chat.messages.push({
-        role: "assistant",
-        content: rejectionMessage,
-      });
-
-      await chat.save();
-
-      return res.json({
-        message: "Message sent successfully",
-        userMessage: {
-          role: "user",
-          content,
-          timestamp: chat.messages[chat.messages.length - 2].timestamp,
+    // Define tools
+    const tools = {
+      generate_flashcards: tool({
+        description: "Generate flashcards for studying a topic. Use this when the user specifically requests to generate, create, or build flashcards or study cards.",
+        parameters: z.object({
+          topic: z.string().describe("The topic or subject to generate flashcards about"),
+          numberOfCards: z.number().optional().describe("Number of flashcards to generate (default: 10, range: 5-30)"),
+          difficulty: z.enum(["easy", "medium", "hard"]).optional().describe("Difficulty level (default: medium)"),
+          includeExamples: z.boolean().optional().describe("Whether to include examples (default: false)"),
+        }),
+        execute: async (args) => {
+          return await executeFlashcardGeneration(args, req.user._id, chat._id);
         },
-        aiResponse: {
-          role: "assistant",
-          content: rejectionMessage,
-          timestamp: chat.messages[chat.messages.length - 1].timestamp,
+      }),
+      generate_course: tool({
+        description: "Generate a comprehensive course outline and start generating course content on a topic. Use this when the user specifically requests to create, make, or build a course, study guide, or structured course on a topic.",
+        parameters: z.object({
+          title: z.string().describe("The title or topic of the course"),
+          description: z.string().optional().describe("Optional description or specific focus areas of the course"),
+          level: z.enum(["beginner", "intermediate", "advanced"]).optional().describe("Target level (default: intermediate)"),
+          detailLevel: z.enum(["basic", "moderate", "comprehensive"]).optional().describe("How detailed the content should be (default: moderate)"),
+          includeExamples: z.boolean().optional().describe("Whether to include examples (default: true)"),
+          includePracticeQuestions: z.boolean().optional().describe("Whether to include practice questions (default: false)"),
+        }),
+        execute: async (args) => {
+          return await executeCourseGeneration(args, req.user._id);
         },
-        title: chat.title,
-      });
-    }
-
-    // Handle single function call
-    if (intentResult && intentResult.functionCalls && intentResult.functionCalls.length === 1) {
-      const functionCall = intentResult.functionCalls[0];
-      
-      // Add user message
-      chat.messages.push({
-        role: "user",
-        content,
-      });
-
-      let actionResult = null;
-      let aiResponse = "";
-      let attachment = null;
-
-      try {
-        switch (functionCall.name) {
-          case "generate_flashcards":
-            actionResult = await executeFlashcardGeneration(
-              functionCall.args,
-              req.user._id,
-              chat._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "flashcard",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "generate_course":
-            actionResult = await executeCourseGeneration(
-              functionCall.args,
-              req.user._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "course",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "generate_quiz":
-            actionResult = await executeQuizGeneration(
-              functionCall.args,
-              req.user._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "quiz",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "analyze_document":
-            // Only allow document analysis if a document is attached
-            if (!hasDocument) {
-              aiResponse = "I'd be happy to analyze a document for you, but I don't see any document attached to this chat. Please upload a document using the add/plus button in the input section, and then ask me to analyze it.";
-            } else {
-              actionResult = await executeDocumentAnalysis(
-                functionCall.args,
-                chat.sourceId.extractedText || chat.sourceId.summary,
-                chat.sourceId.originalName
-              );
-              aiResponse = actionResult.message;
-            }
-            break;
-
-          default:
-            // Unknown function, fall back to regular chat
-            aiResponse = await deepseekService.generateChatResponse(
-              chat.messages.slice(-10),
-              ""
-            );
-        }
-      } catch (actionError) {
-        console.error("Action execution error:", actionError);
-        aiResponse = `I encountered an error while trying to ${functionCall.name.replace(/_/g, " ")}. Please try again or rephrase your request.`;
-      }
-
-      // Add AI response with optional attachment
-      const assistantMessage = {
-        role: "assistant",
-        content: aiResponse,
-      };
-      
-      if (attachment) {
-        assistantMessage.attachments = [attachment];
-      }
-
-      chat.messages.push(assistantMessage);
-
-      // Auto-generate title if this is the first message
-      if (chat.messages.length === 2 && (chat.title === "New Chat" || chat.title.includes("Chat"))) {
-        try {
-          const generatedTitle = await deepseekService.generateChatTitle(content);
-          chat.title = generatedTitle;
-        } catch (titleError) {
-          console.error("Failed to generate chat title:", titleError);
-        }
-      }
-
-      await chat.save();
-
-      return res.json({
-        message: "Message sent successfully",
-        userMessage: {
-          role: "user",
-          content,
-          timestamp: chat.messages[chat.messages.length - 2].timestamp,
+      }),
+      generate_quiz: tool({
+        description: "Generate a quiz or test questions on a topic. Use this when the user specifically requests to generate, create, or build a quiz, test, assessment, or practice questions.",
+        parameters: z.object({
+          title: z.string().describe("The title or topic of the quiz"),
+          description: z.string().optional().describe("Optional description or specific focus areas for the quiz"),
+          numberOfQuestions: z.number().optional().describe("Number of questions to generate (default: 10, range: 5-50)"),
+          difficulty: z.enum(["easy", "medium", "hard", "mixed"]).optional().describe("Difficulty level (default: mixed)"),
+          includeCalculations: z.boolean().optional().describe("Whether to include calculation-based questions (default: false)"),
+        }),
+        execute: async (args) => {
+          return await executeQuizGeneration(args, req.user._id);
         },
-        aiResponse: {
-          role: "assistant",
-          content: aiResponse,
-          timestamp: chat.messages[chat.messages.length - 1].timestamp,
-          attachments: attachment ? [attachment] : undefined,
+      }),
+    };
+
+    if (hasDocument) {
+      tools.analyze_document = tool({
+        description: "Analyze or extract information from the uploaded document. Use this ONLY when the user asks to summarize, analyze, query, or extract information from the attached document.",
+        parameters: z.object({
+          analysisType: z.enum(["summary", "key_points", "questions", "detailed"]).optional().describe("Type of analysis (default: summary)"),
+          focusAreas: z.string().optional().describe("Specific areas or topics in the document to focus on"),
+        }),
+        execute: async (args) => {
+          return await executeDocumentAnalysis(
+            args,
+            chat.sourceId.extractedText || chat.sourceId.summary,
+            chat.sourceId.originalName
+          );
         },
-        actionResult: actionResult ? {
-          type: actionResult.type,
-          data: actionResult.data,
-        } : undefined,
-        title: chat.title,
       });
     }
 
-    // No function call detected - proceed with normal chat
-    // Add user message
-    chat.messages.push({
-      role: "user",
-      content,
+    // Initialize agent
+    const agent = new ToolLoopAgent({
+      model: deepseekService.sdkModel,
+      instructions: `You are Synapse AI, an intelligent learning assistant created by Musa Musa Kannike. Your primary function is to help users learn, understand concepts, and answer their questions across various subjects. If asked about your identity, creator, or purpose, you can share this information. However, focus primarily on providing helpful, accurate responses to the user's main questions without unnecessarily mentioning your identity unless specifically asked.`,
+      tools,
     });
 
-    // Prepare context based on chat type
+    // Prepare context
     let context = "";
     if (chat.sourceId) {
       switch (chat.type) {
@@ -649,48 +580,76 @@ const sendMessage = async (req, res) => {
       }
     }
 
-    // Generate AI response
-    const aiResponse = await deepseekService.generateChatResponse(
-      chat.messages.slice(-10), // Last 10 messages for context
-      context
-    );
-
-    // Add AI response
-    chat.messages.push({
-      role: "assistant",
-      content: aiResponse,
+    // Construct UI Messages input
+    const uiMessages = [];
+    const systemPrompt = `You are Synapse AI, an intelligent learning assistant created by Musa Musa Kannike. Your primary function is to help users learn, understand concepts, and answer their questions across various subjects. If asked about your identity, creator, or purpose, you can share this information. However, focus primarily on providing helpful, accurate responses to the user's main questions without unnecessarily mentioning your identity unless specifically asked.`;
+    
+    uiMessages.push({
+      id: "system-instruction",
+      role: "system",
+      content: systemPrompt,
     });
 
-    // Auto-generate title if this is the first message (only user message + AI response)
-    if (chat.messages.length === 2 && (chat.title === "New Chat" || chat.title.includes("Chat"))) {
-      try {
-        const generatedTitle = await deepseekService.generateChatTitle(content);
-        chat.title = generatedTitle;
-      } catch (titleError) {
-        console.error("Failed to generate chat title:", titleError);
-        // Continue without updating title
-      }
+    if (context) {
+      uiMessages.push({
+        id: "system-context",
+        role: "system",
+        content: `CONTEXT:\n${context}\n\nUse this context to inform your responses where relevant.`,
+      });
     }
 
-    await chat.save();
+    // Get input messages from request body, fallback to simple content
+    const inputMessages = messages || [{ role: "user", content: content }];
 
-    res.json({
-      message: "Message sent successfully",
-      userMessage: {
-        role: "user",
-        content,
-        timestamp: chat.messages[chat.messages.length - 2].timestamp,
+    // Map input messages to conform with AI SDK expectations
+    const processedMessages = inputMessages
+      .filter((m) => m.role !== "system")
+      .map((m, idx) => ({
+        id: m.id || `msg-${idx}-${Date.now()}`,
+        role: m.role,
+        content: m.content || "",
+        attachments: m.attachments,
+        toolInvocations: m.toolInvocations,
+      }));
+
+    uiMessages.push(...processedMessages);
+
+    // Stream response using Vercel AI SDK
+    await pipeAgentUIStreamToResponse({
+      response: res,
+      agent,
+      uiMessages,
+      onFinish: async ({ messages: finalMessages }) => {
+        try {
+          const chatToUpdate = await Chat.findById(chat._id);
+          if (chatToUpdate) {
+            chatToUpdate.messages = mapUIMessagesToDbMessages(finalMessages);
+
+            // Auto-generate title if this is the first real exchange (e.g. 1 user + 1 assistant message)
+            if (
+              chatToUpdate.messages.length <= 3 &&
+              (chatToUpdate.title === "New Chat" || chatToUpdate.title.includes("Chat"))
+            ) {
+              const firstUserMsg = chatToUpdate.messages.find((m) => m.role === "user");
+              if (firstUserMsg) {
+                const generatedTitle = await deepseekService.generateChatTitle(firstUserMsg.content);
+                chatToUpdate.title = generatedTitle;
+              }
+            }
+
+            chatToUpdate.lastActivity = new Date();
+            await chatToUpdate.save();
+          }
+        } catch (dbError) {
+          console.error("Failed to save chat on stream finish:", dbError);
+        }
       },
-      aiResponse: {
-        role: "assistant",
-        content: aiResponse,
-        timestamp: chat.messages[chat.messages.length - 1].timestamp,
-      },
-      title: chat.title, // Include updated title in response
     });
   } catch (error) {
     console.error("Send message error:", error);
-    res.status(500).json({ error: "Failed to send message" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to send message" });
+    }
   }
 };
 
@@ -1101,186 +1060,11 @@ const editMessage = async (req, res) => {
     // Remove all messages after the edited message
     chat.messages = chat.messages.slice(0, messageIndex + 1);
 
-    // Check if the chat has a document attached (for document analysis detection)
-    const hasDocument = chat.type === "document" && chat.sourceId;
-    
-    // Detect user intent using function calling
-    let intentResult = null;
-    try {
-      intentResult = await deepseekService.detectIntent(content, hasDocument);
-    } catch (intentError) {
-      console.error("Intent detection error:", intentError);
-    }
-
-    // Handle multi-action requests
-    if (intentResult && intentResult.isMultiAction) {
-      const rejectionMessage = "I can only perform one action at a time. Please ask me to do one of the following separately:\n\n" +
-        "- Generate flashcards\n" +
-        "- Create a course\n" +
-        "- Generate a quiz\n" +
-        "- Analyze a document\n\n" +
-        "Which one would you like me to do first?";
-
-      chat.messages.push({
-        role: "assistant",
-        content: rejectionMessage,
-      });
-
-      await chat.save();
-
-      return res.json({
-        message: "Message edited successfully",
-        messages: chat.messages,
-        newResponse: {
-          role: "assistant",
-          content: rejectionMessage,
-          timestamp: chat.messages[chat.messages.length - 1].timestamp,
-        },
-      });
-    }
-
-    // Handle single function call
-    if (intentResult && intentResult.functionCalls && intentResult.functionCalls.length === 1) {
-      const functionCall = intentResult.functionCalls[0];
-      let actionResult = null;
-      let aiResponse = "";
-      let attachment = null;
-
-      try {
-        switch (functionCall.name) {
-          case "generate_flashcards":
-            actionResult = await executeFlashcardGeneration(
-              functionCall.args,
-              req.user._id,
-              chat._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "flashcard",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "generate_course":
-            actionResult = await executeCourseGeneration(
-              functionCall.args,
-              req.user._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "course",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "generate_quiz":
-            actionResult = await executeQuizGeneration(
-              functionCall.args,
-              req.user._id
-            );
-            aiResponse = actionResult.message;
-            attachment = {
-              type: "quiz",
-              data: actionResult.data,
-              metadata: { createdAt: new Date() },
-            };
-            break;
-
-          case "analyze_document":
-            if (!hasDocument) {
-              aiResponse = "I'd be happy to analyze a document for you, but I don't see any document attached to this chat. Please upload a document using the add/plus button in the input section, and then ask me to analyze it.";
-            } else {
-              actionResult = await executeDocumentAnalysis(
-                functionCall.args,
-                chat.sourceId.extractedText || chat.sourceId.summary,
-                chat.sourceId.originalName
-              );
-              aiResponse = actionResult.message;
-            }
-            break;
-
-          default:
-            aiResponse = await deepseekService.generateChatResponse(
-              chat.messages.slice(-10),
-              ""
-            );
-        }
-      } catch (actionError) {
-        console.error("Action execution error:", actionError);
-        aiResponse = `I encountered an error while trying to ${functionCall.name.replace(/_/g, " ")}. Please try again or rephrase your request.`;
-      }
-
-      const assistantMessage = {
-        role: "assistant",
-        content: aiResponse,
-      };
-      
-      if (attachment) {
-        assistantMessage.attachments = [attachment];
-      }
-
-      chat.messages.push(assistantMessage);
-      await chat.save();
-
-      return res.json({
-        message: "Message edited successfully",
-        messages: chat.messages,
-        newResponse: {
-          role: "assistant",
-          content: aiResponse,
-          timestamp: chat.messages[chat.messages.length - 1].timestamp,
-          attachments: attachment ? [attachment] : undefined,
-        },
-        actionResult: actionResult ? {
-          type: actionResult.type,
-          data: actionResult.data,
-        } : undefined,
-      });
-    }
-
-    // No function call detected - proceed with normal chat
-    // Prepare context based on chat type
-    let context = "";
-    if (chat.sourceId) {
-      switch (chat.type) {
-        case "topic":
-          context = `Topic: ${chat.sourceId.title}\nContent: ${
-            chat.sourceId.generatedContent || chat.sourceId.content
-          }`;
-          break;
-        case "document":
-          context = `Document: ${chat.sourceId.originalName}\nContent: ${chat.sourceId.extractedText}`;
-          break;
-        case "website":
-          context = `Website: ${chat.sourceId.url}\nContent: ${chat.sourceId.extractedContent}`;
-          break;
-      }
-    }
-
-    // Generate new AI response
-    const aiResponse = await deepseekService.generateChatResponse(
-      chat.messages.slice(-10), // Last 10 messages for context
-      context
-    );
-
-    // Add new AI response
-    chat.messages.push({
-      role: "assistant",
-      content: aiResponse,
-    });
-
     await chat.save();
 
     res.json({
       message: "Message edited successfully",
       messages: chat.messages,
-      newResponse: {
-        role: "assistant",
-        content: aiResponse,
-        timestamp: chat.messages[chat.messages.length - 1].timestamp,
-      },
     });
   } catch (error) {
     console.error("Edit message error:", error);
@@ -1314,46 +1098,11 @@ const regenerateResponse = async (req, res) => {
     // Remove the assistant message and all messages after it
     chat.messages = chat.messages.slice(0, messageIndex);
 
-    // Prepare context based on chat type
-    let context = "";
-    if (chat.sourceId) {
-      switch (chat.type) {
-        case "topic":
-          context = `Topic: ${chat.sourceId.title}\nContent: ${
-            chat.sourceId.generatedContent || chat.sourceId.content
-          }`;
-          break;
-        case "document":
-          context = `Document: ${chat.sourceId.originalName}\nContent: ${chat.sourceId.extractedText}`;
-          break;
-        case "website":
-          context = `Website: ${chat.sourceId.url}\nContent: ${chat.sourceId.extractedContent}`;
-          break;
-      }
-    }
-
-    // Generate new AI response
-    const aiResponse = await deepseekService.generateChatResponse(
-      chat.messages.slice(-10), // Last 10 messages for context
-      context
-    );
-
-    // Add new AI response
-    chat.messages.push({
-      role: "assistant",
-      content: aiResponse,
-    });
-
     await chat.save();
 
     res.json({
       message: "Response regenerated successfully",
       messages: chat.messages,
-      newResponse: {
-        role: "assistant",
-        content: aiResponse,
-        timestamp: chat.messages[chat.messages.length - 1].timestamp,
-      },
     });
   } catch (error) {
     console.error("Regenerate response error:", error);

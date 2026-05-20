@@ -6,7 +6,7 @@ import { useAuthModal } from "../contexts/AuthModalContext";
 const CTA: React.FC = () => {
   const { openModal } = useAuthModal();
   return (
-    <section id="cta" className="bg-white">
+    <section id="cta" className="bg-white dark:bg-slate-900">
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="relative overflow-hidden rounded border border-blue-200 bg-linear-to-br from-blue-50 to-white">
           {/* Decorative background */}
@@ -23,10 +23,10 @@ const CTA: React.FC = () => {
 
           <div className="relative z-10 flex flex-col items-center text-center px-6 py-14 md:py-16">
             <p className="text-xs uppercase tracking-wider text-blue-600 font-semibold">Get started</p>
-            <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-gray-900 max-w-2xl">
+            <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white max-w-2xl">
               Ready to learn faster with an AI tutor that adapts to you?
             </h2>
-            <p className="mt-3 text-gray-600 max-w-2xl">
+            <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-2xl">
               Join students already using Synapse to study smarter. Start free, upgrade anytime.
             </p>
 
@@ -39,13 +39,13 @@ const CTA: React.FC = () => {
               </button>
               <Link
                 href="#pricing"
-                className="inline-flex items-center justify-center px-6 py-3 rounded bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 font-semibold transition-colors"
+                className="inline-flex items-center justify-center px-6 py-3 rounded bg-white dark:bg-slate-900 text-blue-700 border border-blue-200 hover:bg-blue-50 font-semibold transition-colors"
               >
                 See Pricing
               </Link>
             </div>
 
-            <p className="mt-4 text-xs text-gray-500">
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
               No credit card required • Cancel anytime • Student-friendly pricing
             </p>
           </div>

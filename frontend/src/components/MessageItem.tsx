@@ -55,7 +55,7 @@ export default function MessageItem({ message, index }: MessageItemProps) {
             <div
                 className={`max-w-full md:max-w-[85%] rounded-2xl px-5 py-4 ${isUser
                     ? "bg-blue-600 text-white rounded-br-sm max-w-[85%]"
-                    : "bg-white border border-gray-200/50 shadow-xs text-gray-800 rounded-bl-sm w-full md:w-auto"
+                    : "bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/50 shadow-xs text-gray-800 dark:text-gray-200 rounded-bl-sm w-full md:w-auto"
                     }`}
             >
                 {isUser ? (

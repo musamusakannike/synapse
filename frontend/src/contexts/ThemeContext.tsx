@@ -51,19 +51,36 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = "app_theme";
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [theme, setThemeState] = useState<Theme>("light");
-    const [isLoading, setIsLoading] = useState(false);
+    const [theme, setThemeState] = useState<Theme>("system");
+    const [isDark, setIsDark] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const isDark = false;
-    const colors = lightColors;
+    const colors = isDark ? darkColors : lightColors;
+
+    const applyTheme = (currentTheme: Theme) => {
+        const root = window.document.documentElement;
+        let activeIsDark = false;
+
+        if (currentTheme === "system") {
+            activeIsDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        } else {
+            activeIsDark = currentTheme === "dark";
+        }
+
+        if (activeIsDark) {
+            root.classList.add("dark");
+        } else {
+            root.classList.remove("dark");
+        }
+        setIsDark(activeIsDark);
+    };
 
     const setTheme = (newTheme: Theme) => {
-        // Lock to light
-        setThemeState("light");
+        setThemeState(newTheme);
+        applyTheme(newTheme);
         if (typeof window !== "undefined") {
             try {
-                localStorage.setItem(THEME_STORAGE_KEY, "light");
-                document.documentElement.classList.remove("dark");
+                localStorage.setItem(THEME_STORAGE_KEY, newTheme);
             } catch (error) {
                 console.error("Error saving theme preference:", error);
             }
@@ -71,26 +88,36 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
 
     const toggleTheme = () => {
-        setTheme("light");
+        const nextTheme = theme === "light" ? "dark" : (theme === "dark" ? "system" : "light");
+        setTheme(nextTheme);
     };
 
     useEffect(() => {
         if (typeof window !== "undefined") {
             try {
-                document.documentElement.classList.remove("dark");
-                localStorage.setItem(THEME_STORAGE_KEY, "light");
+                const storedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+                const initialTheme = storedTheme || "system";
+                setThemeState(initialTheme);
+                applyTheme(initialTheme);
             } catch (error) {
-                console.error("Error setting light theme on load:", error);
+                console.error("Error loading theme preference:", error);
+                applyTheme("system");
             }
+            setIsLoading(false);
         }
     }, []);
 
-    // Apply theme class on mount and when theme changes
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            document.documentElement.classList.remove("dark");
-        }
-    }, []);
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const handleChange = () => {
+            if (theme === "system") {
+                applyTheme("system");
+            }
+        };
+
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, [theme]);
 
     if (isLoading) {
         return null;

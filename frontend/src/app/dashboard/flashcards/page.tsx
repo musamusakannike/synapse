@@ -73,7 +73,7 @@ export default function FlashcardsPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    <p className="text-gray-500 text-sm font-semibold">Loading flashcards...</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold">Loading flashcards...</p>
                 </div>
             </div>
         );
@@ -82,16 +82,16 @@ export default function FlashcardsPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6]">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60 h-16 flex items-center">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60 h-16 flex items-center">
                 <div className="w-full max-w-4xl mx-auto px-6 flex items-center justify-between">
                     <button
                         onClick={() => router.push("/dashboard/chat")}
-                        className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
+                        className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors font-medium text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Back</span>
                     </button>
-                    <h1 className="text-base font-bold text-gray-800">My Flashcards</h1>
+                    <h1 className="text-base font-bold text-gray-800 dark:text-gray-200">My Flashcards</h1>
                     <button
                         onClick={() => router.push("/dashboard/flashcards/generate")}
                         className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
@@ -104,14 +104,14 @@ export default function FlashcardsPage() {
 
             <main className="max-w-4xl mx-auto px-6 py-10">
                 {flashcardSets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white border border-gray-200/60 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+                    <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
                         <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-100/30 flex items-center justify-center mb-4">
                             <Layers className="w-8 h-8 text-blue-600" />
                         </div>
                         <h2 className="text-base font-bold text-gray-850 mb-2">
                             No Flashcards Yet
                         </h2>
-                        <p className="text-gray-500 text-center max-w-xs text-xs font-semibold mb-6">
+                        <p className="text-gray-500 dark:text-gray-400 text-center max-w-xs text-xs font-semibold mb-6">
                             Create your first flashcard set to start studying and memorizing
                             key concepts.
                         </p>
@@ -128,7 +128,7 @@ export default function FlashcardsPage() {
                         {flashcardSets.map((set, index) => (
                             <div
                                 key={set._id}
-                                className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden group cursor-pointer hover:border-gray-300 hover:shadow-xs transition-all flex flex-col"
+                                className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-200 dark:border-gray-700/60 overflow-hidden group cursor-pointer hover:border-gray-300 hover:shadow-xs transition-all flex flex-col"
                                 onClick={() => router.push(`/dashboard/flashcards/${set._id}`)}
                                 style={{
                                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
@@ -142,7 +142,7 @@ export default function FlashcardsPage() {
                                                     <Layers className="w-5 h-5 text-blue-600" />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <h3 className="font-bold text-gray-800 truncate text-sm group-hover:text-blue-650 transition-colors">
+                                                    <h3 className="font-bold text-gray-800 dark:text-gray-200 truncate text-sm group-hover:text-blue-650 transition-colors">
                                                         {set.title}
                                                     </h3>
                                                     <p className="text-[10px] text-gray-400 font-semibold">
@@ -167,14 +167,14 @@ export default function FlashcardsPage() {
                                         </div>
 
                                         {set.description && (
-                                            <p className="text-xs text-gray-500 font-semibold mb-4 line-clamp-2 leading-relaxed">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-4 line-clamp-2 leading-relaxed">
                                                 {set.description}
                                             </p>
                                         )}
                                     </div>
 
                                     <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-50">
-                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold">
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-semibold">
                                             <BookOpen className="w-3.5 h-3.5" />
                                             <span>{set.flashcards?.length || 0} cards</span>
                                         </div>

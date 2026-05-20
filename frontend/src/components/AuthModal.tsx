@@ -132,17 +132,17 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-200"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded shadow-2xl w-full max-w-md mx-4 transform transition-all duration-200 scale-100">
+      <div className="bg-white dark:bg-slate-900 rounded shadow-2xl w-full max-w-md mx-4 transform transition-all duration-200 scale-100">
         {/* Header */}
-        <div className="relative px-6 py-4 border-b border-gray-100">
-          <h3 className="text-xl font-semibold text-gray-900 text-center">
+        <div className="relative px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white text-center">
             {step === "choose" && "Welcome"}
             {step === "email" && "Check your email"}
             {step === "code" && "Enter verification code"}
           </h3>
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="absolute right-4 top-4 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:bg-slate-800 rounded-full transition-colors"
           >
             <X size={20} />
           </button>
@@ -151,7 +151,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
         <div className="px-6 py-6">
           {step === "choose" && (
             <div className="space-y-6">
-              <p className="text-center text-gray-600">
+              <p className="text-center text-gray-600 dark:text-gray-400">
                 Sign in or create an account to continue
               </p>
 
@@ -160,7 +160,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 <button
                   onClick={handleGoogle}
                   disabled={oauthLoading}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:bg-slate-800 hover:border-gray-300 transition-colors group disabled:opacity-60"
                 >
                   <div className="w-5 h-5 flex items-center justify-center text-white text-xs font-bold">
                     <svg
@@ -186,7 +186,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                       />
                     </svg>
                   </div>
-                  <span className="font-medium text-gray-700 group-hover:text-gray-900">
+                  <span className="font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:text-white">
                     {oauthLoading ? (
                       <span className="flex items-center gap-2">
                         <Loader size="xs" />
@@ -201,10 +201,10 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 <button
                   onClick={handleGithub}
                   disabled={oauthLoading}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 hover:border-gray-300 transition-colors group disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:bg-slate-800 hover:border-gray-300 transition-colors group disabled:opacity-60"
                 >
-                  <Github size={20} className="text-gray-700" />
-                  <span className="font-medium text-gray-700 group-hover:text-gray-900">
+                  <Github size={20} className="text-gray-700 dark:text-gray-300" />
+                  <span className="font-medium text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:text-white">
                     {oauthLoading ? (
                       <span className="flex items-center gap-2">
                         <Loader size="xs" />
@@ -224,14 +224,14 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
               {/* Divider */}
               {/* <div className="flex items-center gap-4 py-2">
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-                <span className="text-sm text-gray-400 bg-white px-2">or</span>
+                <span className="text-sm text-gray-400 bg-white dark:bg-slate-900 px-2">or</span>
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
               </div> */}
 
               {/* Email Input */}
               {/* <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Email address
                   </label>
                   <div className="relative">
@@ -249,7 +249,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                       className={`w-full pl-10 pr-4 py-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors ${
                         emailError
                           ? "border-red-300 bg-red-50/50"
-                          : "border-gray-200 hover:border-gray-300"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                       }`}
                       placeholder="Enter your email"
                     />
@@ -281,10 +281,10 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   We'll send a verification code to
                 </p>
-                <p className="font-semibold text-gray-900 bg-gray-50 px-3 py-2 rounded-lg inline-block">
+                <p className="font-semibold text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-800 px-3 py-2 rounded-lg inline-block">
                   {email}
                 </p>
               </div>
@@ -292,7 +292,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep("choose")}
-                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:bg-slate-800 transition-colors"
                 >
                   <ArrowLeft size={18} />
                   Back
@@ -322,10 +322,10 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
               </div>
 
               <div className="space-y-2">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Enter the 6-digit code we sent to
                 </p>
-                <p className="font-medium text-gray-700">{email}</p>
+                <p className="font-medium text-gray-700 dark:text-gray-300">{email}</p>
               </div>
 
               <div className="space-y-4">
@@ -343,7 +343,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                     className={`w-full text-center text-2xl font-mono py-4 px-4 border-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors tracking-widest ${
                       codeError
                         ? "border-red-300 bg-red-50/50"
-                        : "border-gray-200 hover:border-gray-300"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                     }`}
                     placeholder="000000"
                     maxLength={6}
@@ -359,7 +359,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep("choose")}
-                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 dark:bg-slate-800 transition-colors"
                   >
                     <ArrowLeft size={18} />
                     Start over
@@ -381,7 +381,7 @@ const AuthModal: React.FC<Props> = ({ open, onClose }) => {
                 </div>
               </div>
 
-              <button className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+              <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300 transition-colors">
                 Didn't receive the code? Resend
               </button>
             </div>

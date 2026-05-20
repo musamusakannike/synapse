@@ -157,19 +157,19 @@ export default function DocumentUploadModal({
             />
 
             {/* Modal */}
-            <div className="relative w-full sm:w-[500px] bg-white rounded-t-3xl sm:rounded-2xl border border-gray-200/80 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full sm:w-[500px] bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl border border-gray-200 dark:border-gray-700/80 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-200 max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150 sticky top-0 bg-white z-10">
-                    <h2 className="text-lg font-bold text-gray-800">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150 sticky top-0 bg-white dark:bg-slate-900 z-10">
+                    <h2 className="text-lg font-bold text-gray-800 dark:text-gray-200">
                         Upload Document
                     </h2>
                     <button
                         onClick={handleClose}
                         disabled={isUploading}
-                        className="p-1.5 hover:bg-gray-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="p-1.5 hover:bg-gray-50 dark:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
                         aria-label="Close"
                     >
-                        <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                        <X className="w-5 h-5 text-gray-400 hover:text-gray-600 dark:text-gray-400" />
                     </button>
                 </div>
 
@@ -177,10 +177,10 @@ export default function DocumentUploadModal({
                 <div className="p-6 space-y-6">
                     {/* Guidance Text Input */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 mb-1">
+                        <label className="block text-sm font-bold text-gray-800 dark:text-gray-200 mb-1">
                             What should I do with this document?
                         </label>
-                        <p className="text-xs text-gray-500 font-semibold mb-3">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-3">
                             (Optional) Add instructions for how to process this document
                         </p>
                         <textarea
@@ -189,7 +189,7 @@ export default function DocumentUploadModal({
                             placeholder="e.g., 'Summarize the key points', 'Extract main formulas', 'Create study questions', etc."
                             maxLength={500}
                             disabled={isUploading}
-                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:opacity-50 text-sm"
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:opacity-50 text-sm"
                             rows={3}
                         />
                         <div className="text-xs text-gray-400 font-semibold text-right mt-1">
@@ -197,7 +197,7 @@ export default function DocumentUploadModal({
                         </div>
                     </div>
 
-                    <p className="text-xs font-semibold text-gray-500">
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
                         Select a PDF, DOCX, TXT file, or an image (JPEG, PNG, WebP, GIF, BMP, TIFF) to upload
                     </p>
 
@@ -214,9 +214,9 @@ export default function DocumentUploadModal({
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 text-gray-700 font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:bg-slate-800/80 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl transition-all disabled:opacity-50 text-sm"
                     >
-                        <FileText className="w-4 h-4 text-gray-500" />
+                        <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         {selectedFile ? "Change File" : "Select File or Image"}
                     </button>
 
@@ -264,7 +264,7 @@ export default function DocumentUploadModal({
                     <button
                         onClick={handleClose}
                         disabled={isUploading}
-                        className="w-full py-2 text-gray-500 hover:text-gray-800 transition-colors disabled:opacity-50 font-semibold text-sm"
+                        className="w-full py-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-200 transition-colors disabled:opacity-50 font-semibold text-sm"
                     >
                         Cancel
                     </button>

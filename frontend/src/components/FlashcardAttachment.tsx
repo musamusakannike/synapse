@@ -37,16 +37,16 @@ export default function FlashcardAttachment({
     );
 
     return (
-        <div className="mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
+        <div className="mt-3 bg-white dark:bg-slate-900 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-4 shadow-mobile">
             <div className="flex items-start gap-3 mb-3">
                 <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                     <Layers className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white dark:text-gray-100 mb-1">
                         {title}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-400">
                         {flashcards.length} {flashcards.length === 1 ? "card" : "cards"}
                     </p>
                 </div>

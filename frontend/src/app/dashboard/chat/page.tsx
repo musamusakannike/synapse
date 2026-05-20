@@ -131,24 +131,24 @@ export default function ChatPage() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
                 {/* Header */}
-                <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+                <header className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700/60 bg-white dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
                     <button
                         onClick={openSidebar}
-                        className="p-2 hover:bg-gray-50 rounded-xl transition-colors"
+                        className="p-2 hover:bg-gray-50 dark:bg-slate-800 rounded-xl transition-colors"
                         aria-label="Open menu"
                     >
-                        <Menu className="w-5 h-5 text-gray-700" />
+                        <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                     </button>
 
-                    <h1 className="text-xl font-semibold text-gray-800 tracking-tight">Synapse</h1>
+                    <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200 tracking-tight">Synapse</h1>
 
                     <button
                         onClick={() => setIsProfileModalOpen(true)}
-                        className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center
-                       bg-white hover:bg-gray-50 transition-all shadow-sm"
+                        className="w-10 h-10 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                       bg-white dark:bg-slate-900 hover:bg-gray-50 dark:bg-slate-800 transition-all shadow-sm"
                         aria-label="User profile"
                     >
-                        <User className="w-5 h-5 text-gray-600" />
+                        <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                 </header>
 

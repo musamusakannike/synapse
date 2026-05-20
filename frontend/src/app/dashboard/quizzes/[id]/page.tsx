@@ -225,11 +225,11 @@ export default function QuizAttemptPage() {
         if (!showExplanation) {
             return selectedOption === optionIndex
                 ? `${baseStyle} border-blue-600 bg-blue-50/50`
-                : `${baseStyle} border-gray-200 hover:border-gray-300 hover:bg-gray-50 bg-white`;
+                : `${baseStyle} border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:bg-slate-800 bg-white dark:bg-slate-900`;
         }
 
         const currentQuestion = quiz?.questions[currentQuestionIndex];
-        if (!currentQuestion) return `${baseStyle} border-gray-200 bg-white`;
+        if (!currentQuestion) return `${baseStyle} border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900`;
 
         if (optionIndex === currentQuestion.correctOption) {
             return `${baseStyle} border-green-600 bg-green-50/50`;
@@ -237,12 +237,12 @@ export default function QuizAttemptPage() {
         if (optionIndex === selectedOption && optionIndex !== currentQuestion.correctOption) {
             return `${baseStyle} border-red-600 bg-red-50/50`;
         }
-        return `${baseStyle} border-gray-200 opacity-60 bg-white`;
+        return `${baseStyle} border-gray-200 dark:border-gray-700 opacity-60 bg-white dark:bg-slate-900`;
     };
 
     const getOptionTextColor = (optionIndex: number) => {
         if (!showExplanation) {
-            return selectedOption === optionIndex ? "text-blue-800 font-semibold" : "text-gray-700";
+            return selectedOption === optionIndex ? "text-blue-800 font-semibold" : "text-gray-700 dark:text-gray-300";
         }
 
         const currentQuestion = quiz?.questions[currentQuestionIndex];
@@ -254,7 +254,7 @@ export default function QuizAttemptPage() {
         if (optionIndex === selectedOption && optionIndex !== currentQuestion.correctOption) {
             return "text-red-800 font-semibold";
         }
-        return "text-gray-500";
+        return "text-gray-500 dark:text-gray-400";
     };
 
     const getBadgeStyle = (optionIndex: number) => {
@@ -262,7 +262,7 @@ export default function QuizAttemptPage() {
         if (!showExplanation) {
             return selectedOption === optionIndex
                 ? base + "bg-blue-100 text-blue-700"
-                : base + "bg-gray-100 text-gray-500";
+                : base + "bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400";
         }
         const currentQuestion = quiz?.questions[currentQuestionIndex];
         if (optionIndex === currentQuestion?.correctOption) {
@@ -271,7 +271,7 @@ export default function QuizAttemptPage() {
         if (optionIndex === selectedOption) {
             return base + "bg-red-100 text-red-700";
         }
-        return base + "bg-gray-100 text-gray-400";
+        return base + "bg-gray-100 dark:bg-slate-800 text-gray-400";
     };
 
     if (isLoading || (quiz?.status === "generating" && quiz.questions.length === 0)) {
@@ -279,13 +279,13 @@ export default function QuizAttemptPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-                    <p className="text-gray-800 text-lg font-semibold animate-pulse">
+                    <p className="text-gray-800 dark:text-gray-200 text-lg font-semibold animate-pulse">
                         {quiz?.status === "generating"
                             ? "Generating quiz questions..."
                             : "Loading quiz..."}
                     </p>
                     {quiz?.status === "generating" && (
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">
                             {quiz.questions.length} / {quiz.settings.numberOfQuestions} questions generated
                         </p>
                     )}
@@ -299,7 +299,7 @@ export default function QuizAttemptPage() {
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <XCircle className="w-12 h-12 text-red-500" />
-                    <p className="text-gray-800 text-lg font-bold">Quiz not found</p>
+                    <p className="text-gray-800 dark:text-gray-200 text-lg font-bold">Quiz not found</p>
                     <button
                         onClick={() => router.back()}
                         className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-sm"
@@ -317,7 +317,7 @@ export default function QuizAttemptPage() {
 
         return (
             <div className="min-h-screen bg-[#f9f8f6] flex items-center justify-center p-6 animate-fade-in">
-                <div className="w-full max-w-md bg-white rounded-2xl p-8 border border-gray-200/60 text-center shadow-lg">
+                <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl p-8 border border-gray-200 dark:border-gray-700/60 text-center shadow-lg">
                     <div
                         className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-6 ${isPassing ? "bg-green-50" : "bg-red-50"
                             }`}
@@ -329,7 +329,7 @@ export default function QuizAttemptPage() {
                         )}
                     </div>
 
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         {isPassing ? "Congratulations!" : "Keep Practicing!"}
                     </h1>
                     <p className="text-gray-555 text-sm font-medium mb-6">{quiz.title}</p>
@@ -339,19 +339,19 @@ export default function QuizAttemptPage() {
                         <span className="text-4xl text-gray-300">/</span>
                         <span className="text-3xl text-gray-400 font-semibold">{quiz.questions.length}</span>
                     </div>
-                    <p className="text-xl font-bold text-gray-700 mb-8">{percentage}%</p>
+                    <p className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-8">{percentage}%</p>
 
-                    <div className="flex items-center justify-center gap-8 mb-8 p-4 bg-gray-50 border border-gray-250/20 rounded-xl">
+                    <div className="flex items-center justify-center gap-8 mb-8 p-4 bg-gray-50 dark:bg-slate-800 border border-gray-250/20 rounded-xl">
                         <div className="text-center">
                             <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                            <p className="text-xl font-bold text-gray-800">{score}</p>
-                            <p className="text-xs text-gray-500 font-semibold">Correct</p>
+                            <p className="text-xl font-bold text-gray-800 dark:text-gray-200">{score}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">Correct</p>
                         </div>
                         <div className="w-px h-10 bg-gray-200" />
                         <div className="text-center">
                             <XCircle className="w-5 h-5 text-red-500 mx-auto mb-1" />
-                            <p className="text-xl font-bold text-gray-800">{quiz.questions.length - score}</p>
-                            <p className="text-xs text-gray-500 font-semibold">Incorrect</p>
+                            <p className="text-xl font-bold text-gray-800 dark:text-gray-200">{quiz.questions.length - score}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">Incorrect</p>
                         </div>
                     </div>
 
@@ -381,7 +381,7 @@ export default function QuizAttemptPage() {
     return (
         <div className="min-h-screen bg-[#f9f8f6] flex flex-col animate-fade-in">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200/60">
+            <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-700/60">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
                     <button
                         onClick={() => {
@@ -389,7 +389,7 @@ export default function QuizAttemptPage() {
                                 router.back();
                             }
                         }}
-                        className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all"
+                        className="p-2 text-gray-400 hover:text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-slate-800 rounded-xl transition-all"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -418,7 +418,7 @@ export default function QuizAttemptPage() {
                         {currentQuestion.difficulty.charAt(0).toUpperCase() +
                             currentQuestion.difficulty.slice(1)}
                     </span>
-                    <h2 className="text-xl font-bold text-gray-900 leading-relaxed">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white leading-relaxed">
                         {currentQuestion.questionText}
                     </h2>
                 </div>
@@ -463,13 +463,13 @@ export default function QuizAttemptPage() {
                             <Lightbulb className="w-5 h-5 text-amber-600" />
                             <span className="font-bold text-sm text-amber-700 uppercase tracking-wider">Explanation</span>
                         </div>
-                        <p className="text-gray-700 text-sm leading-relaxed font-medium">{currentQuestion.explanation}</p>
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed font-medium">{currentQuestion.explanation}</p>
                     </div>
                 )}
             </main>
 
             {/* Footer */}
-            <footer className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200/60 p-4">
+            <footer className="sticky bottom-0 bg-white dark:bg-slate-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700/60 p-4">
                 <div className="max-w-4xl mx-auto">
                     {!showExplanation ? (
                         <button

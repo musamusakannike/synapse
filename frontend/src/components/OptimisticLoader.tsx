@@ -79,7 +79,7 @@ export default function OptimisticLoader({ messages = defaultMessages, interval 
       {/* Message */}
       <div className="text-center space-y-2">
         <p
-          className={`text-lg font-medium text-gray-700 transition-opacity duration-400 ${opacityClass}`}
+          className={`text-lg font-medium text-gray-700 dark:text-gray-300 transition-opacity duration-400 ${opacityClass}`}
         >
           {messages[currentIndex]}
         </p>

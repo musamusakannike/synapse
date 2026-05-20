@@ -168,7 +168,7 @@ export const HelpSystem: React.FC = () => {
       {/* Help Bubble */}
       <div
         ref={bubbleRef}
-        className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200 max-w-sm w-[90vw] sm:w-80 pointer-events-auto"
+        className="fixed z-50 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-w-sm w-[90vw] sm:w-80 pointer-events-auto"
         style={{
           top: position.top,
           left: position.left,
@@ -176,14 +176,14 @@ export const HelpSystem: React.FC = () => {
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-blue-600" />
-            <h3 className="font-semibold text-gray-900">{currentStep.title}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{currentStep.title}</h3>
           </div>
           <button
             onClick={stopHelp}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-400 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -191,7 +191,7 @@ export const HelpSystem: React.FC = () => {
 
         {/* Content */}
         <div className="p-4">
-          <p className="text-gray-700 text-sm leading-relaxed mb-4">
+          <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed mb-4">
             {currentStep.content}
           </p>
 
@@ -209,7 +209,7 @@ export const HelpSystem: React.FC = () => {
                 }`}
               />
             ))}
-            <span className="text-xs text-gray-500 ml-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
               {currentStepIndex + 1} of {currentConfig.steps.length}
             </span>
           </div>
@@ -219,7 +219,7 @@ export const HelpSystem: React.FC = () => {
             <button
               onClick={prevStep}
               disabled={isFirstStep}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
               Previous

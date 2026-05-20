@@ -63,15 +63,15 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             />
 
             {/* Modal */}
-            <div className="relative w-full sm:w-[380px] bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200/60 overflow-hidden animate-slide-up">
+            <div className="relative w-full sm:w-[380px] bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700/60 overflow-hidden animate-slide-up">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-150">
-                    <h2 className="text-sm font-bold text-gray-800">
+                    <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200">
                         Account Profile
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-1.5 hover:bg-gray-100 rounded-xl transition-all"
+                        className="p-1.5 hover:bg-gray-100 dark:bg-slate-800 rounded-xl transition-all"
                         aria-label="Close"
                     >
                         <X className="w-4 h-4 text-gray-400" />
@@ -108,11 +108,11 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
                                 <div className="text-center">
                                     {userData.name && (
-                                        <h3 className="text-sm font-bold text-gray-800">
+                                        <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
                                             {userData.name}
                                         </h3>
                                     )}
-                                    <p className="text-xs text-gray-500 font-semibold mt-0.5">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-0.5">
                                         {userData.email}
                                     </p>
                                 </div>
@@ -122,11 +122,11 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                             <div className="space-y-2.5">
                                 <button
                                     onClick={() => handleNavigation("/dashboard/subscription")}
-                                    className="w-full flex items-center justify-between p-3.5 bg-gray-50/50 hover:bg-gray-50 border border-gray-100 hover:border-gray-150 rounded-xl transition-all text-left"
+                                    className="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-800 hover:border-gray-150 rounded-xl transition-all text-left"
                                 >
                                     <div className="flex items-center gap-3">
                                         <ShieldAlert className="w-4 h-4 text-blue-600" />
-                                        <span className="text-xs font-bold text-gray-700">
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                             Manage Subscription
                                         </span>
                                     </div>
@@ -135,11 +135,11 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
                                 <button
                                     onClick={() => handleNavigation("/dashboard/transactions")}
-                                    className="w-full flex items-center justify-between p-3.5 bg-gray-50/50 hover:bg-gray-50 border border-gray-100 hover:border-gray-150 rounded-xl transition-all text-left"
+                                    className="w-full flex items-center justify-between p-3.5 bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-gray-800 hover:border-gray-150 rounded-xl transition-all text-left"
                                 >
                                     <div className="flex items-center gap-3">
                                         <Receipt className="w-4 h-4 text-blue-600" />
-                                        <span className="text-xs font-bold text-gray-700">
+                                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                             Billing History
                                         </span>
                                     </div>

@@ -20,7 +20,7 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
       {summary && <SummaryBlock text={summary} />}
 
       {messages.length === 0 && !sending && (
-        <div className="text-center text-xs text-gray-500">Ask a question to get started.</div>
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400">Ask a question to get started.</div>
       )}
 
       {messages.map((m, idx) => (
@@ -29,7 +29,7 @@ export default function Chat({ messages, sending, messagesEndRef, summary }: Pro
           className={`max-w-[92%] md:max-w-[78%] p-3 rounded-lg border ${
             m.role === "user"
               ? "ml-auto bg-blue-50 border-blue-100"
-              : "bg-gray-50 border-gray-200"
+              : "bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-gray-700"
           }`}
         >
           {m.content === "typing__placeholder__" ? (
@@ -67,8 +67,8 @@ function SummaryBlock({ text }: { text: string }) {
   const isLong = text.length > limit;
   const display = expanded || !isLong ? text : text.slice(0, limit) + "…";
   return (
-    <div className="p-3 rounded-lg border border-gray-200 bg-gray-50/50">
-      <p className="text-[11px] font-semibold text-gray-700 mb-1">Document summary</p>
+    <div className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800/50">
+      <p className="text-[11px] font-semibold text-gray-700 dark:text-gray-300 mb-1">Document summary</p>
       <StyledMarkdown className="prose-headings:mt-2 prose-headings:mb-1 prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
         {display}
       </StyledMarkdown>
@@ -76,7 +76,7 @@ function SummaryBlock({ text }: { text: string }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 text-xs text-gray-600 hover:text-gray-900 underline"
+          className="mt-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white underline"
         >
           {expanded ? "Show less" : "Show more"}
         </button>

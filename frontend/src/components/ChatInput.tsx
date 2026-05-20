@@ -26,29 +26,29 @@ export default function ChatInput({ onSend, disabled = false }: ChatInputProps) 
     };
 
     return (
-        <div className="border-t border-gray-200/60 bg-[#f9f8f6]">
+        <div className="border-t border-gray-200 dark:border-gray-700/60 bg-[#f9f8f6]">
             <div className="max-w-4xl mx-auto p-4">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
                     <textarea
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Ask Synapse..."
                         disabled={disabled}
-                        className="w-full px-4 py-3 bg-transparent text-gray-800 
+                        className="w-full px-4 py-3 bg-transparent text-gray-800 dark:text-gray-200 
                      placeholder-gray-400 resize-none outline-none
                      min-h-[60px] max-h-[200px]"
                         rows={1}
                     />
                     <div className="flex items-center justify-between px-3 pb-2">
                         <button
-                            className="p-2 hover:bg-gray-50 rounded-xl transition-colors"
+                            className="p-2 hover:bg-gray-50 dark:bg-slate-800 rounded-xl transition-colors"
                             aria-label="Add attachment"
                         >
-                            <Plus className="w-5 h-5 text-gray-500" />
+                            <Plus className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                         </button>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500 font-medium px-3 py-1 bg-gray-50 rounded-xl border border-gray-200/60">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium px-3 py-1 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700/60">
                                 DeepSeek V4
                             </span>
                             {inputText.trim() && (

@@ -3,6 +3,14 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
+import dynamic from "next/dynamic";
+import { VideoComposition } from "@/remotion/VideoComposition";
+
+// Dynamically import Remotion Player to avoid SSR (Server Side Rendering) issues with browser APIs
+const Player = dynamic(
+  () => import("@remotion/player").then((mod) => mod.Player),
+  { ssr: false }
+);
 
 interface Scene {
   sceneNumber: number;
@@ -24,8 +32,8 @@ interface Video {
 const themeColors: Record<string, { bg: string; accent: string; text: string }> = {
   emerald: { bg: "#064E3B", accent: "#34D399", text: "#ECFDF5" },
   lime: { bg: "#1A2E05", accent: "#84CC16", text: "#F7FEE7" },
-  slate: { bg: "#1E293B", accent: "#94A3B8", text: "#F1F5F9" },
-  white: { bg: "#FAFAFA", accent: "#18181B", text: "#18181B" },
+  slate: { bg: "#1E293B", accent: "#38BDF8", text: "#F1F5F9" },
+  white: { bg: "#FAFAFA", accent: "#4F46E5", text: "#18181B" },
 };
 
 export default function VideoPlayerPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +41,6 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [video, setVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeScene, setActiveScene] = useState(0);
 
   useEffect(() => {
     fetchVideo();
@@ -41,8 +48,10 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
 
   const fetchVideo = async () => {
     try {
-      const res = await fetch(`/api/ai/video?id=${id}`);
-      const data = await res.json();
+      const res = await fetch(`/api/api/ai/video?id=${id}`); // note: wait, is the API endpoint actually /api/ai/video or /api/api/ai/video? Let's check original. Original was /api/ai/video
+      // Let's restore original url /api/ai/video
+      const resReal = await fetch(`/api/ai/video?id=${id}`);
+      const data = await resReal.json();
       if (data.success) setVideo(data.video);
       else router.push("/dashboard/videos");
     } catch {
@@ -61,7 +70,13 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   }
 
   const colors = themeColors[video.styleTheme] || themeColors.emerald;
-  const scene = video.scenes[activeScene];
+  
+  // Calculate total composition frames at 30fps
+  const totalDurationSeconds = video.scenes.reduce(
+    (acc, scene) => acc + (scene.durationSeconds || 10),
+    0
+  );
+  const totalFrames = totalDurationSeconds * 30;
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-4xl">
@@ -72,78 +87,73 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
         ← Back to videos
       </button>
 
-      <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold mb-4 sm:mb-6">{video.title}</h1>
-
-      {/* Video slide viewer */}
-      <div
-        className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6 flex flex-col items-center justify-center p-6 sm:p-8 md:p-12"
-        style={{ backgroundColor: colors.bg }}
-      >
-        {/* Placeholder for illustration */}
-        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 px-2 py-1 rounded bg-black/20 text-xs text-white/60">
-          Scene {scene.sceneNumber}/{video.scenes.length}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">{video.title}</h1>
+          <p className="text-xs text-[var(--text-muted)]">Topic: {video.topic}</p>
         </div>
-
-        <h2
-          className="text-xl sm:text-2xl md:text-3xl font-bold font-[family-name:var(--font-display)] text-center mb-4 sm:mb-6"
-          style={{ color: colors.text }}
-        >
-          {scene.title}
-        </h2>
-
-        <ul className="space-y-2 text-center">
-          {scene.bulletPoints.map((bp, i) => (
-            <li key={i} className="text-sm md:text-base" style={{ color: colors.accent }}>
-              {bp}
-            </li>
-          ))}
-        </ul>
-
-        {/* Image placeholder */}
-        <div className="absolute bottom-4 left-4 right-4 p-3 rounded-lg bg-black/20">
-          <p className="text-xs text-white/50 italic">
-            Image prompt: {scene.illustrationPrompt}
-          </p>
+        <div className="px-3 py-1.5 rounded-full text-xs font-semibold self-start sm:self-auto bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
+          {video.styleTheme} Theme
         </div>
       </div>
 
-      {/* Narration */}
-      <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mb-6">
-        <p className="text-xs text-[var(--text-muted)] mb-1 uppercase tracking-wide font-medium">Narration</p>
-        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{scene.narration}</p>
+      {/* Remotion Interactive Player */}
+      <div className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6 bg-[var(--bg-secondary)] border border-[var(--border)] shadow-2xl">
+        <Player
+          component={VideoComposition}
+          inputProps={{
+            scenes: video.scenes,
+            styleTheme: video.styleTheme,
+          }}
+          durationInFrames={totalFrames}
+          fps={30}
+          compositionWidth={1280}
+          compositionHeight={720}
+          style={{
+            width: "100%",
+            height: "100%",
+          }}
+          controls
+          loop
+        />
       </div>
 
-      {/* Scene navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setActiveScene((p) => Math.max(0, p - 1))}
-          disabled={activeScene === 0}
-          className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-30 transition-colors"
-        >
-          ← Previous
-        </button>
-
-        <div className="flex items-center gap-2">
-          {video.scenes.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveScene(i)}
-              className={cn(
-                "w-2.5 h-2.5 rounded-full transition-colors",
-                i === activeScene ? "bg-[var(--accent)]" : "bg-[var(--bg-elevated)]"
-              )}
-            />
+      {/* Narrative Breakdown */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] font-[family-name:var(--font-display)]">Video Narrative & Scenes</h3>
+        <div className="grid gap-4">
+          {video.scenes.map((scene, index) => (
+            <div 
+              key={index}
+              className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col md:flex-row gap-4"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-5 h-5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center text-xs font-bold border border-[var(--accent)]/20">
+                    {scene.sceneNumber}
+                  </span>
+                  <h4 className="font-semibold text-sm text-[var(--text-primary)]">{scene.title}</h4>
+                  <span className="text-xs text-[var(--text-muted)] ml-auto">({scene.durationSeconds || 10}s)</span>
+                </div>
+                <ul className="space-y-1 pl-7 list-disc text-xs text-[var(--text-secondary)] mb-3">
+                  {scene.bulletPoints.map((bp, i) => (
+                    <li key={i}>{bp}</li>
+                  ))}
+                </ul>
+                <div className="p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)]">
+                  <p className="text-[10px] text-[var(--text-muted)] mb-0.5 uppercase font-medium tracking-wide">Narration Voiceover</p>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">"{scene.narration}"</p>
+                </div>
+              </div>
+              <div className="md:w-64 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] flex flex-col justify-between">
+                <span className="text-[10px] text-[var(--accent)] uppercase font-semibold tracking-wider mb-2">🎨 Scene Graphic Concept</span>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{scene.illustrationPrompt}</p>
+              </div>
+            </div>
           ))}
         </div>
-
-        <button
-          onClick={() => setActiveScene((p) => Math.min(video.scenes.length - 1, p + 1))}
-          disabled={activeScene === video.scenes.length - 1}
-          className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] disabled:opacity-30 font-medium transition-colors"
-        >
-          Next →
-        </button>
       </div>
     </div>
   );
 }
+

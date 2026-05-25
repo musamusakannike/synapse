@@ -84,15 +84,15 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
   const question = quiz.questions[currentQ];
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-2xl mx-auto">
       <button
         onClick={() => router.push("/dashboard/quizzes")}
-        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-6"
+        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-4 sm:mb-6"
       >
         ← Back to quizzes
       </button>
 
-      <h1 className="font-[family-name:var(--font-display)] text-xl font-bold mb-2">{quiz.title}</h1>
+      <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold mb-2">{quiz.title}</h1>
 
       {/* Progress */}
       <div className="flex items-center gap-2 mb-8">

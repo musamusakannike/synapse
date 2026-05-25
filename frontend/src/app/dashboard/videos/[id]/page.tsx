@@ -64,28 +64,28 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
   const scene = video.scenes[activeScene];
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 sm:p-6 md:p-8 max-w-4xl">
       <button
         onClick={() => router.push("/dashboard/videos")}
-        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-6"
+        className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-4 sm:mb-6"
       >
         ← Back to videos
       </button>
 
-      <h1 className="font-[family-name:var(--font-display)] text-xl font-bold mb-6">{video.title}</h1>
+      <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold mb-4 sm:mb-6">{video.title}</h1>
 
       {/* Video slide viewer */}
       <div
-        className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6 flex flex-col items-center justify-center p-12"
+        className="relative w-full aspect-video rounded-2xl overflow-hidden mb-6 flex flex-col items-center justify-center p-6 sm:p-8 md:p-12"
         style={{ backgroundColor: colors.bg }}
       >
         {/* Placeholder for illustration */}
-        <div className="absolute top-4 right-4 px-2 py-1 rounded bg-black/20 text-xs text-white/60">
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4 px-2 py-1 rounded bg-black/20 text-xs text-white/60">
           Scene {scene.sceneNumber}/{video.scenes.length}
         </div>
 
         <h2
-          className="text-2xl md:text-3xl font-bold font-[family-name:var(--font-display)] text-center mb-6"
+          className="text-xl sm:text-2xl md:text-3xl font-bold font-[family-name:var(--font-display)] text-center mb-4 sm:mb-6"
           style={{ color: colors.text }}
         >
           {scene.title}

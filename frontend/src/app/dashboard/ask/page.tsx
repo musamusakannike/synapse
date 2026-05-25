@@ -35,15 +35,15 @@ export default function AskPage() {
   };
 
   return (
-    <div className="p-8 max-w-3xl">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold mb-2">
+    <div className="p-4 sm:p-6 md:p-8 max-w-3xl">
+      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
         Ask AI Tutor
       </h1>
-      <p className="text-sm text-[var(--text-secondary)] mb-8">
+      <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
         Ask any academic question. The AI adapts its answer to your learning style and level.
       </p>
 
-      <form onSubmit={handleAsk} className="mb-8">
+      <form onSubmit={handleAsk} className="mb-6 sm:mb-8">
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
@@ -54,7 +54,7 @@ export default function AskPage() {
         <button
           type="submit"
           disabled={loading || !question.trim()}
-          className="mt-3 px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-3 w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Thinking..." : "Ask Synapse"}
         </button>

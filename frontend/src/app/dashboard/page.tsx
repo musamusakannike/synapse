@@ -34,10 +34,10 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 sm:p-6 md:p-8 max-w-5xl">
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
+      <div className="mb-8 sm:mb-10">
+        <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold">
           Welcome back, {user?.name?.split(" ")[0]}
         </h1>
         <p className="text-sm text-[var(--text-secondary)] mt-1">

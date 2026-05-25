@@ -1,6 +1,7 @@
 import React from "react";
 import { Sequence, useVideoConfig } from "remotion";
-import { Scene, SceneComponent } from "./SceneComponent";
+import { SceneDispatcher } from "./SceneDispatcher";
+import type { Scene } from "./SceneDispatcher";
 
 interface VideoCompositionProps {
   scenes?: Scene[];
@@ -8,10 +9,10 @@ interface VideoCompositionProps {
 }
 
 const themeColors: Record<string, { bg: string; accent: string; text: string }> = {
-  emerald: { bg: "#064E3B", accent: "#34D399", text: "#ECFDF5" },
-  lime: { bg: "#1A2E05", accent: "#84CC16", text: "#F7FEE7" },
-  slate: { bg: "#1E293B", accent: "#38BDF8", text: "#F1F5F9" }, // brightened slate accent for video visibility
-  white: { bg: "#FAFAFA", accent: "#4F46E5", text: "#18181B" }, // indigo accent for high contrast white theme
+  emerald: { bg: "#052E1C", accent: "#34D399", text: "#ECFDF5" },
+  lime: { bg: "#0F1A02", accent: "#A3E635", text: "#F7FEE7" },
+  slate: { bg: "#0F172A", accent: "#38BDF8", text: "#E2E8F0" },
+  white: { bg: "#F8FAFC", accent: "#6366F1", text: "#1E293B" },
 };
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({
@@ -21,7 +22,6 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
   const { fps } = useVideoConfig();
   const colors = themeColors[styleTheme] || themeColors.emerald;
 
-  // Calculate cumulative starts to place each scene sequence correctly
   let currentFrameStart = 0;
 
   return (
@@ -35,7 +35,7 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
       }}
     >
       {scenes.map((scene) => {
-        const durationFrames = scene.durationSeconds * fps;
+        const durationFrames = (scene.durationSeconds || 12) * fps;
         const fromFrame = currentFrameStart;
         currentFrameStart += durationFrames;
 
@@ -45,7 +45,7 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
             from={fromFrame}
             durationInFrames={durationFrames}
           >
-            <SceneComponent
+            <SceneDispatcher
               scene={scene}
               colors={colors}
               totalScenes={scenes.length}

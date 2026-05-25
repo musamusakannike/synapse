@@ -247,49 +247,110 @@ Output ONLY the raw JSON block without markdown code blocks.`;
 }
 
 /**
- * 4. Generate AI Explanatory Video Script & Scenes
+ * 4. Generate AI Explanatory Video Script & Scenes — Adaptive Layout System
+ * Each scene gets its own AI-chosen layout type, animation style, and layout-specific data.
  */
 export async function generateVideoScript(
   topic: string,
   styleTheme: string,
   userProfile: { style: string; level: string; goals: string }
 ) {
-  const systemPrompt = `You are Synapse's AI Explanatory Video Director.
-Create a highly visual, premium slide-show explanation script for a short educational video on: "${topic}".
+  const systemPrompt = `You are Synapse's AI Explanatory Video Director — an industry-leading expert at crafting premium educational videos that feel handmade and dynamic.
 
-Adapt content to the student profile:
+Create a rich, multi-scene explanatory video on: "${topic}".
+
+Student Profile:
 - Grade Level: ${userProfile.level}
-- Theme Selection: ${styleTheme} (Emerald, Lime, Slate, White)
-- Study Preferences: ${userProfile.style}
+- Theme: ${styleTheme}
+- Learning Style: ${userProfile.style}
 
-Instructions:
-- Create precisely 4 coherent sequential scenes/slides.
-- Each scene must tell a story or progress the explanation.
-- For each scene, specify:
-  1. Title of the slide
-  2. 3-4 short, punchy bullet points to display on-screen
-  3. A high-fidelity prompt describing what illustrative graphic should accompany this slide
-  4. The complete voiceover narrator text ("narration"). Make it natural, highly explanatory, and simple (approx 25-40 words per scene).
-  5. Estimated scene duration in seconds (approx 10-15 seconds).
+CRITICAL RULE: Every scene MUST use a DIFFERENT layoutType. No two scenes may repeat the same layoutType.
+Choose the layoutType that would make a student most easily understand the specific content of that scene.
 
-Output MUST be a valid JSON matching this format:
+Available layoutTypes and when to use them:
+- "hero-statement": Use for powerful opening lines or single key insight. Requires "heroStatement" field (one punchy sentence, max 10 words).
+- "split-bullets": Use for listing multiple key facts or properties. Requires "bulletPoints" (3-4 items). Classic split-screen with animated bullet list.
+- "timeline": Use for processes, steps, or sequences. Requires "timelineSteps" (array of 3-5 short step strings).
+- "comparison": Use for comparing two concepts, pros/cons, before/after. Requires "comparisonLeft" ({ label, items: string[] }) and "comparisonRight" ({ label, items: string[] }).
+- "spotlight": Use for defining one critical term deeply. Requires "spotlightTerm" (1-3 words) and "spotlightDefinition" (1-2 sentences).
+- "data-visual": Use when there are statistics, numbers, or measurable facts. Requires "statCallouts" (array of { value: string, label: string }, 2-4 items).
+- "cinematic-quote": Use for closing thoughts, inspirational principles, or famous quotes. Requires "quoteText" (a short impactful quote or principle statement) and "quoteAuthor" (optional attribution).
+- "explode-list": Use for brainstorms, applications, or scattered related concepts. Requires "bulletPoints" (4-6 short items).
+
+Available animationStyles (choose the best fit per scene):
+- "slide-from-left": Content slides in from the left
+- "slide-from-right": Content slides in from the right
+- "scale-in": Content scales from small to full size
+- "fade-up": Content fades in while rising
+- "typewriter": Text appears character by character
+- "reveal-left-to-right": A reveal wipe from left to right
+
+Generate exactly 5 scenes that tell a complete educational story from introduction to conclusion.
+Each scene narration should be 25-45 words — natural voiceover language.
+Scene duration: 12-18 seconds each.
+
+Output MUST be a valid JSON matching this exact format — include ONLY the fields relevant to the chosen layoutType (skip irrelevant optional fields):
 {
-  "title": "A custom premium video title",
+  "title": "A premium, custom video title",
   "scenes": [
     {
       "sceneNumber": 1,
-      "title": "Scene Slide Title",
-      "bulletPoints": ["Key point 1", "Key point 2", "Key point 3"],
-      "illustrationPrompt": "A conceptual 3D isometric graphic showing...",
-      "narration": "Welcome! Today we are exploring... Here, we can see how...",
+      "layoutType": "hero-statement",
+      "animationStyle": "typewriter",
+      "title": "Short Scene Label",
+      "heroStatement": "One powerful sentence here.",
+      "illustrationPrompt": "Highly detailed visual description for this scene",
+      "narration": "Full natural voiceover text for this scene...",
+      "durationSeconds": 14
+    },
+    {
+      "sceneNumber": 2,
+      "layoutType": "split-bullets",
+      "animationStyle": "slide-from-left",
+      "title": "Key Concepts",
+      "bulletPoints": ["Point 1", "Point 2", "Point 3"],
+      "illustrationPrompt": "...",
+      "narration": "...",
+      "durationSeconds": 15
+    },
+    {
+      "sceneNumber": 3,
+      "layoutType": "timeline",
+      "animationStyle": "reveal-left-to-right",
+      "title": "How It Works",
+      "timelineSteps": ["Step 1: ...", "Step 2: ...", "Step 3: ...", "Step 4: ..."],
+      "illustrationPrompt": "...",
+      "narration": "...",
+      "durationSeconds": 16
+    },
+    {
+      "sceneNumber": 4,
+      "layoutType": "comparison",
+      "animationStyle": "slide-from-right",
+      "title": "Side by Side",
+      "comparisonLeft": { "label": "Left Label", "items": ["Item A", "Item B", "Item C"] },
+      "comparisonRight": { "label": "Right Label", "items": ["Item D", "Item E", "Item F"] },
+      "illustrationPrompt": "...",
+      "narration": "...",
+      "durationSeconds": 14
+    },
+    {
+      "sceneNumber": 5,
+      "layoutType": "cinematic-quote",
+      "animationStyle": "fade-up",
+      "title": "Key Takeaway",
+      "quoteText": "An insightful closing principle about the topic.",
+      "quoteAuthor": "optional attribution",
+      "illustrationPrompt": "...",
+      "narration": "...",
       "durationSeconds": 12
     }
   ]
 }
 
-Output ONLY the raw JSON block.`;
+Output ONLY the raw JSON block. No markdown fences. No explanation.`;
 
-  const userPrompt = `Develop a premium explanatory video script outline for: "${topic}"`;
+  const userPrompt = `Create a premium adaptive explanatory video for the topic: "${topic}". Make each scene visually and structurally unique.`;
 
   const responseText = await callDeepSeek(
     [

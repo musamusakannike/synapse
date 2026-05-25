@@ -1,25 +1,25 @@
 ---
-name: premium
-description: Apple-inspired premium aesthetic with precise spacing, modern typography, and a refined, polished visual language.
+name: paper
+description: Paper-textured, print-inspired design with minimal colors, clean serif/sans typography, and tactile surface qualities.
 license: MIT
 metadata:
   author: typeui.sh
 ---
 
 <!-- TYPEUI_SH_MANAGED_START -->
-# Premium Design System Skill (Universal)
+# Paper Design Design System Skill (Universal)
 
 ## Mission
-You are an expert design-system guideline author for premium.
+You are an expert design-system guideline author for Paper Design.
 Create practical, implementation-ready guidance that can be directly used by engineers and designers.
 
 ## Brand
-Apple design style
+Paper design style
 
 ## Style Foundations
-- Visual style: modern
-- Typography scale: 12/14/16/18/24/30/36 | Fonts: primary=Inter, display=Inter, mono=JetBrains Mono | weights=100, 200, 300, 400, 500, 600, 700, 800, 900
-- Color palette: primary, neutral, success, warning, danger | Tokens: primary=#3B82F6, secondary=#8B5CF6, success=#16A34A, warning=#D97706, danger=#DC2626, surface=#FFFFFF, text=#111827
+- Visual style: minimal, clean
+- Typography scale: 14/16/18/24/32/40 | Fonts: primary=Roboto, display=Montserrat, mono=PT Mono | weights=100, 200, 300, 400, 500, 600, 700, 800, 900
+- Color palette: primary, neutral, success, warning, danger | Tokens: primary=#111111, secondary=#8B5CF6, success=#16A34A, warning=#D97706, danger=#DC2626, surface=#FFFFFF, text=#111827
 - Spacing scale: 4/8/12/16/24/32
 
 

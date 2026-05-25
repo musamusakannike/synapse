@@ -51,11 +51,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="p-8 max-w-2xl">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold mb-2">
+    <div className="p-4 sm:p-6 md:p-8 max-w-2xl">
+      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
         Settings
       </h1>
-      <p className="text-sm text-[var(--text-secondary)] mb-8">
+      <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
         Customize your learning profile. This affects how the AI generates content for you.
       </p>
 

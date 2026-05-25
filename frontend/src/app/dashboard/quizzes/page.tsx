@@ -62,15 +62,15 @@ export default function QuizzesPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl">
-      <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold mb-2">
+    <div className="p-4 sm:p-6 md:p-8 max-w-4xl">
+      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
         Practice Quizzes
       </h1>
-      <p className="text-sm text-[var(--text-secondary)] mb-8">
+      <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
         Generate targeted quizzes on any topic. Test your understanding with AI-crafted questions.
       </p>
 
-      <form onSubmit={handleGenerate} className="flex gap-3 mb-8">
+      <form onSubmit={handleGenerate} className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8">
         <input
           type="text"
           value={topic}
@@ -81,7 +81,7 @@ export default function QuizzesPage() {
         <button
           type="submit"
           disabled={generating || !topic.trim()}
-          className="px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {generating ? "Spinning up..." : "Generate Quiz"}
         </button>

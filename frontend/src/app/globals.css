@@ -61,6 +61,10 @@ body {
   overflow-x: hidden;
 }
 
+button {
+  cursor: pointer;
+}
+
 ::selection {
   background: var(--accent-muted);
   color: var(--accent);

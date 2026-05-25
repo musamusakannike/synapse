@@ -39,6 +39,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const [generating, setGenerating] = useState<string | null>(null);
   const [activeLesson, setActiveLesson] = useState<LessonContent | null>(null);
   const [error, setError] = useState("");
+  const [showOutline, setShowOutline] = useState(true);
 
   useEffect(() => {
     fetchCourse();
@@ -60,6 +61,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const generateLesson = async (moduleTitle: string, lessonTitle: string) => {
     setGenerating(lessonTitle);
     setError("");
+    setShowOutline(false); // Switch to content view on mobile
     try {
       const res = await fetch("/api/ai/course", {
         method: "PUT",
@@ -84,7 +86,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     try {
       const res = await fetch(`/api/ai/course?lessonId=${lessonId}`);
       const data = await res.json();
-      if (data.success) setActiveLesson(data.lesson);
+      if (data.success) {
+        setActiveLesson(data.lesson);
+        setShowOutline(false); // Switch to content view on mobile
+      }
     } catch {
       // silent
     }
@@ -101,9 +106,35 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   if (!course) return null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Mobile toggle buttons */}
+      <div className="md:hidden flex border-b border-[var(--border-subtle)] bg-[var(--bg-secondary)]">
+        <button
+          onClick={() => setShowOutline(true)}
+          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            showOutline
+              ? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+              : "text-[var(--text-muted)]"
+          }`}
+        >
+          Outline
+        </button>
+        <button
+          onClick={() => setShowOutline(false)}
+          className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            !showOutline
+              ? "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+              : "text-[var(--text-muted)]"
+          }`}
+        >
+          Content
+        </button>
+      </div>
+
       {/* Outline sidebar */}
-      <div className="w-80 border-r border-[var(--border-subtle)] overflow-y-auto p-6">
+      <div className={`w-full md:w-80 border-r border-[var(--border-subtle)] overflow-y-auto p-6 ${
+        showOutline ? "block" : "hidden md:block"
+      }`}>
         <button
           onClick={() => router.push("/dashboard/courses")}
           className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-4"
@@ -163,7 +194,9 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Lesson content */}
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className={`flex-1 overflow-y-auto p-6 md:p-8 ${
+        showOutline ? "hidden md:block" : "block"
+      }`}>
         {activeLesson ? (
           <div className="max-w-3xl">
             {activeLesson.summary && (

@@ -2,24 +2,15 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/cn";
 import dynamic from "next/dynamic";
 import { VideoComposition } from "@/remotion/VideoComposition";
+import type { Scene } from "@/remotion/SceneDispatcher";
 
-// Dynamically import Remotion Player to avoid SSR (Server Side Rendering) issues with browser APIs
+// Dynamically import Remotion Player to avoid SSR issues
 const Player = dynamic(
   () => import("@remotion/player").then((mod) => mod.Player),
   { ssr: false }
 );
-
-interface Scene {
-  sceneNumber: number;
-  title: string;
-  bulletPoints: string[];
-  illustrationPrompt: string;
-  narration: string;
-  durationSeconds: number;
-}
 
 interface Video {
   _id: string;
@@ -28,13 +19,6 @@ interface Video {
   styleTheme: string;
   scenes: Scene[];
 }
-
-const themeColors: Record<string, { bg: string; accent: string; text: string }> = {
-  emerald: { bg: "#064E3B", accent: "#34D399", text: "#ECFDF5" },
-  lime: { bg: "#1A2E05", accent: "#84CC16", text: "#F7FEE7" },
-  slate: { bg: "#1E293B", accent: "#38BDF8", text: "#F1F5F9" },
-  white: { bg: "#FAFAFA", accent: "#4F46E5", text: "#18181B" },
-};
 
 export default function VideoPlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -46,12 +30,11 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     fetchVideo();
   }, [id]);
 
+
   const fetchVideo = async () => {
     try {
-      const res = await fetch(`/api/api/ai/video?id=${id}`); // note: wait, is the API endpoint actually /api/ai/video or /api/api/ai/video? Let's check original. Original was /api/ai/video
-      // Let's restore original url /api/ai/video
-      const resReal = await fetch(`/api/ai/video?id=${id}`);
-      const data = await resReal.json();
+      const res = await fetch(`/api/ai/video?id=${id}`);
+      const data = await res.json();
       if (data.success) setVideo(data.video);
       else router.push("/dashboard/videos");
     } catch {
@@ -69,11 +52,9 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const colors = themeColors[video.styleTheme] || themeColors.emerald;
-  
   // Calculate total composition frames at 30fps
   const totalDurationSeconds = video.scenes.reduce(
-    (acc, scene) => acc + (scene.durationSeconds || 10),
+    (acc, scene) => acc + (scene.durationSeconds || 12),
     0
   );
   const totalFrames = totalDurationSeconds * 30;
@@ -127,19 +108,52 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
               key={index}
               className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex flex-col md:flex-row gap-4"
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="w-5 h-5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center text-xs font-bold border border-[var(--accent)]/20">
                     {scene.sceneNumber}
                   </span>
                   <h4 className="font-semibold text-sm text-[var(--text-primary)]">{scene.title}</h4>
-                  <span className="text-xs text-[var(--text-muted)] ml-auto">({scene.durationSeconds || 10}s)</span>
+                  {scene.layoutType && (
+                    <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20">
+                      {scene.layoutType}
+                    </span>
+                  )}
+                  <span className="text-xs text-[var(--text-muted)] ml-auto">({scene.durationSeconds || 12}s)</span>
                 </div>
-                <ul className="space-y-1 pl-7 list-disc text-xs text-[var(--text-secondary)] mb-3">
-                  {scene.bulletPoints.map((bp, i) => (
-                    <li key={i}>{bp}</li>
-                  ))}
-                </ul>
+                {scene.bulletPoints && scene.bulletPoints.length > 0 && (
+                  <ul className="space-y-1 pl-7 list-disc text-xs text-[var(--text-secondary)] mb-3">
+                    {scene.bulletPoints.map((bp, i) => (
+                      <li key={i}>{bp}</li>
+                    ))}
+                  </ul>
+                )}
+                {scene.timelineSteps && (
+                  <ul className="space-y-1 pl-7 list-decimal text-xs text-[var(--text-secondary)] mb-3">
+                    {scene.timelineSteps.map((s, i) => <li key={i}>{s}</li>)}
+                  </ul>
+                )}
+                {scene.heroStatement && (
+                  <p className="pl-7 text-sm font-bold text-[var(--accent)] mb-3 italic">"{scene.heroStatement}"</p>
+                )}
+                {scene.spotlightTerm && (
+                  <div className="pl-7 mb-3">
+                    <span className="font-bold text-[var(--accent)]">{scene.spotlightTerm}</span>
+                    {scene.spotlightDefinition && <p className="text-xs text-[var(--text-secondary)] mt-1">{scene.spotlightDefinition}</p>}
+                  </div>
+                )}
+                {scene.quoteText && (
+                  <p className="pl-7 text-xs italic text-[var(--text-secondary)] mb-3">"{scene.quoteText}" {scene.quoteAuthor ? `— ${scene.quoteAuthor}` : ""}</p>
+                )}
+                {scene.statCallouts && (
+                  <div className="pl-7 flex flex-wrap gap-2 mb-3">
+                    {scene.statCallouts.map((s, i) => (
+                      <span key={i} className="px-2 py-1 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-bold border border-[var(--accent)]/20">
+                        {s.value} <span className="font-normal opacity-70">{s.label}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)]">
                   <p className="text-[10px] text-[var(--text-muted)] mb-0.5 uppercase font-medium tracking-wide">Narration Voiceover</p>
                   <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">"{scene.narration}"</p>

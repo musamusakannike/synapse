@@ -4,6 +4,8 @@ import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateVideoScript } from "@/lib/deepseek";
 import { ObjectId } from "mongodb";
+import { generateTTS } from "@/lib/tts";
+import path from "path";
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -105,9 +107,35 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     });
 
+    const videoId = result.insertedId.toString();
+
+    // Generate TTS voiceover narration for each scene and attach audio urls
+    const updatedScenes = [...videoScript.scenes];
+    try {
+      await Promise.all(
+        updatedScenes.map(async (scene: any) => {
+          if (!scene.narration) return;
+          const fileName = `scene-${scene.sceneNumber}.mp3`;
+          const relativePath = `/audio/${videoId}/${fileName}`;
+          const absolutePath = path.join(process.cwd(), "public", "audio", videoId, fileName);
+          
+          await generateTTS(scene.narration, absolutePath);
+          scene.audioUrl = relativePath;
+        })
+      );
+
+      // Persist the scenes with their respective audioUrl fields
+      await db.collection("videos").updateOne(
+        { _id: result.insertedId },
+        { $set: { scenes: updatedScenes } }
+      );
+    } catch (ttsError) {
+      console.error("Failed to generate voiceover narration audio files:", ttsError);
+    }
+
     return NextResponse.json({
       success: true,
-      videoId: result.insertedId.toString(),
+      videoId,
     });
   } catch (error: any) {
     console.error("POST Video Error:", error);

@@ -42,6 +42,7 @@ export interface Scene {
   illustrationPrompt: string;
   narration: string;
   durationSeconds: number;
+  audioUrl?: string;
 
   // hero-statement
   heroStatement?: string;

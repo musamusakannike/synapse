@@ -1,5 +1,5 @@
 import React from "react";
-import { Sequence, useVideoConfig } from "remotion";
+import { Sequence, useVideoConfig, Audio } from "remotion";
 import { SceneDispatcher } from "./SceneDispatcher";
 import type { Scene } from "./SceneDispatcher";
 
@@ -45,6 +45,7 @@ export const VideoComposition: React.FC<VideoCompositionProps> = ({
             from={fromFrame}
             durationInFrames={durationFrames}
           >
+            {scene.audioUrl && <Audio src={scene.audioUrl} />}
             <SceneDispatcher
               scene={scene}
               colors={colors}

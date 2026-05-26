@@ -43,13 +43,13 @@ function splitTextIntoChunks(text: string, maxLength: number = 200): string[] {
 }
 
 /**
- * Generates an MP3 narration voiceover file for a given text utilizing Google Translate's free TTS.
- * Handles longer strings automatically by chunking, fetching, and merging them.
+ * Synthesizes text to speech using Google Translate's free engine, returning the audio data as a raw MP3 Buffer.
+ * Fully modular and does not perform any disk operations.
  * 
  * @param text The narration text to synthesize.
- * @param outputPath The absolute destination file path on the system.
+ * @returns A Promise resolving to the continuous MP3 audio Buffer.
  */
-export async function generateTTS(text: string, outputPath: string): Promise<void> {
+export async function generateTTSBuffer(text: string): Promise<Buffer> {
   const chunks = splitTextIntoChunks(text, 200);
   const buffers: Buffer[] = [];
 
@@ -72,7 +72,17 @@ export async function generateTTS(text: string, outputPath: string): Promise<voi
     buffers.push(Buffer.from(arrayBuffer));
   }
 
-  const finalBuffer = Buffer.concat(buffers);
+  return Buffer.concat(buffers);
+}
+
+/**
+ * Legacy wrapper: Generates an MP3 narration voiceover file for a given text and writes it directly to disk.
+ * 
+ * @param text The narration text to synthesize.
+ * @param outputPath The absolute destination file path on the system.
+ */
+export async function generateTTS(text: string, outputPath: string): Promise<void> {
+  const finalBuffer = await generateTTSBuffer(text);
   
   // Ensure the target directory structure exists
   const dir = path.dirname(outputPath);

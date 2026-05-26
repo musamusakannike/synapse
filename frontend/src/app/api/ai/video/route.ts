@@ -4,8 +4,10 @@ import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateVideoScript } from "@/lib/deepseek";
 import { ObjectId } from "mongodb";
-import { generateTTS } from "@/lib/tts";
+import { generateTTSBuffer } from "@/lib/tts";
+import { isR2Configured, uploadToR2 } from "@/lib/r2";
 import path from "path";
+import fs from "fs";
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -116,11 +118,28 @@ export async function POST(request: Request) {
         updatedScenes.map(async (scene: any) => {
           if (!scene.narration) return;
           const fileName = `scene-${scene.sceneNumber}.mp3`;
-          const relativePath = `/audio/${videoId}/${fileName}`;
-          const absolutePath = path.join(process.cwd(), "public", "audio", videoId, fileName);
           
-          await generateTTS(scene.narration, absolutePath);
-          scene.audioUrl = relativePath;
+          // Generate raw audio buffer
+          const audioBuffer = await generateTTSBuffer(scene.narration);
+          
+          if (isR2Configured) {
+            // Upload to Cloudflare R2
+            const r2Key = `audio/${videoId}/${fileName}`;
+            const publicUrl = await uploadToR2(audioBuffer, r2Key, "audio/mpeg");
+            scene.audioUrl = publicUrl;
+            console.log(`Successfully uploaded scene ${scene.sceneNumber} voiceover to Cloudflare R2: ${publicUrl}`);
+          } else {
+            // Fallback: Save local file
+            const relativePath = `/audio/${videoId}/${fileName}`;
+            const absolutePath = path.join(process.cwd(), "public", "audio", videoId, fileName);
+            
+            const dir = path.dirname(absolutePath);
+            await fs.promises.mkdir(dir, { recursive: true });
+            await fs.promises.writeFile(absolutePath, audioBuffer);
+            
+            scene.audioUrl = relativePath;
+            console.log(`R2 not configured. Saved scene ${scene.sceneNumber} voiceover locally: ${relativePath}`);
+          }
         })
       );
 

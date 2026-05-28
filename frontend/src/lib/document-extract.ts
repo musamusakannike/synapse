@@ -1,5 +1,5 @@
-import pdfParse from "pdf-parse";
-import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
+import * as mammoth from "mammoth";
 
 export type SupportedMimeType =
   | "application/pdf"
@@ -38,8 +38,10 @@ export async function extractTextFromBuffer(
   fileName?: string
 ): Promise<string> {
   if (mimeType === "application/pdf") {
-    const data = await pdfParse(buffer);
-    return data.text.trim();
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+    return result.text.trim();
   }
 
   if (

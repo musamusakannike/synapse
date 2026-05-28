@@ -102,6 +102,18 @@ export interface QuizDocument {
   createdAt: Date;
 }
 
+export interface UploadedDocument {
+  _id?: string;
+  userId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  r2Key: string;
+  publicUrl: string;
+  extractedText?: string;
+  createdAt: Date;
+}
+
 export interface VideoDocument {
   _id?: string;
   userId: string;

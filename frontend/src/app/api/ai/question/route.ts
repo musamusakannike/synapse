@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateTutorAnswer } from "@/lib/deepseek";
 import { checkAndIncrementUsage } from "@/lib/paystack";
+import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
 export async function POST(request: Request) {
@@ -21,9 +22,9 @@ export async function POST(request: Request) {
     }
 
     // 2. Parse body
-    const { question } = await request.json();
-    if (!question || question.trim() === "") {
-      return NextResponse.json({ error: "Question cannot be empty" }, { status: 400 });
+    const { question, documentIds } = await request.json();
+    if ((!question || question.trim() === "") && (!documentIds || documentIds.length === 0)) {
+      return NextResponse.json({ error: "Please provide a question or upload a document" }, { status: 400 });
     }
 
     // 3. Enforce Freemium rate limits
@@ -53,13 +54,21 @@ export async function POST(request: Request) {
       goals: user.goals || "",
     };
 
-    // 5. Query DeepSeek API
-    const answerMarkdown = await generateTutorAnswer(question, userProfile);
+    // 5. Build document context if provided
+    let documentContext = "";
+    if (documentIds && documentIds.length > 0) {
+      documentContext = await buildDocumentContext(documentIds, session.userId);
+    }
 
-    // 6. Log Q&A activity in database
+    // 6. Query DeepSeek API
+    const questionText = question?.trim() || "Analyze and explain the key concepts from the uploaded document(s).";
+    const answerMarkdown = await generateTutorAnswer(questionText, userProfile, documentContext);
+
+    // 7. Log Q&A activity in database
     await db.collection("questions").insertOne({
       userId: session.userId,
-      question,
+      question: questionText,
+      documentIds: documentIds || [],
       answer: answerMarkdown,
       createdAt: new Date(),
     });

@@ -4,6 +4,7 @@ import { connectToDatabase, CourseDocument, LessonDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateCourseOutline, generateLessonContent } from "@/lib/deepseek";
 import { checkAndIncrementUsage } from "@/lib/paystack";
+import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
 // Authenticate session helper
@@ -78,9 +79,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { topic } = await request.json();
-    if (!topic || topic.trim() === "") {
-      return NextResponse.json({ error: "Topic is required" }, { status: 400 });
+    const { topic, documentIds } = await request.json();
+    if ((!topic || topic.trim() === "") && (!documentIds || documentIds.length === 0)) {
+      return NextResponse.json({ error: "Please provide a topic or upload a document" }, { status: 400 });
     }
 
     // Rate Limit check
@@ -109,18 +110,26 @@ export async function POST(request: Request) {
       goals: user.goals || "",
     };
 
+    // Build document context if provided
+    let documentContext = "";
+    if (documentIds && documentIds.length > 0) {
+      documentContext = await buildDocumentContext(documentIds, userId);
+    }
+
     // Generate Custom Course outline from DeepSeek
+    const topicText = topic?.trim() || "Create a course based on the uploaded document(s)";
     const courseData = await generateCourseOutline(
-      topic,
+      topicText,
       userProfile.level,
       userProfile.style,
-      userProfile.goals
+      userProfile.goals,
+      documentContext
     );
 
     // Save Course in MongoDB
     const result = await db.collection("courses").insertOne({
       userId,
-      title: courseData.title || `Course: ${topic}`,
+      title: courseData.title || `Course: ${topicText}`,
       level: userProfile.level,
       style: userProfile.style,
       outline: courseData.outline,

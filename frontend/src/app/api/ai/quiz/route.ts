@@ -4,6 +4,7 @@ import { connectToDatabase, QuizDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateQuizQuestions } from "@/lib/deepseek";
 import { checkAndIncrementUsage } from "@/lib/paystack";
+import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
 async function getUserId() {
@@ -62,9 +63,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { topic } = await request.json();
-    if (!topic || topic.trim() === "") {
-      return NextResponse.json({ error: "Topic is required" }, { status: 400 });
+    const { topic, documentIds } = await request.json();
+    if ((!topic || topic.trim() === "") && (!documentIds || documentIds.length === 0)) {
+      return NextResponse.json({ error: "Please provide a topic or upload a document" }, { status: 400 });
     }
 
     // Daily Limit Checker
@@ -93,14 +94,21 @@ export async function POST(request: Request) {
       goals: user.goals || "",
     };
 
+    // Build document context if provided
+    let documentContext = "";
+    if (documentIds && documentIds.length > 0) {
+      documentContext = await buildDocumentContext(documentIds, userId);
+    }
+
     // Spin questions using DeepSeek
-    const quizData = await generateQuizQuestions(topic, userProfile);
+    const topicText = topic?.trim() || "Quiz based on the uploaded document(s)";
+    const quizData = await generateQuizQuestions(topicText, userProfile, documentContext);
 
     // Save to MongoDB
     const result = await db.collection("quizzes").insertOne({
       userId,
-      title: quizData.title || `Quiz: ${topic}`,
-      topic,
+      title: quizData.title || `Quiz: ${topicText}`,
+      topic: topicText,
       questions: quizData.questions,
       attempts: [],
       createdAt: new Date(),

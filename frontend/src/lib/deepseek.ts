@@ -62,7 +62,8 @@ export async function generateCourseOutline(
   topic: string,
   level: string,
   style: string,
-  goals: string
+  goals: string,
+  documentContext?: string
 ) {
   const systemPrompt = `You are Synapse's AI Course Architect.
 Your task is to design a highly personalized, logically structured academic course outline for a student.
@@ -105,7 +106,10 @@ Important Instructions:
 - Define 2 to 3 modules, with 2 lessons in each module (total 4 to 6 lessons) to keep the course compact and achievable.
 - Output ONLY the raw JSON block without markdown code blocks.`;
 
-  const userPrompt = `Create a custom, premium course outline about: "${topic}"`;
+  let userPrompt = `Create a custom, premium course outline about: "${topic}"`;
+  if (documentContext) {
+    userPrompt += `\n\nThe student has provided the following reference material. Use it to inform and enrich the course structure:\n${documentContext}`;
+  }
 
   const responseText = await callDeepSeek(
     [
@@ -186,7 +190,8 @@ Output only raw JSON block without markdown code blocks.`;
  */
 export async function generateQuizQuestions(
   topic: string,
-  userProfile: { style: string; level: string; goals: string }
+  userProfile: { style: string; level: string; goals: string },
+  documentContext?: string
 ) {
   const systemPrompt = `You are Synapse's AI Quiz Master.
 Generate a targeted, interactive 5-question practice quiz based on the user's topic: "${topic}".
@@ -233,7 +238,10 @@ Output MUST be a valid JSON object matching the following structure:
 
 Output ONLY the raw JSON block without markdown code blocks.`;
 
-  const userPrompt = `Spin up a targeted quiz for the topic: "${topic}"`;
+  let userPrompt = `Spin up a targeted quiz for the topic: "${topic}"`;
+  if (documentContext) {
+    userPrompt += `\n\nThe student has provided the following reference material. Base the quiz questions on this content:\n${documentContext}`;
+  }
 
   const responseText = await callDeepSeek(
     [
@@ -368,7 +376,8 @@ Output ONLY the raw JSON block. No markdown fences. No explanation.`;
  */
 export async function generateTutorAnswer(
   question: string,
-  userProfile: { style: string; level: string; goals: string }
+  userProfile: { style: string; level: string; goals: string },
+  documentContext?: string
 ): Promise<string> {
   const systemPrompt = `You are Synapse's Elite Academic AI Tutor.
 Provide a highly personalized, clear, and comprehensive explanation to the student's question.
@@ -384,8 +393,13 @@ Formatting Guidelines:
 - Conclude with a helpful quick summary.
 - Respond directly in rich Markdown.`;
 
+  let userContent = question;
+  if (documentContext) {
+    userContent += `\n\nReference material provided by the student:\n${documentContext}`;
+  }
+
   return await callDeepSeek([
     { role: "system", content: systemPrompt },
-    { role: "user", content: question },
+    { role: "user", content: userContent },
   ]);
 }

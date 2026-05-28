@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { InputWithDocuments } from "@/components/documents";
+import type { UploadedDoc } from "@/components/documents";
 
 interface Quiz {
   _id: string;
@@ -16,14 +18,12 @@ export default function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
+  const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [optimisticQuiz, setOptimisticQuiz] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchQuizzes();
-  }, []);
-
-  const fetchQuizzes = async () => {
+  const fetchQuizzes = useCallback(async () => {
     try {
       const res = await fetch("/api/ai/quiz");
       const data = await res.json();
@@ -33,31 +33,47 @@ export default function QuizzesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchQuizzes();
+  }, [fetchQuizzes]);
+
+  const canGenerate =
+    !generating && (topic.trim() !== "" || attachedDocs.length > 0);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim()) return;
+    if (!canGenerate) return;
     setError("");
     setGenerating(true);
+
+    const quizLabel =
+      topic.trim() || `Quiz from ${attachedDocs.map((d) => d.fileName).join(", ")}`;
+    setOptimisticQuiz(quizLabel);
 
     try {
       const res = await fetch("/api/ai/quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({
+          topic,
+          documentIds: attachedDocs.map((d) => d._id),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to generate quiz");
       } else {
         setTopic("");
+        setAttachedDocs([]);
         await fetchQuizzes();
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch {
+      setError("Something went wrong");
     } finally {
       setGenerating(false);
+      setOptimisticQuiz(null);
     }
   };
 
@@ -67,21 +83,23 @@ export default function QuizzesPage() {
         Practice Quizzes
       </h1>
       <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
-        Generate targeted quizzes on any topic. Test your understanding with AI-crafted questions.
+        Generate targeted quizzes on any topic. Upload documents or enter a topic for AI-crafted questions.
       </p>
 
-      <form onSubmit={handleGenerate} className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8">
-        <input
-          type="text"
+      <form onSubmit={handleGenerate} className="mb-6 sm:mb-8">
+        <InputWithDocuments
+          inputType="input"
           value={topic}
-          onChange={(e) => setTopic(e.target.value)}
+          onChange={setTopic}
           placeholder="e.g. Photosynthesis, Linear Algebra, World War II"
-          className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+          attachedDocs={attachedDocs}
+          onDocsChange={setAttachedDocs}
+          disabled={generating}
         />
         <button
           type="submit"
-          disabled={generating || !topic.trim()}
-          className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          disabled={!canGenerate}
+          className="mt-3 w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {generating ? "Spinning up..." : "Generate Quiz"}
         </button>
@@ -93,11 +111,26 @@ export default function QuizzesPage() {
         </div>
       )}
 
+      {/* Generating progress */}
+      {generating && optimisticQuiz && (
+        <div className="mb-4 p-4 rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-subtle)]">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm font-medium text-[var(--accent)]">
+              Crafting quiz: &quot;{optimisticQuiz}&quot;...
+            </span>
+          </div>
+          <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
+            <div className="h-full bg-[var(--accent)] rounded-full animate-pulse" style={{ width: "50%" }} />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : quizzes.length === 0 ? (
+      ) : quizzes.length === 0 && !generating ? (
         <div className="text-center py-20">
           <p className="text-sm text-[var(--text-muted)]">No quizzes yet. Generate your first one above.</p>
         </div>

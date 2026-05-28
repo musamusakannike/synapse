@@ -1,38 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { InputWithDocuments } from "@/components/documents";
+import type { UploadedDoc } from "@/components/documents";
 
 export default function AskPage() {
   const [question, setQuestion] = useState("");
+  const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [optimisticMessage, setOptimisticMessage] = useState("");
 
-  const handleAsk = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!question.trim()) return;
-    setError("");
-    setAnswer("");
-    setLoading(true);
+  const canSubmit =
+    !loading && (question.trim() !== "" || attachedDocs.length > 0);
 
-    try {
-      const res = await fetch("/api/ai/question", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to get answer");
-      } else {
-        setAnswer(data.answer);
+  const handleAsk = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!canSubmit) return;
+      setError("");
+      setAnswer("");
+      setLoading(true);
+
+      // Optimistic UX
+      const docNames = attachedDocs.map((d) => d.fileName).join(", ");
+      setOptimisticMessage(
+        attachedDocs.length > 0
+          ? `Analyzing ${docNames}${question.trim() ? " with your question" : ""}...`
+          : "Generating personalized answer..."
+      );
+
+      try {
+        const res = await fetch("/api/ai/question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question,
+            documentIds: attachedDocs.map((d) => d._id),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Failed to get answer");
+        } else {
+          setAnswer(data.answer);
+        }
+      } catch {
+        setError("Something went wrong");
+      } finally {
+        setLoading(false);
+        setOptimisticMessage("");
       }
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [canSubmit, question, attachedDocs]
+  );
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-3xl">
@@ -40,20 +62,22 @@ export default function AskPage() {
         Ask AI Tutor
       </h1>
       <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
-        Ask any academic question. The AI adapts its answer to your learning style and level.
+        Ask any academic question. Upload documents for context-aware answers adapted to your learning style.
       </p>
 
       <form onSubmit={handleAsk} className="mb-6 sm:mb-8">
-        <textarea
+        <InputWithDocuments
+          inputType="textarea"
           value={question}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={setQuestion}
           placeholder="e.g. Explain the difference between mitosis and meiosis..."
-          rows={4}
-          className="w-full px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors resize-none"
+          attachedDocs={attachedDocs}
+          onDocsChange={setAttachedDocs}
+          disabled={loading}
         />
         <button
           type="submit"
-          disabled={loading || !question.trim()}
+          disabled={!canSubmit}
           className="mt-3 w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Thinking..." : "Ask Synapse"}
@@ -67,9 +91,16 @@ export default function AskPage() {
       )}
 
       {loading && (
-        <div className="flex items-center gap-3 py-8">
-          <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-[var(--text-muted)]">Generating personalized answer...</span>
+        <div className="mb-6 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-4 h-4 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-[var(--text-muted)]">
+              {optimisticMessage}
+            </span>
+          </div>
+          <div className="w-full h-1 bg-[var(--border)] rounded-full overflow-hidden">
+            <div className="h-full bg-[var(--accent)] rounded-full animate-pulse" style={{ width: "60%" }} />
+          </div>
         </div>
       )}
 

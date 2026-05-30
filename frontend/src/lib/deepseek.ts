@@ -191,10 +191,11 @@ Output only raw JSON block without markdown code blocks.`;
 export async function generateQuizQuestions(
   topic: string,
   userProfile: { style: string; level: string; goals: string },
-  documentContext?: string
+  documentContext?: string,
+  numQuestions: number = 5
 ) {
   const systemPrompt = `You are Synapse's AI Quiz Master.
-Generate a targeted, interactive 5-question practice quiz based on the user's topic: "${topic}".
+Generate a targeted, interactive ${numQuestions}-question practice quiz based on the user's topic: "${topic}".
 
 Student Profile:
 - Grade Level: ${userProfile.level}
@@ -202,11 +203,11 @@ Student Profile:
 - Primary Study Style: ${userProfile.style}
 
 Instructions for Questions:
-- Generate precisely 5 questions.
-- Maintain a balance of types:
-  - At least 2 Multiple-Choice (type: "multiple-choice", must provide an array of 4 "options" strings)
-  - At least 1 True/False (type: "true-false", must provide options: ["True", "False"])
-  - At least 1 Fill-in-the-blank (type: "fill-in-the-blank", options should be empty or omitted. The answer should be a precise single word or short phrase).
+- Generate precisely ${numQuestions} questions.
+- Maintain a balance of types across the ${numQuestions} questions:
+  - Multiple-Choice (type: "multiple-choice", must provide an array of 4 "options" strings) - roughly 50% of the quiz.
+  - True/False (type: "true-false", must provide options: ["True", "False"]) - roughly 25% of the quiz.
+  - Fill-in-the-blank (type: "fill-in-the-blank", options should be empty or omitted. The answer should be a precise single word or short phrase) - roughly 25% of the quiz.
 - Provide a detailed "explanation" for why the answer is correct and why other choices are wrong. Make it educational.
 
 Output MUST be a valid JSON object matching the following structure:

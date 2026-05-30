@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
+import { cn } from "@/lib/cn";
 
 interface Quiz {
   _id: string;
@@ -19,6 +20,7 @@ export default function QuizzesPage() {
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
+  const [numQuestions, setNumQuestions] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [optimisticQuiz, setOptimisticQuiz] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export default function QuizzesPage() {
         body: JSON.stringify({
           topic,
           documentIds: attachedDocs.map((d) => d._id),
+          numQuestions,
         }),
       });
       const data = await res.json();
@@ -96,6 +99,31 @@ export default function QuizzesPage() {
           onDocsChange={setAttachedDocs}
           disabled={generating}
         />
+
+        <div className="mt-4 mb-5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
+            Number of Questions
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {[5, 10, 15, 20].map((num) => (
+              <button
+                key={num}
+                type="button"
+                onClick={() => setNumQuestions(num)}
+                disabled={generating}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-semibold transition-all border",
+                  numQuestions === num
+                    ? "bg-[var(--accent)] text-[var(--bg-primary)] border-[var(--accent)] shadow-sm"
+                    : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
+                )}
+              >
+                {num} {num === 20 ? "Questions (Max)" : "Questions"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           type="submit"
           disabled={!canGenerate}

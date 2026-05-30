@@ -53,6 +53,53 @@ export async function GET(request: Request) {
   }
 }
 
+function extractNumQuestions(topic: string): { topicCleaned: string; count?: number } {
+  const regexes = [
+    // Matches "10 questions", "10 qns", "10 items", "10 quiz questions", etc.
+    /(?:^|\b)(\d+)\s*(?:quiz\s+)?(?:questions?|qns?|items?)\b/i,
+    // Matches "questions: 10", "questions 10", "qns 10", etc.
+    /\b(?:questions?|qns?|items?)\b\s*(?:of|about|on|for)?\s*(\d+)\b/i,
+    // Matches "generate 10 questions", "make 10 questions", etc.
+    /\b(?:generate|make|create)\s+(\d+)\s*(?:quiz\s+)?(?:questions?|qns?|items?)\b/i
+  ];
+
+  for (const regex of regexes) {
+    const match = topic.match(regex);
+    if (match) {
+      const count = parseInt(match[1], 10);
+      if (!isNaN(count) && count > 0) {
+        // Remove the matched part
+        let topicCleaned = topic.replace(match[0], "");
+        
+        // Clean multiple times to handle successive leading patterns (like "generate" then "about")
+        let prev = "";
+        while (topicCleaned !== prev) {
+          prev = topicCleaned;
+          topicCleaned = topicCleaned
+            .trim()
+            // Remove leading punctuation
+            .replace(/^[-—–,:;()\[\]{}.]+\s*/g, "")
+            // Remove leading helper verbs
+            .replace(/^(?:generate|make|create|spin\s+up|build|give\s+me)\s+/i, "")
+            // Remove leading prepositions
+            .replace(/^(?:on|about|for|of|to|in|with|from)\s+/i, "")
+            // Remove trailing punctuation
+            .replace(/\s*[-—–,:;()\[\]{}.]+$/g, "")
+            // Remove empty parentheses/brackets/braces
+            .replace(/\(\s*\)/g, "")
+            .replace(/\[\s*\]/g, "")
+            .replace(/\{\s*\}/g, "");
+        }
+        
+        topicCleaned = topicCleaned.replace(/\s+/g, " ").trim();
+        return { topicCleaned: topicCleaned || topic, count };
+      }
+    }
+  }
+
+  return { topicCleaned: topic };
+}
+
 /**
  * POST spin up a new quiz
  */
@@ -63,7 +110,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { topic, documentIds } = await request.json();
+    const body = await request.json();
+    const { topic, documentIds, numQuestions } = body;
     if ((!topic || topic.trim() === "") && (!documentIds || documentIds.length === 0)) {
       return NextResponse.json({ error: "Please provide a topic or upload a document" }, { status: 400 });
     }
@@ -100,15 +148,41 @@ export async function POST(request: Request) {
       documentContext = await buildDocumentContext(documentIds, userId);
     }
 
+    // Parse question count and clean up topic
+    let topicText = topic?.trim() || "";
+    let parsedCount: number | undefined;
+
+    if (topicText) {
+      const parsed = extractNumQuestions(topicText);
+      topicText = parsed.topicCleaned;
+      parsedCount = parsed.count;
+    }
+
+    // Determine final question count: parsedCount takes priority if present, else body param, fallback to 5
+    let finalNumQuestions = 5;
+    if (parsedCount !== undefined) {
+      finalNumQuestions = parsedCount;
+    } else if (numQuestions !== undefined) {
+      finalNumQuestions = parseInt(numQuestions, 10) || 5;
+    }
+
+    // Enforce limits: min 1, max 20 (cap at max possible one)
+    if (finalNumQuestions > 20) {
+      finalNumQuestions = 20;
+    } else if (finalNumQuestions < 1) {
+      finalNumQuestions = 5;
+    }
+
+    const finalTopic = topicText || "Quiz based on the uploaded document(s)";
+
     // Spin questions using DeepSeek
-    const topicText = topic?.trim() || "Quiz based on the uploaded document(s)";
-    const quizData = await generateQuizQuestions(topicText, userProfile, documentContext);
+    const quizData = await generateQuizQuestions(finalTopic, userProfile, documentContext, finalNumQuestions);
 
     // Save to MongoDB
     const result = await db.collection("quizzes").insertOne({
       userId,
-      title: quizData.title || `Quiz: ${topicText}`,
-      topic: topicText,
+      title: quizData.title || `Quiz: ${finalTopic}`,
+      topic: finalTopic,
       questions: quizData.questions,
       attempts: [],
       createdAt: new Date(),

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { cn } from "@/lib/cn";
+import { useAuth } from "@/lib/auth-context";
 
 interface Quiz {
   _id: string;
@@ -15,7 +16,14 @@ interface Quiz {
   createdAt: string;
 }
 
+interface UserLimits {
+  isPremium: boolean;
+  maxQuestions: number;
+  premiumMaxQuestions: number;
+}
+
 export default function QuizzesPage() {
+  const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
@@ -24,12 +32,22 @@ export default function QuizzesPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [optimisticQuiz, setOptimisticQuiz] = useState<string | null>(null);
+  const [userLimits, setUserLimits] = useState<UserLimits>({
+    isPremium: false,
+    maxQuestions: 15,
+    premiumMaxQuestions: 100,
+  });
 
   const fetchQuizzes = useCallback(async () => {
     try {
       const res = await fetch("/api/ai/quiz");
       const data = await res.json();
-      if (data.success) setQuizzes(data.quizzes || []);
+      if (data.success) {
+        setQuizzes(data.quizzes || []);
+        if (data.userLimits) {
+          setUserLimits(data.userLimits);
+        }
+      }
     } catch {
       // silent
     } finally {
@@ -40,6 +58,17 @@ export default function QuizzesPage() {
   useEffect(() => {
     fetchQuizzes();
   }, [fetchQuizzes]);
+
+  // Update limits when auth context user changes
+  useEffect(() => {
+    if (user) {
+      setUserLimits(prev => ({
+        ...prev,
+        isPremium: user.premium,
+        maxQuestions: user.premium ? 100 : 15,
+      }));
+    }
+  }, [user]);
 
   const canGenerate =
     !generating && (topic.trim() !== "" || attachedDocs.length > 0);
@@ -103,9 +132,13 @@ export default function QuizzesPage() {
         <div className="mt-4 mb-5">
           <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
             Number of Questions
+            {!userLimits.isPremium && (
+              <span className="ml-2 text-[var(--accent)]">(Premium: up to {userLimits.premiumMaxQuestions})</span>
+            )}
           </label>
           <div className="flex flex-wrap gap-2">
-            {[5, 10, 15, 20].map((num) => (
+            {/* Free tier options */}
+            {[5, 10, 15].map((num) => (
               <button
                 key={num}
                 type="button"
@@ -118,10 +151,44 @@ export default function QuizzesPage() {
                     : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
                 )}
               >
-                {num} {num === 20 ? "Questions (Max)" : "Questions"}
+                {num} Questions
               </button>
             ))}
+            {/* Premium options - shown to all but disabled for non-premium */}
+            {[30, 50, 100].map((num) => {
+              const isLocked = !userLimits.isPremium || num > userLimits.maxQuestions;
+              return (
+                <button
+                  key={num}
+                  type="button"
+                  onClick={() => !isLocked && setNumQuestions(num)}
+                  disabled={generating || isLocked}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-xs font-semibold transition-all border relative",
+                    numQuestions === num
+                      ? "bg-[var(--accent)] text-[var(--bg-primary)] border-[var(--accent)] shadow-sm"
+                      : isLocked
+                      ? "bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-[var(--border)] cursor-not-allowed"
+                      : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
+                  )}
+                >
+                  {num === 100 ? "100 Questions" : `${num} Questions`}
+                  {isLocked && (
+                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-[var(--accent)] rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-[var(--bg-primary)]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+          {!userLimits.isPremium && (
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              Subscribe to unlock up to {userLimits.premiumMaxQuestions} questions per quiz.
+            </p>
+          )}
         </div>
 
         <button

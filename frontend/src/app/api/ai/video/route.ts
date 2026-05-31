@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateVideoScript } from "@/lib/deepseek";
+import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 import { generateTTSBuffer } from "@/lib/tts";
 import { isR2Configured, uploadToR2 } from "@/lib/r2";
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { topic, styleTheme, numScenes } = await request.json();
+    const { topic, styleTheme, numScenes, documentIds } = await request.json();
     if (!topic || topic.trim() === "") {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
@@ -97,8 +98,14 @@ export async function POST(request: Request) {
       goals: user.goals || "",
     };
 
+    // Build document context if provided
+    let documentContext = "";
+    if (documentIds && documentIds.length > 0) {
+      documentContext = await buildDocumentContext(documentIds, userId);
+    }
+
     // Generate video scene script outline
-    const videoScript = await generateVideoScript(topic, targetTheme, userProfile, targetNumScenes);
+    const videoScript = await generateVideoScript(topic, targetTheme, userProfile, targetNumScenes, documentContext);
 
     // Save Video Project
     const result = await db.collection("videos").insertOne({

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { InputWithDocuments } from "@/components/documents";
+import type { UploadedDoc } from "@/components/documents";
 
 interface Video {
   _id: string;
@@ -26,6 +28,7 @@ export default function VideosPage() {
   const [topic, setTopic] = useState("");
   const [theme, setTheme] = useState("emerald");
   const [numScenes, setNumScenes] = useState(5);
+  const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,7 +50,7 @@ export default function VideosPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim()) return;
+    if (!topic.trim() && attachedDocs.length === 0) return;
     setError("");
     setGenerating(true);
 
@@ -55,13 +58,14 @@ export default function VideosPage() {
       const res = await fetch("/api/ai/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, styleTheme: theme, numScenes }),
+        body: JSON.stringify({ topic, styleTheme: theme, numScenes, documentIds: attachedDocs.map((d) => d._id) }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Failed to generate video");
       } else {
         setTopic("");
+        setAttachedDocs([]);
         await fetchVideos();
       }
     } catch (err: any) {
@@ -90,18 +94,20 @@ export default function VideosPage() {
 
       {user?.premium && (
         <form onSubmit={handleGenerate} className="flex flex-col gap-3 mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
+          <div className="flex flex-col gap-3">
+            <InputWithDocuments
+              inputType="input"
               value={topic}
-              onChange={(e) => setTopic(e.target.value)}
+              onChange={setTopic}
               placeholder="e.g. How neural networks work"
-              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              attachedDocs={attachedDocs}
+              onDocsChange={setAttachedDocs}
+              disabled={generating}
             />
             <button
               type="submit"
-              disabled={generating || !topic.trim()}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              disabled={generating || (!topic.trim() && attachedDocs.length === 0)}
+              className="w-full sm:w-auto self-start px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {generating ? "Generating..." : "Create Video"}
             </button>

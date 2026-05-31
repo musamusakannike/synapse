@@ -358,8 +358,12 @@ Output ONLY the raw JSON block without markdown code blocks.`;
 export async function generateVideoScript(
   topic: string,
   styleTheme: string,
-  userProfile: { style: string; level: string; goals: string }
+  userProfile: { style: string; level: string; goals: string },
+  numScenes: number = 5
 ) {
+  // Clamp to supported range
+  const sceneCount = Math.max(3, Math.min(8, numScenes));
+
   const systemPrompt = `You are Synapse's AI Explanatory Video Director — an industry-leading expert at crafting premium educational videos that feel handmade and dynamic.
 
 Create a rich, multi-scene explanatory video on: "${topic}".
@@ -368,6 +372,7 @@ Student Profile:
 - Grade Level: ${userProfile.level}
 - Theme: ${styleTheme}
 - Learning Style: ${userProfile.style}
+- Learning Goals: ${userProfile.goals}
 
 CRITICAL RULE: Every scene MUST use a DIFFERENT layoutType. No two scenes may repeat the same layoutType.
 Choose the layoutType that would make a student most easily understand the specific content of that scene.
@@ -390,11 +395,11 @@ Available animationStyles (choose the best fit per scene):
 - "typewriter": Text appears character by character
 - "reveal-left-to-right": A reveal wipe from left to right
 
-Generate exactly 5 scenes that tell a complete educational story from introduction to conclusion.
+Generate exactly ${sceneCount} scenes that tell a complete educational story from introduction to conclusion.
 Each scene narration should be 25-45 words — natural voiceover language.
 Scene duration: 12-18 seconds each.
 
-Output MUST be a valid JSON matching this exact format — include ONLY the fields relevant to the chosen layoutType (skip irrelevant optional fields):
+Output MUST be a valid JSON with exactly ${sceneCount} scene objects. Include ONLY the fields relevant to the chosen layoutType (skip irrelevant optional fields). Example structure (adapt scene count to ${sceneCount}):
 {
   "title": "A premium, custom video title",
   "scenes": [
@@ -420,27 +425,6 @@ Output MUST be a valid JSON matching this exact format — include ONLY the fiel
     },
     {
       "sceneNumber": 3,
-      "layoutType": "timeline",
-      "animationStyle": "reveal-left-to-right",
-      "title": "How It Works",
-      "timelineSteps": ["Step 1: ...", "Step 2: ...", "Step 3: ...", "Step 4: ..."],
-      "illustrationPrompt": "...",
-      "narration": "...",
-      "durationSeconds": 16
-    },
-    {
-      "sceneNumber": 4,
-      "layoutType": "comparison",
-      "animationStyle": "slide-from-right",
-      "title": "Side by Side",
-      "comparisonLeft": { "label": "Left Label", "items": ["Item A", "Item B", "Item C"] },
-      "comparisonRight": { "label": "Right Label", "items": ["Item D", "Item E", "Item F"] },
-      "illustrationPrompt": "...",
-      "narration": "...",
-      "durationSeconds": 14
-    },
-    {
-      "sceneNumber": 5,
       "layoutType": "cinematic-quote",
       "animationStyle": "fade-up",
       "title": "Key Takeaway",

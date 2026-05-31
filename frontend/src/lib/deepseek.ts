@@ -445,15 +445,33 @@ Output ONLY the raw JSON block. No markdown fences. No explanation.`;
     userPrompt += `\n\nThe student has provided the following reference material. Ground the video script in this content where relevant:\n${documentContext}`;
   }
 
-  const responseText = await callDeepSeek(
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    true
-  );
+  const messages: DeepSeekMessage[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ];
 
-  return JSON.parse(responseText);
+  const MAX_ATTEMPTS = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const responseText = await callDeepSeek(messages, true);
+      const parsed = JSON.parse(responseText);
+
+      if (!parsed.scenes || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
+        throw new Error(`AI returned an invalid scene structure on attempt ${attempt}.`);
+      }
+
+      return parsed;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`generateVideoScript attempt ${attempt} failed: ${err.message}`);
+    }
+  }
+
+  throw new Error(
+    `Failed to generate a valid video script after ${MAX_ATTEMPTS} attempts. Last error: ${lastError?.message}`
+  );
 }
 
 /**

@@ -25,6 +25,7 @@ export default function VideosPage() {
   const [loading, setLoading] = useState(true);
   const [topic, setTopic] = useState("");
   const [theme, setTheme] = useState("emerald");
+  const [numScenes, setNumScenes] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,7 +55,7 @@ export default function VideosPage() {
       const res = await fetch("/api/ai/video", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, styleTheme: theme }),
+        body: JSON.stringify({ topic, styleTheme: theme, numScenes }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -88,31 +89,62 @@ export default function VideosPage() {
       </p>
 
       {user?.premium && (
-        <form onSubmit={handleGenerate} className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-8">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. How neural networks work"
-            className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-          />
-          <select
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-            className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-          >
-            <option value="emerald">Emerald</option>
-            <option value="lime">Lime</option>
-            <option value="slate">Slate</option>
-            <option value="white">White</option>
-          </select>
-          <button
-            type="submit"
-            disabled={generating || !topic.trim()}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {generating ? "Generating..." : "Create Video"}
-          </button>
+        <form onSubmit={handleGenerate} className="flex flex-col gap-3 mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. How neural networks work"
+              className="flex-1 px-4 py-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={generating || !topic.trim()}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {generating ? "Generating..." : "Create Video"}
+            </button>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                Theme
+              </label>
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                className="px-4 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+              >
+                <option value="emerald">Emerald</option>
+                <option value="lime">Lime</option>
+                <option value="slate">Slate</option>
+                <option value="white">White</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
+                Scenes (3–8)
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {[3, 4, 5, 6, 7, 8].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setNumScenes(n)}
+                    disabled={generating}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
+                      numScenes === n
+                        ? "bg-[var(--accent)] text-[var(--bg-primary)] border-[var(--accent)]"
+                        : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </form>
       )}
 

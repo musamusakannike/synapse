@@ -66,12 +66,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { topic, styleTheme } = await request.json();
+    const { topic, styleTheme, numScenes } = await request.json();
     if (!topic || topic.trim() === "") {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
 
     const targetTheme = styleTheme || "emerald"; // emerald, lime, slate, white
+    const targetNumScenes = Math.max(3, Math.min(8, Number(numScenes) || 5));
 
     const { db } = await connectToDatabase();
     const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
     };
 
     // Generate video scene script outline
-    const videoScript = await generateVideoScript(topic, targetTheme, userProfile);
+    const videoScript = await generateVideoScript(topic, targetTheme, userProfile, targetNumScenes);
 
     // Save Video Project
     const result = await db.collection("videos").insertOne({

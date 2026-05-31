@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
+import { formatMarkdown } from "@/lib/markdown";
 
 interface Lesson {
   title: string;
@@ -221,24 +222,4 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       </div>
     </div>
   );
-}
-
-function formatMarkdown(md: string): string {
-  return md
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
-    .replace(/`([^`]+)`/gim, '<code>$1</code>')
-    .replace(/```[\s\S]*?```/gim, (match) => {
-      const code = match.replace(/```\w*\n?/g, '').replace(/```/g, '');
-      return `<pre><code>${code}</code></pre>`;
-    })
-    .replace(/^\- (.*$)/gim, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br/>')
-    .replace(/^(?!<[hupol])/gm, '<p>')
-    .replace(/(?<![>])$/gm, '</p>');
 }

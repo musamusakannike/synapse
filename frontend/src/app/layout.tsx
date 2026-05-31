@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 const outfit = Outfit({

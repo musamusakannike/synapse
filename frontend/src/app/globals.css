@@ -130,3 +130,92 @@ button {
   pointer-events: none;
   z-index: 0;
 }
+
+/* Rich Math and Markdown Enhancements for prose containers */
+.prose {
+  /* GFM Tables */
+  & table {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    text-align: left;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
+  & thead {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  & th {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  & td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+  }
+
+  & tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.015);
+  }
+
+  /* Unordered lists */
+  & ul {
+    list-style-type: disc !important;
+    margin: 1.25rem 0 !important;
+    padding-left: 1.5rem !important;
+  }
+
+  & ul li {
+    margin: 0.375rem 0 !important;
+    color: var(--text-secondary) !important;
+  }
+
+  /* Ordered lists */
+  & ol {
+    list-style-type: decimal !important;
+    margin: 1.25rem 0 !important;
+    padding-left: 1.5rem !important;
+  }
+
+  & ol li {
+    margin: 0.375rem 0 !important;
+    color: var(--text-secondary) !important;
+  }
+
+  /* Blockquotes */
+  & blockquote {
+    margin: 1.5rem 0;
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-left: 3px solid var(--accent);
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-top-right-radius: var(--radius-sm);
+    border-bottom-right-radius: var(--radius-sm);
+  }
+}
+
+/* Thin horizontal scrollbar for overflow equations */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+

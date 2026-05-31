@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase, QuizDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
-import { generateQuizQuestions } from "@/lib/deepseek";
+import { generateQuizQuestions, generateQuizQuestionsChunked } from "@/lib/deepseek";
 import { checkAndIncrementUsage } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
+
+// Question limits
+const FREE_MAX_QUESTIONS = 15;
+const PREMIUM_MAX_QUESTIONS = 100;
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -29,6 +33,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const quizId = searchParams.get("id");
 
+    // Get user to check premium status
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(userId) },
+      { projection: { premium: 1 } }
+    );
+    const isPremium = user?.premium || false;
+
     if (quizId) {
       const quiz = await db.collection("quizzes").findOne({
         _id: new ObjectId(quizId),
@@ -37,7 +48,15 @@ export async function GET(request: Request) {
       if (!quiz) {
         return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
       }
-      return NextResponse.json({ success: true, quiz });
+      return NextResponse.json({
+        success: true,
+        quiz,
+        userLimits: {
+          isPremium,
+          maxQuestions: isPremium ? PREMIUM_MAX_QUESTIONS : FREE_MAX_QUESTIONS,
+          premiumMaxQuestions: PREMIUM_MAX_QUESTIONS,
+        }
+      });
     }
 
     const quizzes = await db
@@ -46,7 +65,15 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return NextResponse.json({ success: true, quizzes });
+    return NextResponse.json({
+      success: true,
+      quizzes,
+      userLimits: {
+        isPremium,
+        maxQuestions: isPremium ? PREMIUM_MAX_QUESTIONS : FREE_MAX_QUESTIONS,
+        premiumMaxQuestions: PREMIUM_MAX_QUESTIONS,
+      }
+    });
   } catch (error: any) {
     console.error("GET Quiz Error:", error);
     return NextResponse.json({ error: "Failed to retrieve quiz" }, { status: 500 });
@@ -166,17 +193,27 @@ export async function POST(request: Request) {
       finalNumQuestions = parseInt(numQuestions, 10) || 5;
     }
 
-    // Enforce limits: min 1, max 20 (cap at max possible one)
-    if (finalNumQuestions > 20) {
-      finalNumQuestions = 20;
+    // Get user premium status to enforce limits
+    const isPremium = user?.premium || false;
+    const userMaxQuestions = isPremium ? PREMIUM_MAX_QUESTIONS : FREE_MAX_QUESTIONS;
+
+    // Enforce limits: min 1, max based on subscription
+    if (finalNumQuestions > userMaxQuestions) {
+      finalNumQuestions = userMaxQuestions;
     } else if (finalNumQuestions < 1) {
       finalNumQuestions = 5;
     }
 
     const finalTopic = topicText || "Quiz based on the uploaded document(s)";
 
-    // Spin questions using DeepSeek
-    const quizData = await generateQuizQuestions(finalTopic, userProfile, documentContext, finalNumQuestions);
+    // Spin questions using DeepSeek (chunked for large quizzes)
+    let quizData;
+    if (finalNumQuestions > 20) {
+      // Use chunked generation for large quizzes to ensure exact count
+      quizData = await generateQuizQuestionsChunked(finalTopic, userProfile, documentContext, finalNumQuestions);
+    } else {
+      quizData = await generateQuizQuestions(finalTopic, userProfile, documentContext, finalNumQuestions);
+    }
 
     // Save to MongoDB
     const result = await db.collection("quizzes").insertOne({
@@ -193,6 +230,11 @@ export async function POST(request: Request) {
       quizId: result.insertedId.toString(),
       generationsToday: usage.generationsToday,
       limit: usage.limit,
+      userLimits: {
+        isPremium,
+        maxQuestions: userMaxQuestions,
+        premiumMaxQuestions: PREMIUM_MAX_QUESTIONS,
+      }
     });
   } catch (error: any) {
     console.error("POST Quiz Error:", error);

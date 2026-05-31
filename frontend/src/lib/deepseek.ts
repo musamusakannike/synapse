@@ -256,6 +256,102 @@ Output ONLY the raw JSON block without markdown code blocks.`;
 }
 
 /**
+ * Generate quiz questions in chunks for large quizzes.
+ * This ensures the AI generates exactly the requested number of questions
+ * by splitting generation into smaller batches and combining them.
+ */
+export async function generateQuizQuestionsChunked(
+  topic: string,
+  userProfile: { style: string; level: string; goals: string },
+  documentContext?: string,
+  numQuestions: number = 50
+) {
+  const CHUNK_SIZE = 20;
+  const chunks: number[] = [];
+
+  // Calculate chunk sizes
+  let remaining = numQuestions;
+  while (remaining > 0) {
+    const chunkSize = Math.min(remaining, CHUNK_SIZE);
+    chunks.push(chunkSize);
+    remaining -= chunkSize;
+  }
+
+  const allQuestions: any[] = [];
+  let quizTitle = "";
+
+  // Generate each chunk sequentially to maintain topic coherence
+  for (let i = 0; i < chunks.length; i++) {
+    const chunkSize = chunks[i];
+    const chunkNumber = i + 1;
+    const totalChunks = chunks.length;
+
+    const systemPrompt = `You are Synapse's AI Quiz Master.
+Generate exactly ${chunkSize} quiz questions for chunk ${chunkNumber} of ${totalChunks}.
+Topic: "${topic}"
+Student Profile:
+- Grade Level: ${userProfile.level}
+- Learning Goals: ${userProfile.goals}
+- Primary Study Style: ${userProfile.style}
+
+${totalChunks > 1 ? `This is part ${chunkNumber} of a ${numQuestions}-question quiz. Focus on different aspects than previous parts to avoid repetition.` : ""}
+
+Instructions:
+- Generate precisely ${chunkSize} questions.
+- Maintain a balance: ~50% Multiple-Choice, ~25% True/False, ~25% Fill-in-the-blank.
+- For Multiple-Choice: provide exactly 4 options.
+- For True/False: options must be ["True", "False"].
+- For Fill-in-the-blank: options should be empty, answer is a single word or short phrase.
+- Provide detailed educational explanations.
+
+Output MUST be valid JSON:
+{
+  "title": "Quiz title (only include in part 1, empty string for subsequent parts)",
+  "questions": [
+    {
+      "question": "The question text...",
+      "type": "multiple-choice",
+      "options": ["A", "B", "C", "D"],
+      "answer": "Correct answer",
+      "explanation": "Educational explanation..."
+    }
+  ]
+}
+
+Output ONLY the raw JSON block without markdown code blocks.`;
+
+    let userPrompt = `Generate ${chunkSize} quiz questions for the topic: "${topic}"`;
+    if (documentContext) {
+      userPrompt += `\n\nReference material:\n${documentContext}`;
+    }
+
+    const responseText = await callDeepSeek(
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      true
+    );
+
+    const chunkData = JSON.parse(responseText);
+    if (chunkData.questions && Array.isArray(chunkData.questions)) {
+      allQuestions.push(...chunkData.questions);
+    }
+    if (chunkData.title && !quizTitle) {
+      quizTitle = chunkData.title;
+    }
+  }
+
+  // Trim to exact requested count in case of over-generation
+  const finalQuestions = allQuestions.slice(0, numQuestions);
+
+  return {
+    title: quizTitle || `Quiz: ${topic}`,
+    questions: finalQuestions,
+  };
+}
+
+/**
  * 4. Generate AI Explanatory Video Script & Scenes — Adaptive Layout System
  * Each scene gets its own AI-chosen layout type, animation style, and layout-specific data.
  */

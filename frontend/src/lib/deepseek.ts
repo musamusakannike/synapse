@@ -359,7 +359,8 @@ export async function generateVideoScript(
   topic: string,
   styleTheme: string,
   userProfile: { style: string; level: string; goals: string },
-  numScenes: number = 5
+  numScenes: number = 5,
+  documentContext?: string
 ) {
   // Clamp to supported range
   const sceneCount = Math.max(3, Math.min(8, numScenes));
@@ -439,7 +440,10 @@ Output MUST be a valid JSON with exactly ${sceneCount} scene objects. Include ON
 
 Output ONLY the raw JSON block. No markdown fences. No explanation.`;
 
-  const userPrompt = `Create a premium adaptive explanatory video for the topic: "${topic}". Make each scene visually and structurally unique.`;
+  let userPrompt = `Create a premium adaptive explanatory video for the topic: "${topic}". Make each scene visually and structurally unique.`;
+  if (documentContext) {
+    userPrompt += `\n\nThe student has provided the following reference material. Ground the video script in this content where relevant:\n${documentContext}`;
+  }
 
   const responseText = await callDeepSeek(
     [

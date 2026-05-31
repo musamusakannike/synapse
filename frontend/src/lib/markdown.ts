@@ -19,21 +19,21 @@ export function formatMarkdown(md: string): string {
 
   // 1. Extract block math: \[ ... \]
   let processed = md.replace(/\\\[([\s\S]*?)\\\]/g, (_, math) => {
-    const placeholder = `__BLOCK_MATH_PLACEHOLDER_${blockMathBlocks.length}__`;
+    const placeholder = `MATHBLOCKPLACEHOLDER${blockMathBlocks.length}`;
     blockMathBlocks.push(math.trim());
     return placeholder;
   });
 
   // 2. Extract block math: $$ ... $$
   processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
-    const placeholder = `__BLOCK_MATH_PLACEHOLDER_${blockMathBlocks.length}__`;
+    const placeholder = `MATHBLOCKPLACEHOLDER${blockMathBlocks.length}`;
     blockMathBlocks.push(math.trim());
     return placeholder;
   });
 
   // 3. Extract inline math: \( ... \)
   processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, (_, math) => {
-    const placeholder = `__INLINE_MATH_PLACEHOLDER_${inlineMathBlocks.length}__`;
+    const placeholder = `MATHINLINEPLACEHOLDER${inlineMathBlocks.length}`;
     inlineMathBlocks.push(math.trim());
     return placeholder;
   });
@@ -48,7 +48,7 @@ export function formatMarkdown(md: string): string {
 
   // 5. Restore block math with KaTeX
   blockMathBlocks.forEach((math, index) => {
-    const placeholder = `__BLOCK_MATH_PLACEHOLDER_${index}__`;
+    const placeholder = `MATHBLOCKPLACEHOLDER${index}`;
     try {
       const rendered = katex.renderToString(math, {
         displayMode: true,
@@ -68,7 +68,7 @@ export function formatMarkdown(md: string): string {
 
   // 6. Restore inline math with KaTeX
   inlineMathBlocks.forEach((math, index) => {
-    const placeholder = `__INLINE_MATH_PLACEHOLDER_${index}__`;
+    const placeholder = `MATHINLINEPLACEHOLDER${index}`;
     try {
       const rendered = katex.renderToString(math, {
         displayMode: false,

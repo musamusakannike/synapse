@@ -225,7 +225,8 @@ export async function POST(request: Request) {
       createdAt: new Date(),
     });
 
-    return NextResponse.json({
+    // Build response with optional warning for partial generation
+    const response: any = {
       success: true,
       quizId: result.insertedId.toString(),
       generationsToday: usage.generationsToday,
@@ -235,7 +236,14 @@ export async function POST(request: Request) {
         maxQuestions: userMaxQuestions,
         premiumMaxQuestions: PREMIUM_MAX_QUESTIONS,
       }
-    });
+    };
+
+    // Add warning if some chunks failed but we still got partial results
+    if (quizData.failedChunks && quizData.failedChunks > 0) {
+      response.warning = `Generated ${quizData.generatedCount} of ${quizData.requestedCount} questions due to AI processing issues. You can regenerate for more questions.`;
+    }
+
+    return NextResponse.json(response);
   } catch (error: any) {
     console.error("POST Quiz Error:", error);
     return NextResponse.json({ error: error.message || "Failed to spin up quiz" }, { status: 500 });

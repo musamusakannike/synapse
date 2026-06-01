@@ -1,6 +1,49 @@
 import axios from "axios";
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+/**
+ * Safely parse JSON from AI response, handling common formatting issues:
+ * - Markdown code blocks (```json ... ```)
+ * - Trailing/leading whitespace
+ * - Truncated responses
+ * Returns { data, error } tuple for safe handling
+ */
+function safeJsonParse(rawText: string): { data: any | null; error: string | null } {
+  if (!rawText || typeof rawText !== "string") {
+    return { data: null, error: "Empty or invalid response" };
+  }
+
+  let cleaned = rawText.trim();
+
+  // Extract JSON from markdown code blocks
+  const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonBlockMatch) {
+    cleaned = jsonBlockMatch[1].trim();
+  }
+
+  // Remove any text before the first { or after the last }
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+  }
+
+  try {
+    const data = JSON.parse(cleaned);
+    return { data, error: null };
+  } catch (err: any) {
+    // Provide context about where the error might be
+    const errorPos = err.message?.match(/position\s+(\d+)/)?.[1];
+    const context = errorPos
+      ? ` around "${cleaned.substring(Math.max(0, parseInt(errorPos) - 20), parseInt(errorPos) + 20)}"`
+      : "";
+    return {
+      data: null,
+      error: `JSON parse error: ${err.message}${context}. Raw length: ${cleaned.length}`,
+    };
+  }
+}
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 const BASE_URL = "https://api.deepseek.com";
 
@@ -119,7 +162,11 @@ Important Instructions:
     true
   );
 
-  return JSON.parse(responseText);
+  const { data, error } = safeJsonParse(responseText);
+  if (error) {
+    throw new Error(`Failed to parse course outline: ${error}`);
+  }
+  return data;
 }
 
 /**
@@ -182,7 +229,11 @@ Output only raw JSON block without markdown code blocks.`;
     true
   );
 
-  return JSON.parse(responseText);
+  const { data, error } = safeJsonParse(responseText);
+  if (error) {
+    throw new Error(`Failed to parse lesson content: ${error}`);
+  }
+  return data;
 }
 
 /**
@@ -252,13 +303,18 @@ Output ONLY the raw JSON block without markdown code blocks.`;
     true
   );
 
-  return JSON.parse(responseText);
+  const { data, error } = safeJsonParse(responseText);
+  if (error) {
+    throw new Error(`Failed to parse quiz questions: ${error}`);
+  }
+  return data;
 }
 
 /**
  * Generate quiz questions in chunks for large quizzes.
  * This ensures the AI generates exactly the requested number of questions
  * by splitting generation into smaller batches and combining them.
+ * Includes retry logic and graceful degradation for failed chunks.
  */
 export async function generateQuizQuestionsChunked(
   topic: string,
@@ -266,7 +322,8 @@ export async function generateQuizQuestionsChunked(
   documentContext?: string,
   numQuestions: number = 50
 ) {
-  const CHUNK_SIZE = 20;
+  const CHUNK_SIZE = 15; // Reduced from 20 for better reliability
+  const MAX_RETRIES = 3;
   const chunks: number[] = [];
 
   // Calculate chunk sizes
@@ -279,6 +336,7 @@ export async function generateQuizQuestionsChunked(
 
   const allQuestions: any[] = [];
   let quizTitle = "";
+  let failedChunks = 0;
 
   // Generate each chunk sequentially to maintain topic coherence
   for (let i = 0; i < chunks.length; i++) {
@@ -303,6 +361,7 @@ Instructions:
 - For True/False: options must be ["True", "False"].
 - For Fill-in-the-blank: options should be empty, answer is a single word or short phrase.
 - Provide detailed educational explanations.
+- CRITICAL: Your response must be valid JSON only. No markdown, no extra text.
 
 Output MUST be valid JSON:
 {
@@ -325,29 +384,81 @@ Output ONLY the raw JSON block without markdown code blocks.`;
       userPrompt += `\n\nReference material:\n${documentContext}`;
     }
 
-    const responseText = await callDeepSeek(
-      [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      true
-    );
+    // Retry logic for each chunk
+    let chunkSuccess = false;
+    let lastError = "";
 
-    const chunkData = JSON.parse(responseText);
-    if (chunkData.questions && Array.isArray(chunkData.questions)) {
-      allQuestions.push(...chunkData.questions);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const responseText = await callDeepSeek(
+          [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          true
+        );
+
+        const { data: chunkData, error } = safeJsonParse(responseText);
+
+        if (error) {
+          lastError = error;
+          console.warn(`Chunk ${chunkNumber} attempt ${attempt} failed: ${error}`);
+          if (attempt < MAX_RETRIES) continue;
+          break;
+        }
+
+        if (!chunkData || !chunkData.questions || !Array.isArray(chunkData.questions)) {
+          lastError = "Invalid response structure - missing questions array";
+          console.warn(`Chunk ${chunkNumber} attempt ${attempt}: ${lastError}`);
+          if (attempt < MAX_RETRIES) continue;
+          break;
+        }
+
+        // Validate question count
+        if (chunkData.questions.length !== chunkSize) {
+          console.warn(
+            `Chunk ${chunkNumber} returned ${chunkData.questions.length} questions, expected ${chunkSize}`
+          );
+        }
+
+        allQuestions.push(...chunkData.questions);
+        if (chunkData.title && !quizTitle) {
+          quizTitle = chunkData.title;
+        }
+        chunkSuccess = true;
+        break;
+      } catch (err: any) {
+        lastError = err.message || "Unknown error";
+        console.warn(`Chunk ${chunkNumber} attempt ${attempt} error: ${lastError}`);
+        if (attempt < MAX_RETRIES) continue;
+      }
     }
-    if (chunkData.title && !quizTitle) {
-      quizTitle = chunkData.title;
+
+    if (!chunkSuccess) {
+      failedChunks++;
+      console.error(`Chunk ${chunkNumber} failed after ${MAX_RETRIES} attempts: ${lastError}`);
     }
+  }
+
+  // Warn if any chunks failed
+  if (failedChunks > 0) {
+    console.warn(`${failedChunks} of ${chunks.length} chunks failed. Generated ${allQuestions.length}/${numQuestions} questions.`);
   }
 
   // Trim to exact requested count in case of over-generation
   const finalQuestions = allQuestions.slice(0, numQuestions);
 
+  // If we have no questions at all, throw an error
+  if (finalQuestions.length === 0) {
+    throw new Error("Failed to generate any valid quiz questions. Please try again.");
+  }
+
   return {
     title: quizTitle || `Quiz: ${topic}`,
     questions: finalQuestions,
+    generatedCount: finalQuestions.length,
+    requestedCount: numQuestions,
+    failedChunks,
   };
 }
 
@@ -456,9 +567,13 @@ Output ONLY the raw JSON block. No markdown fences. No explanation.`;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const responseText = await callDeepSeek(messages, true);
-      const parsed = JSON.parse(responseText);
+      const { data: parsed, error } = safeJsonParse(responseText);
 
-      if (!parsed.scenes || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
+      if (error) {
+        throw new Error(`JSON parse failed: ${error}`);
+      }
+
+      if (!parsed || !parsed.scenes || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
         throw new Error(`AI returned an invalid scene structure on attempt ${attempt}.`);
       }
 

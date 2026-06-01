@@ -38,6 +38,25 @@ export default function RootLayout({
       lang="en"
       className={`${outfit.variable} ${jakarta.variable} ${jetbrains.variable} h-full`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('theme');
+                  var systemLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+                  if (saved === 'light' || (!saved && systemLight)) {
+                    document.documentElement.classList.add('light');
+                  } else {
+                    document.documentElement.classList.remove('light');
+                  }
+                } catch (e) {}
+              })()
+            `,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col antialiased">
         <Providers>{children}</Providers>
       </body>

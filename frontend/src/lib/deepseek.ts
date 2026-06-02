@@ -44,7 +44,7 @@ function safeJsonParse(rawText: string): { data: any | null; error: string | nul
     };
   }
 }
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
 const BASE_URL = "https://api.deepseek.com";
 
 if (!DEEPSEEK_API_KEY) {
@@ -221,19 +221,37 @@ Output only raw JSON block without markdown code blocks.`;
 
   const userPrompt = `Write the full lesson text for "${lessonTitle}" inside the module "${moduleTitle}".`;
 
-  const responseText = await callDeepSeek(
-    [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    true
-  );
+  const messages: DeepSeekMessage[] = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ];
 
-  const { data, error } = safeJsonParse(responseText);
-  if (error) {
-    throw new Error(`Failed to parse lesson content: ${error}`);
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const responseText = await callDeepSeek(messages, true);
+
+      const { data, error } = safeJsonParse(responseText);
+      if (error) {
+        throw new Error(`Failed to parse lesson content: ${error}`);
+      }
+
+      if (!data || typeof data.summary !== "string" || typeof data.content !== "string") {
+        throw new Error("Invalid lesson structure - missing summary or content fields");
+      }
+
+      return data;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`generateLessonContent attempt ${attempt} failed: ${err.message}`);
+    }
   }
-  return data;
+
+  throw new Error(
+    `Failed to generate lesson content after ${MAX_RETRIES} attempts. Last error: ${lastError?.message}`
+  );
 }
 
 /**

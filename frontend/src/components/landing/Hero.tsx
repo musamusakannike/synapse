@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import Link from "next/link";
 import gsap from "gsap";
+import { BetaBadge } from "@/components/BetaBadge";
 
 export function Hero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -87,7 +88,7 @@ export function Hero() {
           ref={subRef}
           className="mt-6 text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed opacity-0"
         >
-          Generate courses, AI videos, and quizzes tailored entirely to your style.
+          Generate courses, <span className="inline-flex items-center gap-1.5">AI videos <BetaBadge /></span>, and quizzes tailored entirely to your style.
           No cookie-cutter content — Synapse adapts to you.
         </p>
 

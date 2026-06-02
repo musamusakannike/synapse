@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateVideoScript } from "@/lib/deepseek";
+import { syncUserSubscriptionStatus } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 import { generateTTSBuffer } from "@/lib/tts";
@@ -82,7 +83,9 @@ export async function POST(request: Request) {
     }
 
     // Explanatory Video is a Premium-Only Feature!
-    if (!user.premium) {
+    const premiumActive = await syncUserSubscriptionStatus(userId);
+
+    if (!premiumActive) {
       return NextResponse.json(
         {
           error: "Synapse AI Explanatory Video requires Premium Subscription.",

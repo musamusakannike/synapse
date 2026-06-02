@@ -1,9 +1,137 @@
 import axios from "axios";
-import { connectToDatabase, UserDocument } from "./db";
+import { connectToDatabase } from "./db";
 import { ObjectId } from "mongodb";
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "sk_test_mockkey";
-const PAYSTACK_CALLBACK_URL = process.env.PAYSTACK_CALLBACK_URL || "http://localhost:3000";
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+const APP_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  process.env.APP_BASE_URL ||
+  "https://synapse.codiac.online";
+export const PREMIUM_SUBSCRIPTION_PRICE_NGN = 2500;
+export const PREMIUM_SUBSCRIPTION_PRICE_KOBO = PREMIUM_SUBSCRIPTION_PRICE_NGN * 100;
+export const PREMIUM_SUBSCRIPTION_PLAN = "premium_monthly";
+
+function getPaystackSecretKey() {
+  if (!PAYSTACK_SECRET_KEY) {
+    throw new Error("PAYSTACK_SECRET_KEY is not configured");
+  }
+
+  return PAYSTACK_SECRET_KEY;
+}
+
+export function addOneSubscriptionMonth(date: Date) {
+  const next = new Date(date);
+  const day = next.getDate();
+
+  next.setDate(1);
+  next.setMonth(next.getMonth() + 1);
+
+  const lastDayOfTargetMonth = new Date(
+    next.getFullYear(),
+    next.getMonth() + 1,
+    0
+  ).getDate();
+
+  next.setDate(Math.min(day, lastDayOfTargetMonth));
+  return next;
+}
+
+function isSubscriptionActive(user: { premium?: unknown; subscriptionExpiresAt?: unknown }) {
+  if (!user.premium || !user.subscriptionExpiresAt) return false;
+
+  return new Date(user.subscriptionExpiresAt as string | Date).getTime() > Date.now();
+}
+
+export async function syncUserSubscriptionStatus(userId: string) {
+  if (!ObjectId.isValid(userId)) return false;
+
+  const { db } = await connectToDatabase();
+  const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
+  if (!user) return false;
+
+  const active = isSubscriptionActive({
+    premium: user.premium,
+    subscriptionExpiresAt: user.subscriptionExpiresAt,
+  });
+
+  if (!active && user.premium) {
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { premium: false, subscriptionStatus: "expired" } }
+    );
+  }
+
+  return active;
+}
+
+export async function activateMonthlySubscription(
+  userId: string,
+  payment: {
+    reference: string;
+    amount: number;
+    currency: string;
+    paidAt?: string;
+    customerCode?: string;
+  }
+) {
+  if (!ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID in payment metadata");
+  }
+
+  if (payment.amount !== PREMIUM_SUBSCRIPTION_PRICE_KOBO || payment.currency !== "NGN") {
+    throw new Error("Payment amount or currency does not match the Premium monthly plan");
+  }
+
+  const { db } = await connectToDatabase();
+  const paidAt = payment.paidAt ? new Date(payment.paidAt) : new Date();
+  const subscriptionExpiresAt = addOneSubscriptionMonth(paidAt);
+
+  const existingPayment = await db.collection("payments").findOne({
+    reference: payment.reference,
+    status: "success",
+  });
+
+  if (existingPayment) {
+    return {
+      alreadyProcessed: true,
+      subscriptionExpiresAt: existingPayment.subscriptionExpiresAt as Date,
+    };
+  }
+
+  await db.collection("payments").updateOne(
+    { reference: payment.reference },
+    {
+      $setOnInsert: {
+        reference: payment.reference,
+        userId,
+        amount: payment.amount,
+        currency: payment.currency,
+        status: "success",
+        plan: PREMIUM_SUBSCRIPTION_PLAN,
+        paidAt,
+        subscriptionExpiresAt,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true }
+  );
+
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(userId) },
+    {
+      $set: {
+        premium: true,
+        subscriptionStatus: "active",
+        subscriptionStartedAt: paidAt,
+        subscriptionExpiresAt,
+        paystackCustomerCode: payment.customerCode,
+        paystackLastReference: payment.reference,
+      },
+    }
+  );
+
+  return { alreadyProcessed: false, subscriptionExpiresAt };
+}
 
 /**
  * Initialize a subscription payment with Paystack
@@ -14,20 +142,28 @@ export async function initializeTransaction(
   userId: string
 ) {
   try {
+    if (!ObjectId.isValid(userId)) {
+      throw new Error("Invalid user ID");
+    }
+
     const amountInKobo = amountInNGN * 100; // Paystack requires lowest currency unit (Kobo)
     const response = await axios.post(
       "https://api.paystack.co/transaction/initialize",
       {
         email,
         amount: amountInKobo.toString(),
-        callback_url: `${PAYSTACK_CALLBACK_URL}/api/payments/verify`,
+        currency: "NGN",
+        callback_url: `${APP_BASE_URL}/api/payments/verify`,
         metadata: {
           userId,
+          plan: PREMIUM_SUBSCRIPTION_PLAN,
+          interval: "monthly",
+          app: "synapse",
         },
       },
       {
         headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${getPaystackSecretKey()}`,
           "Content-Type": "application/json",
         },
       }
@@ -51,7 +187,7 @@ export async function verifyTransaction(reference: string) {
       `https://api.paystack.co/transaction/verify/${reference}`,
       {
         headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${getPaystackSecretKey()}`,
         },
       }
     );
@@ -83,8 +219,10 @@ export async function checkAndIncrementUsage(userId: string): Promise<{
     return { allowed: false, premium: false, generationsToday: 0, limit: 3 };
   }
 
+  const premiumActive = await syncUserSubscriptionStatus(userId);
+
   // Premium users are always allowed
-  if (user.premium) {
+  if (premiumActive) {
     return { allowed: true, premium: true, generationsToday: 0, limit: Infinity };
   }
 

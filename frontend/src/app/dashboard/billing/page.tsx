@@ -9,11 +9,17 @@ export default function BillingPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const subscriptionExpiresAt = user?.subscriptionExpiresAt
+    ? new Date(user.subscriptionExpiresAt).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
 
   useEffect(() => {
     const status = searchParams.get("status");
     if (status === "success") {
-      setMessage("Payment successful! Your account has been upgraded to Premium.");
+      setMessage("Payment successful! Your Premium monthly subscription is now active.");
       refreshUser();
     } else if (status === "failed") {
       setMessage("Payment was not completed. Please try again.");
@@ -59,11 +65,16 @@ export default function BillingPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold">
-              {user?.premium ? "Premium Plan" : "Free Plan"}
+              {user?.premium ? "Premium Monthly" : "Free Plan"}
             </h3>
             <p className="text-xs text-[var(--text-muted)] mt-1">
               {user?.premium ? "Unlimited AI generations & all features" : "3 AI generations per day"}
             </p>
+            {user?.premium && subscriptionExpiresAt && (
+              <p className="text-xs text-[var(--text-muted)] mt-2">
+                Expires on {subscriptionExpiresAt}
+              </p>
+            )}
           </div>
           <div className="px-3 py-1 rounded-full text-xs font-semibold" style={{
             background: user?.premium ? "var(--accent-muted)" : "var(--bg-elevated)",
@@ -73,15 +84,17 @@ export default function BillingPage() {
           </div>
         </div>
 
-        {!user?.premium && (
-          <button
-            onClick={handleUpgrade}
-            disabled={loading}
-            className="w-full py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
-          >
-            {loading ? "Redirecting to Paystack..." : "Upgrade to Premium — ₦2,500/month"}
-          </button>
-        )}
+        <button
+          onClick={handleUpgrade}
+          disabled={loading}
+          className="w-full py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
+        >
+          {loading
+            ? "Redirecting to Paystack..."
+            : user?.premium
+              ? "Renew Premium — ₦2,500/month"
+              : "Upgrade to Premium — ₦2,500/month"}
+        </button>
       </div>
 
       {/* Features comparison */}

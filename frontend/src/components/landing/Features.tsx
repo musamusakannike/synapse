@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { BetaBadge } from "@/components/BetaBadge";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -104,8 +105,9 @@ export function Features() {
               <div className="w-10 h-10 rounded-xl bg-[var(--accent-muted)] flex items-center justify-center text-[var(--accent)] mb-4">
                 {feature.icon}
               </div>
-              <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold mb-2">
+              <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold mb-2 flex items-center gap-2">
                 {feature.title}
+                {feature.title === "AI Explanatory Videos" && <BetaBadge />}
               </h3>
               <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                 {feature.description}

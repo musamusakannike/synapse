@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
-import { initializeTransaction } from "@/lib/paystack";
+import { initializeTransaction, PREMIUM_SUBSCRIPTION_PRICE_NGN } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 export async function POST() {
@@ -25,10 +25,9 @@ export async function POST() {
     }
 
     // Initialize Paystack subscription at NGN 2,500
-    const subscriptionCost = 2500;
     const checkoutData = await initializeTransaction(
       user.email,
-      subscriptionCost,
+      PREMIUM_SUBSCRIPTION_PRICE_NGN,
       session.userId
     );
 

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/components/ThemeProvider";
+import { BetaBadge } from "@/components/BetaBadge";
 
 const navItems = [
   {
@@ -169,7 +170,12 @@ export function DashboardSidebar() {
               )}
             >
               <span className="flex-shrink-0">{item.icon}</span>
-              {!collapsed && <span className="font-medium">{item.label}</span>}
+              {!collapsed && (
+                <span className="font-medium flex items-center gap-2">
+                  {item.label}
+                  {item.label === "Videos" && <BetaBadge />}
+                </span>
+              )}
             </Link>
           );
         })}

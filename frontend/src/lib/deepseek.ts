@@ -621,7 +621,103 @@ Output ONLY the raw JSON block. No markdown fences. No explanation.`;
 }
 
 /**
- * 5. General Academic Q&A (Synapse AI Tutor)
+ * 5. Generate Document Insights — Summary, Key Concepts, Glossary, Quiz Topics, Course Outline
+ */
+export interface DocumentInsights {
+  summary: string;
+  keyConcepts: Array<{ concept: string; description: string }>;
+  glossary: Array<{ term: string; definition: string }>;
+  quizTopics: string[];
+  courseOutline: Array<{ module: string; lessons: string[] }>;
+}
+
+export async function generateDocumentInsights(
+  extractedText: string,
+  fileName: string,
+  userProfile: { style: string; level: string; goals: string }
+): Promise<DocumentInsights> {
+  const truncatedText = extractedText.substring(0, 6000);
+
+  const systemPrompt = `You are Synapse's AI Document Analyst — an expert at transforming raw study materials into structured, actionable learning resources.
+
+Student Profile:
+- Grade Level: ${userProfile.level}
+- Study Style: ${userProfile.style}
+- Goals: ${userProfile.goals}
+
+Analyze the provided document text and generate comprehensive study insights.
+
+Output MUST be a valid JSON object with this exact structure:
+{
+  "summary": "A 3-5 sentence executive summary of the document's main content and purpose.",
+  "keyConcepts": [
+    { "concept": "Concept Name", "description": "Clear 1-2 sentence explanation of why this is important" }
+  ],
+  "glossary": [
+    { "term": "Technical Term", "definition": "Clear, student-friendly definition" }
+  ],
+  "quizTopics": [
+    "Specific topic or question area that could be tested"
+  ],
+  "courseOutline": [
+    { "module": "Module Title", "lessons": ["Lesson 1 title", "Lesson 2 title"] }
+  ]
+}
+
+Instructions:
+- summary: Provide a rich overview that captures the document's scope, purpose, and key findings.
+- keyConcepts: Extract 4-8 core concepts/ideas. Prioritize what a student NEEDS to understand.
+- glossary: Extract 5-10 technical terms, jargon, or key vocabulary with student-friendly definitions.
+- quizTopics: Suggest 5-8 specific topics/questions that could be used to test understanding.
+- courseOutline: Suggest a 2-4 module course structure with 2-3 lessons each, based on the document's content.
+- Adapt language complexity to the student's grade level.
+- Output ONLY the raw JSON. No markdown fences. No extra text.`;
+
+  const userPrompt = `Analyze this document ("${fileName}") and generate comprehensive study insights:\n\n${truncatedText}`;
+
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const responseText = await callDeepSeek(
+        [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        true
+      );
+
+      const { data, error } = safeJsonParse(responseText);
+      if (error) {
+        throw new Error(`Failed to parse document insights: ${error}`);
+      }
+
+      if (
+        !data ||
+        typeof data.summary !== "string" ||
+        !Array.isArray(data.keyConcepts) ||
+        !Array.isArray(data.glossary) ||
+        !Array.isArray(data.quizTopics) ||
+        !Array.isArray(data.courseOutline)
+      ) {
+        throw new Error("Invalid insights structure — missing required fields");
+      }
+
+      return data as DocumentInsights;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`generateDocumentInsights attempt ${attempt} failed: ${err.message}`);
+    }
+  }
+
+  throw new Error(
+    `Failed to generate document insights after ${MAX_RETRIES} attempts. Last error: ${lastError?.message}`
+  );
+}
+
+/**
+ * 6. General Academic Q&A (Synapse AI Tutor)
  */
 export async function generateTutorAnswer(
   question: string,

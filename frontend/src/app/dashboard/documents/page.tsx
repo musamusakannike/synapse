@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { DocumentUpload, type UploadedDoc } from "@/components/documents";
 import { cn } from "@/lib/cn";
 
@@ -25,6 +26,7 @@ function mimeColor(mime: string) {
 }
 
 export default function DocumentsPage() {
+  const router = useRouter();
   const [documents, setDocuments] = useState<UploadedDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -111,9 +113,12 @@ export default function DocumentsPage() {
                 {mimeIcon(doc.mimeType)}
               </span>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-[var(--text-primary)] font-medium truncate">
+              {/* Info — clickable to navigate to insights */}
+              <div
+                className="flex-1 min-w-0 cursor-pointer"
+                onClick={() => router.push(`/dashboard/documents/${doc._id}`)}
+              >
+                <p className="text-sm text-[var(--text-primary)] font-medium truncate group-hover:text-[var(--accent)] transition-colors">
                   {doc.fileName}
                 </p>
                 <p className="text-xs text-[var(--text-muted)]">
@@ -123,7 +128,17 @@ export default function DocumentsPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => router.push(`/dashboard/documents/${doc._id}`)}
+                  className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-xs font-medium text-[var(--accent)] bg-[var(--accent-muted)] hover:bg-[var(--accent)]/20 transition-all"
+                  title="View Insights"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span className="hidden sm:inline">Insights</span>
+                </button>
                 <a
                   href={doc.publicUrl}
                   target="_blank"

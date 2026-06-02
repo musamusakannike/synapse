@@ -3,11 +3,12 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateTutorAnswer } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     // 1. Authenticate user
     const cookieStore = await cookies();
@@ -60,6 +61,9 @@ export async function POST(request: Request) {
       documentContext = await buildDocumentContext(documentIds, session.userId);
     }
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = session.userId;
+
     // 6. Query DeepSeek API
     const questionText = question?.trim() || "Analyze and explain the key concepts from the uploaded document(s).";
     const answerMarkdown = await generateTutorAnswer(questionText, userProfile, documentContext);
@@ -80,6 +84,7 @@ export async function POST(request: Request) {
       limit: usage.limit,
     });
   } catch (error: any) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("AI Tutor Route Error:", error);
     return NextResponse.json({ error: error.message || "Failed to process academic query" }, { status: 500 });
   }

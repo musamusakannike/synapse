@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase, QuizDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateQuizQuestions, generateQuizQuestionsChunked } from "@/lib/deepseek";
-import { checkAndIncrementUsage, syncUserSubscriptionStatus } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage, syncUserSubscriptionStatus } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
@@ -127,6 +127,7 @@ function extractNumQuestions(topic: string): { topicCleaned: string; count?: num
  * POST spin up a new quiz
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -202,6 +203,9 @@ export async function POST(request: Request) {
 
     const finalTopic = topicText || "Quiz based on the uploaded document(s)";
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
+
     // Spin questions using DeepSeek (chunked for large quizzes)
     let quizData;
     if (finalNumQuestions > 20) {
@@ -235,12 +239,13 @@ export async function POST(request: Request) {
     };
 
     // Add warning if some chunks failed but we still got partial results
-    if (quizData.failedChunks && quizData.failedChunks > 0) {
+    if ("failedChunks" in quizData && quizData.failedChunks > 0) {
       response.warning = `Generated ${quizData.generatedCount} of ${quizData.requestedCount} questions due to AI processing issues. You can regenerate for more questions.`;
     }
 
     return NextResponse.json(response);
   } catch (error: any) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("POST Quiz Error:", error);
     return NextResponse.json({ error: error.message || "Failed to spin up quiz" }, { status: 500 });
   }

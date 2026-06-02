@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
+import { FetchError } from "@/components/FetchError";
 
 interface Course {
   _id: string;
@@ -28,6 +29,7 @@ interface Course {
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [topic, setTopic] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -35,12 +37,17 @@ export default function CoursesPage() {
   const [optimisticCourse, setOptimisticCourse] = useState<Course | null>(null);
 
   const fetchCourses = useCallback(async () => {
+    setFetchError(false);
     try {
       const res = await fetch("/api/ai/course");
       const data = await res.json();
-      if (data.success) setCourses(data.courses || []);
+      if (res.ok && data.success) {
+        setCourses(data.courses || []);
+      } else {
+        setFetchError(true);
+      }
     } catch {
-      // silent
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -150,6 +157,8 @@ export default function CoursesPage() {
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : fetchError ? (
+        <FetchError message="Couldn't load your courses." onRetry={fetchCourses} />
       ) : courses.length === 0 && !generating ? (
         <div className="text-center py-20">
           <p className="text-sm text-[var(--text-muted)]">No courses yet. Generate your first one above.</p>

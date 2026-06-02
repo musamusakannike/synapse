@@ -270,3 +270,29 @@ export async function checkAndIncrementUsage(userId: string): Promise<{
 
   return { allowed: true, premium: false, generationsToday: newCount, limit };
 }
+
+/**
+ * Refund a single generation previously counted by {@link checkAndIncrementUsage}.
+ *
+ * Call this when an AI generation fails AFTER usage was incremented, so a free
+ * user doesn't lose a generation for work that never produced a result. It only
+ * decrements today's counter (never below 0) and is a no-op once the daily
+ * counter has already reset to a new day.
+ */
+export async function refundUsage(userId: string): Promise<void> {
+  if (!ObjectId.isValid(userId)) return;
+
+  const { db } = await connectToDatabase();
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+  // Only decrement if the reservation happened today and the counter is > 0,
+  // so we never go negative or refund into a freshly reset day.
+  await db.collection("users").updateOne(
+    {
+      _id: new ObjectId(userId),
+      lastGenerationResetDate: today,
+      generationsToday: { $gt: 0 },
+    },
+    { $inc: { generationsToday: -1 } }
+  );
+}

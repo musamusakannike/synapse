@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase, CourseDocument, LessonDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateCourseOutline, generateLessonContent } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
@@ -73,6 +73,7 @@ export async function GET(request: Request) {
  * POST create a new course outline
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -116,6 +117,9 @@ export async function POST(request: Request) {
       documentContext = await buildDocumentContext(documentIds, userId);
     }
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
+
     // Generate Custom Course outline from DeepSeek
     const topicText = topic?.trim() || "Create a course based on the uploaded document(s)";
     const courseData = await generateCourseOutline(
@@ -143,6 +147,7 @@ export async function POST(request: Request) {
       limit: usage.limit,
     });
   } catch (error: any) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("POST Course Error:", error);
     return NextResponse.json({ error: error.message || "Failed to generate course outline" }, { status: 500 });
   }
@@ -152,6 +157,7 @@ export async function POST(request: Request) {
  * PUT incrementally generate lesson content (Context Aware)
  */
 export async function PUT(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -202,6 +208,9 @@ export async function PUT(request: Request) {
 
     const previousContent = lastLesson.length > 0 ? lastLesson[0].content : undefined;
     const nextOrder = lastLesson.length > 0 ? lastLesson[0].sequenceOrder + 1 : 1;
+
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
 
     // Generate detailed lesson content
     const lessonData = await generateLessonContent(
@@ -260,6 +269,7 @@ export async function PUT(request: Request) {
       limit: usage.limit,
     });
   } catch (error: any) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("Incremental Lesson Generation Error:", error);
     return NextResponse.json({ error: error.message || "Failed to generate lesson content" }, { status: 500 });
   }

@@ -5,7 +5,7 @@ import katex from "katex";
  * Parses markdown content and renders embedded mathematical equations (LaTeX) using KaTeX.
  * Supports:
  * - Block equations: \[ ... \] and $$ ... $$
- * - Inline equations: \( ... \)
+ * - Inline equations: \( ... \) and $ ... $
  * 
  * To prevent Markdown syntax (like underscores, asterisks, and backslashes) from breaking
  * the LaTeX formatting, we temporarily extract all math blocks, compile the Markdown,
@@ -38,7 +38,14 @@ export function formatMarkdown(md: string): string {
     return placeholder;
   });
 
-  // 4. Compile remaining markdown using marked
+  // 4. Extract inline math: $ ... $
+  processed = processed.replace(/(?<!\$)\$(?!\s)([^$]+?)(?<!\s)\$(?!\$)/g, (_, math) => {
+    const placeholder = `MATHINLINEPLACEHOLDER${inlineMathBlocks.length}`;
+    inlineMathBlocks.push(math.trim());
+    return placeholder;
+  });
+
+  // 5. Compile remaining markdown using marked
   let html = "";
   try {
     html = marked.parse(processed, { async: false }) as string;
@@ -46,7 +53,7 @@ export function formatMarkdown(md: string): string {
     html = processed;
   }
 
-  // 5. Restore block math with KaTeX
+  // 6. Restore block math with KaTeX
   blockMathBlocks.forEach((math, index) => {
     const placeholder = `MATHBLOCKPLACEHOLDER${index}`;
     try {
@@ -66,7 +73,7 @@ export function formatMarkdown(md: string): string {
     }
   });
 
-  // 6. Restore inline math with KaTeX
+  // 7. Restore inline math with KaTeX
   inlineMathBlocks.forEach((math, index) => {
     const placeholder = `MATHINLINEPLACEHOLDER${index}`;
     try {

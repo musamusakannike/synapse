@@ -239,8 +239,9 @@ Output only raw JSON block without markdown code blocks.`;
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    let responseText = "";
     try {
-      const responseText = await callDeepSeek(messages, true);
+      responseText = await callDeepSeek(messages, true);
 
       console.log(`generateLessonContent attempt ${attempt} raw response (first 500 chars):`, responseText.substring(0, 500));
 
@@ -257,10 +258,20 @@ Output only raw JSON block without markdown code blocks.`;
             content: trimmed,
           };
         }
+        
+        console.error(`[JSON ERROR] Parse failed on generateLessonContent attempt ${attempt}. Error details: ${error}`);
+        console.error(`[RAW RESPONSE START]\n${responseText}\n[RAW RESPONSE END]`);
+        
         throw new Error(`Failed to parse lesson content: ${error}`);
       }
 
-      return validateOrThrow(lessonContentSchema, data, "lesson content");
+      try {
+        return validateOrThrow(lessonContentSchema, data, "lesson content");
+      } catch (validationErr: any) {
+        console.error(`[JSON ERROR] Zod validation failed on generateLessonContent attempt ${attempt}. Error details: ${validationErr.message}`);
+        console.error(`[RAW RESPONSE START]\n${responseText}\n[RAW RESPONSE END]`);
+        throw validationErr;
+      }
     } catch (err: any) {
       lastError = err;
       console.warn(`generateLessonContent attempt ${attempt} failed: ${err.message}`);

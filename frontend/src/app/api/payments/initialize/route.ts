@@ -36,8 +36,9 @@ export async function POST() {
       authorizationUrl: checkoutData.authorization_url,
       reference: checkoutData.reference,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to initialize checkout";
     console.error("Payment Initialize Error:", error);
-    return NextResponse.json({ error: error.message || "Failed to initialize checkout" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

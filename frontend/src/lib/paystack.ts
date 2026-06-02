@@ -11,6 +11,16 @@ export const PREMIUM_SUBSCRIPTION_PRICE_NGN = 2500;
 export const PREMIUM_SUBSCRIPTION_PRICE_KOBO = PREMIUM_SUBSCRIPTION_PRICE_NGN * 100;
 export const PREMIUM_SUBSCRIPTION_PLAN = "premium_monthly";
 
+function getPaystackErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    return typeof error.response?.data?.message === "string"
+      ? error.response.data.message
+      : error.message || fallback;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 function getPaystackSecretKey() {
   if (!PAYSTACK_SECRET_KEY) {
     throw new Error("PAYSTACK_SECRET_KEY is not configured");
@@ -170,11 +180,9 @@ export async function initializeTransaction(
     );
 
     return response.data?.data; // Returns { authorization_url, access_code, reference }
-  } catch (error: any) {
-    console.error("Paystack Initialize Error:", error.response?.data || error.message);
-    throw new Error(
-      error.response?.data?.message || "Failed to initialize transaction with Paystack"
-    );
+  } catch (error: unknown) {
+    console.error("Paystack Initialize Error:", getPaystackErrorMessage(error, "Unknown error"));
+    throw new Error(getPaystackErrorMessage(error, "Failed to initialize transaction with Paystack"));
   }
 }
 
@@ -193,11 +201,9 @@ export async function verifyTransaction(reference: string) {
     );
 
     return response.data?.data; // Returns full transaction details, check data.status === 'success'
-  } catch (error: any) {
-    console.error("Paystack Verify Error:", error.response?.data || error.message);
-    throw new Error(
-      error.response?.data?.message || "Failed to verify transaction with Paystack"
-    );
+  } catch (error: unknown) {
+    console.error("Paystack Verify Error:", getPaystackErrorMessage(error, "Unknown error"));
+    throw new Error(getPaystackErrorMessage(error, "Failed to verify transaction with Paystack"));
   }
 }
 

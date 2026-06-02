@@ -70,6 +70,7 @@ export interface CourseDocument {
     }>;
   };
   createdAt: Date;
+  isPublic?: boolean;
 }
 
 export interface LessonDocument {
@@ -102,6 +103,7 @@ export interface QuizDocument {
     takenAt: Date;
   }>;
   createdAt: Date;
+  isPublic?: boolean;
 }
 
 export interface UploadedDocument {
@@ -139,6 +141,7 @@ export interface VideoDocument {
     durationSeconds: number;
   }>;
   createdAt: Date;
+  isPublic?: boolean;
 }
 
 export interface QuestionDocument {
@@ -150,4 +153,5 @@ export interface QuestionDocument {
   pinned?: boolean;
   createdAt: Date;
   updatedAt?: Date;
+  isPublic?: boolean;
 }

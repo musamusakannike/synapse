@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { formatMarkdown } from "@/lib/markdown";
+import { ShareButton } from "@/components/ShareButton";
 
 interface Lesson {
   title: string;
@@ -190,9 +191,12 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         >
           ← Back to courses
         </button>
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold mb-4">
-          {course.title}
-        </h2>
+        <div className="flex items-start justify-between gap-2 mb-4">
+          <h2 className="font-[family-name:var(--font-display)] text-lg font-bold leading-tight">
+            {course.title}
+          </h2>
+          <ShareButton id={course._id} type="course" />
+        </div>
 
         {/* Progress overview */}
         {totalLessons > 0 && (

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     const answerMarkdown = await generateTutorAnswer(questionText, userProfile, documentContext);
 
     // 7. Log Q&A activity in database
-    await db.collection("questions").insertOne({
+    const result = await db.collection("questions").insertOne({
       userId: session.userId,
       question: questionText,
       documentIds: documentIds || [],
@@ -79,6 +79,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      questionId: result.insertedId.toString(),
       answer: answerMarkdown,
       generationsToday: usage.generationsToday,
       limit: usage.limit,

@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { ShareButton } from "@/components/ShareButton";
 
 interface Question {
   question: string;
@@ -291,18 +292,21 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
         ← Back to quizzes
       </button>
 
-      <div className="flex items-center gap-3 mb-2">
-        <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">{quiz.title}</h1>
-        <span
-          className={cn(
-            "px-2 py-0.5 rounded-full text-xs font-medium",
-            feedbackMode === "immediate"
-              ? "bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20"
-              : "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
-          )}
-        >
-          {feedbackMode === "immediate" ? "Instant Feedback" : "Review at End"}
-        </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">{quiz.title}</h1>
+          <span
+            className={cn(
+              "px-2 py-0.5 rounded-full text-xs font-medium",
+              feedbackMode === "immediate"
+                ? "bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20"
+                : "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
+            )}
+          >
+            {feedbackMode === "immediate" ? "Instant Feedback" : "Review at End"}
+          </span>
+        </div>
+        <ShareButton id={quiz._id} type="quiz" />
       </div>
 
       {/* Progress */}

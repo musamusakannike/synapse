@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { VideoComposition } from "@/remotion/VideoComposition";
 import type { Scene } from "@/remotion/SceneDispatcher";
+import { ShareButton } from "@/components/ShareButton";
 
 // Dynamically import Remotion Player to avoid SSR issues
 const Player = dynamic(
@@ -68,13 +69,16 @@ export default function VideoPlayerPage({ params }: { params: Promise<{ id: stri
         ← Back to videos
       </button>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 sm:mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4 sm:mb-6">
         <div>
           <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">{video.title}</h1>
           <p className="text-xs text-[var(--text-muted)]">Topic: {video.topic}</p>
         </div>
-        <div className="px-3 py-1.5 rounded-full text-xs font-semibold self-start sm:self-auto bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
-          {video.styleTheme} Theme
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
+            {video.styleTheme} Theme
+          </div>
+          <ShareButton id={video._id} type="video" />
         </div>
       </div>
 

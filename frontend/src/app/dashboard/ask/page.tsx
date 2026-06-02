@@ -5,11 +5,13 @@ import Link from "next/link";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { formatMarkdown } from "@/lib/markdown";
+import { ShareButton } from "@/components/ShareButton";
 
 export default function AskPage() {
   const [question, setQuestion] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [answer, setAnswer] = useState("");
+  const [questionId, setQuestionId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [optimisticMessage, setOptimisticMessage] = useState("");
@@ -23,6 +25,7 @@ export default function AskPage() {
       if (!canSubmit) return;
       setError("");
       setAnswer("");
+      setQuestionId("");
       setLoading(true);
 
       // Optimistic UX
@@ -47,6 +50,7 @@ export default function AskPage() {
           setError(data.error || "Failed to get answer");
         } else {
           setAnswer(data.answer);
+          setQuestionId(data.questionId);
         }
       } catch {
         setError("Something went wrong");
@@ -120,9 +124,14 @@ export default function AskPage() {
       )}
 
       {answer && (
-        <div className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+        <div className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] relative">
+          {questionId && (
+            <div className="absolute top-4 right-4 z-10">
+              <ShareButton id={questionId} type="chat" />
+            </div>
+          )}
           <div
-            className="prose prose-invert prose-sm max-w-none [&_h1]:font-[family-name:var(--font-display)] [&_h2]:font-[family-name:var(--font-display)] [&_h3]:font-[family-name:var(--font-display)] [&_p]:text-[var(--text-secondary)] [&_p]:leading-relaxed [&_li]:text-[var(--text-secondary)] [&_strong]:text-[var(--text-primary)] [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[var(--accent)] [&_code]:text-xs"
+            className="prose prose-invert prose-sm max-w-none [&_h1]:font-[family-name:var(--font-display)] [&_h2]:font-[family-name:var(--font-display)] [&_h3]:font-[family-name:var(--font-display)] [&_p]:text-[var(--text-secondary)] [&_p]:leading-relaxed [&_li]:text-[var(--text-secondary)] [&_strong]:text-[var(--text-primary)] [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[var(--accent)] [&_code]:text-xs pr-12"
             dangerouslySetInnerHTML={{ __html: formatMarkdown(answer) }}
           />
         </div>

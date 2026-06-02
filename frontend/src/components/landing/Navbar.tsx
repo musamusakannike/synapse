@@ -31,7 +31,7 @@ export function Navbar() {
               <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          <span className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight">
+          <span className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight hidden sm:block">
             Synapse
           </span>
         </Link>
@@ -75,7 +75,7 @@ export function Navbar() {
 
           <Link
             href="/login"
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-4 py-2"
+            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-4 py-2 hidden sm:block"
           >
             Sign in
           </Link>

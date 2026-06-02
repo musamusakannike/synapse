@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { formatMarkdown } from "@/lib/markdown";
@@ -59,12 +60,25 @@ export default function AskPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-3xl">
-      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
-        Ask AI Tutor
-      </h1>
-      <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
-        Ask any academic question. Upload documents for context-aware answers adapted to your learning style.
-      </p>
+      <div className="flex items-start justify-between gap-4 mb-6 sm:mb-8">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
+            Ask AI Tutor
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Ask any academic question. Upload documents for context-aware answers adapted to your learning style.
+          </p>
+        </div>
+        <Link
+          href="/dashboard/history"
+          className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/30 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          History
+        </Link>
+      </div>
 
       <form onSubmit={handleAsk} className="mb-6 sm:mb-8">
         <InputWithDocuments

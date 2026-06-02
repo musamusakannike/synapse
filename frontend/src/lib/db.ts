@@ -135,3 +135,14 @@ export interface VideoDocument {
   }>;
   createdAt: Date;
 }
+
+export interface QuestionDocument {
+  _id?: string;
+  userId: string;
+  question: string;
+  answer: string;
+  documentIds?: string[];
+  pinned?: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+}

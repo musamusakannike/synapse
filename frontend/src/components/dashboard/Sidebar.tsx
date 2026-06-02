@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/cn";
@@ -137,12 +138,15 @@ export function DashboardSidebar() {
       >
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-5 border-b border-[var(--border-subtle)]">
-        <div className="w-8 h-8 rounded-lg bg-[var(--accent)] flex items-center justify-center flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
+        <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+          <Image
+            src="/synapse.webp"
+            alt="Synapse Logo"
+            width={32}
+            height={32}
+            priority
+            className="object-contain w-full h-full"
+          />
         </div>
         {!collapsed && (
           <span className="font-[family-name:var(--font-display)] text-sm font-bold">Synapse</span>

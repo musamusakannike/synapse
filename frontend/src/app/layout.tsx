@@ -26,10 +26,50 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Synapse — Learn the way your brain works",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://synapse.codiac.online"),
+  title: {
+    default: "Synapse — Learn the way your brain works",
+    template: "%s | Synapse",
+  },
   description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
-  keywords: ["AI learning", "personalized education", "course generator", "AI tutor", "study tools"],
+  keywords: ["AI learning", "personalized education", "course generator", "AI tutor", "study tools", "AI course maker", "personalized quizzes"],
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "Synapse — Learn the way your brain works",
+    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
+    url: "https://synapse.codiac.online",
+    siteName: "Synapse",
+    images: [
+      {
+        url: "/synapse.webp",
+        width: 1200,
+        height: 630,
+        alt: "Synapse — Personalized AI Learning Platform",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Synapse — Learn the way your brain works",
+    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
+    images: ["/synapse.webp"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

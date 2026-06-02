@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase, QuizDocument } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateQuizQuestions, generateQuizQuestionsChunked } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, syncUserSubscriptionStatus } from "@/lib/paystack";
 import { buildDocumentContext } from "@/lib/document-context";
 import { ObjectId } from "mongodb";
 
@@ -34,11 +34,7 @@ export async function GET(request: Request) {
     const quizId = searchParams.get("id");
 
     // Get user to check premium status
-    const user = await db.collection("users").findOne(
-      { _id: new ObjectId(userId) },
-      { projection: { premium: 1 } }
-    );
-    const isPremium = user?.premium || false;
+    const isPremium = await syncUserSubscriptionStatus(userId);
 
     if (quizId) {
       const quiz = await db.collection("quizzes").findOne({
@@ -194,7 +190,7 @@ export async function POST(request: Request) {
     }
 
     // Get user premium status to enforce limits
-    const isPremium = user?.premium || false;
+    const isPremium = usage.premium;
     const userMaxQuestions = isPremium ? PREMIUM_MAX_QUESTIONS : FREE_MAX_QUESTIONS;
 
     // Enforce limits: min 1, max based on subscription

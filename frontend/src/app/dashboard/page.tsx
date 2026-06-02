@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { BetaBadge } from "@/components/BetaBadge";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -81,8 +82,9 @@ export default function DashboardPage() {
               className="w-3 h-3 rounded-full mb-4"
               style={{ backgroundColor: action.color }}
             />
-            <h3 className="font-[family-name:var(--font-display)] text-base font-semibold mb-1">
+            <h3 className="font-[family-name:var(--font-display)] text-base font-semibold mb-1 flex items-center gap-2">
               {action.title}
+              {action.title === "Create a Video" && <BetaBadge />}
             </h3>
             <p className="text-xs text-[var(--text-secondary)]">
               {action.description}

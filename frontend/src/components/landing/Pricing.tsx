@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { BetaBadge } from "@/components/BetaBadge";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -97,18 +98,25 @@ export function Pricing() {
             <ul className="space-y-3 mb-8">
               {[
                 "Unlimited AI generations",
-                "AI Explanatory Videos",
+                { text: "AI Explanatory Videos", beta: true },
                 "Priority AI processing",
                 "Advanced learning analytics",
                 "All Free features included",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                  {item}
-                </li>
-              ))}
+              ].map((item) => {
+                const text = typeof item === "string" ? item : item.text;
+                const isBeta = typeof item === "object" && item.beta;
+                return (
+                  <li key={text} className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                    <span className="flex items-center gap-2">
+                      {text}
+                      {isBeta && <BetaBadge />}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
             <Link
               href="/register"

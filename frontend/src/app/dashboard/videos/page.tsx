@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
+import { BetaBadge } from "@/components/BetaBadge";
 
 interface Video {
   _id: string;
@@ -77,8 +78,9 @@ export default function VideosPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-4xl">
-      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">
+      <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">
         AI Videos
+        <BetaBadge />
       </h1>
       <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
         Generate explanatory video presentations on any topic.
@@ -107,9 +109,14 @@ export default function VideosPage() {
             <button
               type="submit"
               disabled={generating || (!topic.trim() && attachedDocs.length === 0)}
-              className="w-full sm:w-auto self-start px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+              className="w-full sm:w-auto self-start px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2"
             >
-              {generating ? "Generating..." : "Create Video"}
+              {generating ? "Generating..." : (
+                <>
+                  Create Video
+                  <BetaBadge className="bg-[var(--bg-primary)]/20 text-[var(--bg-primary)] border-[var(--bg-primary)]/30" />
+                </>
+              )}
             </button>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">

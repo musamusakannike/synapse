@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
+import { syncUserSubscriptionStatus } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 // Helper to get user from session token cookie
@@ -36,13 +37,23 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    const premiumActive = await syncUserSubscriptionStatus(session.userId);
+    const subscriptionStatus = premiumActive
+      ? "active"
+      : user.premium
+        ? "expired"
+        : user.subscriptionStatus || "free";
+
     return NextResponse.json({
       success: true,
       user: {
         id: user._id.toString(),
         name: user.name,
         email: user.email,
-        premium: user.premium || false,
+        premium: premiumActive,
+        subscriptionStatus,
+        subscriptionStartedAt: user.subscriptionStartedAt?.toISOString?.() || null,
+        subscriptionExpiresAt: user.subscriptionExpiresAt?.toISOString?.() || null,
         style: user.style || "textual",
         level: user.level || "self-learner",
         goals: user.goals || "",

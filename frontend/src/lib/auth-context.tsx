@@ -7,6 +7,9 @@ interface User {
   name: string;
   email: string;
   premium: boolean;
+  subscriptionStatus?: "free" | "active" | "expired";
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
   style: string;
   level: string;
   goals: string;

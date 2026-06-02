@@ -41,6 +41,11 @@ export interface UserDocument {
   password?: string; // hashed for email/password
   googleAuth: boolean;
   premium: boolean;
+  subscriptionStatus?: "free" | "active" | "expired";
+  subscriptionStartedAt?: Date;
+  subscriptionExpiresAt?: Date;
+  paystackCustomerCode?: string;
+  paystackLastReference?: string;
   generationsToday: number;
   lastGenerationResetDate: string; // YYYY-MM-DD
   style: string; // textual, visual, case-study, analytical, qa

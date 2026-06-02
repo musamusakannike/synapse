@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { connectToDatabase } from "@/lib/db";
-import { ObjectId } from "mongodb";
+import {
+  activateMonthlySubscription,
+  PREMIUM_SUBSCRIPTION_PLAN,
+} from "@/lib/paystack";
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "sk_test_mockkey";
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text();
     const signature = request.headers.get("x-paystack-signature");
+
+    if (!PAYSTACK_SECRET_KEY) {
+      console.error("Paystack webhook received but PAYSTACK_SECRET_KEY is not configured.");
+      return NextResponse.json({ error: "Webhook secret is not configured" }, { status: 500 });
+    }
 
     if (!signature) {
       return NextResponse.json({ error: "Missing signature header" }, { status: 400 });
@@ -20,7 +27,13 @@ export async function POST(request: Request) {
       .update(rawBody)
       .digest("hex");
 
-    if (hash !== signature) {
+    const hashBuffer = Buffer.from(hash, "hex");
+    const signatureBuffer = Buffer.from(signature, "hex");
+
+    if (
+      hashBuffer.length !== signatureBuffer.length ||
+      !crypto.timingSafeEqual(hashBuffer, signatureBuffer)
+    ) {
       console.warn("Invalid webhook signature received.");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
@@ -32,13 +45,14 @@ export async function POST(request: Request) {
       const data = payload.data;
       const userId = data.metadata?.userId;
 
-      if (userId) {
-        console.log(`Paystack Webhook: Activating premium for user ${userId}`);
-        const { db } = await connectToDatabase();
-        await db.collection("users").updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { premium: true } }
-        );
+      if (userId && data.metadata?.plan === PREMIUM_SUBSCRIPTION_PLAN) {
+        await activateMonthlySubscription(userId, {
+          reference: data.reference,
+          amount: data.amount,
+          currency: data.currency,
+          paidAt: data.paid_at,
+          customerCode: data.customer?.customer_code,
+        });
       }
     }
 

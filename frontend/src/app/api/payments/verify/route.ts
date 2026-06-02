@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
-import { verifyTransaction } from "@/lib/paystack";
-import { ObjectId } from "mongodb";
+import {
+  activateMonthlySubscription,
+  PREMIUM_SUBSCRIPTION_PLAN,
+  verifyTransaction,
+} from "@/lib/paystack";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -16,14 +18,16 @@ export async function GET(request: Request) {
   try {
     const txData = await verifyTransaction(reference);
 
-    if (txData && txData.status === "success") {
+    if (txData?.status === "success" && txData.metadata?.plan === PREMIUM_SUBSCRIPTION_PLAN) {
       const userId = txData.metadata?.userId;
       if (userId) {
-        const { db } = await connectToDatabase();
-        await db.collection("users").updateOne(
-          { _id: new ObjectId(userId) },
-          { $set: { premium: true } }
-        );
+        await activateMonthlySubscription(userId, {
+          reference: txData.reference,
+          amount: txData.amount,
+          currency: txData.currency,
+          paidAt: txData.paid_at,
+          customerCode: txData.customer?.customer_code,
+        });
         return NextResponse.redirect(`${baseUrl}/dashboard/billing?status=success`);
       }
     }

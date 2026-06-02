@@ -24,12 +24,9 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   cachedClient = client;
   cachedDb = db;
 
-  // Let's create unique indexes on user email to ensure uniqueness
-  try {
-    await db.collection("users").createIndex({ email: 1 }, { unique: true });
-  } catch (error) {
-    console.error("Index creation error:", error);
-  }
+  // Indexes are created out-of-band by `scripts/create-indexes.mjs`
+  // (run `pnpm db:indexes`), not on every runtime connection, so normal
+  // requests don't pay for background index maintenance.
 
   return { client, db };
 }

@@ -1,4 +1,13 @@
 import axios from "axios";
+import {
+  validateOrThrow,
+  courseOutlineSchema,
+  lessonContentSchema,
+  quizSchema,
+  quizQuestionSchema,
+  videoScriptSchema,
+  documentInsightsSchema,
+} from "@/lib/ai-schemas";
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
@@ -166,7 +175,7 @@ Important Instructions:
   if (error) {
     throw new Error(`Failed to parse course outline: ${error}`);
   }
-  return data;
+  return validateOrThrow(courseOutlineSchema, data, "course outline");
 }
 
 /**
@@ -251,11 +260,7 @@ Output only raw JSON block without markdown code blocks.`;
         throw new Error(`Failed to parse lesson content: ${error}`);
       }
 
-      if (!data || typeof data.summary !== "string" || typeof data.content !== "string") {
-        throw new Error("Invalid lesson structure - missing summary or content fields");
-      }
-
-      return data;
+      return validateOrThrow(lessonContentSchema, data, "lesson content");
     } catch (err: any) {
       lastError = err;
       console.warn(`generateLessonContent attempt ${attempt} failed: ${err.message}`);
@@ -338,7 +343,7 @@ Output ONLY the raw JSON block without markdown code blocks.`;
   if (error) {
     throw new Error(`Failed to parse quiz questions: ${error}`);
   }
-  return data;
+  return validateOrThrow(quizSchema, data, "quiz");
 }
 
 /**
@@ -452,7 +457,10 @@ Output ONLY the raw JSON block without markdown code blocks.`;
           );
         }
 
-        allQuestions.push(...chunkData.questions);
+        for (const q of chunkData.questions) {
+          const parsedQuestion = quizQuestionSchema.safeParse(q);
+          if (parsedQuestion.success) allQuestions.push(parsedQuestion.data);
+        }
         if (chunkData.title && !quizTitle) {
           quizTitle = chunkData.title;
         }
@@ -604,11 +612,7 @@ Output ONLY the raw JSON block. No markdown fences. No explanation.`;
         throw new Error(`JSON parse failed: ${error}`);
       }
 
-      if (!parsed || !parsed.scenes || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
-        throw new Error(`AI returned an invalid scene structure on attempt ${attempt}.`);
-      }
-
-      return parsed;
+      return validateOrThrow(videoScriptSchema, parsed, "video script");
     } catch (err: any) {
       lastError = err;
       console.warn(`generateVideoScript attempt ${attempt} failed: ${err.message}`);
@@ -693,18 +697,7 @@ Instructions:
         throw new Error(`Failed to parse document insights: ${error}`);
       }
 
-      if (
-        !data ||
-        typeof data.summary !== "string" ||
-        !Array.isArray(data.keyConcepts) ||
-        !Array.isArray(data.glossary) ||
-        !Array.isArray(data.quizTopics) ||
-        !Array.isArray(data.courseOutline)
-      ) {
-        throw new Error("Invalid insights structure — missing required fields");
-      }
-
-      return data as DocumentInsights;
+      return validateOrThrow(documentInsightsSchema, data, "document insights") as DocumentInsights;
     } catch (err: any) {
       lastError = err;
       console.warn(`generateDocumentInsights attempt ${attempt} failed: ${err.message}`);

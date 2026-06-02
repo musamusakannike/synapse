@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { BetaBadge } from "@/components/BetaBadge";
 import { PremiumPrompt } from "@/components/PremiumPrompt";
+import { FetchError } from "@/components/FetchError";
 
 interface Video {
   _id: string;
@@ -27,6 +28,7 @@ export default function VideosPage() {
   const { user } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [topic, setTopic] = useState("");
   const [theme, setTheme] = useState("emerald");
   const [numScenes, setNumScenes] = useState(5);
@@ -34,21 +36,26 @@ export default function VideosPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    fetchVideos();
-  }, []);
-
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
+    setFetchError(false);
     try {
       const res = await fetch("/api/ai/video");
       const data = await res.json();
-      if (data.success) setVideos(data.videos || []);
+      if (res.ok && data.success) {
+        setVideos(data.videos || []);
+      } else {
+        setFetchError(true);
+      }
     } catch {
-      // silent
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchVideos();
+  }, [fetchVideos]);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +180,8 @@ export default function VideosPage() {
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : fetchError ? (
+        <FetchError message="Couldn't load your videos." onRetry={fetchVideos} />
       ) : videos.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-sm text-[var(--text-muted)]">

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateDocumentInsights, type DocumentInsights } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 async function getUserId() {
@@ -63,6 +63,7 @@ export async function GET(request: Request) {
  * POST — generate insights for a document (uses AI generation quota)
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -122,6 +123,9 @@ export async function POST(request: Request) {
       goals: user?.goals || "",
     };
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
+
     // Generate insights
     const insights: DocumentInsights = await generateDocumentInsights(
       doc.extractedText,
@@ -143,6 +147,7 @@ export async function POST(request: Request) {
       limit: usage.limit,
     });
   } catch (error) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("POST Document Insights Error:", error);
     const message = error instanceof Error ? error.message : "Failed to generate insights";
     return NextResponse.json({ error: message }, { status: 500 });

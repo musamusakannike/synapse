@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
+import { RegisterSW } from "@/components/RegisterSW";
+import { OfflineToast } from "@/components/OfflineToast";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -26,6 +28,20 @@ export const metadata: Metadata = {
   title: "Synapse — Learn the way your brain works",
   description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
   keywords: ["AI learning", "personalized education", "course generator", "AI tutor", "study tools"],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Synapse",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0C0C0E",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -58,7 +74,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <RegisterSW />
+          <OfflineToast />
+        </Providers>
       </body>
     </html>
   );

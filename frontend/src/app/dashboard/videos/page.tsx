@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { BetaBadge } from "@/components/BetaBadge";
+import { PremiumPrompt } from "@/components/PremiumPrompt";
 
 interface Video {
   _id: string;
@@ -84,15 +85,16 @@ export default function VideosPage() {
       </h1>
       <p className="text-sm text-[var(--text-secondary)] mb-6 sm:mb-8">
         Generate explanatory video presentations on any topic.
-        {!user?.premium && (
-          <span className="text-[var(--accent)] ml-1">Premium feature — </span>
-        )}
-        {!user?.premium && (
-          <Link href="/dashboard/billing" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
-            upgrade to access
-          </Link>
-        )}
       </p>
+
+      {!user?.premium && (
+        <PremiumPrompt
+          className="mb-6 sm:mb-8"
+          title="Create AI explanatory videos"
+          description="Turn any topic or document into a narrated, animated video presentation. Upgrade to Premium to generate and export videos."
+          ctaLabel="Upgrade to access"
+        />
+      )}
 
       {user?.premium && (
         <form onSubmit={handleGenerate} className="flex flex-col gap-3 mb-6 sm:mb-8">

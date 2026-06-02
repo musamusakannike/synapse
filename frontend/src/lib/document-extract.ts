@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import pdf from "pdf-parse";
 import * as mammoth from "mammoth";
 import OpenAI from "openai";
 
@@ -139,9 +139,7 @@ async function extractTextFromPDFWithOCR(
   fileName?: string
 ): Promise<string> {
   // First try standard PDF text extraction
-  const parser = new PDFParse({ data: buffer });
-  const result = await parser.getText();
-  await parser.destroy();
+  const result = await pdf(buffer);
 
   const extractedText = result.text.trim();
 

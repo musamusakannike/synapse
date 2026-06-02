@@ -1,2 +1,2 @@
-import { PDFParse } from "pdf-parse";
-console.log("PDFParse successfully imported!", PDFParse);
+import pdf from "pdf-parse";
+console.log("pdf-parse successfully imported!", pdf);

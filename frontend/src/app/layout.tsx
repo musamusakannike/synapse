@@ -3,6 +3,7 @@ import { Outfit, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import { RegisterSW } from "@/components/RegisterSW";
 import { OfflineToast } from "@/components/OfflineToast";
+import { Analytics } from "@vercel/analytics/react";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
@@ -78,6 +79,7 @@ export default function RootLayout({
           {children}
           <RegisterSW />
           <OfflineToast />
+          <Analytics />
         </Providers>
       </body>
     </html>

@@ -44,7 +44,7 @@ function safeJsonParse(rawText: string): { data: any | null; error: string | nul
     };
   }
 }
-const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 const BASE_URL = "https://api.deepseek.com";
 
 if (!DEEPSEEK_API_KEY) {
@@ -233,8 +233,21 @@ Output only raw JSON block without markdown code blocks.`;
     try {
       const responseText = await callDeepSeek(messages, true);
 
+      console.log(`generateLessonContent attempt ${attempt} raw response (first 500 chars):`, responseText.substring(0, 500));
+
       const { data, error } = safeJsonParse(responseText);
+
       if (error) {
+        // Fallback: if the AI returned raw markdown instead of JSON, wrap it
+        const trimmed = responseText.trim();
+        const looksLikeMarkdown = !trimmed.startsWith("{") && (trimmed.startsWith("#") || trimmed.includes("\n#") || trimmed.length > 100);
+        if (looksLikeMarkdown) {
+          console.warn(`generateLessonContent attempt ${attempt}: AI returned raw markdown, wrapping as lesson content`);
+          return {
+            summary: lessonTitle,
+            content: trimmed,
+          };
+        }
         throw new Error(`Failed to parse lesson content: ${error}`);
       }
 

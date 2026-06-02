@@ -68,12 +68,7 @@ export function Hero() {
       />
 
       <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] mb-8">
-          <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
-          <span className="text-xs text-[var(--text-secondary)] font-medium">
-            Personalized AI learning — not generic content
-          </span>
-        </div>
+       
 
         <h1
           ref={headingRef}

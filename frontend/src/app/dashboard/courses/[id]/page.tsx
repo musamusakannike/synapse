@@ -41,6 +41,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const [activeLesson, setActiveLesson] = useState<LessonContent | null>(null);
   const [error, setError] = useState("");
   const [showOutline, setShowOutline] = useState(true);
+  const [generatingExam, setGeneratingExam] = useState(false);
 
   useEffect(() => {
     fetchCourse();
@@ -96,6 +97,41 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  const generateFinalExam = async () => {
+    setGeneratingExam(true);
+    setError("");
+    try {
+      const res = await fetch("/api/ai/course/exam", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to generate final exam");
+      } else {
+        router.push(`/dashboard/quizzes/${data.quizId}`);
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setGeneratingExam(false);
+    }
+  };
+
+  // Continue with the first lesson that hasn't been generated/completed yet
+  const startNextLesson = () => {
+    if (!course) return;
+    for (const mod of course.outline.modules) {
+      const lesson = mod.lessons.find((l) => !l.isCompleted);
+      if (lesson) {
+        if (lesson.generatedLessonId) viewLesson(lesson.generatedLessonId);
+        else generateLesson(mod.title, lesson.title);
+        return;
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -105,6 +141,18 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   }
 
   if (!course) return null;
+
+  const allLessons = course.outline.modules.flatMap((m) => m.lessons);
+  const totalLessons = allLessons.length;
+  const completedLessons = allLessons.filter((l) => l.isCompleted).length;
+  const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+  const isComplete = totalLessons > 0 && completedLessons === totalLessons;
+  // ~8 minutes of study per lesson
+  const remainingMinutes = (totalLessons - completedLessons) * 8;
+  const remainingLabel =
+    remainingMinutes >= 60
+      ? `${Math.floor(remainingMinutes / 60)}h ${remainingMinutes % 60 ? `${remainingMinutes % 60}m` : ""}`.trim()
+      : `${remainingMinutes}m`;
 
   return (
     <div className="flex flex-col md:flex-row h-full">
@@ -142,9 +190,59 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
         >
           ← Back to courses
         </button>
-        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold mb-6">
+        <h2 className="font-[family-name:var(--font-display)] text-lg font-bold mb-4">
           {course.title}
         </h2>
+
+        {/* Progress overview */}
+        {totalLessons > 0 && (
+          <div className="mb-5 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
+                {completedLessons} of {totalLessons} lessons
+              </span>
+              <span className="text-xs font-semibold" style={{ color: isComplete ? "var(--success)" : "var(--accent)" }}>
+                {percent}%
+              </span>
+            </div>
+            <div className="w-full h-2 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${percent}%`, backgroundColor: isComplete ? "var(--success)" : "var(--accent)" }}
+              />
+            </div>
+            <p className="text-[11px] text-[var(--text-muted)] mt-2">
+              {isComplete ? "Course complete — nice work!" : `~${remainingLabel} of study left`}
+            </p>
+
+            {!isComplete && (
+              <button
+                onClick={startNextLesson}
+                disabled={!!generating}
+                className="mt-3 w-full px-4 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {completedLessons === 0 ? "Start first lesson" : "Continue learning"}
+              </button>
+            )}
+
+            {isComplete && (
+              <button
+                onClick={generateFinalExam}
+                disabled={generatingExam}
+                className="mt-3 w-full px-4 py-2.5 rounded-xl bg-[var(--success)] text-[var(--bg-primary)] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {generatingExam ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-[var(--bg-primary)] border-t-transparent rounded-full animate-spin" />
+                    Building exam...
+                  </>
+                ) : (
+                  "Generate final exam"
+                )}
+              </button>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 p-2 rounded-lg bg-[var(--danger)]/10 text-xs text-[var(--danger)]">

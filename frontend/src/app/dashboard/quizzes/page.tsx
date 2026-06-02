@@ -6,6 +6,7 @@ import { InputWithDocuments } from "@/components/documents";
 import type { UploadedDoc } from "@/components/documents";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/auth-context";
+import { PremiumPrompt } from "@/components/PremiumPrompt";
 
 interface Quiz {
   _id: string;
@@ -20,6 +21,16 @@ interface UserLimits {
   isPremium: boolean;
   maxQuestions: number;
   premiumMaxQuestions: number;
+}
+
+interface Bookmark {
+  _id: string;
+  question: string;
+  type: string;
+  options: string[];
+  answer: string;
+  explanation: string;
+  sourceQuizTitle?: string | null;
 }
 
 export default function QuizzesPage() {
@@ -37,6 +48,9 @@ export default function QuizzesPage() {
     maxQuestions: 15,
     premiumMaxQuestions: 100,
   });
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [practicingBookmarks, setPracticingBookmarks] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
 
   const fetchQuizzes = useCallback(async () => {
     try {
@@ -55,9 +69,51 @@ export default function QuizzesPage() {
     }
   }, []);
 
+  const fetchBookmarks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ai/quiz/bookmarks");
+      const data = await res.json();
+      if (data.success) setBookmarks(data.bookmarks || []);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  const practiceBookmarks = async () => {
+    if (bookmarks.length === 0) return;
+    setPracticingBookmarks(true);
+    setError("");
+    try {
+      const res = await fetch("/api/ai/quiz/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questions: bookmarks.map((b) => ({
+            question: b.question,
+            type: b.type,
+            options: b.options,
+            answer: b.answer,
+            explanation: b.explanation,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to generate practice quiz");
+      } else {
+        window.location.href = `/dashboard/quizzes/${data.quizId}`;
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setPracticingBookmarks(false);
+    }
+  };
+
   useEffect(() => {
     fetchQuizzes();
-  }, [fetchQuizzes]);
+    fetchBookmarks();
+  }, [fetchQuizzes, fetchBookmarks]);
 
   // Update limits when auth context user changes
   useEffect(() => {
@@ -161,14 +217,14 @@ export default function QuizzesPage() {
                 <button
                   key={num}
                   type="button"
-                  onClick={() => !isLocked && setNumQuestions(num)}
-                  disabled={generating || isLocked}
+                  onClick={() => (isLocked ? setShowUpsell(true) : setNumQuestions(num))}
+                  disabled={generating}
                   className={cn(
                     "px-4 py-2 rounded-xl text-xs font-semibold transition-all border relative",
                     numQuestions === num
                       ? "bg-[var(--accent)] text-[var(--bg-primary)] border-[var(--accent)] shadow-sm"
                       : isLocked
-                      ? "bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-[var(--border)] cursor-not-allowed"
+                      ? "bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--accent)]/40"
                       : "bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--text-muted)]"
                   )}
                 >
@@ -221,6 +277,41 @@ export default function QuizzesPage() {
         </div>
       )}
 
+      {/* Bookmarked questions for spaced repetition */}
+      {bookmarks.length > 0 && (
+        <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent-subtle)]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-[var(--accent)] flex-shrink-0 mt-0.5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-semibold">
+                  {bookmarks.length} bookmarked question{bookmarks.length === 1 ? "" : "s"}
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+                  Questions you missed and saved. Generate a fresh practice quiz to review them.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={practiceBookmarks}
+              disabled={practicingBookmarks}
+              className="flex-shrink-0 px-4 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {practicingBookmarks ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-[var(--bg-primary)] border-t-transparent rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Practice bookmarks"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
@@ -253,6 +344,15 @@ export default function QuizzesPage() {
             </Link>
           ))}
         </div>
+      )}
+
+      {showUpsell && (
+        <PremiumPrompt
+          variant="modal"
+          title="Unlock larger quizzes"
+          description={`Go Premium to generate up to ${userLimits.premiumMaxQuestions} questions per quiz, plus unlimited document context and advanced study analytics.`}
+          onClose={() => setShowUpsell(false)}
+        />
       )}
     </div>
   );

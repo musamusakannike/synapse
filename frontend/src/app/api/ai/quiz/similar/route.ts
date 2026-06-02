@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateQuizQuestions } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 async function getUserId() {
@@ -28,6 +28,7 @@ interface QuizQuestion {
  * an explicit list of questions (e.g. bookmarked ones).
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -104,6 +105,9 @@ export async function POST(request: Request) {
       user?.premium ? 20 : 10
     );
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
+
     const quizData = await generateQuizQuestions(
       topic,
       userProfile,
@@ -129,6 +133,7 @@ export async function POST(request: Request) {
       limit: usage.limit,
     });
   } catch (error: unknown) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("POST Similar Quiz Error:", error);
     const message = error instanceof Error ? error.message : "Failed to generate practice quiz";
     return NextResponse.json({ error: message }, { status: 500 });

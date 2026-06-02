@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyJWT } from "@/lib/jwt";
 import { generateQuizQuestions } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 async function getUserId() {
@@ -18,6 +18,7 @@ async function getUserId() {
  * POST generate a comprehensive final exam quiz for a completed course.
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -94,6 +95,9 @@ export async function POST(request: Request) {
 
     const numQuestions = Math.min(Math.max(totalLessons * 2, 8), user?.premium ? 25 : 15);
 
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
+
     const quizData = await generateQuizQuestions(
       `Final exam covering the entire course: ${course.title}`,
       userProfile,
@@ -119,6 +123,7 @@ export async function POST(request: Request) {
       limit: usage.limit,
     });
   } catch (error: unknown) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("POST Final Exam Error:", error);
     const message = error instanceof Error ? error.message : "Failed to generate final exam";
     return NextResponse.json({ error: message }, { status: 500 });

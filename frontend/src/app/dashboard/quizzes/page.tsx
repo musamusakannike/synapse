@@ -7,6 +7,7 @@ import type { UploadedDoc } from "@/components/documents";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/lib/auth-context";
 import { PremiumPrompt } from "@/components/PremiumPrompt";
+import { FetchError } from "@/components/FetchError";
 
 interface Quiz {
   _id: string;
@@ -37,6 +38,7 @@ export default function QuizzesPage() {
   const { user } = useAuth();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [topic, setTopic] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [numQuestions, setNumQuestions] = useState(5);
@@ -53,17 +55,20 @@ export default function QuizzesPage() {
   const [showUpsell, setShowUpsell] = useState(false);
 
   const fetchQuizzes = useCallback(async () => {
+    setFetchError(false);
     try {
       const res = await fetch("/api/ai/quiz");
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setQuizzes(data.quizzes || []);
         if (data.userLimits) {
           setUserLimits(data.userLimits);
         }
+      } else {
+        setFetchError(true);
       }
     } catch {
-      // silent
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -316,6 +321,8 @@ export default function QuizzesPage() {
         <div className="flex items-center justify-center py-20">
           <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : fetchError ? (
+        <FetchError message="Couldn't load your quizzes." onRetry={fetchQuizzes} />
       ) : quizzes.length === 0 && !generating ? (
         <div className="text-center py-20">
           <p className="text-sm text-[var(--text-muted)]">No quizzes yet. Generate your first one above.</p>

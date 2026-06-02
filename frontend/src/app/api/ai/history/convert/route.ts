@@ -7,7 +7,7 @@ import {
   generateCourseOutline,
   generateVideoScript,
 } from "@/lib/deepseek";
-import { checkAndIncrementUsage } from "@/lib/paystack";
+import { checkAndIncrementUsage, refundUsage } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
 async function getUserId() {
@@ -22,6 +22,7 @@ async function getUserId() {
  * POST convert a Q&A answer to quiz, course, or video
  */
 export async function POST(request: Request) {
+  let usageRefundUserId: string | null = null;
   try {
     const userId = await getUserId();
     if (!userId) {
@@ -84,6 +85,9 @@ export async function POST(request: Request) {
     const topic = questionDoc.question;
     // Use the answer as document context for better relevance
     const documentContext = `Based on the following Q&A context:\nQuestion: ${questionDoc.question}\n\nAnswer: ${questionDoc.answer}`;
+
+    // Reserve a refund of this generation in case the AI call fails after the increment
+    if (!usage.premium) usageRefundUserId = userId;
 
     let result;
 
@@ -198,6 +202,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error: any) {
+    if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("Convert Answer Error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to convert answer" },

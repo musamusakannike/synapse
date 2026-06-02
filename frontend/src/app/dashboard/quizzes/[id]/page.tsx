@@ -34,6 +34,11 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
   const [showModeSelector, setShowModeSelector] = useState(true);
   // Separate input state for fill-in-the-blank to allow typing before submitting
   const [fillBlankInput, setFillBlankInput] = useState<string>("");
+  // Review mode: bookmarks + practice generation
+  const [bookmarked, setBookmarked] = useState<Record<number, boolean>>({});
+  const [bookmarkBusy, setBookmarkBusy] = useState<number | null>(null);
+  const [generatingPractice, setGeneratingPractice] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     fetchQuiz();
@@ -128,6 +133,81 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
       });
     } catch {
       // silent
+    }
+  };
+
+  // Retake the quiz from scratch
+  const handleRetry = () => {
+    setAnswers({});
+    setSubmitted(false);
+    setScore(0);
+    setCurrentQ(0);
+    setFillBlankInput("");
+    setReviewError("");
+    setBookmarked({});
+  };
+
+  const missedIndices = quiz
+    ? quiz.questions
+        .map((q, i) => (answers[i]?.toLowerCase().trim() === q.answer.toLowerCase().trim() ? -1 : i))
+        .filter((i) => i >= 0)
+    : [];
+
+  const toggleBookmark = async (index: number) => {
+    if (!quiz) return;
+    setBookmarkBusy(index);
+    const q = quiz.questions[index];
+    const currentlyBookmarked = !!bookmarked[index];
+    try {
+      if (currentlyBookmarked) {
+        await fetch(
+          `/api/ai/quiz/bookmarks?sourceQuizId=${id}&question=${encodeURIComponent(q.question)}`,
+          { method: "DELETE" }
+        );
+        setBookmarked((prev) => ({ ...prev, [index]: false }));
+      } else {
+        await fetch("/api/ai/quiz/bookmarks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceQuizId: id,
+            sourceQuizTitle: quiz.title,
+            question: q.question,
+            type: q.type,
+            options: q.options,
+            answer: q.answer,
+            explanation: q.explanation,
+          }),
+        });
+        setBookmarked((prev) => ({ ...prev, [index]: true }));
+      }
+    } catch {
+      setReviewError("Couldn't update bookmark. Try again.");
+    } finally {
+      setBookmarkBusy(null);
+    }
+  };
+
+  const generatePracticeQuiz = async () => {
+    if (missedIndices.length === 0) return;
+    setGeneratingPractice(true);
+    setReviewError("");
+    try {
+      const res = await fetch("/api/ai/quiz/similar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quizId: id, questionIndices: missedIndices }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setReviewError(data.error || "Failed to generate practice quiz");
+      } else {
+        router.push(`/dashboard/quizzes/${data.quizId}`);
+      }
+    } catch {
+      setReviewError("Something went wrong");
+    } finally {
+      setGeneratingPractice(false);
     }
   };
 
@@ -247,13 +327,69 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
             {score === quiz.questions.length ? "Perfect score!" : score >= quiz.questions.length / 2 ? "Good job!" : "Keep practicing!"}
           </p>
 
+          {/* Review actions */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-2">
+            <button
+              onClick={handleRetry}
+              className="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm font-semibold hover:border-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] transition-all flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Retry quiz
+            </button>
+            {missedIndices.length > 0 && (
+              <button
+                onClick={generatePracticeQuiz}
+                disabled={generatingPractice}
+                className="px-5 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {generatingPractice ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-[var(--bg-primary)] border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>Practice {missedIndices.length} missed</>
+                )}
+              </button>
+            )}
+          </div>
+          {reviewError && (
+            <p className="text-xs text-[var(--danger)] mb-2">{reviewError}</p>
+          )}
+          {missedIndices.length > 0 && (
+            <p className="text-xs text-[var(--text-muted)] mb-4">
+              Bookmark questions to revisit them later for spaced repetition.
+            </p>
+          )}
+
           {/* Review */}
-          <div className="text-left space-y-4 mt-8">
+          <div className="text-left space-y-4 mt-4">
             {quiz.questions.map((q, i) => {
               const isCorrect = answers[i]?.toLowerCase().trim() === q.answer.toLowerCase().trim();
               return (
                 <div key={i} className={cn("p-4 rounded-xl border", isCorrect ? "border-[var(--success)]/30 bg-[var(--success)]/5" : "border-[var(--danger)]/30 bg-[var(--danger)]/5")}>
-                  <p className="text-sm font-medium mb-1">{q.question}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium mb-1">{q.question}</p>
+                    {!isCorrect && (
+                      <button
+                        onClick={() => toggleBookmark(i)}
+                        disabled={bookmarkBusy === i}
+                        aria-label={bookmarked[i] ? "Remove bookmark" : "Bookmark question"}
+                        className={cn(
+                          "flex-shrink-0 p-1.5 rounded-lg transition-colors disabled:opacity-50",
+                          bookmarked[i]
+                            ? "text-[var(--accent)]"
+                            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                        )}
+                      >
+                        <svg className="w-4 h-4" fill={bookmarked[i] ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                   <p className="text-xs text-[var(--text-muted)]">
                     Your answer: {answers[i] || "(none)"} • Correct: {q.answer}
                   </p>
@@ -265,7 +401,7 @@ export default function QuizTakePage({ params }: { params: Promise<{ id: string 
 
           <button
             onClick={() => router.push("/dashboard/quizzes")}
-            className="mt-8 px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold"
+            className="mt-8 px-6 py-3 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] text-sm font-semibold hover:border-[var(--text-muted)] transition-all"
           >
             Back to Quizzes
           </button>

@@ -156,22 +156,54 @@ export default function CoursesPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {courses.map((course) => (
-            <Link
-              key={course._id}
-              href={`/dashboard/courses/${course._id}`}
-              className="block p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all"
-            >
-              <h3 className="font-[family-name:var(--font-display)] text-base font-semibold mb-1">
-                {course.title}
-              </h3>
-              <p className="text-xs text-[var(--text-muted)]">
-                {course.outline?.modules?.length || 0} modules •{" "}
-                {course.outline?.modules?.reduce((acc, m) => acc + m.lessons.length, 0) || 0} lessons •{" "}
-                {new Date(course.createdAt).toLocaleDateString()}
-              </p>
-            </Link>
-          ))}
+          {courses.map((course) => {
+            const allLessons = course.outline?.modules?.flatMap((m) => m.lessons) || [];
+            const totalLessons = allLessons.length;
+            const completedLessons = allLessons.filter((l) => l.isCompleted).length;
+            const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+            const isComplete = totalLessons > 0 && completedLessons === totalLessons;
+            return (
+              <Link
+                key={course._id}
+                href={`/dashboard/courses/${course._id}`}
+                className="block p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all"
+              >
+                <div className="flex items-start justify-between gap-3 mb-1">
+                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold">
+                    {course.title}
+                  </h3>
+                  {isComplete && (
+                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      Completed
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mb-3">
+                  {course.outline?.modules?.length || 0} modules • {totalLessons} lessons •{" "}
+                  {new Date(course.createdAt).toLocaleDateString()}
+                </p>
+                {totalLessons > 0 && (
+                  <>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[11px] text-[var(--text-secondary)]">
+                        {completedLessons} of {totalLessons} lessons
+                      </span>
+                      <span className="text-[11px] text-[var(--text-muted)]">{percent}%</span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%`, backgroundColor: isComplete ? "var(--success)" : "var(--accent)" }}
+                      />
+                    </div>
+                  </>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

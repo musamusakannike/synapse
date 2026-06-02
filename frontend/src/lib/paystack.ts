@@ -1,6 +1,8 @@
 import axios from "axios";
 import { connectToDatabase } from "./db";
 import { ObjectId } from "mongodb";
+import { sendSubscriptionSuccessEmail } from "./mail";
+
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const APP_BASE_URL =
@@ -140,7 +142,28 @@ export async function activateMonthlySubscription(
     }
   );
 
+  // Retrieve user to send subscription success email asynchronously
+  db.collection("users")
+    .findOne({ _id: new ObjectId(userId) })
+    .then((user) => {
+      if (user && user.email) {
+        sendSubscriptionSuccessEmail(
+          user.email,
+          user.name || "Scholar",
+          payment.reference,
+          payment.amount,
+          subscriptionExpiresAt
+        ).catch((err) => {
+          console.error("Failed to send subscription success email:", err);
+        });
+      }
+    })
+    .catch((err) => {
+      console.error("Error retrieving user for subscription success email:", err);
+    });
+
   return { alreadyProcessed: false, subscriptionExpiresAt };
+
 }
 
 /**

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import { ObjectId } from "mongodb";
+import { sendAdminUpgradeEmail } from "@/lib/mail";
+
 
 /**
  * POST — Upgrade a user's subscription by N months.
@@ -85,6 +87,13 @@ export async function POST(
       subscriptionExpiresAt: newExpiry,
       createdAt: now,
     });
+
+    // Send admin upgrade email asynchronously
+    if (user.email) {
+      sendAdminUpgradeEmail(user.email, user.name || "Scholar", months, newExpiry).catch((err) => {
+        console.error("Failed to send admin upgrade email:", err);
+      });
+    }
 
     return NextResponse.json({
       success: true,

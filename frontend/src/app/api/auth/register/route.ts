@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db";
 import { signJWT } from "@/lib/jwt";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 export async function POST(request: Request) {
   try {
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
     });
+
+    // Send welcome email asynchronously
+    sendWelcomeEmail(email.toLowerCase(), name).catch((err) => {
+      console.error("Failed to send welcome email during manual registration:", err);
+    });
+
 
     return NextResponse.json({
       success: true,

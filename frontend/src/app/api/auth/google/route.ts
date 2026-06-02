@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { connectToDatabase } from "@/lib/db";
 import { verifyGoogleToken } from "@/lib/firebase";
 import { signJWT } from "@/lib/jwt";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 export async function POST(request: Request) {
   try {
@@ -68,10 +69,16 @@ export async function POST(request: Request) {
         email: email.toLowerCase(),
         premium: false,
       } as any;
+
+      // Send welcome email asynchronously
+      sendWelcomeEmail(email.toLowerCase(), name || "Google Scholar").catch((err) => {
+        console.error("Failed to send welcome email during Google registration:", err);
+      });
     } else {
+
       // Ensure googleAuth is flag set in database
       await db.collection("users").updateOne(
-        { _id: user._id },
+        { _id: user!._id },
         { $set: { googleAuth: true } }
       );
     }

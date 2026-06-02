@@ -9,6 +9,16 @@ export default function BillingPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const status = searchParams.get("status");
+  const statusMessage =
+    status === "success"
+      ? "Payment successful! Your Premium monthly subscription is now active."
+      : status === "failed"
+        ? "Payment was not completed. Please try again."
+        : status === "error"
+          ? "An error occurred during payment verification."
+          : "";
+  const displayMessage = message || statusMessage;
   const subscriptionExpiresAt = user?.subscriptionExpiresAt
     ? new Date(user.subscriptionExpiresAt).toLocaleString(undefined, {
         dateStyle: "medium",
@@ -17,16 +27,10 @@ export default function BillingPage() {
     : null;
 
   useEffect(() => {
-    const status = searchParams.get("status");
     if (status === "success") {
-      setMessage("Payment successful! Your Premium monthly subscription is now active.");
       refreshUser();
-    } else if (status === "failed") {
-      setMessage("Payment was not completed. Please try again.");
-    } else if (status === "error") {
-      setMessage("An error occurred during payment verification.");
     }
-  }, [searchParams, refreshUser]);
+  }, [status, refreshUser]);
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -38,8 +42,8 @@ export default function BillingPage() {
       } else {
         setMessage(data.error || "Failed to initialize payment");
       }
-    } catch (err: any) {
-      setMessage(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -54,9 +58,9 @@ export default function BillingPage() {
         Manage your subscription and plan.
       </p>
 
-      {message && (
+      {displayMessage && (
         <div className="mb-6 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-secondary)]">
-          {message}
+          {displayMessage}
         </div>
       )}
 

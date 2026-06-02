@@ -58,8 +58,9 @@ export async function POST(request: Request) {
 
     // Always respond with a 200 OK to Paystack
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Webhook processing failed";
     console.error("Webhook processing error:", error);
-    return NextResponse.json({ error: error.message || "Webhook processing failed" }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

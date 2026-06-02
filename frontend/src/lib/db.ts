@@ -116,6 +116,14 @@ export interface UploadedDocument {
   r2Key: string;
   publicUrl: string;
   extractedText?: string;
+  insights?: {
+    summary: string;
+    keyConcepts: Array<{ concept: string; description: string }>;
+    glossary: Array<{ term: string; definition: string }>;
+    quizTopics: string[];
+    courseOutline: Array<{ module: string; lessons: string[] }>;
+  };
+  insightsGeneratedAt?: Date;
   createdAt: Date;
 }
 

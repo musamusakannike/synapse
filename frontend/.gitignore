@@ -40,6 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# test/scratch files that may contain secrets
+test-*.mjs
+test-*.js
+
 .agents/
 .agent/
 .cursor/

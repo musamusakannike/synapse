@@ -55,31 +55,43 @@ export function DocumentUpload({
       const formData = new FormData();
       formData.append("file", file);
 
+      console.log(`[DocumentUpload Component] Starting upload for file: "${file.name}" (Type: ${file.type}, Size: ${file.size} bytes)`);
+
       try {
         const xhr = new XMLHttpRequest();
 
         const uploadPromise = new Promise<UploadedDoc>((resolve, reject) => {
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
-              setProgress(Math.round((e.loaded / e.total) * 90));
+              const pct = Math.round((e.loaded / e.total) * 90);
+              setProgress(pct);
+              console.log(`[DocumentUpload Component] Upload progress for "${file.name}": ${pct}%`);
             }
           };
 
           xhr.onload = () => {
             setProgress(100);
+            console.log(`[DocumentUpload Component] Response received for "${file.name}". HTTP status: ${xhr.status}`);
             try {
               const data = JSON.parse(xhr.responseText);
               if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+                console.log(`[DocumentUpload Component] Upload succeeded for "${file.name}". Response:`, data);
                 resolve(data.document);
               } else {
+                console.error(`[DocumentUpload Component] Upload failed for "${file.name}". Error returned: ${data.error || "Unknown error"}`);
                 reject(new Error(data.error || "Upload failed"));
               }
-            } catch {
+            } catch (err) {
+              console.error(`[DocumentUpload Component] Failed to parse JSON response for "${file.name}". Response text:`, xhr.responseText);
               reject(new Error("Invalid response from server"));
             }
           };
 
-          xhr.onerror = () => reject(new Error("Network error during upload"));
+          xhr.onerror = () => {
+            console.error(`[DocumentUpload Component] Network error during upload of "${file.name}"`);
+            reject(new Error("Network error during upload"));
+          };
+          
           xhr.open("POST", "/api/documents/upload");
           xhr.send(formData);
         });
@@ -88,6 +100,7 @@ export function DocumentUpload({
         onUploadComplete(doc);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
+        console.error(`[DocumentUpload Component] Upload failed: ${message}`, err);
         onError?.(message);
       } finally {
         setUploading(false);

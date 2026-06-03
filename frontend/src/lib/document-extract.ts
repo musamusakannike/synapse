@@ -1,6 +1,6 @@
 import pdf from "pdf-parse";
 import * as mammoth from "mammoth";
-import OpenAI from "openai";
+import axios from "axios";
 import { createWorker } from "tesseract.js";
 import { Jimp } from "jimp";
 import { callDeepSeek } from "./deepseek";
@@ -35,22 +35,75 @@ export function isImageMime(mime: string): boolean {
 }
 
 /**
- * Initialize OpenAI client configured for DeepSeek API
- * DeepSeek's API is fully compatible with OpenAI SDK format
+ * Perform OCR on an image using Google Cloud Vision API (DOCUMENT_TEXT_DETECTION).
+ * Uses the REST API directly via axios — no heavy SDK needed.
  */
-function getVisionClient(): OpenAI | null {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+async function performGoogleVisionOCR(
+  buffer: Buffer,
+  mimeType: string,
+  fileName?: string
+): Promise<string> {
+  const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY;
   if (!apiKey) {
-    console.warn("DEEPSEEK_API_KEY not configured - OCR features will be unavailable");
-    return null;
+    console.error("[Google Vision API] Failure: GOOGLE_CLOUD_VISION_API_KEY is not configured.");
+    throw new Error("GOOGLE_CLOUD_VISION_API_KEY is not configured.");
   }
 
-  return new OpenAI({
-    apiKey,
-    baseURL: "https://api.deepseek.com",
-    timeout: 60000,
-    maxRetries: 2,
-  });
+  const base64Data = buffer.toString("base64");
+
+  const requestBody = {
+    requests: [
+      {
+        image: { content: base64Data },
+        features: [
+          { type: "DOCUMENT_TEXT_DETECTION" },
+        ],
+        imageContext: {
+          languageHints: ["en"],
+        },
+      },
+    ],
+  };
+
+  console.log(`[Google Vision API] Sending POST request to Google Vision API for file: "${fileName || "image"}" (Buffer size: ${buffer.length} bytes)`);
+  try {
+    const response = await axios.post(
+      `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
+      requestBody,
+      {
+        headers: { "Content-Type": "application/json" },
+        timeout: 60000,
+      }
+    );
+
+    console.log(`[Google Vision API] Response received. HTTP status: ${response.status}`);
+
+    const result = response.data?.responses?.[0];
+
+    if (result?.error) {
+      console.error(`[Google Vision API] API returned internal error: ${JSON.stringify(result.error)}`);
+      throw new Error(`Google Vision API error: ${result.error.message}`);
+    }
+
+    // DOCUMENT_TEXT_DETECTION returns fullTextAnnotation with structured text
+    const extractedText =
+      result?.fullTextAnnotation?.text?.trim() ||
+      result?.textAnnotations?.[0]?.description?.trim();
+
+    if (!extractedText) {
+      console.warn(`[Google Vision API] No text was detected/extracted in: "${fileName || "image"}"`);
+      throw new Error(`No text could be extracted by Google Vision from: ${fileName || "image"}`);
+    }
+
+    console.log(`[Google Vision API] Successfully extracted ${extractedText.length} characters from: "${fileName || "image"}"`);
+    return extractedText;
+  } catch (error: any) {
+    const errorDetails = error.response
+      ? `Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`
+      : error.message || error;
+    console.error(`[Google Vision API] Request failed for "${fileName || "image"}": ${errorDetails}`);
+    throw error;
+  }
 }
 
 /**
@@ -107,8 +160,24 @@ async function performOCR(
   mimeType: string,
   fileName?: string
 ): Promise<string> {
+  // 1. Try Google Cloud Vision OCR first if API key is present
+  if (process.env.GOOGLE_CLOUD_VISION_API_KEY) {
+    try {
+      console.log(`[OCR] Attempting Google Cloud Vision OCR for: ${fileName || "image"}`);
+      const text = await performGoogleVisionOCR(buffer, mimeType, fileName);
+      console.log(`[OCR] Google Cloud Vision OCR succeeded for: ${fileName || "image"}`);
+      console.log(`[OCR Method] SUCCESS: Google Cloud Vision API was used for image: "${fileName || "image"}"`);
+      return `[Image Content - ${fileName || "image"}]:\n${text}`;
+    } catch (visionError: any) {
+      console.warn(`[OCR] Google Cloud Vision OCR failed, falling back to local OCR pipeline: ${visionError.message || visionError}`);
+    }
+  } else {
+    console.log(`[OCR] Google Cloud Vision API Key is not set. Using local OCR pipeline for: ${fileName || "image"}`);
+  }
+
+  // 2. Fallback to Local OCR + DeepSeek text correction
   try {
-    console.log(`[OCR] Starting local OCR for image: ${fileName || "image"} (${mimeType})`);
+    console.log(`[OCR] Starting local OCR fallback for image: ${fileName || "image"} (${mimeType})`);
     
     // 1. Read image with Jimp
     const image = await Jimp.read(buffer);
@@ -132,10 +201,12 @@ async function performOCR(
     const rawText = ocrResult.data.text?.trim() || "";
     
     if (!rawText) {
+      console.log(`[OCR Method] SUCCESS (Fallback): Local Tesseract OCR was used, but no text was detected in: "${fileName || "image"}"`);
       return `[Image Content - ${fileName || "image"}]: No text detected in image.`;
     }
     
     console.log(`[OCR] Raw text extracted successfully (${rawText.length} chars). Cleaning up with DeepSeek...`);
+    console.log(`[OCR Method] SUCCESS: Local Tesseract OCR was used for image: "${fileName || "image"}"`);
     
     // 4. Clean up raw OCR output using DeepSeek text API
     const systemPrompt = `You are a post-processing helper for OCR. The user will provide text recognized from a handwritten document.
@@ -161,22 +232,226 @@ Do NOT summarize, comment, or explain. Respond ONLY with the cleaned-up, transcr
   }
 }
 
-/**
- * Check if PDF text extraction seems insufficient (possibly scanned/handwritten PDF)
- * Triggers OCR fallback if text is too short
- */
 function shouldUseOCROnPDF(extractedText: string): boolean {
   if (!extractedText || extractedText.trim().length < OCR_MIN_LENGTH_THRESHOLD) {
     return true;
   }
-  // Check if text looks like garbage/scrambled characters (common in scanned PDFs)
+
+  // 1. Check if text consists mostly of common scanner watermarks/metadata
+  const watermarks = [
+    /camscanner/gi,
+    /scanned\s+(with|by)/gi,
+    /wps\s+office/gi,
+    /adobe\s+scan/gi,
+    /microsoft\s+lens/gi,
+    /office\s+lens/gi,
+    /scanner\s+app/gi,
+    /scanbot/gi,
+    /tiny\s+scanner/gi,
+    /trial\s+version/gi,
+  ];
+
+  let cleanText = extractedText;
+  for (const regex of watermarks) {
+    cleanText = cleanText.replace(regex, "");
+  }
+  cleanText = cleanText.trim();
+
+  // If the text without watermarks is too short, treat it as scanned
+  if (cleanText.length < OCR_MIN_LENGTH_THRESHOLD) {
+    console.log(`[PDF Extraction] Extracted text consists mostly of scanner watermarks (original: ${extractedText.length} chars, cleaned: ${cleanText.length} chars). Triggering OCR.`);
+    return true;
+  }
+
+  // 2. Repetition/Uniqueness ratio check (e.g. "CamScanner" repeated many times)
+  const words = extractedText.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+  if (words.length >= 5) {
+    const uniqueWords = new Set(words);
+    const uniquenessRatio = uniqueWords.size / words.length;
+    if (uniquenessRatio < 0.25) { // If less than 25% of words are unique
+      console.log(`[PDF Extraction] Low text uniqueness ratio detected (${(uniquenessRatio * 100).toFixed(1)}% unique words out of ${words.length}). Triggering OCR.`);
+      return true;
+    }
+  }
+
+  // 3. Check if text looks like garbage/scrambled characters (common in scanned PDFs)
   const printableRatio =
     extractedText.replace(/[^\x20-\x7E\n\r\t]/g, "").length / extractedText.length;
-  return printableRatio < 0.8;
+  if (printableRatio < 0.8) {
+    console.log(`[PDF Extraction] Low printable character ratio detected (${(printableRatio * 100).toFixed(1)}%). Triggering OCR.`);
+    return true;
+  }
+
+  return false;
 }
 
 /**
- * Convert first page of PDF to image for OCR (simplified approach)
+ * Perform OCR on a single batch of up to 5 PDF pages using Google Cloud Vision
+ * files:annotate (synchronous). Returns extracted text for those pages.
+ */
+async function performGoogleVisionPDFBatch(
+  base64Data: string,
+  pageNumbers: number[], // 1-indexed, max 5 per call
+  apiKey: string,
+  fileName?: string
+): Promise<string> {
+  const requestBody = {
+    requests: [
+      {
+        inputConfig: {
+          content: base64Data,
+          mimeType: "application/pdf",
+        },
+        features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+        pages: pageNumbers,
+      },
+    ],
+  };
+
+  console.log(`[Google Vision API] Sending POST request to files:annotate for PDF: "${fileName || "document"}" pages [${pageNumbers.join(", ")}]`);
+
+  const response = await axios.post(
+    `https://vision.googleapis.com/v1/files:annotate?key=${apiKey}`,
+    requestBody,
+    {
+      headers: { "Content-Type": "application/json" },
+      timeout: 120000,
+    }
+  );
+
+  console.log(`[Google Vision API] HTTP status: ${response.status}`);
+  console.log(`[Google Vision API] Raw response (pages [${pageNumbers.join(", ")}]):`, JSON.stringify(response.data, null, 2));
+
+  const fileResponse = response.data?.responses?.[0];
+
+  if (!fileResponse) {
+    console.warn(`[Google Vision API] Top-level responses array is empty or missing.`);
+    return "";
+  }
+
+  console.log(`[Google Vision API] Top-level fileResponse keys: ${Object.keys(fileResponse).join(", ")}`);
+
+  if (fileResponse?.error) {
+    console.error(`[Google Vision API] Top-level error: ${JSON.stringify(fileResponse.error)}`);
+    throw new Error(`Google Vision PDF API error: ${fileResponse.error.message}`);
+  }
+
+  const pageResponses = fileResponse?.responses;
+  console.log(`[Google Vision API] Inner page responses count: ${pageResponses?.length ?? 0}`);
+
+  if (!pageResponses || pageResponses.length === 0) {
+    console.warn(`[Google Vision API] No inner page responses returned for pages [${pageNumbers.join(", ")}].`);
+    return "";
+  }
+
+  let batchText = "";
+  for (let i = 0; i < pageResponses.length; i++) {
+    const pageRes = pageResponses[i];
+    const pageNum = pageRes.context?.pageNumber ?? pageNumbers[i];
+    console.log(`[Google Vision API] Page ${pageNum} response keys: ${Object.keys(pageRes).join(", ")}`);
+
+    // The files:annotate response nests results directly on the page response object,
+    // NOT under an "annotateImageResponse" wrapper — that only exists in images:annotate.
+    if (pageRes.error) {
+      console.warn(`[Google Vision API] Error on page ${pageNum}: ${JSON.stringify(pageRes.error)}`);
+      continue;
+    }
+
+    const fullText = pageRes.fullTextAnnotation?.text?.trim();
+    const legacyText = pageRes.textAnnotations?.[0]?.description?.trim();
+    console.log(`[Google Vision API] Page ${pageNum} fullTextAnnotation length: ${fullText?.length ?? 0}, textAnnotations[0] length: ${legacyText?.length ?? 0}`);
+
+    const text = fullText || legacyText;
+    if (text) {
+      batchText += `\n--- Page ${pageNum} ---\n${text}\n`;
+    } else {
+      console.warn(`[Google Vision API] Page ${pageNum} returned no text content.`);
+    }
+  }
+
+  return batchText;
+}
+
+/**
+ * Perform OCR on a PDF directly using Google Cloud Vision API (files:annotate).
+ * Handles PDFs of any page count by batching in groups of 5 pages (API limit).
+ * Splits oversized PDFs into chunks to stay within the 10MB base64 payload limit.
+ */
+async function performGoogleVisionPDFOCR(
+  buffer: Buffer,
+  fileName?: string
+): Promise<string> {
+  const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY;
+  if (!apiKey) {
+    throw new Error("GOOGLE_CLOUD_VISION_API_KEY is not configured.");
+  }
+
+  // Google Vision files:annotate endpoint has a payload limit of 10MB (base64 encoded).
+  // base64 inflates size by ~33%, so the raw buffer limit is ~7.5MB to be safe.
+  const MAX_RAW_BYTES = 7.5 * 1024 * 1024;
+  if (buffer.length > MAX_RAW_BYTES) {
+    throw new Error(
+      `PDF buffer size (${(buffer.length / 1024 / 1024).toFixed(1)}MB) exceeds the safe limit for direct Google Vision API upload. Falling back to page-by-page rendering.`
+    );
+  }
+
+  // Determine total page count using pdf-parse before batching
+  let totalPages = 1;
+  try {
+    const pdfMeta = await pdf(buffer, { max: 0 }); // max:0 = parse metadata only, no text
+    totalPages = pdfMeta.numpages || 1;
+  } catch {
+    // If we can't parse page count, fall back to assuming up to 20 pages
+    totalPages = 20;
+  }
+
+  console.log(`[Google Vision API] PDF has ${totalPages} pages. Processing in batches of 5...`);
+
+  const base64Data = buffer.toString("base64");
+  const BATCH_SIZE = 5; // Google Vision synchronous limit per request
+
+  let combinedText = "";
+  let successPages = 0;
+
+  // Build batches: [1-5], [6-10], [11-15], [16-20], etc.
+  for (let startPage = 1; startPage <= totalPages; startPage += BATCH_SIZE) {
+    const batchPages: number[] = [];
+    for (
+      let p = startPage;
+      p < startPage + BATCH_SIZE && p <= totalPages;
+      p++
+    ) {
+      batchPages.push(p);
+    }
+
+    try {
+      const batchText = await performGoogleVisionPDFBatch(
+        base64Data,
+        batchPages,
+        apiKey,
+        fileName
+      );
+      if (batchText.trim()) {
+        combinedText += batchText;
+        successPages += batchPages.length;
+      }
+    } catch (batchError: any) {
+      console.warn(
+        `[Google Vision API] Batch failed for pages [${batchPages.join(", ")}]: ${batchError.message || batchError}`
+      );
+    }
+  }
+
+  if (!combinedText.trim()) {
+    throw new Error("Google Vision API completed but returned no text content.");
+  }
+
+  console.log(`[Google Vision API] Successfully extracted text from ${successPages}/${totalPages} PDF pages.`);
+  return combinedText.trim();
+}
+
+/**
+ * Convert PDF to image for OCR (simplified approach)
  * In production, you might want to use a PDF-to-image library
  */
 async function extractTextFromPDFWithOCR(
@@ -190,9 +465,46 @@ async function extractTextFromPDFWithOCR(
 
   // If text extraction looks good, return it
   if (!shouldUseOCROnPDF(extractedText)) {
+    console.log(`[PDF Extraction] Native text layer was extracted successfully (${extractedText.length} chars). Skipping OCR fallback.`);
+    console.log(`[OCR Method] SUCCESS: Native text extraction was used (no OCR required) for: "${fileName || "document"}"`);
     return extractedText;
   }
 
+  // 1. Try direct Google Vision PDF OCR first
+  if (process.env.GOOGLE_CLOUD_VISION_API_KEY) {
+    try {
+      console.log(`[OCR] Attempting direct Google Cloud Vision PDF OCR for: ${fileName || "document"}`);
+      const directText = await performGoogleVisionPDFOCR(buffer, fileName);
+      console.log(`[OCR] Direct Google Cloud Vision PDF OCR succeeded for: ${fileName || "document"}`);
+      console.log(`[OCR Method] SUCCESS: Direct Google Cloud Vision API was used for PDF: "${fileName || "document"}"`);
+      
+      // Clean up text using DeepSeek if needed
+      console.log(`[OCR] Direct PDF text extracted (${directText.length} chars). Running DeepSeek cleanup...`);
+      const systemPrompt = `You are a post-processing helper for OCR. The user will provide text recognized from pages of a scanned PDF document.
+Your task is to fix spelling mistakes, grammar, spacing, and restore the original flow and paragraphs of the text.
+Do NOT summarize, comment, or explain. Respond ONLY with the cleaned-up, transcribed text. If the text seems like gibberish or is unparseable, just return the raw text as is.`;
+
+      let cleanedText = directText;
+      try {
+        cleanedText = await callDeepSeek([
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Here is the raw OCR text from the scanned PDF:\n\n${directText}` }
+        ], false);
+      } catch (deepseekError) {
+        console.warn("DeepSeek PDF OCR post-processing cleanup failed, falling back to raw text:", deepseekError);
+      }
+
+      const headerText = extractedText.length > 0
+        ? `${extractedText}\n\n[Scanned/Handwritten content extracted via OCR below]:\n`
+        : "";
+
+      return `${headerText}${cleanedText.trim()}`;
+    } catch (directVisionError: any) {
+      console.warn(`[OCR] Direct Google Cloud Vision PDF OCR failed, falling back to page-by-page rendering: ${directVisionError.message || directVisionError}`);
+    }
+  }
+
+  // 2. Fallback to local image extraction and page-by-page OCR
   console.log(`[OCR] PDF standard text extraction is insufficient. Starting local PDF image extraction for: ${fileName || "document"}`);
 
   // Dynamic import of pdfjs-dist and polyfill DOMMatrix for Node.js
@@ -201,21 +513,27 @@ async function extractTextFromPDFWithOCR(
   }
   
   try {
-    const pdfjs = await import("pdfjs-dist");
+    const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     
-    // Set worker src to avoid worker loading warnings/errors in Next.js
-    if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-      pdfjs.GlobalWorkerOptions.workerSrc = `pdfjs-dist/build/pdf.worker.mjs`;
+    // Configure pdfjs worker path to point to the actual file in node_modules
+    // This avoids Next.js resolving it relative to the compiled server chunk directory.
+    try {
+      const { createRequire } = await import("module");
+      const require = createRequire(import.meta.url);
+      const workerPath = require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+      pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
+    } catch (workerErr: any) {
+      console.warn("[OCR] Failed to configure pdfjs workerSrc:", workerErr.message || workerErr);
     }
 
     const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer) });
     const pdfDocument = await loadingTask.promise;
     
-    // Process up to 10 pages to avoid timeouts/heavy resource consumption
-    const maxPages = Math.min(pdfDocument.numPages, 10);
+    // Process all pages — no arbitrary cap. Large PDFs are handled page-by-page.
+    const maxPages = pdfDocument.numPages;
     let combinedOCRText = "";
 
-    console.log(`[OCR] PDF has ${pdfDocument.numPages} pages. Processing the first ${maxPages} pages...`);
+    console.log(`[OCR] PDF has ${pdfDocument.numPages} pages. Processing all ${maxPages} pages...`);
 
     for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
       const page = await pdfDocument.getPage(pageNum);
@@ -265,15 +583,48 @@ async function extractTextFromPDFWithOCR(
 
       if (pageImages.length > 0) {
         console.log(`[OCR] Found ${pageImages.length} images on page ${pageNum}. Transcribing...`);
-        const worker = await createWorker("eng");
-        for (let imgIdx = 0; imgIdx < pageImages.length; imgIdx++) {
-          const ocrResult = await worker.recognize(pageImages[imgIdx]);
-          const pageText = ocrResult.data.text?.trim() || "";
-          if (pageText) {
-            combinedOCRText += `\n--- Page ${pageNum} Image ${imgIdx + 1} ---\n${pageText}\n`;
+        
+        let pageTexts: string[] = [];
+        let useLocalOCR = true;
+        
+        if (process.env.GOOGLE_CLOUD_VISION_API_KEY) {
+          try {
+            console.log(`[OCR] Attempting Google Cloud Vision OCR for page ${pageNum}...`);
+            for (let imgIdx = 0; imgIdx < pageImages.length; imgIdx++) {
+              const text = await performGoogleVisionOCR(
+                pageImages[imgIdx],
+                "image/png",
+                `page_${pageNum}_img_${imgIdx + 1}.png`
+              );
+              if (text) pageTexts.push(text);
+            }
+            useLocalOCR = false;
+            console.log(`[OCR] Google Cloud Vision OCR succeeded for page ${pageNum}`);
+            console.log(`[OCR Method] SUCCESS: Google Cloud Vision API was used for PDF page ${pageNum}`);
+          } catch (visionError: any) {
+            console.warn(`[OCR] Google Cloud Vision OCR failed for page ${pageNum}, falling back to local OCR: ${visionError.message || visionError}`);
+            pageTexts = [];
+            useLocalOCR = true;
           }
+        } else {
+          console.log(`[OCR] Google Cloud Vision API Key is not set. Using local OCR pipeline for PDF page ${pageNum}`);
         }
-        await worker.terminate();
+        
+        if (useLocalOCR) {
+          console.log(`[OCR] Running local Tesseract OCR for page ${pageNum}...`);
+          const worker = await createWorker("eng");
+          for (let imgIdx = 0; imgIdx < pageImages.length; imgIdx++) {
+            const ocrResult = await worker.recognize(pageImages[imgIdx]);
+            const pageText = ocrResult.data.text?.trim() || "";
+            if (pageText) pageTexts.push(pageText);
+          }
+          await worker.terminate();
+          console.log(`[OCR Method] SUCCESS: Local Tesseract OCR was used for PDF page ${pageNum}`);
+        }
+        
+        for (let imgIdx = 0; imgIdx < pageTexts.length; imgIdx++) {
+          combinedOCRText += `\n--- Page ${pageNum} Image ${imgIdx + 1} ---\n${pageTexts[imgIdx]}\n`;
+        }
       }
     }
 
@@ -337,12 +688,16 @@ export async function extractTextFromBuffer(
     mimeType ===
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
+    console.log(`[Text Extraction] Extracting text natively from DOCX file: "${fileName || "document"}"`);
     const result = await mammoth.extractRawText({ buffer });
+    console.log(`[OCR Method] SUCCESS: Native DOCX extraction was used (no OCR required) for: "${fileName || "document"}"`);
     return result.value.trim();
   }
 
   // Handle plain text files
   if (TEXT_MIME_TYPES.has(mimeType)) {
+    console.log(`[Text Extraction] Extracting text natively from plain text/markdown file: "${fileName || "document"}"`);
+    console.log(`[OCR Method] SUCCESS: Native text extraction was used (no OCR required) for: "${fileName || "document"}"`);
     return buffer.toString("utf-8").trim();
   }
 
@@ -361,11 +716,10 @@ export async function extractTextFromBuffer(
 export async function batchOCR(
   items: Array<{ buffer: Buffer; mimeType: string; fileName?: string }>
 ): Promise<string[]> {
-  const client = getVisionClient();
-  if (!client) {
-    return items.map(
-      (item) => `[Image: ${item.fileName || "image"} - OCR unavailable]`
-    );
+  if (!process.env.GOOGLE_CLOUD_VISION_API_KEY && !process.env.DEEPSEEK_API_KEY) {
+    // If no keys are present, we can still run Tesseract local OCR fallback, so we do not block.
+    // However, if we want to guard, we can warn.
+    console.warn("Neither GOOGLE_CLOUD_VISION_API_KEY nor DEEPSEEK_API_KEY is configured. Batch OCR will run using local Tesseract without API cleanups.");
   }
 
   // Process in parallel with concurrency limit

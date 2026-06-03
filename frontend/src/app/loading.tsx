@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Loading() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--bg-primary)] relative overflow-hidden">
@@ -16,20 +18,7 @@ export default function Loading() {
           <div className="absolute inset-0 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
           {/* Inner icon */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-[var(--accent)]"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 006.75 18M12 18a3.75 3.75 0 01-.495-7.467 5.99 5.99 0 011.925-3.546 5.974 5.974 0 002.133 1A3.75 3.75 0 0117.25 18m-5.25-7.5V3"
-              />
-            </svg>
+            <Image src={"/synapse.webp"} alt="Synapse Icon" width={100} height={100} priority placeholder="blur" loading="eager" />
           </div>
         </div>
 

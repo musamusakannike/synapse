@@ -56,6 +56,40 @@ function safeJsonParse(rawText: string): { data: any | null; error: string | nul
     };
   }
 }
+
+/**
+ * Parse the AI response for a lesson, supporting both legacy JSON mode
+ * and raw markdown with [SUMMARY] ... [/SUMMARY] tags.
+ */
+function parseLessonContentResponse(
+  responseText: string,
+  lessonTitle: string
+): { summary: string; content: string } {
+  const trimmed = responseText.trim();
+
+  // Try parsing as JSON first (handles legacy or fallback outputs)
+  const { data, error } = safeJsonParse(trimmed);
+  if (!error && data && typeof data === "object" && typeof data.content === "string") {
+    return {
+      summary: data.summary || lessonTitle,
+      content: data.content,
+    };
+  }
+
+  // Look for [SUMMARY] ... [/SUMMARY] tags
+  const summaryMatch = trimmed.match(/\[SUMMARY\]([\s\S]*?)\[\/SUMMARY\]/i);
+  if (summaryMatch) {
+    const summary = summaryMatch[1].trim();
+    const content = trimmed.substring(summaryMatch.index! + summaryMatch[0].length).trim();
+    return { summary, content };
+  }
+
+  // Fallback: If no tags or JSON, treat the whole response as markdown content
+  return {
+    summary: lessonTitle,
+    content: trimmed,
+  };
+}
 const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
 const BASE_URL = "https://api.deepseek.com";
 
@@ -216,7 +250,7 @@ Student Learning Context:
 Lesson Continuity Context:
 ${contextSnippet}
 
-Formatting Instructions:
+Writing & Formatting Instructions:
 - Write in rich Markdown.
 - Organize content into clear sections:
   1. **# Lesson Introduction**: Tie back to previous topics, establish why this matters.
@@ -225,15 +259,17 @@ Formatting Instructions:
   4. **# Sandbox Activity / Practice**: A hands-on prompt or practice challenge that the student can attempt right now.
   5. **# Summary Checklist**: Concise review bullets.
 
-Generate a JSON object containing:
-{
-  "summary": "A 1-2 sentence executive summary of the lesson",
-  "content": "Full markdown lesson content..."
-}
+Output Format:
+You MUST start your response with a 1-2 sentence executive summary of the lesson enclosed in [SUMMARY] ... [/SUMMARY] tags.
+Immediately following that, write the full markdown lesson content.
 
-CRITICAL JSON RULES:
-1. Do NOT escape backticks (\`) or single quotes (') inside the JSON string values. Only double quotes (") and backslashes (\\) must be escaped. Write raw backticks (\`) directly.
-2. Output ONLY a valid raw JSON object. Do not wrap the JSON output in markdown code blocks.`;
+Example Output:
+[SUMMARY]
+This lesson introduces the foundational skill of distinguishing given and required information.
+[/SUMMARY]
+
+# Lesson 1.1: Identifying Given and Required
+Welcome to the lesson...`;
 
   const userPrompt = `Write the full lesson text for "${lessonTitle}" inside the module "${moduleTitle}".`;
 
@@ -248,34 +284,16 @@ CRITICAL JSON RULES:
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     let responseText = "";
     try {
-      responseText = await callDeepSeek(messages, true);
+      responseText = await callDeepSeek(messages, false); // jsonMode = false for free-form generation
 
       console.log(`generateLessonContent attempt ${attempt} raw response (first 500 chars):`, responseText.substring(0, 500));
 
-      const { data, error } = safeJsonParse(responseText);
-
-      if (error) {
-        // Fallback: if the AI returned raw markdown instead of JSON, wrap it
-        const trimmed = responseText.trim();
-        const looksLikeMarkdown = !trimmed.startsWith("{") && (trimmed.startsWith("#") || trimmed.includes("\n#") || trimmed.length > 100);
-        if (looksLikeMarkdown) {
-          console.warn(`generateLessonContent attempt ${attempt}: AI returned raw markdown, wrapping as lesson content`);
-          return {
-            summary: lessonTitle,
-            content: trimmed,
-          };
-        }
-        
-        console.error(`[JSON ERROR] Parse failed on generateLessonContent attempt ${attempt}. Error details: ${error}`);
-        console.error(`[RAW RESPONSE START]\n${responseText}\n[RAW RESPONSE END]`);
-        
-        throw new Error(`Failed to parse lesson content: ${error}`);
-      }
+      const parsedData = parseLessonContentResponse(responseText, lessonTitle);
 
       try {
-        return validateOrThrow(lessonContentSchema, data, "lesson content");
+        return validateOrThrow(lessonContentSchema, parsedData, "lesson content");
       } catch (validationErr: any) {
-        console.error(`[JSON ERROR] Zod validation failed on generateLessonContent attempt ${attempt}. Error details: ${validationErr.message}`);
+        console.error(`[VALIDATION ERROR] Zod validation failed on generateLessonContent attempt ${attempt}. Error details: ${validationErr.message}`);
         console.error(`[RAW RESPONSE START]\n${responseText}\n[RAW RESPONSE END]`);
         throw validationErr;
       }

@@ -31,6 +31,9 @@ function safeJsonParse(rawText: string): { data: any | null; error: string | nul
     cleaned = jsonBlockMatch[1].trim();
   }
 
+  // Repair common AI JSON escaping mistakes: unescape escaped backticks (\`) and single quotes (\')
+  cleaned = cleaned.replace(/\\`/g, "`").replace(/\\'/g, "'");
+
   // Remove any text before the first { or after the last }
   const firstBrace = cleaned.indexOf("{");
   const lastBrace = cleaned.lastIndexOf("}");
@@ -84,13 +87,14 @@ export async function callDeepSeek(
         messages,
         response_format: jsonMode ? { type: "json_object" } : undefined,
         temperature: jsonMode ? 0.2 : 0.7,
+        max_tokens: 8192,
       },
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
         },
-        timeout: 60000, // 60 seconds timeout
+        timeout: 90000, // 90 seconds timeout for large responses
       }
     );
 
@@ -226,7 +230,10 @@ Generate a JSON object containing:
   "summary": "A 1-2 sentence executive summary of the lesson",
   "content": "Full markdown lesson content..."
 }
-Output only raw JSON block without markdown code blocks.`;
+
+CRITICAL JSON RULES:
+1. Do NOT escape backticks (\`) or single quotes (') inside the JSON string values. Only double quotes (") and backslashes (\\) must be escaped. Write raw backticks (\`) directly.
+2. Output ONLY a valid raw JSON object. Do not wrap the JSON output in markdown code blocks.`;
 
   const userPrompt = `Write the full lesson text for "${lessonTitle}" inside the module "${moduleTitle}".`;
 

@@ -46,16 +46,6 @@ export default async function Image() {
           fontFamily: fontData ? "Outfit" : "system-ui, sans-serif",
         }}
       >
-        {/* Background Grid Lines (using borders to avoid heavy patterns) */}
-        <div tw="absolute inset-0 flex flex-wrap opacity-[0.03]">
-          {Array.from({ length: 48 }).map((_, i) => (
-            <div
-              key={i}
-              tw="border border-[#F5F2ED] w-[150px] h-[150px] flex-shrink-0"
-            />
-          ))}
-        </div>
-
         {/* Ambient Radial Gradient Orb */}
         <div
           tw="absolute w-[800px] h-[800px] rounded-full opacity-60"

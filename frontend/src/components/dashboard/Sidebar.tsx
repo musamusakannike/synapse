@@ -120,7 +120,7 @@ export function DashboardSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 md:hidden w-10 h-10 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center"
+        className="fixed top-4 right-4 z-50 md:hidden w-10 h-10 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
           <line x1="3" y1="6" x2="21" y2="6" />

@@ -4,6 +4,12 @@ import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { BetaBadge } from "@/components/BetaBadge";
+import {
+  CourseGenIllustration,
+  VideosIllustration,
+  QuizzesIllustration,
+  AskTutorIllustration,
+} from "./FeatureIllustrations";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,45 +18,25 @@ const features = [
     title: "Instant Course Generation",
     description:
       "Type any topic. Get a structured, multi-module course built around your learning style in seconds.",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-        <path d="M8 7h8M8 11h6" />
-      </svg>
-    ),
+    illustration: <CourseGenIllustration />,
   },
   {
     title: "AI Explanatory Videos",
     description:
       "Transform any concept into a visual slideshow with narration — premium feature for deep understanding.",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="5 3 19 12 5 21 5 3" />
-      </svg>
-    ),
+    illustration: <VideosIllustration />,
   },
   {
     title: "Targeted Practice Quizzes",
     description:
       "Auto-generated quizzes that test exactly what you studied — multiple choice, true/false, and fill-in-the-blank.",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 11l3 3L22 4" />
-        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-      </svg>
-    ),
+    illustration: <QuizzesIllustration />,
   },
   {
     title: "Ask Anything",
     description:
       "Your personal AI tutor that answers questions adapted to your level, goals, and preferred explanation style.",
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        <path d="M12 7v2M12 13h.01" />
-      </svg>
-    ),
+    illustration: <AskTutorIllustration />,
   },
 ];
 
@@ -96,22 +82,24 @@ export function Features() {
           </p>
         </div>
 
-        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="feature-card group relative p-7 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all duration-300"
+              className="feature-card group relative p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all duration-300 flex flex-col justify-between overflow-hidden"
             >
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent-muted)] flex items-center justify-center text-[var(--accent)] mb-4">
-                {feature.icon}
+              <div className="w-full mb-6">
+                {feature.illustration}
               </div>
-              <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold mb-2 flex items-center gap-2">
-                {feature.title}
-                {feature.title === "AI Explanatory Videos" && <BetaBadge />}
-              </h3>
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                {feature.description}
-              </p>
+              <div>
+                <h3 className="font-[family-name:var(--font-display)] text-lg font-semibold mb-2 flex items-center gap-2">
+                  {feature.title}
+                  {feature.title === "AI Explanatory Videos" && <BetaBadge />}
+                </h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>

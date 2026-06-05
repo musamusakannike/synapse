@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { Hero } from "@/components/landing/Hero";
+import { Marquee } from "@/components/landing/Marquee";
 import { Features } from "@/components/landing/Features";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Pricing } from "@/components/landing/Pricing";
@@ -44,6 +45,7 @@ export default function Home() {
       />
       <Navbar />
       <Hero />
+      <Marquee />
       <Features />
       <HowItWorks />
       <Pricing />

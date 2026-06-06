@@ -22,8 +22,8 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Synapse Admin — Dashboard",
-  description: "Admin dashboard for the Synapse AI learning platform.",
+  title: "Sabi Learn Admin — Dashboard",
+  description: "Admin dashboard for the Sabi Learn AI learning platform.",
 };
 
 export default function RootLayout({

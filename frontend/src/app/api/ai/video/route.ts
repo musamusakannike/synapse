@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     if (!premiumActive) {
       return NextResponse.json(
         {
-          error: "Synapse AI Explanatory Video requires Premium Subscription.",
+          error: "Sabi Learn AI Explanatory Video requires Premium Subscription.",
           code: "PREMIUM_REQUIRED",
         },
         { status: 403 }

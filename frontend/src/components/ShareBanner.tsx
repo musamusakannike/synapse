@@ -9,7 +9,7 @@ export function ShareBanner() {
         <div className="flex items-center gap-2">
           <span className="text-base sm:text-lg">💡</span>
           <p className="text-xs sm:text-sm font-medium text-[var(--text-primary)]">
-            You are viewing a shared learning resource from <span className="font-bold text-[var(--accent)]">Synapse</span>. Learn the way your brain works!
+            You are viewing a shared learning resource from <span className="font-bold text-[var(--accent)]">Sabi Learn</span>. Sabi the way your brain dey work!
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">

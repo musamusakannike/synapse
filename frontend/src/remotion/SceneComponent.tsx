@@ -123,7 +123,7 @@ export const SceneComponent: React.FC<SceneComponentProps> = ({
             color: colors.accent,
           }}
         >
-          Synapse AI Explainer
+          Sabi Learn AI Explainer
         </span>
         <span
           style={{

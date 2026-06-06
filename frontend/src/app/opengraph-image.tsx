@@ -65,13 +65,13 @@ export default async function Image() {
               <div tw="w-2.5 h-2.5 rounded-full bg-[#E8A838]" />
             </div>
           </div>
-          <span tw="text-2xl font-bold tracking-tight text-white">Synapse</span>
+          <span tw="text-2xl font-bold tracking-tight text-white">Sabi Learn</span>
         </div>
 
         {/* Hero Title */}
         <div tw="flex flex-col items-center text-center">
           <h1 tw="text-6xl font-black tracking-tight leading-none text-white m-0">
-            Learn the way
+            Sabi the way
           </h1>
           <h1
             tw="text-7xl font-black tracking-tight leading-none mt-2 mb-6"
@@ -81,18 +81,18 @@ export default async function Image() {
               color: "transparent",
             }}
           >
-            your brain works
+            your brain dey work
           </h1>
         </div>
 
         {/* Subtitle */}
         <p tw="text-xl text-[#A8A29E] text-center max-w-2xl leading-relaxed m-0 mb-10">
-          AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.
+          AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.
         </p>
 
         {/* Mock CTA Button */}
         <div tw="flex items-center gap-2 px-8 py-4 rounded-full bg-[#E8A838] text-[#0C0C0E] text-lg font-bold shadow-lg">
-          Start learning free
+          Start to learn free
           <span tw="ml-2 font-normal text-black/70">→</span>
         </div>
       </div>

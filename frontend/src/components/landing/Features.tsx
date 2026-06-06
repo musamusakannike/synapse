@@ -17,25 +17,25 @@ const features = [
   {
     title: "Instant Course Generation",
     description:
-      "Type any topic. Get a structured, multi-module course built around your learning style in seconds.",
+      "Type any topic wey you want. Grab structured, multi-module course built as you like am in seconds.",
     illustration: <CourseGenIllustration />,
   },
   {
     title: "AI Explanatory Videos",
     description:
-      "Transform any concept into a visual slideshow with narration — premium feature for deep understanding.",
+      "Change any hard topic to visual slideshow with sweet narration — standard way to grab everything sharp.",
     illustration: <VideosIllustration />,
   },
   {
     title: "Targeted Practice Quizzes",
     description:
-      "Auto-generated quizzes that test exactly what you studied — multiple choice, true/false, and fill-in-the-blank.",
+      "Quizzes wey setup based on exactly what you study — multiple choice, true/false, and fill-in-the-blank to test your level.",
     illustration: <QuizzesIllustration />,
   },
   {
     title: "Ask Anything",
     description:
-      "Your personal AI tutor that answers questions adapted to your level, goals, and preferred explanation style.",
+      "Your personal AI tutor wey ready to answer any question. E go break am down to your level as you want.",
     illustration: <AskTutorIllustration />,
   },
 ];

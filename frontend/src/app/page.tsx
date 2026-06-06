@@ -13,24 +13,24 @@ export default function Home() {
     "@graph": [
       {
         "@type": "Organization",
-        "@id": "https://synapse.codiac.online/#organization",
-        "name": "Synapse",
-        "url": "https://synapse.codiac.online",
+        "@id": "https://sabilearn.online/#organization",
+        "name": "Sabi Learn",
+        "url": "https://sabilearn.online",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://synapse.codiac.online/synapse.webp",
-          "caption": "Synapse Logo"
+          "url": "https://sabilearn.online/synapse.webp",
+          "caption": "Sabi Learn Logo"
         },
-        "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best."
+        "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best."
       },
       {
         "@type": "WebSite",
-        "@id": "https://synapse.codiac.online/#website",
-        "url": "https://synapse.codiac.online",
-        "name": "Synapse",
-        "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
+        "@id": "https://sabilearn.online/#website",
+        "url": "https://sabilearn.online",
+        "name": "Sabi Learn",
+        "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.",
         "publisher": {
-          "@id": "https://synapse.codiac.online/#organization"
+          "@id": "https://sabilearn.online/#organization"
         }
       }
     ]

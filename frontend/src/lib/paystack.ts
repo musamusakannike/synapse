@@ -8,7 +8,7 @@ const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 const APP_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.APP_BASE_URL ||
-  "https://synapse.codiac.online";
+  "https://sabilearn.online";
 export const PREMIUM_SUBSCRIPTION_PRICE_NGN = 2500;
 export const PREMIUM_SUBSCRIPTION_PRICE_KOBO = PREMIUM_SUBSCRIPTION_PRICE_NGN * 100;
 export const PREMIUM_SUBSCRIPTION_PLAN = "premium_monthly";
@@ -191,7 +191,7 @@ export async function initializeTransaction(
           userId,
           plan: PREMIUM_SUBSCRIPTION_PLAN,
           interval: "monthly",
-          app: "synapse",
+          app: "sabilearn",
         },
       },
       {

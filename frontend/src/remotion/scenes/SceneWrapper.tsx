@@ -118,7 +118,7 @@ export const SceneWrapper: React.FC<SceneWrapperProps> = ({
               color: colors.accent,
             }}
           >
-            Synapse AI
+            Sabi Learn
           </span>
         </div>
 

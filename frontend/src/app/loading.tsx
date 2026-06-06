@@ -18,13 +18,13 @@ export default function Loading() {
           <div className="absolute inset-0 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
           {/* Inner icon */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <Image src={"/synapse.webp"} alt="Synapse Icon" width={100} height={100} priority loading="eager" />
+            <Image src={"/synapse.webp"} alt="Sabi Learn Icon" width={100} height={100} priority loading="eager" />
           </div>
         </div>
 
         {/* Label */}
         <p className="text-sm text-[var(--text-muted)] tracking-wide">
-          Loading Synapse…
+          Loading Sabi Learn…
         </p>
       </div>
     </div>

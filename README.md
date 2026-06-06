@@ -1,8 +1,8 @@
-# Synapse
+# Sabi Learn
 
 AI-powered personalized learning platform. Generate structured courses, explanatory videos, and practice quizzes tailored to how you learn best.
 
-**Live:** [synapse.codiac.online](https://synapse.codiac.online)
+**Live:** [sabilearn.online](https://sabilearn.online)
 
 ---
 
@@ -18,7 +18,7 @@ AI-powered personalized learning platform. Generate structured courses, explanat
 ## Project Structure
 
 ```
-synapse/
+sabilearn/
 ├── frontend/   # Next.js user-facing application
 └── admin/      # Next.js admin dashboard
 ```

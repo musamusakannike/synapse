@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 // Standard Firebase client credentials.
 // For security-first code, these are public config parameters (perfectly safe to embed).
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyFakeKeyForLocalSynapseAuthTesting",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyFakeKeyForLocalSabiLearnAuthTesting",
   authDomain: `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "synapsebotai"}.firebaseapp.com`,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "synapsebotai",
   appId: "1:999999999:web:fakeappid",
@@ -39,7 +39,7 @@ export async function signInWithGoogle() {
         auth_time: Math.floor(Date.now() / 1000),
         user_id: "google-tester-123",
         sub: "google-tester-123",
-        email: "student@synapse.edu",
+        email: "student@sabilearn.online",
         email_verified: true,
         name: "Scholar Dev",
         picture: "https://lh3.googleusercontent.com/a/mock-pic",

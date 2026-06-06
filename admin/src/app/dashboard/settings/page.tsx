@@ -67,7 +67,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="text-sm text-[var(--text-secondary)] mt-1">
-          Manage your Synapse admin account security and preference options.
+          Manage your Sabi Learn admin account security and preference options.
         </p>
       </div>
 

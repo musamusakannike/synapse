@@ -1,7 +1,7 @@
 {
-  "name": "Synapse Learning",
-  "short_name": "Synapse",
-  "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
+  "name": "Sabi Learn",
+  "short_name": "Sabi Learn",
+  "description": "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

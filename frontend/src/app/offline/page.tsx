@@ -50,7 +50,7 @@ export default function OfflinePage() {
           Connection Interrupted
         </h1>
         <p className="mt-3 text-sm text-[#A8A29E] leading-relaxed max-w-sm mx-auto">
-          Synapse is ready to study, but it looks like you are not connected to the internet right now.
+          Sabi Learn is ready to study, but it looks like you are not connected to the internet right now.
         </p>
 
         {/* Offline Badge */}

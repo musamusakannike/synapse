@@ -47,14 +47,14 @@ export function LoginForm() {
           <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
             <Image
               src="/synapse.webp"
-              alt="Synapse Logo"
+              alt="Sabi Learn Logo"
               width={32}
               height={32}
               priority
               className="object-contain w-full h-full"
             />
           </div>
-          <span className="font-[family-name:var(--font-display)] text-lg font-bold">Synapse</span>
+          <span className="font-[family-name:var(--font-display)] text-lg font-bold">Sabi Learn</span>
         </Link>
 
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold mb-2">

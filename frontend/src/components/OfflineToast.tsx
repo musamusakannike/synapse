@@ -98,7 +98,7 @@ export function OfflineToast() {
           <p className="text-xs text-stone-400 mt-0.5 leading-relaxed">
             {toastType === "offline"
               ? "Running in offline mode. Standard features may be limited."
-              : "Reconnected to Synapse successfully."}
+              : "Reconnected to Sabi Learn successfully."}
           </p>
         </div>
 

@@ -9,17 +9,17 @@ export function Footer() {
           <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
             <Image
               src="/synapse.webp"
-              alt="Synapse Logo"
+              alt="Sabi Learn Logo"
               width={28}
               height={28}
               className="object-contain w-full h-full"
             />
           </div>
-          <span className="font-[family-name:var(--font-display)] text-sm font-bold">Synapse</span>
+          <span className="font-[family-name:var(--font-display)] text-sm font-bold">Sabi Learn</span>
         </div>
 
         <p className="text-xs text-[var(--text-muted)]">
-          © {new Date().getFullYear()} Synapse. Personalized AI learning for everyone.
+          © {new Date().getFullYear()} Sabi Learn. Personalized AI learning wey go make you sabi book sharp-sharp.
         </p>
 
         <div className="flex items-center gap-6">

@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       { $set: { isPublic } }
     );
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://synapse.codiac.online";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sabilearn.online";
     const shareUrl = `${baseUrl}/share/${type}/${id}`;
 
     return NextResponse.json({

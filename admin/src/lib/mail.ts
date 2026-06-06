@@ -1,6 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "noreply@synapse.codiac.online";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://synapse.codiac.online";
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "noreply@sabilearn.online";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sabilearn.online";
 
 interface SendEmailParams {
   to: string;
@@ -22,7 +22,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: `Synapse <${RESEND_FROM_EMAIL}>`,
+        from: `Sabi Learn <${RESEND_FROM_EMAIL}>`,
         to: [to],
         subject,
         html,
@@ -165,7 +165,7 @@ function getBaseTemplate(title: string, headline: string, contentHtml: string, c
   <div class="wrapper">
     <div class="container">
       <div class="logo-container">
-        <a href="${APP_URL}" class="logo">SYN<span>APSE</span></a>
+        <a href="${APP_URL}" class="logo">SABI<span>LEARN</span></a>
       </div>
       <div class="divider"></div>
       <h1 class="headline">${headline}</h1>
@@ -179,8 +179,8 @@ function getBaseTemplate(title: string, headline: string, contentHtml: string, c
       </p>
     </div>
     <div class="footer">
-      &copy; ${year} Synapse. All rights reserved.<br>
-      Learn the way your brain works.<br>
+      &copy; ${year} Sabi Learn. All rights reserved.<br>
+      Sabi the way your brain dey work.<br>
       <a href="${APP_URL}/dashboard/settings">Manage Email Preferences</a> | <a href="${APP_URL}">Visit Website</a>
     </div>
   </div>
@@ -195,7 +195,7 @@ export async function sendAdminUpgradeEmail(
   expiryDate: Date
 ): Promise<boolean> {
   const title = "Your account has been upgraded!";
-  const headline = "Synapse Premium access granted by Admin.";
+  const headline = "Sabi Learn Premium access granted by Admin.";
   const formattedExpiry = expiryDate.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -204,7 +204,7 @@ export async function sendAdminUpgradeEmail(
 
   const contentHtml = `
     <p>Hi ${name},</p>
-    <p>Great news! An administrator has upgraded your Synapse account to <strong>Premium</strong>. Your subscription status is now fully active, granting you unlimited, unrestricted access to all our state-of-the-art AI-powered personalized learning features.</p>
+    <p>Great news! An administrator has upgraded your Sabi Learn account to <strong>Premium</strong>. Your subscription status is now fully active, granting you unlimited, unrestricted access to all our state-of-the-art AI-powered personalized learning features.</p>
     <div class="highlight-card">
       <div class="highlight-title">Premium Access Grant</div>
       <p style="margin: 5px 0; color: #F5F2ED;"><strong>Upgraded Plan:</strong> Premium Monthly</p>
@@ -218,7 +218,7 @@ export async function sendAdminUpgradeEmail(
   const html = getBaseTemplate(title, headline, contentHtml, "Access Premium Dashboard", `${APP_URL}/dashboard`);
   return sendEmail({
     to: email,
-    subject: "Your Synapse subscription has been upgraded! 🚀",
+    subject: "Your Sabi Learn subscription has been upgraded! 🚀",
     html,
   });
 }

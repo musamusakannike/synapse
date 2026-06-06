@@ -65,13 +65,13 @@ export function CTA() {
           {/* Text Content */}
           <div ref={textRef} className="lg:col-span-7 text-left space-y-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--accent-muted)] text-[var(--accent)] border border-[var(--accent-subtle)]">
-              Start Your Journey
+              Make we start
             </span>
             <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-5xl font-bold tracking-tight leading-tight">
-              Ready to redefine how you learn?
+              You ready to levels up how you dey learn?
             </h2>
             <p className="text-base md:text-lg text-[var(--text-secondary)] leading-relaxed max-w-xl">
-              Unlock a personalized education built entirely around your goals. Generate custom courses, watch visual explanations, and take interactive practice tests today.
+              Unlock standard education wey set structure around your target. Make you generate custom courses, watch visual explanations, and solve interactive practice tests sharp-sharp.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link

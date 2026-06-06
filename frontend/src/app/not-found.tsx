@@ -27,7 +27,7 @@ export default function NotFound() {
         <div className="mx-auto w-20 h-20 rounded-2xl flex items-center justify-center border border-[var(--accent)]/20 animate-float mb-8"
           style={{ background: "linear-gradient(135deg, rgba(232,168,56,0.12) 0%, rgba(232,168,56,0) 100%)" }}
         >
-          <Image src={"/synapse.webp"} alt="Synapse Icon" width={100} height={100} />
+          <Image src={"/synapse.webp"} alt="Sabi Learn Icon" width={100} height={100} />
         </div>
 
         {/* 404 label */}
@@ -37,7 +37,7 @@ export default function NotFound() {
 
         <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl font-bold tracking-tight mb-4">
           Lost in the{" "}
-          <span className="gradient-text">synapse</span>
+          <span className="gradient-text">Sabi Learn</span>
         </h1>
 
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-sm mx-auto mb-10">

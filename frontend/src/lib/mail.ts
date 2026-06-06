@@ -1,6 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "noreply@synapse.codiac.online";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://synapse.codiac.online";
+const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "noreply@sabilearn.online";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sabilearn.online";
 
 interface SendEmailParams {
   to: string;
@@ -22,7 +22,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: `Synapse <${RESEND_FROM_EMAIL}>`,
+        from: `Sabi Learn <${RESEND_FROM_EMAIL}>`,
         to: [to],
         subject,
         html,
@@ -165,7 +165,7 @@ function getBaseTemplate(title: string, headline: string, contentHtml: string, c
   <div class="wrapper">
     <div class="container">
       <div class="logo-container">
-        <a href="${APP_URL}" class="logo">SYN<span>APSE</span></a>
+        <a href="${APP_URL}" class="logo">SABI<span>LEARN</span></a>
       </div>
       <div class="divider"></div>
       <h1 class="headline">${headline}</h1>
@@ -179,8 +179,8 @@ function getBaseTemplate(title: string, headline: string, contentHtml: string, c
       </p>
     </div>
     <div class="footer">
-      &copy; ${year} Synapse. All rights reserved.<br>
-      Learn the way your brain works.<br>
+      &copy; ${year} Sabi Learn. All rights reserved.<br>
+      Sabi the way your brain dey work.<br>
       <a href="${APP_URL}/dashboard/settings">Manage Email Preferences</a> | <a href="${APP_URL}">Visit Website</a>
     </div>
   </div>
@@ -189,11 +189,11 @@ function getBaseTemplate(title: string, headline: string, contentHtml: string, c
 }
 
 export async function sendWelcomeEmail(email: string, name: string): Promise<boolean> {
-  const title = "Welcome to Synapse!";
+  const title = "Welcome to Sabi Learn!";
   const headline = "Your personalized learning journey begins today.";
   const contentHtml = `
     <p>Hi ${name},</p>
-    <p>We're absolutely thrilled to welcome you to Synapse! Synapse is designed to help you study more effectively by tailoring educational content specifically to how your brain works.</p>
+    <p>We're absolutely thrilled to welcome you to Sabi Learn! Sabi Learn is designed to help you study more effectively by tailoring educational content specifically to how your brain works.</p>
     <p>Whether you're looking to generate customized course outlines, explanatory videos, or interactive practice quizzes, we have everything you need to accelerate your learning.</p>
     <div class="highlight-card">
       <div class="highlight-title">Your Account Details</div>
@@ -207,7 +207,7 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
   const html = getBaseTemplate(title, headline, contentHtml, "Go to Dashboard", `${APP_URL}/dashboard`);
   return sendEmail({
     to: email,
-    subject: "Welcome to Synapse! 🧠",
+    subject: "Welcome to Sabi Learn! 🧠",
     html,
   });
 }
@@ -219,7 +219,7 @@ export async function sendSubscriptionSuccessEmail(
   amount: number,
   expiryDate: Date
 ): Promise<boolean> {
-  const title = "Welcome to Synapse Premium!";
+  const title = "Welcome to Sabi Learn Premium!";
   const headline = "Unlimited learning unlocked.";
   const formattedExpiry = expiryDate.toLocaleDateString("en-US", {
     month: "long",
@@ -233,7 +233,7 @@ export async function sendSubscriptionSuccessEmail(
 
   const contentHtml = `
     <p>Hi ${name},</p>
-    <p>Thank you for subscribing to Synapse Premium! Your payment was successfully processed, and your account has been upgraded to Premium.</p>
+    <p>Thank you for subscribing to Sabi Learn Premium! Your payment was successfully processed, and your account has been upgraded to Premium.</p>
     <p>You now have unlimited access to all of our AI learning tools, including advanced course generation, infinite explanatory videos, and unrestricted quiz generation.</p>
     <div class="highlight-card">
       <div class="highlight-title">Subscription Receipt</div>
@@ -248,7 +248,7 @@ export async function sendSubscriptionSuccessEmail(
   const html = getBaseTemplate(title, headline, contentHtml, "Explore Premium Features", `${APP_URL}/dashboard`);
   return sendEmail({
     to: email,
-    subject: "Welcome to Synapse Premium! 🌟",
+    subject: "Welcome to Sabi Learn Premium! 🌟",
     html,
   });
 }

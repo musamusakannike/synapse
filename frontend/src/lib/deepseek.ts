@@ -155,7 +155,7 @@ export async function generateCourseOutline(
   goals: string,
   documentContext?: string
 ) {
-  const systemPrompt = `You are Synapse's AI Course Architect.
+  const systemPrompt = `You are Sabi Learn's AI Course Architect.
 Your task is to design a highly personalized, logically structured academic course outline for a student.
 Adapt your terminology and structure entirely to the student's study preferences.
 
@@ -236,7 +236,7 @@ ${previousLessonContent.substring(0, 1500)}... (truncated context)
 Build logically on top of this. Do NOT re-explain the foundations covered above. Dive straight into this new lesson, connecting the concepts to what they learned previously. Maintain structural continuity.`;
   }
 
-  const systemPrompt = `You are Synapse's AI Senior Professor.
+  const systemPrompt = `You are Sabi Learn's AI Senior Professor.
 Your job is to generate a comprehensive, highly engaging, and non-generic lesson content for a student.
 
 Student Learning Context:
@@ -317,7 +317,7 @@ export async function generateQuizQuestions(
   documentContext?: string,
   numQuestions: number = 5
 ) {
-  const systemPrompt = `You are Synapse's AI Quiz Master.
+  const systemPrompt = `You are Sabi Learn's AI Quiz Master.
 Generate a targeted, interactive ${numQuestions}-question practice quiz based on the user's topic: "${topic}".
 
 Student Profile:
@@ -416,7 +416,7 @@ export async function generateQuizQuestionsChunked(
     const chunkNumber = i + 1;
     const totalChunks = chunks.length;
 
-    const systemPrompt = `You are Synapse's AI Quiz Master.
+    const systemPrompt = `You are Sabi Learn's AI Quiz Master.
 Generate exactly ${chunkSize} quiz questions for chunk ${chunkNumber} of ${totalChunks}.
 Topic: "${topic}"
 Student Profile:
@@ -551,7 +551,7 @@ export async function generateVideoScript(
   // Clamp to supported range
   const sceneCount = Math.max(3, Math.min(8, numScenes));
 
-  const systemPrompt = `You are Synapse's AI Explanatory Video Director — an industry-leading expert at crafting premium educational videos that feel handmade and dynamic.
+  const systemPrompt = `You are Sabi Learn's AI Explanatory Video Director — an industry-leading expert at crafting premium educational videos that feel handmade and dynamic.
 
 Create a rich, multi-scene explanatory video on: "${topic}".
 
@@ -678,7 +678,7 @@ export async function generateDocumentInsights(
 ): Promise<DocumentInsights> {
   const truncatedText = extractedText.substring(0, 6000);
 
-  const systemPrompt = `You are Synapse's AI Document Analyst — an expert at transforming raw study materials into structured, actionable learning resources.
+  const systemPrompt = `You are Sabi Learn's AI Document Analyst — an expert at transforming raw study materials into structured, actionable learning resources.
 
 Student Profile:
 - Grade Level: ${userProfile.level}
@@ -746,14 +746,14 @@ Instructions:
 }
 
 /**
- * 6. General Academic Q&A (Synapse AI Tutor)
+ * 6. General Academic Q&A (Sabi Learn AI Tutor)
  */
 export async function generateTutorAnswer(
   question: string,
   userProfile: { style: string; level: string; goals: string },
   documentContext?: string
 ): Promise<string> {
-  const systemPrompt = `You are Synapse's Elite Academic AI Tutor.
+  const systemPrompt = `You are Sabi Learn's Elite Academic AI Tutor.
 Provide a highly personalized, clear, and comprehensive explanation to the student's question.
 
 Student Learning Profile:

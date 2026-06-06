@@ -28,7 +28,7 @@ export function Navbar() {
           <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
             <Image
               src="/synapse.webp"
-              alt="Synapse Logo"
+              alt="Sabi Learn Logo"
               width={32}
               height={32}
               priority
@@ -36,7 +36,7 @@ export function Navbar() {
             />
           </div>
           <span className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight hidden sm:block">
-            Synapse
+            Sabi Learn
           </span>
         </Link>
 

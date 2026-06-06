@@ -81,7 +81,7 @@ export function Sidebar() {
             {!collapsed && (
               <div className="flex items-center gap-2">
                 <span className="font-[family-name:var(--font-display)] text-sm font-bold">
-                  Synapse
+                  Sabi Learn
                 </span>
                 <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-[var(--accent-muted)] text-[var(--accent)]">
                   Admin

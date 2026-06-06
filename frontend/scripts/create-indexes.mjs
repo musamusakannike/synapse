@@ -1,7 +1,7 @@
 /**
  * Database index setup / migration script.
  *
- * Creates all MongoDB indexes used by Synapse. Run this once on deploy (and
+ * Creates all MongoDB indexes used by Sabi Learn. Run this once on deploy (and
  * after adding new indexes) instead of creating indexes lazily on every
  * runtime connection.
  *
@@ -14,7 +14,7 @@
 import { MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "synapse";
+const dbName = process.env.MONGODB_DB || "sabilearn";
 
 if (!uri) {
   console.error(

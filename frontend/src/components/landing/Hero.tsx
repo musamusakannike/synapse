@@ -74,9 +74,9 @@ export function Hero() {
           ref={headingRef}
           className="font-[family-name:var(--font-display)] text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] opacity-0"
         >
-          Learn the way
+          Sabi the way
           <br />
-          <span className="gradient-text">your brain works</span>
+          <span className="gradient-text">your brain dey work</span>
         </h1>
 
         <p
@@ -84,7 +84,7 @@ export function Hero() {
           className="mt-6 text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed opacity-0"
         >
           Generate courses, <span className="inline-flex items-center gap-1.5">AI videos <BetaBadge /></span>, and quizzes tailored entirely to your style.
-          No cookie-cutter content — Synapse adapts to you.
+          No dulling — Sabi Learn dey adapt directly to how you sabi book best.
         </p>
 
         <div ref={ctaRef} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0">
@@ -92,21 +92,21 @@ export function Hero() {
             href="/register"
             className="group relative px-8 py-3.5 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-sm overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(232,168,56,0.3)]"
           >
-            <span className="relative z-10">Start learning free</span>
+            <span className="relative z-10">Start to learn free</span>
           </Link>
           <a
             href="#how-it-works"
             className="px-8 py-3.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)] text-sm font-medium hover:border-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
           >
-            See how it works
+            See how e dey work
           </a>
         </div>
 
         {/* Stats row */}
         <div className="mt-20 grid grid-cols-3 gap-8 max-w-md mx-auto">
           {[
-            { value: "5min", label: "to your first course" },
-            { value: "100%", label: "personalized" },
+            { value: "5min", label: "to sabi your first course" },
+            { value: "100%", label: "personal as you like am" },
             { value: "Free", label: "to start" },
           ].map((stat) => (
             <div key={stat.label} className="text-center">

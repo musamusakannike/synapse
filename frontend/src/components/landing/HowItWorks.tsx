@@ -10,22 +10,22 @@ const steps = [
   {
     number: "01",
     title: "Tell us how you learn",
-    description: "Set your curriculum level, study style, and goals. Synapse uses this to personalize everything.",
+    description: "Set your curriculum level, study style, and goals. Sabi Learn dey use this format personalize everything for you.",
   },
   {
     number: "02",
     title: "Generate your course",
-    description: "Enter any topic. The AI builds a custom outline with modules and lessons — no two are alike.",
+    description: "Enter any topic. The AI builds custom outline with modules and lessons — no two dey match, pure custom work.",
   },
   {
     number: "03",
     title: "Learn at your pace",
-    description: "Each lesson is generated with context from the last, creating a natural flow that builds on itself.",
+    description: "Each lesson dey flow from the last one, making sure you grab everything step-by-step.",
   },
   {
     number: "04",
     title: "Test your understanding",
-    description: "Spin up a quiz on any topic. Review explanations. Track your progress over time.",
+    description: "Shine your eye with custom quizzes. See correct explanations, check how your level dey rise.",
   },
 ];
 

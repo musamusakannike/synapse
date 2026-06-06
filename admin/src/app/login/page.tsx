@@ -65,7 +65,7 @@ export default function LoginPage() {
             <Shield className="w-7 h-7 text-[var(--accent)]" />
           </div>
           <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold">
-            Synapse Admin
+            Sabi Learn Admin
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Sign in to the admin dashboard

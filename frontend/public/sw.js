@@ -1,4 +1,4 @@
-const CACHE_NAME = "synapse-cache-v1";
+const CACHE_NAME = "sabilearn-cache-v1";
 const OFFLINE_URL = "/offline";
 
 const PRECACHE_ASSETS = [

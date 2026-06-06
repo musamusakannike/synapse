@@ -61,7 +61,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
           href="/"
           className="px-6 py-2.5 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors"
         >
-          Go to Synapse Home
+          Go to Sabi Learn Home
         </Link>
       </div>
     );

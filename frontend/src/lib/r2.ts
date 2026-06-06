@@ -33,7 +33,7 @@ if (isR2Configured) {
   });
 } else {
   console.warn(
-    "Cloudflare R2 is not fully configured in your environment. Synapse will default to saving generated voiceover files on the local filesystem."
+    "Cloudflare R2 is not fully configured in your environment. Sabi Learn will default to saving generated voiceover files on the local filesystem."
   );
 }
 

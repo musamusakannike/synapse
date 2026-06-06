@@ -26,13 +26,13 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://synapse.codiac.online"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://sabilearn.online"),
   title: {
-    default: "Synapse — Learn the way your brain works",
-    template: "%s | Synapse",
+    default: "Sabi Learn — Sabi the way your brain dey work",
+    template: "%s | Sabi Learn",
   },
-  description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
-  keywords: ["AI learning", "personalized education", "course generator", "AI tutor", "study tools", "AI course maker", "personalized quizzes"],
+  description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.",
+  keywords: ["AI learning", "personalized education", "course generator", "AI tutor", "study tools", "AI course maker", "personalized quizzes", "sabi learn"],
   manifest: "/manifest.json",
   alternates: {
     canonical: "/",
@@ -49,22 +49,22 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Synapse — Learn the way your brain works",
-    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
-    url: "https://synapse.codiac.online",
-    siteName: "Synapse",
+    title: "Sabi Learn — Sabi the way your brain dey work",
+    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.",
+    url: "https://sabilearn.online",
+    siteName: "Sabi Learn",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Synapse — Learn the way your brain works",
-    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you learn best.",
+    title: "Sabi Learn — Sabi the way your brain dey work",
+    description: "AI-powered personalized learning. Generate courses, explanatory videos, and practice quizzes tailored entirely to how you sabi book best.",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Synapse",
+    title: "Sabi Learn",
   },
 };
 

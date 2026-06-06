@@ -1,7 +1,7 @@
 import { MongoClient, Db } from "mongodb";
 
 const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "synapse";
+const dbName = process.env.MONGODB_DB || "sabilearn";
 
 if (!uri) {
   throw new Error("Please define the MONGODB_URI environment variable inside .env.local");

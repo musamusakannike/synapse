@@ -13,7 +13,7 @@ AI-powered personalized learning platform. Generate structured courses, explanat
 - **Practice Quizzes** — Auto-generated multiple choice, true/false, and fill-in-the-blank questions
 - **AI Tutor** — Ask anything and get answers adapted to your level and learning style
 - **Document Analysis** — Upload PDFs and documents to generate courses and quizzes from your own material
-- **Billing** — Free tier (3 generations/day) and Premium tier (₦2,500/month) via Paystack
+- **Billing** — Free tier (10 generations/day) and Premium tier (₦2,500/month) via Paystack
 
 ## Project Structure
 

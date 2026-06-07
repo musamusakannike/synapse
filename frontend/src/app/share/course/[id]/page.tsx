@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { formatMarkdown } from "@/lib/markdown";
 import { ShareBanner } from "@/components/ShareBanner";
+import { AddToLibraryButton } from "@/components/AddToLibraryButton";
 import Link from "next/link";
 
 interface Lesson {
@@ -187,12 +188,9 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
               <p className="text-[10px] text-[var(--text-muted)] mt-2">
                 Curriculum level: <span className="capitalize">{course.level}</span>
               </p>
-              <Link
-                href="/register"
-                className="mt-4 block text-center w-full px-4 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors"
-              >
-                Sign up to edit course
-              </Link>
+              <div className="mt-4">
+                <AddToLibraryButton resourceId={id} type="course" />
+              </div>
             </div>
           )}
 

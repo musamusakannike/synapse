@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { formatMarkdown } from "@/lib/markdown";
 import { ShareBanner } from "@/components/ShareBanner";
+import { AddToLibraryButton } from "@/components/AddToLibraryButton";
 import Link from "next/link";
 
 interface ChatSession {
@@ -109,7 +110,8 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
           />
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <AddToLibraryButton resourceId={id} type="chat" />
           <Link
             href="/register"
             className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-all shadow-lg hover:shadow-[0_0_20px_rgba(232,168,56,0.2)]"

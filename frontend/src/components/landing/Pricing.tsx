@@ -61,7 +61,7 @@ export function Pricing() {
             </div>
             <ul className="space-y-3 mb-8">
               {[
-                "3 AI generations per day",
+                "10 AI generations per day",
                 "Course creation",
                 "Practice quizzes",
                 "AI tutor questions",

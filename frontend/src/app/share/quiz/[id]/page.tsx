@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { ShareBanner } from "@/components/ShareBanner";
+import { AddToLibraryButton } from "@/components/AddToLibraryButton";
 import Link from "next/link";
 
 interface Question {
@@ -159,9 +160,13 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
         <ShareBanner />
         <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-2xl mx-auto flex flex-col justify-center">
           <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">{quiz.title}</h1>
-          <p className="text-sm text-[var(--text-secondary)] mb-8">
+          <p className="text-sm text-[var(--text-secondary)] mb-4">
             {quiz.questions.length} questions • Choose how you want to receive feedback
           </p>
+
+          <div className="mb-8">
+            <AddToLibraryButton resourceId={id} type="quiz" />
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <button
@@ -249,19 +254,17 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
               {score === quiz.questions.length ? "Perfect score!" : score >= quiz.questions.length / 2 ? "Good job!" : "Keep practicing!"}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
               <button
                 onClick={handleRetry}
                 className="px-5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm font-semibold hover:border-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] transition-all flex items-center justify-center gap-2"
               >
                 Retry quiz
               </button>
-              <Link
-                href="/register"
-                className="px-5 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors flex items-center justify-center"
-              >
-                Create Account to save attempts
-              </Link>
+            </div>
+
+            <div className="flex justify-center mb-6">
+              <AddToLibraryButton resourceId={id} type="quiz" />
             </div>
 
             {/* Review */}

@@ -74,17 +74,17 @@ export function Hero() {
           ref={headingRef}
           className="font-[family-name:var(--font-display)] text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] opacity-0"
         >
-          Sabi the way
+          Learn anything with
           <br />
-          <span className="gradient-text">your brain dey work</span>
+          <span className="gradient-text">AI-powered courses</span>
         </h1>
 
         <p
           ref={subRef}
           className="mt-6 text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed opacity-0"
         >
-          Generate courses, <span className="inline-flex items-center gap-1.5">AI videos <BetaBadge /></span>, and quizzes tailored entirely to your style.
-          No dulling — Sabi Learn dey adapt directly to how you sabi book best.
+          Type any topic and get a full course, <span className="inline-flex items-center gap-1.5">AI videos <BetaBadge /></span>, and practice quizzes in seconds.
+          Upload your documents, ask an AI tutor, and learn at your own pace.
         </p>
 
         <div ref={ctaRef} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0">

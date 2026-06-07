@@ -91,8 +91,9 @@ export function Pricing() {
             <div className="text-sm font-medium text-[var(--accent)] uppercase tracking-wide mb-2">
               Premium
             </div>
-            <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-4xl font-bold font-[family-name:var(--font-display)]">₦2,500</span>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-4xl font-bold font-[family-name:var(--font-display)]">₦1,500</span>
+              <span className="text-lg text-[var(--text-muted)] line-through">₦2,500</span>
               <span className="text-sm text-[var(--text-muted)]">/month</span>
             </div>
             <ul className="space-y-3 mb-8">

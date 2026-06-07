@@ -72,7 +72,7 @@ export default function BillingPage() {
               {user?.premium ? "Premium Monthly" : "Free Plan"}
             </h3>
             <p className="text-xs text-[var(--text-muted)] mt-1">
-              {user?.premium ? "Unlimited AI generations & all features" : "3 AI generations per day"}
+              {user?.premium ? "Unlimited AI generations & all features" : "10 AI generations per day"}
             </p>
             {user?.premium && subscriptionExpiresAt && (
               <p className="text-xs text-[var(--text-muted)] mt-2">

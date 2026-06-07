@@ -272,4 +272,19 @@ button {
   mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 
+/* Chat dropdown animation */
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: slideInFromBottom 0.15s ease-out forwards;
+}
 

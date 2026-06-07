@@ -267,9 +267,9 @@ export default function QuizDetailScreen() {
               const isRight = isAnswered && opt.label === currentQ.correctAnswer;
               const isWrong = isAnswered && isSelected && !isRight;
 
-              let borderColor = c.border;
-              let bg = c.bgSecondary;
-              let textColor = c.textPrimary;
+              let borderColor: string = c.border;
+              let bg: string = c.bgSecondary;
+              let textColor: string = c.textPrimary;
 
               if (isRight) { borderColor = c.success; bg = `${c.success}18`; textColor = c.success; }
               else if (isWrong) { borderColor = c.danger; bg = `${c.danger}18`; textColor = c.danger; }

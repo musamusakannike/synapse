@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, Video, Play, Clock } from 'lucide-react-native';
@@ -96,12 +96,13 @@ export default function VideosScreen() {
           {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} />)}
         </View>
       ) : (
-        <FlashList
+        <LegendList
           data={data ?? []}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item: VideoItem) => item._id}
           estimatedItemSize={100}
-          contentContainerStyle={styles.list}
-          renderItem={({ item, index }) => <VideoCard item={item} index={index} />}
+          recycleItems
+          contentInset={{ top: spacing.sm, bottom: spacing.lg }}
+          renderItem={({ item, index }: LegendListRenderItemProps<VideoItem>) => <VideoCard item={item} index={index} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState

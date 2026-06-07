@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -185,12 +185,13 @@ export default function HistoryScreen() {
           {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
         </View>
       ) : (
-        <FlashList
+        <LegendList
           data={filtered}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item: QA) => item._id}
           estimatedItemSize={120}
-          contentContainerStyle={styles.list}
-          renderItem={({ item, index }) => <QACard item={item} index={index} />}
+          recycleItems
+          contentInset={{ top: spacing.sm, bottom: spacing.lg }}
+          renderItem={({ item, index }: LegendListRenderItemProps<QA>) => <QACard item={item} index={index} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState

@@ -4,11 +4,10 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  RefreshControl,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { HelpCircle, Search, Plus, Clock, CheckCircle } from 'lucide-react-native';
@@ -162,20 +161,15 @@ export default function QuizzesScreen() {
           {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
         </View>
       ) : (
-        <FlashList
+        <LegendList
           data={filtered}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item: Quiz) => item._id}
           estimatedItemSize={90}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={c.accent}
-              colors={[c.accent]}
-            />
-          }
-          renderItem={({ item, index }) => <QuizCard quiz={item} index={index} />}
+          recycleItems
+          contentInset={{ top: spacing.sm, bottom: spacing.lg }}
+          onRefresh={refetch}
+          refreshing={isRefetching}
+          renderItem={({ item, index }: LegendListRenderItemProps<Quiz>) => <QuizCard quiz={item} index={index} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState

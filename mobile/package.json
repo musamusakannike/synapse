@@ -6,6 +6,7 @@
     "@expo/ui": "~56.0.16",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@howincodes/expo-dynamic-app-icon": "^3.0.2",
+    "@legendapp/list": "^3.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-community/slider": "5.2.0",

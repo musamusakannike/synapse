@@ -1,5 +1,5 @@
 import { useColorScheme as useRNColorScheme } from 'react-native';
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode, type ReactElement } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, type ThemeMode, type ColorTokens } from '@/constants/theme';
 
@@ -15,7 +15,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }): ReactElement {
   const systemScheme = useRNColorScheme();
   const [mode, setMode] = useState<ThemeMode>(systemScheme === 'light' ? 'light' : 'dark');
 

@@ -4,11 +4,10 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  RefreshControl,
   TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlashList } from '@shopify/flash-list';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Search, Plus, Clock } from 'lucide-react-native';
@@ -146,20 +145,15 @@ export default function CoursesScreen() {
           {Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)}
         </View>
       ) : (
-        <FlashList
+        <LegendList
           data={filtered}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item: Course) => item._id}
           estimatedItemSize={100}
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              tintColor={c.accent}
-              colors={[c.accent]}
-            />
-          }
-          renderItem={({ item, index }) => <CourseCard course={item} index={index} />}
+          recycleItems
+          contentInset={{ top: spacing.sm, bottom: spacing.lg }}
+          onRefresh={refetch}
+          refreshing={isRefetching}
+          renderItem={({ item, index }: LegendListRenderItemProps<Course>) => <CourseCard course={item} index={index} />}
           ListEmptyComponent={
             <View style={styles.empty}>
               <EmptyState

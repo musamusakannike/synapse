@@ -24,7 +24,7 @@ export async function POST() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Initialize Paystack subscription at NGN 2,500
+    // Initialize Paystack subscription at NGN 1,500
     const checkoutData = await initializeTransaction(
       user.email,
       PREMIUM_SUBSCRIPTION_PRICE_NGN,

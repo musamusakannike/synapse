@@ -96,8 +96,8 @@ export default function BillingPage() {
           {loading
             ? "Redirecting to Paystack..."
             : user?.premium
-              ? "Renew Premium — ₦2,500/month"
-              : "Upgrade to Premium — ₦2,500/month"}
+              ? "Renew Premium — ₦1,500/month"
+              : "Upgrade to Premium — ₦1,500/month"}
         </button>
       </div>
 

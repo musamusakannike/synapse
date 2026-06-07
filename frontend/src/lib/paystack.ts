@@ -9,7 +9,7 @@ const APP_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ||
   process.env.APP_BASE_URL ||
   "https://sabilearn.online";
-export const PREMIUM_SUBSCRIPTION_PRICE_NGN = 2500;
+export const PREMIUM_SUBSCRIPTION_PRICE_NGN = 1500;
 export const PREMIUM_SUBSCRIPTION_PRICE_KOBO = PREMIUM_SUBSCRIPTION_PRICE_NGN * 100;
 export const PREMIUM_SUBSCRIPTION_PLAN = "premium_monthly";
 
@@ -232,7 +232,7 @@ export async function verifyTransaction(reference: string) {
 
 /**
  * Freemium rate limiter
- * Limits free users to 3 AI operations (course outlines, lessons, quizzes, tutor question answers) per day.
+ * Limits free users to 10 AI operations (course outlines, lessons, quizzes, tutor question answers) per day.
  * Premium users have unlimited access.
  */
 export async function checkAndIncrementUsage(userId: string): Promise<{
@@ -245,7 +245,7 @@ export async function checkAndIncrementUsage(userId: string): Promise<{
   
   const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
   if (!user) {
-    return { allowed: false, premium: false, generationsToday: 0, limit: 3 };
+    return { allowed: false, premium: false, generationsToday: 0, limit: 10 };
   }
 
   const premiumActive = await syncUserSubscriptionStatus(userId);
@@ -273,7 +273,7 @@ export async function checkAndIncrementUsage(userId: string): Promise<{
     );
   }
 
-  const limit = 3;
+  const limit = 10;
 
   if (generationsToday >= limit) {
     return { allowed: false, premium: false, generationsToday, limit };

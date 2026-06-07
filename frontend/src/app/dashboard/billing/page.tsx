@@ -72,7 +72,7 @@ export default function BillingPage() {
               {user?.premium ? "Premium Monthly" : "Free Plan"}
             </h3>
             <p className="text-xs text-[var(--text-muted)] mt-1">
-              {user?.premium ? "Unlimited AI generations & all features" : "3 AI generations per day"}
+              {user?.premium ? "Unlimited AI generations & all features" : "10 AI generations per day"}
             </p>
             {user?.premium && subscriptionExpiresAt && (
               <p className="text-xs text-[var(--text-muted)] mt-2">
@@ -96,8 +96,8 @@ export default function BillingPage() {
           {loading
             ? "Redirecting to Paystack..."
             : user?.premium
-              ? "Renew Premium — ₦2,500/month"
-              : "Upgrade to Premium — ₦2,500/month"}
+              ? "Renew Premium — ₦1,500/month"
+              : "Upgrade to Premium — ₦1,500/month"}
         </button>
       </div>
 

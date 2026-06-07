@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
   const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,7 +23,7 @@ export function LoginForm() {
 
     const result = await login(email, password);
     if (result.success) {
-      router.push("/dashboard");
+      router.push(redirectTo);
     } else {
       setError(result.error || "Login failed");
     }
@@ -33,7 +35,7 @@ export function LoginForm() {
     setLoading(true);
     const result = await loginWithGoogle();
     if (result.success) {
-      router.push("/dashboard");
+      router.push(redirectTo);
     } else {
       setError(result.error || "Google sign-in failed");
     }

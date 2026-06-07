@@ -199,7 +199,7 @@ export async function sendWelcomeEmail(email: string, name: string): Promise<boo
       <div class="highlight-title">Your Account Details</div>
       <p style="margin: 5px 0; color: #F5F2ED;"><strong>Name:</strong> ${name}</p>
       <p style="margin: 5px 0; color: #F5F2ED;"><strong>Email:</strong> ${email}</p>
-      <p style="margin: 5px 0; color: #F5F2ED;"><strong>Plan:</strong> Free Tier (3 AI generations per day)</p>
+      <p style="margin: 5px 0; color: #F5F2ED;"><strong>Plan:</strong> Free Tier (10 AI generations per day)</p>
     </div>
     <p>To get started, click the button below to log in and create your first course outline.</p>
   `;

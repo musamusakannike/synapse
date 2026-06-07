@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { VideoComposition } from "@/remotion/VideoComposition";
 import type { Scene } from "@/remotion/SceneDispatcher";
 import { ShareBanner } from "@/components/ShareBanner";
+import { AddToLibraryButton } from "@/components/AddToLibraryButton";
 import Link from "next/link";
 
 // Dynamically import Remotion Player to avoid SSR issues
@@ -92,8 +93,11 @@ export default function PublicVideoPage({ params }: { params: Promise<{ id: stri
             <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">{video.title}</h1>
             <p className="text-xs text-[var(--text-muted)]">Topic: {video.topic}</p>
           </div>
-          <div className="px-3 py-1.5 rounded-full text-xs font-semibold self-start sm:self-auto bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
-            {video.styleTheme} Theme
+          <div className="flex items-center gap-3">
+            <AddToLibraryButton resourceId={id} type="video" />
+            <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
+              {video.styleTheme} Theme
+            </div>
           </div>
         </div>
 

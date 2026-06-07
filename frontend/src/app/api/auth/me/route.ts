@@ -5,8 +5,18 @@ import { verifyJWT } from "@/lib/jwt";
 import { syncUserSubscriptionStatus } from "@/lib/paystack";
 import { ObjectId } from "mongodb";
 
-// Helper to get user from session token cookie
-async function getSessionUser() {
+// Helper to get user from session token cookie or Authorization header (mobile)
+async function getSessionUser(request?: Request) {
+  // 1. Try Authorization: Bearer header first (mobile clients)
+  if (request) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const payload = verifyJWT(token);
+      if (payload) return payload;
+    }
+  }
+  // 2. Fall back to cookie (web clients)
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
   if (!token) return null;
@@ -20,9 +30,9 @@ async function getSessionUser() {
 /**
  * GET current authenticated user profile
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getSessionUser();
+    const session = await getSessionUser(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -71,7 +81,7 @@ export async function GET() {
  */
 export async function PUT(request: Request) {
   try {
-    const session = await getSessionUser();
+    const session = await getSessionUser(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

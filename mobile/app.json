@@ -28,11 +28,20 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#0C0C0E",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/splash-icon.png",
+          "color": "#E8A838",
+          "defaultChannel": "default",
+          "sounds": []
         }
       ],
       "@howincodes/expo-dynamic-app-icon",

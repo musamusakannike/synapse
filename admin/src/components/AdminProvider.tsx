@@ -11,6 +11,7 @@ interface AdminContextType {
   admin: Admin | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshAdmin: () => Promise<void>;
 }
@@ -58,13 +59,34 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const { signInWithGoogle } = await import("@/lib/firebase-client");
+      const idToken = await signInWithGoogle();
+      if (!idToken) return { success: false, error: "Google sign-in cancelled" };
+
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      await refreshAdmin();
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Google authentication failed";
+      return { success: false, error: message };
+    }
+  };
+
   const logout = async () => {
     await fetch("/api/auth/me", { method: "POST" });
     setAdmin(null);
   };
 
   return (
-    <AdminContext.Provider value={{ admin, loading, login, logout, refreshAdmin }}>
+    <AdminContext.Provider value={{ admin, loading, login, loginWithGoogle, logout, refreshAdmin }}>
       {children}
     </AdminContext.Provider>
   );

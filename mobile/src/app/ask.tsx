@@ -6,11 +6,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Sparkles, ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { useToast } from '@/components/Toast';
@@ -72,7 +73,11 @@ export default function AskScreen() {
       >
         <Animated.View entering={FadeInDown.delay(100).duration(400)}>
           <View style={[styles.heroIcon, { backgroundColor: c.accentMuted }]}>
-            <Sparkles size={24} color={c.accent} strokeWidth={1.5} />
+            <Image
+              source={require('@/assets/images/splash-icon.png')}
+              style={{ width: 24, height: 24, tintColor: c.accent }}
+              resizeMode="contain"
+            />
           </View>
           <Text style={[styles.heading, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
             What would you like to learn?
@@ -113,7 +118,11 @@ export default function AskScreen() {
           >
             <View style={styles.answerHeader}>
               <View style={[styles.answerIcon, { backgroundColor: c.accentMuted }]}>
-                <Sparkles size={14} color={c.accent} strokeWidth={2} />
+                <Image
+                  source={require('@/assets/images/splash-icon.png')}
+                  style={{ width: 14, height: 14, tintColor: c.accent }}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={[styles.answerLabel, { color: c.accent, fontFamily: typography.body.semiBold }]}>
                 AI Response

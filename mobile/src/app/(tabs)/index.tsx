@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
@@ -26,7 +27,6 @@ import {
   HelpCircle,
   Video,
   FileText,
-  Sparkles,
   X,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -46,7 +46,6 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  'Explain quantum entanglement simply',
   'Help me understand photosynthesis',
   'What is machine learning?',
   'Summarize the French Revolution',
@@ -68,7 +67,11 @@ function MessageBubble({ message }: { message: Message }) {
     >
       {!isUser && (
         <View style={[styles.assistantAvatar, { backgroundColor: c.accentMuted }]}>
-          <Sparkles size={14} color={c.accent} strokeWidth={2} />
+          <Image
+            source={require('@/assets/images/splash-icon.png')}
+            style={{ width: 14, height: 14, tintColor: c.accent }}
+            resizeMode="contain"
+          />
         </View>
       )}
       <View
@@ -230,14 +233,8 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bgPrimary }]}>
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: c.borderSubtle }]}>
+      <View style={[styles.header]}>
         <View>
-          <Text style={[styles.headerTitle, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
-            Sabi Learn
-          </Text>
-          <Text style={[styles.headerSub, { color: c.textMuted, fontFamily: typography.body.regular }]}>
-            AI-powered learning assistant
-          </Text>
         </View>
         <Avatar name={user?.name} size={36} />
       </View>
@@ -252,9 +249,7 @@ export default function HomeScreen() {
       >
         {isEmpty ? (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.emptyState}>
-            <View style={[styles.emptyIcon, { backgroundColor: c.accentMuted }]}>
-              <Sparkles size={28} color={c.accent} strokeWidth={1.5} />
-            </View>
+
             <Text style={[styles.emptyTitle, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
               Ask me anything
             </Text>
@@ -283,7 +278,11 @@ export default function HomeScreen() {
             {loading && (
               <Animated.View entering={FadeInDown.duration(300)} style={[styles.bubbleRow, styles.bubbleRowAssistant]}>
                 <View style={[styles.assistantAvatar, { backgroundColor: c.accentMuted }]}>
-                  <Sparkles size={14} color={c.accent} strokeWidth={2} />
+                  <Image
+                    source={require('@/assets/images/splash-icon.png')}
+                    style={{ width: 14, height: 14, tintColor: c.accent }}
+                    resizeMode="contain"
+                  />
                 </View>
                 <View style={[styles.bubble, styles.assistantBubble, { backgroundColor: c.bgSecondary, borderColor: c.borderSubtle }]}>
                   <ActivityIndicator size="small" color={c.accent} />
@@ -357,8 +356,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: fontSize.lg,
@@ -410,12 +407,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   chip: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
     borderWidth: 1,
   },
-  chipText: { fontSize: fontSize.xs },
+  chipText: { fontSize: 9 },
   messageList: { gap: spacing.lg },
   bubbleRow: {
     flexDirection: 'row',

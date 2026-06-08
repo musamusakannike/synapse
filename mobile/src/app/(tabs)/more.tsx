@@ -1,8 +1,7 @@
-import { View, Text, Pressable, StyleSheet, ScrollView, Switch } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Switch, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  Sparkles,
   History,
   FileText,
   Video,
@@ -137,7 +136,13 @@ export default function MoreScreen() {
           <SectionHeader title="LEARN" />
           <View style={[styles.section, { backgroundColor: c.bgSecondary, borderColor: c.borderSubtle }]}>
             <MenuItem
-              icon={<Sparkles size={18} color={c.accent} strokeWidth={1.5} />}
+              icon={
+                <Image
+                  source={require('@/assets/images/splash-icon.png')}
+                  style={{ width: 18, height: 18, tintColor: c.accent }}
+                  resizeMode="contain"
+                />
+              }
               label="Ask AI"
               onPress={() => router.push('/ask')}
             />

@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
@@ -28,6 +29,7 @@ import {
   Video,
   FileText,
   X,
+  SquarePen,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
@@ -230,11 +232,44 @@ export default function HomeScreen() {
 
   const isEmpty = messages.length === 0;
 
+  const handleNewChat = () => {
+    if (messages.length === 0) return;
+    Alert.alert(
+      'New Chat',
+      'Are you sure you want to start a new chat session? This will clear your current messages.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            haptics.medium();
+            setMessages([]);
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bgPrimary }]}>
       {/* Header */}
       <View style={[styles.header]}>
         <View>
+          {!isEmpty && (
+            <Pressable
+              onPress={handleNewChat}
+              style={({ pressed }) => [
+                styles.newChatBtn,
+                {
+                  backgroundColor: pressed ? c.bgHover : c.bgSecondary,
+                  borderColor: c.border,
+                },
+              ]}
+            >
+              <SquarePen size={18} color={c.textSecondary} strokeWidth={2} />
+            </Pressable>
+          )}
         </View>
         <Avatar name={user?.name} size={36} />
       </View>
@@ -356,6 +391,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
+  },
+  newChatBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
   headerTitle: {
     fontSize: fontSize.lg,

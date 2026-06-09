@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { connectToDatabase } from "./db.js";
 import { downloadFromR2 } from "./r2.js";
 import { extractTextFromBuffer } from "./document-extract.js";
+import morgan from "morgan";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,7 +13,7 @@ const OCR_MICROSERVICE_SECRET = process.env.OCR_MICROSERVICE_SECRET;
 
 app.use(cors());
 app.use(express.json());
-
+app.use(morgan("dev"));
 // Logger middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);

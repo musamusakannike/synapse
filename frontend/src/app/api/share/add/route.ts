@@ -75,10 +75,69 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Already added to your library", code: "ALREADY_ADDED" }, { status: 409 });
     }
 
+    const clonedCourseId = new ObjectId();
+
     // Clone the resource — strip ownership/metadata fields
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _id: _omit1, userId: _omit2, isPublic: _omit3, createdAt: _omit4, ...rest } = resource;
+
+    // For courses, also clone all associated lessons and map their IDs
+    let clonedLessons: Record<string, unknown>[] = [];
+    if (type === "course") {
+      const lessons = await db.collection("lessons").find({ courseId: id }).toArray();
+      if (lessons.length > 0) {
+        const lessonIdMap: Record<string, string> = {};
+        clonedLessons = lessons.map((lesson) => {
+          const newLessonId = new ObjectId();
+          lessonIdMap[lesson._id.toString()] = newLessonId.toString();
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { _id: _lid, userId: _luid, courseId: _lcid, ...lessonRest } = lesson;
+          return {
+            _id: newLessonId,
+            ...lessonRest,
+            userId: session.userId,
+            courseId: clonedCourseId.toString(),
+            createdAt: new Date(),
+          };
+        });
+
+        // Update course outline lessons with the new generated lesson IDs
+        interface LessonOutline {
+          title: string;
+          description: string;
+          isCompleted?: boolean;
+          generatedLessonId?: string;
+        }
+
+        interface ModuleOutline {
+          title: string;
+          description: string;
+          lessons: LessonOutline[];
+        }
+
+        if (rest.outline && rest.outline.modules) {
+          rest.outline.modules = (rest.outline.modules as ModuleOutline[]).map((mod) => {
+            if (!mod.lessons) return mod;
+            return {
+              ...mod,
+              lessons: mod.lessons.map((lesson) => {
+                if (lesson.generatedLessonId && lessonIdMap[lesson.generatedLessonId]) {
+                  return {
+                    ...lesson,
+                    generatedLessonId: lessonIdMap[lesson.generatedLessonId],
+                  };
+                }
+                return lesson;
+              }),
+            };
+          });
+        }
+      }
+    }
+
     const clone = {
+      _id: clonedCourseId,
       ...rest,
       userId: session.userId,
       clonedFrom: id,
@@ -88,22 +147,8 @@ export async function POST(request: Request) {
 
     const result = await db.collection(collectionName).insertOne(clone);
 
-    // For courses, also clone all associated lessons
-    if (type === "course") {
-      const lessons = await db.collection("lessons").find({ courseId: id }).toArray();
-      if (lessons.length > 0) {
-        const clonedLessons = lessons.map((lesson) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { _id: _lid, userId: _luid, courseId: _lcid, ...lessonRest } = lesson;
-          return {
-            ...lessonRest,
-            userId: session.userId,
-            courseId: result.insertedId.toString(),
-            createdAt: new Date(),
-          };
-        });
-        await db.collection("lessons").insertMany(clonedLessons);
-      }
+    if (clonedLessons.length > 0) {
+      await db.collection("lessons").insertMany(clonedLessons);
     }
 
     return NextResponse.json({

@@ -60,6 +60,10 @@ export function DocumentPicker({
     if (open) {
       fetchDocuments();
       setSelected(new Set(selectedIds));
+      // Ping the OCR microservice health endpoint to wake it up (cold start recovery)
+      fetch("/api/documents/health").catch((err) => {
+        console.warn("[OCR Health] Failed to ping health endpoint:", err);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

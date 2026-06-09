@@ -193,7 +193,16 @@ Output MUST be a valid JSON object matching the following structure:
 
 Important Instructions:
 - Avoid generic lesson divisions. Make it specialized.
-- Define 2 to 3 modules, with 2 lessons in each module (total 4 to 6 lessons) to keep the course compact and achievable.
+- CRITICAL: Analyze the topic's complexity and scope to determine the optimal course structure:
+  * For simple, focused topics: 2-3 modules with 2-3 lessons each (4-9 total lessons)
+  * For intermediate topics: 3-5 modules with 2-4 lessons each (6-20 total lessons)
+  * For complex, comprehensive topics: 5-8 modules with 3-5 lessons each (15-40 total lessons)
+  * For highly specialized or in-depth subjects: 8-12 modules with 4-6 lessons each (32-72 total lessons)
+- Use your judgment: the course should be thorough enough to cover the topic properly, but not artificially padded.
+- Each module should represent a distinct learning phase or conceptual area.
+- Lessons should build progressively within each module.
+- If the topic requires extensive coverage (e.g., "Complete Web Development", "Advanced Physics", "Machine Learning from Scratch"), create a comprehensive multi-module structure.
+- If the topic is narrow (e.g., "Understanding Photosynthesis", "Intro to Variables"), keep it concise with fewer modules.
 - Output ONLY the raw JSON block without markdown code blocks.`;
 
   let userPrompt = `Create a custom, premium course outline about: "${topic}"`;

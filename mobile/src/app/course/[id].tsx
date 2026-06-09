@@ -58,7 +58,7 @@ function ModuleSection({
 }: {
   mod: Module;
   modIndex: number;
-  onLessonPress: (lesson: Lesson) => void;
+  onLessonPress: (lesson: Lesson, moduleTitle: string) => void;
 }) {
   const { c } = useTheme();
   const [expanded, setExpanded] = useState(true);
@@ -105,7 +105,7 @@ function ModuleSection({
               lesson={lesson}
               lessonIndex={lessonIndex}
               isLast={lessonIndex === mod.lessons.length - 1}
-              onPress={() => onLessonPress(lesson)}
+              onPress={() => onLessonPress(lesson, mod.title)}
             />
           ))}
         </View>
@@ -194,12 +194,19 @@ export default function CourseDetailScreen() {
     enabled: !!id,
   });
 
-  const handleLessonPress = (lesson: Lesson) => {
+  const handleLessonPress = (lesson: Lesson, moduleTitle: string) => {
     if (lesson.generatedLessonId) {
-      // Navigate to lesson detail — adapt route if you have one
       router.push(`/course/lesson/${lesson.generatedLessonId}` as any);
+    } else if (course?._id) {
+      router.push({
+        pathname: '/course/lesson/generate',
+        params: {
+          courseId: course._id,
+          moduleTitle,
+          lessonTitle: lesson.title,
+        },
+      } as any);
     }
-    // Otherwise: lesson not yet generated — could show a toast or do nothing
   };
 
   // Derived stats

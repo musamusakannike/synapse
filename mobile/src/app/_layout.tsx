@@ -45,6 +45,10 @@ function RootNavigation() {
           options={{ animation: 'slide_from_bottom' }}
         />
         <Stack.Screen
+          name="course/lesson/[id]"
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
           name="quiz/[id]"
           options={{ animation: 'slide_from_bottom' }}
         />

@@ -31,6 +31,8 @@ export async function GET() {
             mimeType: 1,
             sizeBytes: 1,
             publicUrl: 1,
+            ocrStatus: 1,
+            ocrError: 1,
             createdAt: 1,
           },
         }

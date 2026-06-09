@@ -12,6 +12,8 @@ interface DocumentMeta {
   publicUrl: string;
   createdAt: string;
   extractedText: string;
+  ocrStatus?: "pending" | "processing" | "completed" | "failed";
+  ocrError?: string | null;
 }
 
 interface KeyConcept {
@@ -156,6 +158,15 @@ export default function DocumentInsightsPage() {
     fetchDocument();
   }, [fetchDocument]);
 
+  useEffect(() => {
+    if (document?.ocrStatus === "processing") {
+      const interval = setInterval(() => {
+        fetchDocument();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [document?.ocrStatus, fetchDocument]);
+
   const handleGenerateInsights = async () => {
     setGenerating(true);
     setError(null);
@@ -263,8 +274,70 @@ export default function DocumentInsightsPage() {
         </div>
       )}
 
+      {/* Processing State */}
+      {document?.ocrStatus === "processing" && (
+        <div className="flex flex-col items-center justify-center py-16 px-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]/50 backdrop-blur-md relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-[var(--border)] overflow-hidden">
+            <div className="h-full bg-[var(--accent)] w-1/3 rounded-full animate-[loading-bar_1.5s_infinite_linear]" style={{ transformOrigin: "0% 50%" }} />
+          </div>
+          <style>{`
+            @keyframes loading-bar {
+              0% { transform: translateX(-100%); }
+              100% { transform: translateX(300%); }
+            }
+          `}</style>
+          <div className="w-16 h-16 rounded-2xl bg-[var(--accent-muted)] flex items-center justify-center mb-4 relative">
+            <div className="absolute inset-0 rounded-2xl border-2 border-[var(--accent)] animate-ping opacity-25" />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+            OCR Text Extraction In Progress...
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)] text-center max-w-md mb-2">
+            We are currently processing the file and extracting its text layer via OCR.
+          </p>
+          <p className="text-xs text-[var(--text-muted)] text-center">
+            This will refresh automatically. Please do not close the window.
+          </p>
+        </div>
+      )}
+
+      {/* Failed State */}
+      {document?.ocrStatus === "failed" && (
+        <div className="flex flex-col items-center justify-center py-16 px-6 rounded-2xl border border-[var(--danger)]/20 bg-[var(--danger)]/5">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--danger)]/10 flex items-center justify-center mb-4">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
+            OCR Extraction Failed
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)] text-center max-w-md mb-6">
+            {document.ocrError || "An error occurred during text extraction."}
+          </p>
+          <button
+            onClick={() => router.push("/dashboard/documents")}
+            className="px-6 py-2.5 rounded-xl border border-[var(--border)] text-sm font-medium hover:bg-[var(--bg-hover)] transition-colors"
+          >
+            Back to Documents
+          </button>
+        </div>
+      )}
+
       {/* Generate insights CTA */}
-      {!insights && !generating && (
+      {!insights && !generating && document?.ocrStatus !== "processing" && document?.ocrStatus !== "failed" && (
         <div className="flex flex-col items-center justify-center py-16 px-6 rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--bg-secondary)]">
           <div className="w-16 h-16 rounded-2xl bg-[var(--accent-muted)] flex items-center justify-center mb-4">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -286,7 +359,7 @@ export default function DocumentInsightsPage() {
           </button>
           <p className="text-xs text-[var(--text-muted)] mt-3">
             Uses 1 AI generation credit
-          </p>No text content available for this document. Only text-based documents can generate insights.
+          </p>
         </div>
       )}
 

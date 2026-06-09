@@ -50,6 +50,8 @@ export async function GET(request: Request) {
         publicUrl: doc.publicUrl,
         createdAt: doc.createdAt,
         extractedText: doc.extractedText || "",
+        ocrStatus: doc.ocrStatus || "completed",
+        ocrError: doc.ocrError || null,
       },
       insights: doc.insights || null,
     });
@@ -86,6 +88,18 @@ export async function POST(request: Request) {
     }
 
     if (!doc.extractedText || doc.extractedText.trim().length === 0) {
+      if (doc.ocrStatus === "processing") {
+        return NextResponse.json(
+          { error: "OCR is currently extracting text from this document. Please wait a few moments and try again." },
+          { status: 423 }
+        );
+      }
+      if (doc.ocrStatus === "failed") {
+        return NextResponse.json(
+          { error: `OCR text extraction failed for this document: ${doc.ocrError || "Unknown error"}. Please delete and re-upload.` },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
         { error: "No text content available for this document. Only text-based documents can generate insights." },
         { status: 400 }

@@ -91,6 +91,18 @@
       "skillPath": "skills/streamdown/SKILL.md",
       "computedHash": "c842552c75b80abb74ef8f92481d34684c709884dd2df22c2ab3b183aee582fe"
     },
+    "supabase": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase/SKILL.md",
+      "computedHash": "d414d598b9428b3e851c4ce61898649906b19e55aa7415bb42a286bd9ca2ab32"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "0d2c4857a7d6fdcd3fbc46e458fa4c497f029cab89a01548b3defce203003932"
+    },
     "ucp": {
       "source": "vercel-labs/agentic-commerce-skills",
       "sourceType": "github",

@@ -61,6 +61,17 @@ export default function DocumentsPage() {
     return () => { cancelled = true; };
   }, [fetchDocuments]);
 
+  // Poll list every 5 seconds if there are any documents still in processing status
+  useEffect(() => {
+    const hasProcessing = documents.some((doc) => doc.ocrStatus === "processing");
+    if (hasProcessing) {
+      const interval = setInterval(() => {
+        fetchDocuments();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [documents, fetchDocuments]);
+
   const handleUploadComplete = (doc: UploadedDoc) => {
     setDocuments((prev) => [doc, ...prev]);
   };
@@ -132,10 +143,22 @@ export default function DocumentsPage() {
                 className="flex-1 min-w-0 cursor-pointer"
                 onClick={() => router.push(`/dashboard/documents/${doc._id}`)}
               >
-                <p className="text-sm text-[var(--text-primary)] font-medium truncate group-hover:text-[var(--accent)] transition-colors">
-                  {doc.fileName}
-                </p>
-                <p className="text-xs text-[var(--text-muted)]">
+                <div className="flex items-center gap-2 max-w-full">
+                  <p className="text-sm text-[var(--text-primary)] font-medium truncate group-hover:text-[var(--accent)] transition-colors">
+                    {doc.fileName}
+                  </p>
+                  {doc.ocrStatus === "processing" && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/10 animate-pulse shrink-0">
+                      Processing OCR
+                    </span>
+                  )}
+                  {doc.ocrStatus === "failed" && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/10 shrink-0">
+                      OCR Failed
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
                   {formatFileSize(doc.sizeBytes)} &middot;{" "}
                   {new Date(doc.createdAt).toLocaleDateString()}
                 </p>

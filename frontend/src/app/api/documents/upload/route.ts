@@ -62,15 +62,23 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text content
+    const useMicroservice = !!process.env.OCR_MICROSERVICE_URL;
+    let ocrStatus = "completed";
     let extractedText = "";
-    try {
-      console.log(`[Upload API] Beginning text extraction for: "${file.name}"`);
-      extractedText = await extractTextFromBuffer(buffer, file.type, file.name);
-      console.log(`[Upload API] Text extraction completed successfully for: "${file.name}" (Extracted length: ${extractedText.length} chars)`);
-    } catch (extractError: any) {
-      console.error(`[Upload API] Text extraction failed for: "${file.name}". Error: ${extractError.message || extractError}`);
-      extractedText = "";
+
+    if (useMicroservice) {
+      ocrStatus = "processing";
+      console.log(`[Upload API] OCR Microservice is enabled. Postponing extraction for: "${file.name}"`);
+    } else {
+      // Fallback: Run OCR synchronously
+      try {
+        console.log(`[Upload API] OCR Microservice URL is not set. Falling back to synchronous extraction for: "${file.name}"`);
+        extractedText = await extractTextFromBuffer(buffer, file.type, file.name);
+        console.log(`[Upload API] Synced text extraction completed successfully for: "${file.name}" (Extracted length: ${extractedText.length} chars)`);
+      } catch (extractError: any) {
+        console.error(`[Upload API] Synced text extraction failed for: "${file.name}". Error: ${extractError.message || extractError}`);
+        ocrStatus = "failed";
+      }
     }
 
     // Upload to R2
@@ -93,11 +101,48 @@ export async function POST(request: Request) {
       r2Key,
       publicUrl,
       extractedText,
+      ocrStatus,
       createdAt: new Date(),
     });
     console.log(`[Upload API] Metadata saved to MongoDB with document ID: ${result.insertedId}`);
 
-    console.log(`[Upload API] Document "${file.name}" uploaded and processed successfully!`);
+    // Asynchronously call the microservice if enabled
+    if (useMicroservice) {
+      const microserviceUrl = process.env.OCR_MICROSERVICE_URL;
+      const secret = process.env.OCR_MICROSERVICE_SECRET;
+      
+      console.log(`[Upload API] Triggering OCR microservice asynchronously for document: ${result.insertedId}`);
+      
+      // Fire-and-forget fetch to avoid blocking the API response
+      fetch(`${microserviceUrl}/process-document`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(secret ? { "Authorization": `Bearer ${secret}` } : {}),
+        },
+        body: JSON.stringify({ documentId: result.insertedId.toString() }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          console.error(`[Upload API] Microservice returned error: ${res.status} - ${text}`);
+          // Update status in DB to failed
+          await db.collection("documents").updateOne(
+            { _id: result.insertedId },
+            { $set: { ocrStatus: "failed", ocrError: `Microservice returned HTTP ${res.status}: ${text}` } }
+          );
+        } else {
+          console.log(`[Upload API] Microservice successfully triggered for document ${result.insertedId}`);
+        }
+      }).catch(async (fetchErr) => {
+        console.error(`[Upload API] Failed to contact microservice:`, fetchErr);
+        await db.collection("documents").updateOne(
+          { _id: result.insertedId },
+          { $set: { ocrStatus: "failed", ocrError: fetchErr.message || String(fetchErr) } }
+        );
+      });
+    }
+
+    console.log(`[Upload API] Document "${file.name}" uploaded successfully!`);
 
     return NextResponse.json({
       success: true,
@@ -107,6 +152,7 @@ export async function POST(request: Request) {
         mimeType: file.type,
         sizeBytes: file.size,
         publicUrl,
+        ocrStatus,
         createdAt: new Date().toISOString(),
       },
     });

@@ -9,6 +9,8 @@ export interface UploadedDoc {
   mimeType: string;
   sizeBytes: number;
   publicUrl: string;
+  ocrStatus?: "pending" | "processing" | "completed" | "failed";
+  ocrError?: string | null;
   createdAt: string;
 }
 

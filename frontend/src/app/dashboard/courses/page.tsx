@@ -57,8 +57,10 @@ export default function CoursesPage() {
     fetchCourses();
   }, [fetchCourses]);
 
+  const hasProcessingDocs = attachedDocs.some((d) => d.ocrStatus === "processing");
+  const hasFailedDocs = attachedDocs.some((d) => d.ocrStatus === "failed");
   const canGenerate =
-    !generating && (topic.trim() !== "" || attachedDocs.length > 0);
+    !generating && !hasProcessingDocs && !hasFailedDocs && (topic.trim() !== "" || attachedDocs.length > 0);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +129,13 @@ export default function CoursesPage() {
           disabled={!canGenerate}
           className="mt-3 w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
-          {generating ? "Generating..." : "Generate"}
+          {generating
+            ? "Generating..."
+            : hasProcessingDocs
+            ? "Processing Uploads..."
+            : hasFailedDocs
+            ? "OCR Failed (Please Re-upload)"
+            : "Generate"}
         </button>
       </form>
 

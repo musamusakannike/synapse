@@ -40,10 +40,11 @@ export async function GET() {
     const data = await res.json();
     console.log(`[OCR Health] Ping succeeded:`, data);
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("[OCR Health] Error pinging OCR microservice:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to check OCR microservice health" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

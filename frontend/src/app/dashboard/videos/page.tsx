@@ -57,9 +57,13 @@ export default function VideosPage() {
     fetchVideos();
   }, [fetchVideos]);
 
+  const hasProcessingDocs = attachedDocs.some((d) => d.ocrStatus === "processing");
+  const hasFailedDocs = attachedDocs.some((d) => d.ocrStatus === "failed");
+  const isSubmitDisabled = generating || hasProcessingDocs || hasFailedDocs || (!topic.trim() && attachedDocs.length === 0);
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim() && attachedDocs.length === 0) return;
+    if (isSubmitDisabled) return;
     setError("");
     setGenerating(true);
 
@@ -117,10 +121,10 @@ export default function VideosPage() {
             />
             <button
               type="submit"
-              disabled={generating || (!topic.trim() && attachedDocs.length === 0)}
+              disabled={isSubmitDisabled}
               className="w-full sm:w-auto self-start px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2"
             >
-              {generating ? "Generating..." : (
+              {generating ? "Generating..." : hasProcessingDocs ? "Processing..." : hasFailedDocs ? "OCR Failed" : (
                 <>
                   Create Video
                   <BetaBadge className="bg-[var(--bg-primary)]/20 text-[var(--bg-primary)] border-[var(--bg-primary)]/30" />

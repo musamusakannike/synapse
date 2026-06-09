@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { DocumentUpload, AttachedDocChip, type UploadedDoc } from "./DocumentUpload";
 import { DocumentPicker } from "./DocumentPicker";
 import { cn } from "@/lib/cn";
@@ -59,6 +59,48 @@ export function InputWithDocuments({
       prevIsTextarea.current = isTextareaMode;
     }
   }, [isTextareaMode, inputType, value]);
+
+  // Poll status of processing attached docs
+  useEffect(() => {
+    const processingDocs = attachedDocs.filter((d) => d.ocrStatus === "processing");
+    if (processingDocs.length === 0) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const updatedDocs = await Promise.all(
+          processingDocs.map(async (doc) => {
+            const res = await fetch(`/api/documents/insights?id=${doc._id}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && data.document) {
+                return data.document as UploadedDoc;
+              }
+            }
+            return doc;
+          })
+        );
+
+        // Merge updated docs back into attachedDocs
+        const newAttachedDocs = attachedDocs.map((doc) => {
+          const updated = updatedDocs.find((ud) => ud._id === doc._id);
+          return updated ? updated : doc;
+        });
+
+        // Check if anything actually changed to avoid infinite loop
+        const changed = newAttachedDocs.some((doc, idx) => {
+          return doc.ocrStatus !== attachedDocs[idx].ocrStatus || doc.ocrError !== attachedDocs[idx].ocrError;
+        });
+
+        if (changed) {
+          onDocsChange(newAttachedDocs);
+        }
+      } catch (err) {
+        console.warn("[InputWithDocuments] Failed to update attached doc status:", err);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [attachedDocs, onDocsChange]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     cursorPositionRef.current = e.target.selectionStart;

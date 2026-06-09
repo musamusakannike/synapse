@@ -281,12 +281,28 @@ function mimeIcon(mime: string) {
 
 export function AttachedDocChip({ doc, onRemove }: AttachedDocChipProps) {
   return (
-    <div className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] text-xs">
-      <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-[var(--accent-muted)] text-[var(--accent)] text-[10px] font-bold shrink-0">
+    <div className={cn(
+      "group flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors",
+      doc.ocrStatus === "failed" 
+        ? "bg-[var(--danger)]/5 border-[var(--danger)]/20" 
+        : "bg-[var(--bg-tertiary)] border-[var(--border)]"
+    )}>
+      <span className={cn(
+        "inline-flex items-center justify-center w-6 h-6 rounded text-[10px] font-bold shrink-0",
+        doc.ocrStatus === "failed"
+          ? "bg-[var(--danger)]/10 text-[var(--danger)]"
+          : "bg-[var(--accent-muted)] text-[var(--accent)]"
+      )}>
         {mimeIcon(doc.mimeType)}
       </span>
-      <span className="text-[var(--text-secondary)] truncate max-w-[140px]">
+      <span className="text-[var(--text-secondary)] truncate max-w-[140px] flex items-center gap-1.5">
         {doc.fileName}
+        {doc.ocrStatus === "processing" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-ping" title="Extracting text layer..." />
+        )}
+        {doc.ocrStatus === "failed" && (
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)]" title="OCR extraction failed" />
+        )}
       </span>
       <span className="text-[var(--text-muted)]">
         {formatFileSize(doc.sizeBytes)}

@@ -16,8 +16,10 @@ export default function AskPage() {
   const [error, setError] = useState("");
   const [optimisticMessage, setOptimisticMessage] = useState("");
 
+  const hasProcessingDocs = attachedDocs.some((d) => d.ocrStatus === "processing");
+  const hasFailedDocs = attachedDocs.some((d) => d.ocrStatus === "failed");
   const canSubmit =
-    !loading && (question.trim() !== "" || attachedDocs.length > 0);
+    !loading && !hasProcessingDocs && !hasFailedDocs && (question.trim() !== "" || attachedDocs.length > 0);
 
   const handleAsk = useCallback(
     async (e: React.FormEvent) => {
@@ -99,7 +101,13 @@ export default function AskPage() {
           disabled={!canSubmit}
           className="mt-3 w-full sm:w-auto px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Thinking..." : "Ask Sabi Learn"}
+          {loading
+            ? "Thinking..."
+            : hasProcessingDocs
+            ? "Processing Uploads..."
+            : hasFailedDocs
+            ? "OCR Failed (Please Re-upload)"
+            : "Ask Sabi Learn"}
         </button>
       </form>
 

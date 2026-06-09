@@ -58,6 +58,7 @@ export function DocumentPicker({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchDocuments();
       setSelected(new Set(selectedIds));
       // Ping the OCR microservice health endpoint to wake it up (cold start recovery)
@@ -68,7 +69,27 @@ export function DocumentPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Poll list silently every 5 seconds inside the picker modal if any document is processing
+  useEffect(() => {
+    const hasProcessing = documents.some((doc) => doc.ocrStatus === "processing");
+    if (hasProcessing && open) {
+      const interval = setInterval(() => {
+        fetch("/api/documents")
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) setDocuments(data.documents || []);
+          })
+          .catch(() => {});
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [documents, open]);
+
   const toggleSelect = (id: string) => {
+    const doc = documents.find((d) => d._id === id);
+    if (doc?.ocrStatus === "processing" || doc?.ocrStatus === "failed") {
+      return;
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -80,8 +101,13 @@ export function DocumentPicker({
     });
   };
 
+  const selectedDocs = documents.filter((d) => selected.has(d._id));
+  const hasProcessingSelected = selectedDocs.some((d) => d.ocrStatus === "processing");
+  const hasFailedSelected = selectedDocs.some((d) => d.ocrStatus === "failed");
+  const isAttachDisabled = selected.size === 0 || hasProcessingSelected || hasFailedSelected;
+
   const handleConfirm = () => {
-    const selectedDocs = documents.filter((d) => selected.has(d._id));
+    if (isAttachDisabled) return;
     onSelect(selectedDocs);
     onClose();
   };
@@ -190,53 +216,73 @@ export function DocumentPicker({
             </div>
           ) : (
             <div className="space-y-2">
-              {documents.map((doc) => (
-                <div
-                  key={doc._id}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
-                    selected.has(doc._id)
-                      ? "border-[var(--accent)] bg-[var(--accent-subtle)]"
-                      : "border-[var(--border)] hover:border-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]"
-                  )}
-                  onClick={() => toggleSelect(doc._id)}
-                >
-                  {/* Checkbox */}
+              {documents.map((doc) => {
+                const isProcessing = doc.ocrStatus === "processing";
+                const isFailed = doc.ocrStatus === "failed";
+                const isDisabled = isProcessing || isFailed;
+                return (
                   <div
+                    key={doc._id}
                     className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                      selected.has(doc._id)
-                        ? "border-[var(--accent)] bg-[var(--accent)]"
-                        : "border-[var(--border)]"
+                      "flex items-center gap-3 p-3 rounded-xl border transition-all",
+                      isDisabled
+                        ? "opacity-60 cursor-not-allowed border-[var(--border)] bg-[var(--bg-secondary)]"
+                        : selected.has(doc._id)
+                        ? "border-[var(--accent)] bg-[var(--accent-subtle)] cursor-pointer"
+                        : "border-[var(--border)] hover:border-[var(--text-muted)] hover:bg-[var(--bg-tertiary)] cursor-pointer"
                     )}
+                    onClick={() => toggleSelect(doc._id)}
                   >
-                    {selected.has(doc._id) && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
+                    {/* Checkbox */}
+                    <div
+                      className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                        isDisabled
+                          ? "border-[var(--border)] bg-[var(--bg-secondary)]"
+                          : selected.has(doc._id)
+                          ? "border-[var(--accent)] bg-[var(--accent)]"
+                          : "border-[var(--border)]"
+                      )}
+                    >
+                      {selected.has(doc._id) && !isDisabled && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--bg-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
 
-                  {/* Icon */}
-                  <span
-                    className={cn(
-                      "inline-flex items-center justify-center w-8 h-8 rounded-lg text-[10px] font-bold shrink-0",
-                      mimeColor(doc.mimeType)
-                    )}
-                  >
-                    {mimeIcon(doc.mimeType)}
-                  </span>
+                    {/* Icon */}
+                    <span
+                      className={cn(
+                        "inline-flex items-center justify-center w-8 h-8 rounded-lg text-[10px] font-bold shrink-0",
+                        mimeColor(doc.mimeType)
+                      )}
+                    >
+                      {mimeIcon(doc.mimeType)}
+                    </span>
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[var(--text-primary)] truncate">
-                      {doc.fileName}
-                    </p>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      {formatFileSize(doc.sizeBytes)} &middot;{" "}
-                      {new Date(doc.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 max-w-full">
+                        <p className="text-sm text-[var(--text-primary)] font-medium truncate">
+                          {doc.fileName}
+                        </p>
+                        {isProcessing && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/10 animate-pulse shrink-0">
+                            Processing OCR
+                          </span>
+                        )}
+                        {isFailed && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/10 shrink-0">
+                            OCR Failed
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                        {formatFileSize(doc.sizeBytes)} &middot;{" "}
+                        {new Date(doc.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
 
                   {/* Delete button */}
                   <button
@@ -259,7 +305,8 @@ export function DocumentPicker({
                     )}
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -279,9 +326,10 @@ export function DocumentPicker({
               </button>
               <button
                 onClick={handleConfirm}
-                className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors"
+                disabled={isAttachDisabled}
+                className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Attach {selected.size > 0 ? `(${selected.size})` : ""}
+                {hasProcessingSelected ? "Processing..." : hasFailedSelected ? "Failed OCR" : `Attach ${selected.size > 0 ? `(${selected.size})` : ""}`}
               </button>
             </div>
           </div>

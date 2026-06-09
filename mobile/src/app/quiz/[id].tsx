@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
@@ -19,16 +20,12 @@ import { api } from '@/lib/api';
 import { haptics } from '@/lib/haptics';
 import { typography, spacing, fontSize, radius } from '@/constants/theme';
 
-interface Option {
-  label: string;
-  text: string;
-}
-
 interface Question {
   question: string;
-  options: Option[];
-  correctAnswer: string;
-  explanation?: string;
+  type: 'multiple-choice' | 'true-false' | 'fill-in-the-blank';
+  options?: string[];
+  answer: string;
+  explanation: string;
 }
 
 interface Quiz {
@@ -39,16 +36,22 @@ interface Quiz {
   createdAt: string;
 }
 
+type FeedbackMode = 'traditional' | 'immediate';
+
 export default function QuizDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { c } = useTheme();
   const toast = useToast();
 
+  const [feedbackMode, setFeedbackMode] = useState<FeedbackMode | null>(null);
+  const [showModeSelector, setShowModeSelector] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [fillBlankInput, setFillBlankInput] = useState('');
   const [showResult, setShowResult] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: quiz, isLoading } = useQuery<Quiz>({
     queryKey: ['quiz', id],
@@ -61,14 +64,31 @@ export default function QuizDetailScreen() {
 
   const questions = quiz?.questions ?? [];
   const currentQ = questions[currentIndex];
-  const isAnswered = selected !== null;
-  const isCorrect = selected === currentQ?.correctAnswer;
+  const hasAnsweredCurrent = !!answers[currentIndex];
 
-  const handleSelect = (label: string) => {
-    if (selected) return;
-    setSelected(label);
-    setAnswers((prev) => ({ ...prev, [currentIndex]: label }));
-    if (label === currentQ.correctAnswer) {
+  const handleSelect = (optVal: string) => {
+    if (feedbackMode === 'immediate' && hasAnsweredCurrent) return;
+
+    setSelected(optVal);
+    setAnswers((prev) => ({ ...prev, [currentIndex]: optVal }));
+
+    const isCorrect = optVal.toLowerCase().trim() === currentQ.answer.toLowerCase().trim();
+    if (isCorrect) {
+      haptics.success();
+    } else {
+      haptics.error();
+    }
+  };
+
+  const handleFillBlankSubmit = () => {
+    if (feedbackMode === 'immediate' && hasAnsweredCurrent) return;
+    if (!fillBlankInput.trim()) return;
+
+    const val = fillBlankInput.trim();
+    setAnswers((prev) => ({ ...prev, [currentIndex]: val }));
+
+    const isCorrect = val.toLowerCase().trim() === currentQ.answer.toLowerCase().trim();
+    if (isCorrect) {
       haptics.success();
     } else {
       haptics.error();
@@ -76,18 +96,34 @@ export default function QuizDetailScreen() {
   };
 
   const handleNext = () => {
+    // Save fill-in-the-blank text if not already saved
+    if (currentQ?.type === 'fill-in-the-blank' && !answers[currentIndex] && fillBlankInput.trim()) {
+      setAnswers((prev) => ({ ...prev, [currentIndex]: fillBlankInput.trim() }));
+    }
+
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1);
-      setSelected(answers[currentIndex + 1] ?? null);
+      const nextIdx = currentIndex + 1;
+      setCurrentIndex(nextIdx);
+      const nextAns = answers[nextIdx] ?? '';
+      setSelected(nextAns || null);
+      setFillBlankInput(nextAns);
     } else {
-      setShowResult(true);
+      handleSubmit();
     }
   };
 
   const handlePrev = () => {
+    // Save fill-in-the-blank text if typed
+    if (currentQ?.type === 'fill-in-the-blank' && fillBlankInput.trim()) {
+      setAnswers((prev) => ({ ...prev, [currentIndex]: fillBlankInput.trim() }));
+    }
+
     if (currentIndex > 0) {
-      setCurrentIndex((i) => i - 1);
-      setSelected(answers[currentIndex - 1] ?? null);
+      const prevIdx = currentIndex - 1;
+      setCurrentIndex(prevIdx);
+      const prevAns = answers[prevIdx] ?? '';
+      setSelected(prevAns || null);
+      setFillBlankInput(prevAns);
     }
   };
 
@@ -95,12 +131,39 @@ export default function QuizDetailScreen() {
     setCurrentIndex(0);
     setSelected(null);
     setAnswers({});
+    setFillBlankInput('');
     setShowResult(false);
+    setShowModeSelector(true);
+    setFeedbackMode(null);
+  };
+
+  const handleSubmit = async () => {
+    let correct = 0;
+    questions.forEach((q, i) => {
+      const ans = answers[i];
+      if (ans && ans.toLowerCase().trim() === q.answer.toLowerCase().trim()) {
+        correct++;
+      }
+    });
+
+    setSubmitting(true);
+    try {
+      await api.put('/api/ai/quiz', {
+        quizId: id,
+        score: correct,
+        total: questions.length,
+      });
+    } catch (err) {
+      console.warn('Failed to save quiz attempt:', err);
+    } finally {
+      setSubmitting(false);
+      setShowResult(true);
+    }
   };
 
   const correctCount = Object.entries(answers).filter(([idx, ans]) => {
     const q = questions[parseInt(idx, 10)];
-    return q && ans === q.correctAnswer;
+    return q && ans.toLowerCase().trim() === q.answer.toLowerCase().trim();
   }).length;
 
   const scorePercent = questions.length > 0
@@ -111,6 +174,104 @@ export default function QuizDetailScreen() {
     scorePercent >= 80 ? c.success :
     scorePercent >= 50 ? c.warning :
     c.danger;
+
+  if (showModeSelector) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bgPrimary }]} edges={['top']}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: c.borderSubtle }]}>
+          <Pressable
+            onPress={() => { haptics.light(); router.back(); }}
+            style={[styles.backBtn, { backgroundColor: c.bgSecondary }]}
+          >
+            <ChevronLeft size={20} color={c.textPrimary} strokeWidth={2} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: c.textPrimary, fontFamily: typography.display.semiBold }]}>
+            {quiz?.title ?? quiz?.topic ?? 'Quiz'}
+          </Text>
+          <View style={{ width: 36 }} />
+        </View>
+
+        {isLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator size="large" color={c.accent} />
+          </View>
+        ) : !quiz || questions.length === 0 ? (
+          <View style={styles.loadingState}>
+            <Text style={[{ color: c.textMuted, fontFamily: typography.body.regular, fontSize: fontSize.sm }]}>
+              No questions found.
+            </Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.modeSelectorContent} showsVerticalScrollIndicator={false}>
+            <View style={{ alignItems: 'center', marginBottom: spacing.lg }}>
+              <Trophy size={48} color={c.accent} strokeWidth={1.5} />
+              <Text style={[styles.modeSelectorTitleText, { color: c.textPrimary, fontFamily: typography.display.bold, marginTop: spacing.md }]}>
+                Choose Quiz Mode
+              </Text>
+              <Text style={[styles.modeSelectorSubtitle, { color: c.textSecondary, fontFamily: typography.body.regular, marginTop: spacing.xs }]}>
+                {questions.length} questions • Select how you want to learn
+              </Text>
+            </View>
+
+            <View style={styles.modeCardsContainer}>
+              <Pressable
+                onPress={() => {
+                  haptics.light();
+                  setFeedbackMode('traditional');
+                  setShowModeSelector(false);
+                }}
+                style={({ pressed }) => [
+                  styles.modeCard,
+                  {
+                    backgroundColor: c.bgSecondary,
+                    borderColor: c.border,
+                    opacity: pressed ? 0.9 : 1,
+                  }
+                ]}
+              >
+                <View style={[styles.modeIconContainer, { backgroundColor: `${c.accent}15` }]}>
+                  <HelpCircle size={24} color={c.accent} />
+                </View>
+                <Text style={[styles.modeCardTitle, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
+                  Review at the End
+                </Text>
+                <Text style={[styles.modeCardDesc, { color: c.textSecondary, fontFamily: typography.body.regular }]}>
+                  Answer all questions first, then see your score and review all corrections together.
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  haptics.light();
+                  setFeedbackMode('immediate');
+                  setShowModeSelector(false);
+                }}
+                style={({ pressed }) => [
+                  styles.modeCard,
+                  {
+                    backgroundColor: c.bgSecondary,
+                    borderColor: c.border,
+                    opacity: pressed ? 0.9 : 1,
+                  }
+                ]}
+              >
+                <View style={[styles.modeIconContainer, { backgroundColor: `${c.success}15` }]}>
+                  <CheckCircle size={24} color={c.success} />
+                </View>
+                <Text style={[styles.modeCardTitle, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
+                  Instant Feedback
+                </Text>
+                <Text style={[styles.modeCardDesc, { color: c.textSecondary, fontFamily: typography.body.regular }]}>
+                  See if you're right immediately with color highlights and explanations after each answer.
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    );
+  }
 
   if (showResult) {
     return (
@@ -127,7 +288,7 @@ export default function QuizDetailScreen() {
           </Text>
           <View style={{ width: 36 }} />
         </View>
-        <ScrollView contentContainerStyle={styles.resultScroll}>
+        <ScrollView contentContainerStyle={styles.resultScroll} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeIn.duration(400)} style={styles.resultHero}>
             <View style={[styles.trophyWrap, { backgroundColor: `${scoreColor}22` }]}>
               <Trophy size={36} color={scoreColor} strokeWidth={1.5} />
@@ -147,7 +308,7 @@ export default function QuizDetailScreen() {
           <View style={styles.reviewList}>
             {questions.map((q, idx) => {
               const userAns = answers[idx];
-              const correct = userAns === q.correctAnswer;
+              const correct = userAns && userAns.toLowerCase().trim() === q.answer.toLowerCase().trim();
               return (
                 <Animated.View
                   key={idx}
@@ -178,8 +339,13 @@ export default function QuizDetailScreen() {
                     </Text>
                   ) : null}
                   <Text style={[styles.reviewAns, { color: c.success, fontFamily: typography.body.regular }]}>
-                    Correct: {q.correctAnswer}
+                    Correct: {q.answer}
                   </Text>
+                  {q.explanation ? (
+                    <Text style={[styles.reviewAns, { color: c.textSecondary, fontFamily: typography.body.regular, marginTop: 4, marginLeft: 24 }]}>
+                      {q.explanation}
+                    </Text>
+                  ) : null}
                 </Animated.View>
               );
             })}
@@ -193,6 +359,10 @@ export default function QuizDetailScreen() {
     );
   }
 
+  const options = currentQ?.options ?? (currentQ?.type === 'true-false' ? ['True', 'False'] : []);
+  const isMultipleOrTF = currentQ?.type === 'multiple-choice' || currentQ?.type === 'true-false';
+  const isAnswered = !!answers[currentIndex];
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bgPrimary }]} edges={['top']}>
       {/* Header */}
@@ -203,24 +373,23 @@ export default function QuizDetailScreen() {
         >
           <ChevronLeft size={20} color={c.textPrimary} strokeWidth={2} />
         </Pressable>
-        <Text
-          style={[styles.headerTitle, { color: c.textPrimary, fontFamily: typography.display.semiBold }]}
-          numberOfLines={1}
-        >
-          {quiz?.title ?? quiz?.topic ?? 'Quiz'}
-        </Text>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text
+            style={[styles.headerTitleText, { color: c.textPrimary, fontFamily: typography.display.semiBold }]}
+            numberOfLines={1}
+          >
+            {quiz?.title ?? quiz?.topic ?? 'Quiz'}
+          </Text>
+          <Text style={{ fontSize: fontSize['2xs'], color: c.accent, fontFamily: typography.body.medium, marginTop: 2 }}>
+            {feedbackMode === 'immediate' ? 'Instant Feedback' : 'Review at End'}
+          </Text>
+        </View>
         <View style={{ width: 36 }} />
       </View>
 
       {isLoading ? (
         <View style={styles.loadingState}>
           <ActivityIndicator size="large" color={c.accent} />
-        </View>
-      ) : !quiz || questions.length === 0 ? (
-        <View style={styles.loadingState}>
-          <Text style={[{ color: c.textMuted, fontFamily: typography.body.regular, fontSize: fontSize.sm }]}>
-            No questions found.
-          </Text>
         </View>
       ) : (
         <ScrollView
@@ -256,52 +425,152 @@ export default function QuizDetailScreen() {
             <Text
               style={[styles.questionText, { color: c.textPrimary, fontFamily: typography.display.semiBold }]}
             >
-              {currentQ.question}
+              {currentQ?.question}
             </Text>
           </Animated.View>
 
-          {/* Options */}
-          <View style={styles.options}>
-            {currentQ.options.map((opt) => {
-              const isSelected = selected === opt.label;
-              const isRight = isAnswered && opt.label === currentQ.correctAnswer;
-              const isWrong = isAnswered && isSelected && !isRight;
+          {/* Options (Multiple Choice / True-False) */}
+          {isMultipleOrTF && (
+            <View style={styles.options}>
+              {options.map((opt, optIndex) => {
+                const label = String.fromCharCode(65 + optIndex);
+                const isSelected = selected === opt || answers[currentIndex] === opt;
+                const isCorrectAnswer = currentQ.answer === opt;
 
-              let borderColor: string = c.border;
-              let bg: string = c.bgSecondary;
-              let textColor: string = c.textPrimary;
+                let borderColor: string = c.border;
+                let bg: string = c.bgSecondary;
+                let textColor: string = c.textPrimary;
+                let labelBg: string = `${c.border}33`;
+                let labelColor: string = c.textSecondary;
 
-              if (isRight) { borderColor = c.success; bg = `${c.success}18`; textColor = c.success; }
-              else if (isWrong) { borderColor = c.danger; bg = `${c.danger}18`; textColor = c.danger; }
-              else if (isSelected) { borderColor = c.accent; bg = c.accentMuted; textColor = c.accent; }
+                if (feedbackMode === 'immediate' && isAnswered) {
+                  if (isCorrectAnswer) {
+                    borderColor = c.success;
+                    bg = `${c.success}18`;
+                    textColor = c.success;
+                    labelBg = `${c.success}33`;
+                    labelColor = c.success;
+                  } else if (isSelected && !isCorrectAnswer) {
+                    borderColor = c.danger;
+                    bg = `${c.danger}18`;
+                    textColor = c.danger;
+                    labelBg = `${c.danger}33`;
+                    labelColor = c.danger;
+                  }
+                } else {
+                  if (isSelected) {
+                    borderColor = c.accent;
+                    bg = c.accentMuted;
+                    textColor = c.accent;
+                    labelBg = `${c.accent}33`;
+                    labelColor = c.accent;
+                  }
+                }
 
-              return (
-                <Pressable
-                  key={opt.label}
-                  onPress={() => handleSelect(opt.label)}
-                  disabled={!!selected}
+                return (
+                  <Pressable
+                    key={opt}
+                    onPress={() => handleSelect(opt)}
+                    disabled={feedbackMode === 'immediate' && isAnswered}
+                    style={({ pressed }) => [
+                      styles.optionBtn,
+                      {
+                        backgroundColor: bg,
+                        borderColor,
+                        opacity: pressed ? 0.9 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={[styles.optionLabel, { backgroundColor: labelBg }]}>
+                      <Text style={[styles.optionLabelText, { color: labelColor, fontFamily: typography.display.bold }]}>
+                        {label}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[styles.optionText, { color: textColor, fontFamily: typography.body.medium }]}
+                    >
+                      {opt}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
+          {/* Fill-in-the-blank Option */}
+          {currentQ?.type === 'fill-in-the-blank' && (
+            <View style={styles.fillBlankContainer}>
+              <View style={styles.fillBlankRow}>
+                <TextInput
+                  value={feedbackMode === 'immediate' && isAnswered ? answers[currentIndex] : fillBlankInput}
+                  onChangeText={setFillBlankInput}
+                  editable={!(feedbackMode === 'immediate' && isAnswered)}
+                  placeholder="Type your answer..."
+                  placeholderTextColor={c.textMuted}
                   style={[
-                    styles.optionBtn,
-                    { backgroundColor: bg, borderColor },
+                    styles.fillInput,
+                    {
+                      color: c.textPrimary,
+                      backgroundColor: c.bgSecondary,
+                      borderColor: feedbackMode === 'immediate' && isAnswered
+                        ? (answers[currentIndex]?.toLowerCase().trim() === currentQ.answer.toLowerCase().trim() ? c.success : c.danger)
+                        : c.border,
+                      fontFamily: typography.body.medium,
+                    }
+                  ]}
+                />
+                {feedbackMode === 'immediate' && !isAnswered && (
+                  <Button
+                    onPress={handleFillBlankSubmit}
+                    disabled={!fillBlankInput.trim()}
+                    style={styles.checkBtn}
+                  >
+                    Check
+                  </Button>
+                )}
+              </View>
+
+              {/* Immediate feedback explanation / correctness */}
+              {feedbackMode === 'immediate' && isAnswered && (
+                <Animated.View
+                  entering={FadeInDown.duration(300)}
+                  style={[
+                    styles.explanation,
+                    {
+                      backgroundColor: c.bgElevated,
+                      borderColor: answers[currentIndex]?.toLowerCase().trim() === currentQ.answer.toLowerCase().trim() ? c.success : c.danger,
+                      marginTop: spacing.md,
+                    }
                   ]}
                 >
-                  <View style={[styles.optionLabel, { backgroundColor: `${borderColor}33` }]}>
-                    <Text style={[styles.optionLabelText, { color: textColor, fontFamily: typography.display.bold }]}>
-                      {opt.label}
-                    </Text>
+                  <View style={styles.feedbackCorrectRow}>
+                    {answers[currentIndex]?.toLowerCase().trim() === currentQ.answer.toLowerCase().trim() ? (
+                      <>
+                        <CheckCircle size={18} color={c.success} />
+                        <Text style={[styles.expLabel, { color: c.success, fontFamily: typography.body.bold, marginLeft: spacing.xs }]}>Correct!</Text>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle size={18} color={c.danger} />
+                        <Text style={[styles.expLabel, { color: c.danger, fontFamily: typography.body.bold, marginLeft: spacing.xs }]}>Incorrect</Text>
+                      </>
+                    )}
                   </View>
-                  <Text
-                    style={[styles.optionText, { color: textColor, fontFamily: typography.body.medium }]}
-                  >
-                    {opt.text}
+                  {answers[currentIndex]?.toLowerCase().trim() !== currentQ.answer.toLowerCase().trim() && (
+                    <Text style={[styles.expText, { color: c.textPrimary, fontFamily: typography.body.medium, marginTop: spacing.xs }]}>
+                      Correct answer: <Text style={{ color: c.success }}>{currentQ.answer}</Text>
+                    </Text>
+                  )}
+                  <Text style={[styles.expText, { color: c.textSecondary, fontFamily: typography.body.regular, marginTop: spacing.sm }]}>
+                    {currentQ.explanation}
                   </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                </Animated.View>
+              )}
+            </View>
+          )}
 
-          {/* Explanation */}
-          {isAnswered && currentQ.explanation ? (
+          {/* Explanation (Immediate Mode, Multiple choice/T-F) */}
+          {feedbackMode === 'immediate' && isAnswered && currentQ.explanation && isMultipleOrTF && (
             <Animated.View
               entering={FadeInDown.duration(300)}
               style={[styles.explanation, { backgroundColor: c.bgElevated, borderColor: c.border }]}
@@ -313,25 +582,37 @@ export default function QuizDetailScreen() {
                 {currentQ.explanation}
               </Text>
             </Animated.View>
-          ) : null}
+          )}
 
           {/* Navigation */}
           <View style={styles.navRow}>
             <Button
               onPress={handlePrev}
               variant="secondary"
-              disabled={currentIndex === 0}
+              disabled={currentIndex === 0 || (feedbackMode === 'immediate' && isAnswered)}
               style={{ flex: 1 }}
             >
               Previous
             </Button>
-            <Button
-              onPress={handleNext}
-              disabled={!isAnswered}
-              style={{ flex: 1 }}
-            >
-              {currentIndex === questions.length - 1 ? 'Finish' : 'Next'}
-            </Button>
+            
+            {feedbackMode === 'immediate' ? (
+              <Button
+                onPress={handleNext}
+                disabled={!isAnswered}
+                style={{ flex: 1 }}
+              >
+                {currentIndex === questions.length - 1 ? 'Finish' : 'Continue'}
+              </Button>
+            ) : (
+              <Button
+                onPress={handleNext}
+                disabled={currentQ?.type === 'fill-in-the-blank' ? !fillBlankInput.trim() : !answers[currentIndex]}
+                loading={submitting}
+                style={{ flex: 1 }}
+              >
+                {currentIndex === questions.length - 1 ? 'Finish' : 'Next'}
+              </Button>
+            )}
           </View>
         </ScrollView>
       )}
@@ -355,6 +636,11 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     marginHorizontal: spacing.sm,
+  },
+  headerTitleText: {
+    fontSize: fontSize.md,
+    letterSpacing: -0.3,
+    textAlign: 'center',
   },
   backBtn: {
     width: 36,
@@ -490,4 +776,69 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     marginLeft: 24,
   },
+  modeSelectorContent: {
+    padding: spacing.lg,
+    paddingTop: spacing['3xl'],
+    gap: spacing.lg,
+  },
+  modeSelectorTitleText: {
+    fontSize: fontSize.xl,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  modeSelectorSubtitle: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+  },
+  modeCardsContainer: {
+    gap: spacing.lg,
+  },
+  modeCard: {
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    gap: spacing.xs,
+  },
+  modeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  modeCardTitle: {
+    fontSize: fontSize.md,
+    letterSpacing: -0.2,
+  },
+  modeCardDesc: {
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+  },
+  fillBlankContainer: {
+    gap: spacing.md,
+  },
+  fillBlankRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+  },
+  fillInput: {
+    flex: 1,
+    height: 48,
+    borderWidth: 1.5,
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    fontSize: fontSize.sm,
+  },
+  checkBtn: {
+    height: 48,
+    minHeight: 48,
+    borderRadius: radius.full,
+  },
+  feedbackCorrectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });
+

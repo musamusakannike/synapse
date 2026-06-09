@@ -70,7 +70,7 @@ export async function buildDocumentContext(
 
   const sections = docs.map((doc, i) => {
     const rawText = doc.ocrStatus === "processing"
-      ? "[Document text is currently being extracted via OCR. Please wait...]"
+      ? "[Document text is currently being read and analyzed. Please wait...]"
       : doc.extractedText || "[No text could be extracted from this file]";
     const text = truncateToBudget(rawText, perDocBudget);
     const label = `Document ${i + 1}: "${doc.fileName}" (${doc.mimeType})`;

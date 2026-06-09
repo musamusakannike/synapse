@@ -298,10 +298,10 @@ export function AttachedDocChip({ doc, onRemove }: AttachedDocChipProps) {
       <span className="text-[var(--text-secondary)] truncate max-w-[140px] flex items-center gap-1.5">
         {doc.fileName}
         {doc.ocrStatus === "processing" && (
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-ping" title="Extracting text layer..." />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-ping" title="Reading file..." />
         )}
         {doc.ocrStatus === "failed" && (
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)]" title="OCR extraction failed" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--danger)]" title="Could not read file" />
         )}
       </span>
       <span className="text-[var(--text-muted)]">

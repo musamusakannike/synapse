@@ -149,12 +149,12 @@ export default function DocumentsPage() {
                   </p>
                   {doc.ocrStatus === "processing" && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/10 animate-pulse shrink-0">
-                      Processing OCR
+                      Reading file...
                     </span>
                   )}
                   {doc.ocrStatus === "failed" && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/10 shrink-0">
-                      OCR Failed
+                      Could not read
                     </span>
                   )}
                 </div>

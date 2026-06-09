@@ -300,10 +300,10 @@ export default function DocumentInsightsPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-            OCR Text Extraction In Progress...
+            Reading your document...
           </h2>
           <p className="text-sm text-[var(--text-secondary)] text-center max-w-md mb-2">
-            We are currently processing the file and extracting its text layer via OCR.
+            We are currently reading and analyzing the content of this file.
           </p>
           <p className="text-xs text-[var(--text-muted)] text-center">
             This will refresh automatically. Please do not close the window.
@@ -322,7 +322,7 @@ export default function DocumentInsightsPage() {
             </svg>
           </div>
           <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
-            OCR Extraction Failed
+            Unable to read document
           </h2>
           <p className="text-sm text-[var(--text-secondary)] text-center max-w-md mb-6">
             {document.ocrError || "An error occurred during text extraction."}

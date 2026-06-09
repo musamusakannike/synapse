@@ -106,7 +106,7 @@ export default function AskPage() {
             : hasProcessingDocs
             ? "Processing Uploads..."
             : hasFailedDocs
-            ? "OCR Failed (Please Re-upload)"
+            ? "Could not read file (Please re-upload)"
             : "Ask Sabi Learn"}
         </button>
       </form>

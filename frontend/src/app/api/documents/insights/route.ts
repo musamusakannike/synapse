@@ -90,13 +90,13 @@ export async function POST(request: Request) {
     if (!doc.extractedText || doc.extractedText.trim().length === 0) {
       if (doc.ocrStatus === "processing") {
         return NextResponse.json(
-          { error: "OCR is currently extracting text from this document. Please wait a few moments and try again." },
+          { error: "Document text is currently being read. Please wait a few moments and try again." },
           { status: 423 }
         );
       }
       if (doc.ocrStatus === "failed") {
         return NextResponse.json(
-          { error: `OCR text extraction failed for this document: ${doc.ocrError || "Unknown error"}. Please delete and re-upload.` },
+          { error: `We were unable to read this document: ${doc.ocrError || "Unknown error"}. Please delete and re-upload.` },
           { status: 400 }
         );
       }

@@ -269,12 +269,12 @@ export function DocumentPicker({
                         </p>
                         {isProcessing && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[var(--accent-subtle)] text-[var(--accent)] border border-[var(--accent)]/10 animate-pulse shrink-0">
-                            Processing OCR
+                            Reading file...
                           </span>
                         )}
                         {isFailed && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[var(--danger)]/10 text-[var(--danger)] border border-[var(--danger)]/10 shrink-0">
-                            OCR Failed
+                            Could not read
                           </span>
                         )}
                       </div>
@@ -329,7 +329,7 @@ export function DocumentPicker({
                 disabled={isAttachDisabled}
                 className="px-4 py-2 rounded-lg bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {hasProcessingSelected ? "Processing..." : hasFailedSelected ? "Failed OCR" : `Attach ${selected.size > 0 ? `(${selected.size})` : ""}`}
+                {hasProcessingSelected ? "Processing..." : hasFailedSelected ? "Could not read" : `Attach ${selected.size > 0 ? `(${selected.size})` : ""}`}
               </button>
             </div>
           </div>

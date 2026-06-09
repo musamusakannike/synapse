@@ -124,7 +124,7 @@ export default function VideosPage() {
               disabled={isSubmitDisabled}
               className="w-full sm:w-auto self-start px-6 py-3 rounded-xl bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2"
             >
-              {generating ? "Generating..." : hasProcessingDocs ? "Processing..." : hasFailedDocs ? "OCR Failed" : (
+              {generating ? "Generating..." : hasProcessingDocs ? "Processing..." : hasFailedDocs ? "Could not read file" : (
                 <>
                   Create Video
                   <BetaBadge className="bg-[var(--bg-primary)]/20 text-[var(--bg-primary)] border-[var(--bg-primary)]/30" />

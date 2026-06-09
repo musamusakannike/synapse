@@ -14,7 +14,7 @@ export default async function Image() {
   let fontData: ArrayBuffer | null = null;
   try {
     const fontResponse = await fetch(
-      new URL("https://fonts.gstatic.com/s/outfit/v11/QldN_F18_5w7RWfb460P5Gg.ttf")
+      new URL("../../public/fonts/Outfit-Bold.ttf", import.meta.url)
     );
     if (fontResponse.ok) {
       fontData = await fontResponse.arrayBuffer();

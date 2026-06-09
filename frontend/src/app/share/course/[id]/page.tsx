@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
 import { formatMarkdown } from "@/lib/markdown";
 import { ShareBanner } from "@/components/ShareBanner";
 import { AddToLibraryButton } from "@/components/AddToLibraryButton";
@@ -37,8 +36,8 @@ interface LessonContent {
 
 export default function PublicCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
+  const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeLesson, setActiveLesson] = useState<LessonContent | null>(null);
   const [fetchingLesson, setFetchingLesson] = useState(false);
@@ -46,24 +45,25 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
   const [showOutline, setShowOutline] = useState(true);
 
   useEffect(() => {
+    const fetchPublicCourse = async () => {
+      try {
+        const res = await fetch(`/api/share?id=${id}&type=course`);
+        const data = await res.json();
+        if (data.success) {
+          setCourse(data.course);
+          setAdded(!!data.added);
+        } else {
+          setError(data.error || "Shared course not found");
+        }
+      } catch {
+        setError("Failed to load shared course");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPublicCourse();
   }, [id]);
-
-  const fetchPublicCourse = async () => {
-    try {
-      const res = await fetch(`/api/share?id=${id}&type=course`);
-      const data = await res.json();
-      if (data.success) {
-        setCourse(data.course);
-      } else {
-        setError(data.error || "Shared course not found");
-      }
-    } catch {
-      setError("Failed to load shared course");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const viewLesson = async (lessonId: string) => {
     setFetchingLesson(true);
@@ -125,7 +125,6 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
   const totalLessons = allLessons.length;
   const completedLessons = allLessons.filter((l) => l.isCompleted).length;
   const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-  const isComplete = totalLessons > 0 && completedLessons === totalLessons;
 
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-primary)]">
@@ -189,7 +188,7 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
                 Curriculum level: <span className="capitalize">{course.level}</span>
               </p>
               <div className="mt-4">
-                <AddToLibraryButton resourceId={id} type="course" />
+                <AddToLibraryButton resourceId={id} type="course" initialAdded={added} />
               </div>
             </div>
           )}

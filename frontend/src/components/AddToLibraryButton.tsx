@@ -7,15 +7,24 @@ import { useAuth } from "@/lib/auth-context";
 interface AddToLibraryButtonProps {
   resourceId: string;
   type: "quiz" | "course" | "video" | "chat";
+  initialAdded?: boolean;
 }
 
-export function AddToLibraryButton({ resourceId, type }: AddToLibraryButtonProps) {
+export function AddToLibraryButton({ resourceId, type, initialAdded }: AddToLibraryButtonProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [error, setError] = useState("");
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+
+  const [prevInitialAdded, setPrevInitialAdded] = useState(initialAdded);
+
+  if (initialAdded !== prevInitialAdded) {
+    setAdded(initialAdded || false);
+    setPrevInitialAdded(initialAdded);
+  }
 
   const labelMap: Record<string, string> = {
     quiz: "Quiz",
@@ -64,13 +73,62 @@ export function AddToLibraryButton({ resourceId, type }: AddToLibraryButtonProps
     }
   };
 
+  const handleRemove = async () => {
+    if (loading) return;
+
+    if (!user) return;
+
+    setAdding(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/share/add", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: resourceId, type }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setAdded(false);
+      } else {
+        setError(data.error || "Failed to remove");
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   if (added) {
     return (
-      <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--success)]/10 border border-[var(--success)]/20 text-[var(--success)] text-sm font-medium">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        Added to your {labelMap[type]}s
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={handleRemove}
+          disabled={adding}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 border ${
+            hovered
+              ? "bg-[var(--danger)]/10 border-[var(--danger)]/30 text-[var(--danger)]"
+              : "bg-[var(--success)]/10 border-[var(--success)]/30 text-[var(--success)]"
+          }`}
+        >
+          {adding ? (
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          ) : hovered ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+          {adding ? "Removing..." : hovered ? `Remove from My ${labelMap[type]}s` : `Added to My ${labelMap[type]}s`}
+        </button>
+        {error && <p className="text-xs text-[var(--danger)]">{error}</p>}
       </div>
     );
   }
@@ -114,3 +172,4 @@ export function AddToLibraryButton({ resourceId, type }: AddToLibraryButtonProps
     </div>
   );
 }
+

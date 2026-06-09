@@ -161,3 +161,60 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to add resource" }, { status: 500 });
   }
 }
+
+/**
+ * DELETE - Remove a cloned shared resource from the authenticated user's library.
+ */
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
+    }
+
+    const { id, type } = await request.json();
+    if (!id || !type) {
+      return NextResponse.json({ error: "Missing id or type" }, { status: 400 });
+    }
+
+    const collectionName = COLLECTION_MAP[type];
+    if (!collectionName) {
+      return NextResponse.json({ error: "Invalid resource type" }, { status: 400 });
+    }
+
+    const { db } = await connectToDatabase();
+
+    if (type === "course") {
+      const clonedCourse = await db.collection("courses").findOne({
+        userId: session.userId,
+        clonedFrom: id,
+      });
+
+      if (clonedCourse) {
+        // Delete all cloned lessons
+        await db.collection("lessons").deleteMany({
+          userId: session.userId,
+          courseId: clonedCourse._id.toString(),
+        });
+        // Delete course
+        await db.collection("courses").deleteOne({
+          _id: clonedCourse._id,
+        });
+      }
+    } else {
+      await db.collection(collectionName).deleteOne({
+        userId: session.userId,
+        clonedFrom: id,
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `${type} removed from your library`,
+    });
+  } catch (error) {
+    console.error("Share Remove Error:", error);
+    return NextResponse.json({ error: "Failed to remove resource" }, { status: 500 });
+  }
+}
+

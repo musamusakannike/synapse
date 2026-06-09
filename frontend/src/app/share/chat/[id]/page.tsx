@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
 import { formatMarkdown } from "@/lib/markdown";
 import { ShareBanner } from "@/components/ShareBanner";
 import { AddToLibraryButton } from "@/components/AddToLibraryButton";
@@ -16,30 +15,31 @@ interface ChatSession {
 
 export default function PublicChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   const [chat, setChat] = useState<ChatSession | null>(null);
+  const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const fetchPublicChat = async () => {
+      try {
+        const res = await fetch(`/api/share?id=${id}&type=chat`);
+        const data = await res.json();
+        if (data.success) {
+          setChat(data.chat);
+          setAdded(!!data.added);
+        } else {
+          setError(data.error || "Shared chat not found");
+        }
+      } catch {
+        setError("Failed to load shared chat");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPublicChat();
   }, [id]);
-
-  const fetchPublicChat = async () => {
-    try {
-      const res = await fetch(`/api/share?id=${id}&type=chat`);
-      const data = await res.json();
-      if (data.success) {
-        setChat(data.chat);
-      } else {
-        setError(data.error || "Shared chat not found");
-      }
-    } catch {
-      setError("Failed to load shared chat");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -111,7 +111,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <AddToLibraryButton resourceId={id} type="chat" />
+          <AddToLibraryButton resourceId={id} type="chat" initialAdded={added} />
           <Link
             href="/register"
             className="inline-flex items-center justify-center px-6 py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-all shadow-lg hover:shadow-[0_0_20px_rgba(232,168,56,0.2)]"

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { ShareBanner } from "@/components/ShareBanner";
 import { AddToLibraryButton } from "@/components/AddToLibraryButton";
@@ -26,8 +25,8 @@ type FeedbackMode = "traditional" | "immediate";
 
 export default function PublicQuizPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
@@ -38,29 +37,32 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
   const [fillBlankInput, setFillBlankInput] = useState<string>("");
   const [error, setError] = useState("");
 
+  const [prevCurrentQ, setPrevCurrentQ] = useState(currentQ);
+  if (currentQ !== prevCurrentQ) {
+    setFillBlankInput(answers[currentQ] || "");
+    setPrevCurrentQ(currentQ);
+  }
+
   useEffect(() => {
+    const fetchPublicQuiz = async () => {
+      try {
+        const res = await fetch(`/api/share?id=${id}&type=quiz`);
+        const data = await res.json();
+        if (data.success) {
+          setQuiz(data.quiz);
+          setAdded(!!data.added);
+        } else {
+          setError(data.error || "Shared quiz not found");
+        }
+      } catch {
+        setError("Failed to load shared quiz");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPublicQuiz();
   }, [id]);
-
-  useEffect(() => {
-    setFillBlankInput(answers[currentQ] || "");
-  }, [currentQ, answers]);
-
-  const fetchPublicQuiz = async () => {
-    try {
-      const res = await fetch(`/api/share?id=${id}&type=quiz`);
-      const data = await res.json();
-      if (data.success) {
-        setQuiz(data.quiz);
-      } else {
-        setError(data.error || "Shared quiz not found");
-      }
-    } catch {
-      setError("Failed to load shared quiz");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const selectAnswer = (answer: string) => {
     if (submitted) return;
@@ -165,7 +167,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
           </p>
 
           <div className="mb-8">
-            <AddToLibraryButton resourceId={id} type="quiz" />
+            <AddToLibraryButton resourceId={id} type="quiz" initialAdded={added} />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -264,7 +266,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <div className="flex justify-center mb-6">
-              <AddToLibraryButton resourceId={id} type="quiz" />
+              <AddToLibraryButton resourceId={id} type="quiz" initialAdded={added} />
             </div>
 
             {/* Review */}

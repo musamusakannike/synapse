@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { VideoComposition } from "@/remotion/VideoComposition";
 import type { Scene } from "@/remotion/SceneDispatcher";
@@ -25,30 +24,31 @@ interface Video {
 
 export default function PublicVideoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
   const [video, setVideo] = useState<Video | null>(null);
+  const [added, setAdded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const fetchPublicVideo = async () => {
+      try {
+        const res = await fetch(`/api/share?id=${id}&type=video`);
+        const data = await res.json();
+        if (data.success) {
+          setVideo(data.video);
+          setAdded(!!data.added);
+        } else {
+          setError(data.error || "Shared video not found");
+        }
+      } catch {
+        setError("Failed to load shared video");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPublicVideo();
   }, [id]);
-
-  const fetchPublicVideo = async () => {
-    try {
-      const res = await fetch(`/api/share?id=${id}&type=video`);
-      const data = await res.json();
-      if (data.success) {
-        setVideo(data.video);
-      } else {
-        setError(data.error || "Shared video not found");
-      }
-    } catch {
-      setError("Failed to load shared video");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -94,7 +94,7 @@ export default function PublicVideoPage({ params }: { params: Promise<{ id: stri
             <p className="text-xs text-[var(--text-muted)]">Topic: {video.topic}</p>
           </div>
           <div className="flex items-center gap-3">
-            <AddToLibraryButton resourceId={id} type="video" />
+            <AddToLibraryButton resourceId={id} type="video" initialAdded={added} />
             <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent)]/10 text-[var(--accent)] capitalize border border-[var(--accent)]/25">
               {video.styleTheme} Theme
             </div>
@@ -157,7 +157,7 @@ export default function PublicVideoPage({ params }: { params: Promise<{ id: stri
                     </ul>
                   )}
                   {scene.heroStatement && (
-                    <p className="pl-7 text-sm font-bold text-[var(--accent)] mb-3 italic">"{scene.heroStatement}"</p>
+                    <p className="pl-7 text-sm font-bold text-[var(--accent)] mb-3 italic">&ldquo;{scene.heroStatement}&rdquo;</p>
                   )}
                   {scene.spotlightTerm && (
                     <div className="pl-7 mb-3">
@@ -166,7 +166,7 @@ export default function PublicVideoPage({ params }: { params: Promise<{ id: stri
                     </div>
                   )}
                   {scene.quoteText && (
-                    <p className="pl-7 text-xs italic text-[var(--text-secondary)] mb-3">"{scene.quoteText}" {scene.quoteAuthor ? `— ${scene.quoteAuthor}` : ""}</p>
+                    <p className="pl-7 text-xs italic text-[var(--text-secondary)] mb-3">&ldquo;{scene.quoteText}&rdquo; {scene.quoteAuthor ? `— ${scene.quoteAuthor}` : ""}</p>
                   )}
                   {scene.statCallouts && (
                     <div className="pl-7 flex flex-wrap gap-2 mb-3">
@@ -179,7 +179,7 @@ export default function PublicVideoPage({ params }: { params: Promise<{ id: stri
                   )}
                   <div className="p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)]">
                     <p className="text-[10px] text-[var(--text-muted)] mb-0.5 uppercase font-medium tracking-wide">Narration Voiceover</p>
-                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">"{scene.narration}"</p>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed italic">&ldquo;{scene.narration}&rdquo;</p>
                   </div>
                 </div>
                 <div className="md:w-64 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border)] flex flex-col justify-between">

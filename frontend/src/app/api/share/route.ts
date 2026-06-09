@@ -65,8 +65,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: `${type} not found or is private` }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, [type]: resource });
-  } catch (error: any) {
+    // Check if the current logged-in user owns or has cloned this resource
+    let added = false;
+    const userId = await getUserId();
+    if (userId) {
+      if (resource.userId === userId) {
+        added = true;
+      } else {
+        const existingClone = await db.collection(collectionName).findOne({
+          userId,
+          clonedFrom: id,
+        });
+        if (existingClone) {
+          added = true;
+        }
+      }
+    }
+
+    return NextResponse.json({ success: true, [type]: resource, added });
+  } catch (error) {
     console.error("GET Share Link Error:", error);
     return NextResponse.json({ error: "Failed to load public resource" }, { status: 500 });
   }
@@ -118,7 +135,7 @@ export async function POST(request: Request) {
       isPublic,
       shareUrl,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("POST Share Link Error:", error);
     return NextResponse.json({ error: "Failed to configure sharing visibility" }, { status: 500 });
   }

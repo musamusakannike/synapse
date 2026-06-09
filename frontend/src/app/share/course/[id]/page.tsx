@@ -83,7 +83,7 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0C0C0E]">
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-primary)]">
         <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -91,7 +91,7 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
 
   if (error || !course) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0C0C0E] text-center p-6">
+      <div className="flex flex-col items-center justify-center h-screen bg-[var(--bg-primary)] text-center p-6">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--text-primary)] mb-4">
           Course Not Available
         </h1>
@@ -128,7 +128,7 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
   const isComplete = totalLessons > 0 && completedLessons === totalLessons;
 
   return (
-    <div className="flex flex-col h-screen bg-[#0C0C0E]">
+    <div className="flex flex-col h-screen bg-[var(--bg-primary)]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
@@ -239,7 +239,7 @@ export default function PublicCoursePage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Content Viewer */}
-        <div className={`flex-1 overflow-y-auto p-6 md:p-8 bg-[#0C0C0E] ${
+        <div className={`flex-1 overflow-y-auto p-6 md:p-8 bg-[var(--bg-primary)] ${
           showOutline ? "hidden md:block" : "block"
         }`}>
           {fetchingLesson ? (

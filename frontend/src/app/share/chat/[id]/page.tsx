@@ -43,7 +43,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0C0C0E]">
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-primary)]">
         <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -51,7 +51,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
 
   if (error || !chat) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0C0C0E] text-center p-6">
+      <div className="flex flex-col items-center justify-center h-screen bg-[var(--bg-primary)] text-center p-6">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--text-primary)] mb-4">
           Chat Not Available
         </h1>
@@ -69,7 +69,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0C0C0E]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)]">
       <ShareBanner />
 
       <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-3xl mx-auto w-full flex flex-col justify-center">

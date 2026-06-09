@@ -129,7 +129,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0C0C0E]">
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-primary)]">
         <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -137,7 +137,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
 
   if (error || !quiz) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0C0C0E] text-center p-6">
+      <div className="flex flex-col items-center justify-center h-screen bg-[var(--bg-primary)] text-center p-6">
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-bold text-[var(--text-primary)] mb-4">
           Quiz Not Available
         </h1>
@@ -156,7 +156,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
 
   if (showModeSelector) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#0C0C0E]">
+      <div className="min-h-screen flex flex-col bg-[var(--bg-primary)]">
         <ShareBanner />
         <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-2xl mx-auto flex flex-col justify-center">
           <h1 className="font-[family-name:var(--font-display)] text-xl sm:text-2xl font-bold mb-2">{quiz.title}</h1>
@@ -215,7 +215,7 @@ export default function PublicQuizPage({ params }: { params: Promise<{ id: strin
   const currentAnswerCorrect = hasAnsweredCurrent ? isAnswerCorrect(currentQ, answers[currentQ]) : null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0C0C0E]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)]">
       <ShareBanner />
       <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-2xl mx-auto w-full flex flex-col justify-center">
         <div className="flex items-center gap-3 mb-2 flex-wrap">

@@ -25,10 +25,12 @@ import { typography, spacing, fontSize, radius } from '@/constants/theme';
 
 interface Doc {
   _id: string;
-  name: string;
-  type: string;
-  size: number;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
   createdAt: string;
+  ocrStatus?: 'processing' | 'completed' | 'failed';
+  publicUrl?: string;
 }
 
 function formatBytes(bytes: number) {
@@ -37,9 +39,9 @@ function formatBytes(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function DocIcon({ type }: { type: string }) {
+function DocIcon({ mimeType }: { mimeType: string }) {
   const { c } = useTheme();
-  const isImage = type.startsWith('image/');
+  const isImage = mimeType.startsWith('image/');
   const IconComp = isImage ? FileImage : File;
   const color = isImage ? '#60A5FA' : c.accent;
   return (
@@ -55,7 +57,7 @@ function DocCard({ doc, index }: { doc: Doc; index: number }) {
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.delete(`/api/ai/document?id=${doc._id}`),
+    mutationFn: () => api.delete(`/api/documents?id=${doc._id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast.success('Document deleted');
@@ -66,7 +68,7 @@ function DocCard({ doc, index }: { doc: Doc; index: number }) {
   const handleDelete = () => {
     Alert.alert(
       'Delete document?',
-      `"${doc.name}" will be permanently removed.`,
+      `"${doc.fileName}" will be permanently removed.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -78,20 +80,39 @@ function DocCard({ doc, index }: { doc: Doc; index: number }) {
     );
   };
 
+  const isProcessing = doc.ocrStatus === 'processing';
+  const isFailed = doc.ocrStatus === 'failed';
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 40).duration(350)}>
       <View style={[styles.card, { backgroundColor: c.bgSecondary, borderColor: c.borderSubtle }]}>
-        <DocIcon type={doc.type} />
+        <DocIcon mimeType={doc.mimeType} />
         <View style={styles.cardBody}>
-          <Text
-            style={[styles.cardName, { color: c.textPrimary, fontFamily: typography.body.semiBold }]}
-            numberOfLines={2}
-          >
-            {doc.name}
-          </Text>
+          <View style={styles.cardHeader}>
+            <Text
+              style={[styles.cardName, { color: c.textPrimary, fontFamily: typography.body.semiBold }]}
+              numberOfLines={2}
+            >
+              {doc.fileName}
+            </Text>
+            {isProcessing && (
+              <View style={[styles.badge, { backgroundColor: `${c.accent}22`, borderColor: `${c.accent}33` }]}>
+                <Text style={[styles.badgeText, { color: c.accent, fontFamily: typography.body.semiBold }]}>
+                  Reading...
+                </Text>
+              </View>
+            )}
+            {isFailed && (
+              <View style={[styles.badge, { backgroundColor: '#EF444422', borderColor: '#EF444433' }]}>
+                <Text style={[styles.badgeText, { color: '#EF4444', fontFamily: typography.body.semiBold }]}>
+                  Failed
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={styles.cardMeta}>
             <Text style={[styles.metaText, { color: c.textMuted, fontFamily: typography.body.regular }]}>
-              {formatBytes(doc.size)}
+              {formatBytes(doc.sizeBytes)}
             </Text>
             <Text style={[styles.dot, { color: c.border }]}>·</Text>
             <Clock size={11} color={c.textMuted} strokeWidth={1.5} />
@@ -120,14 +141,20 @@ export default function DocumentsScreen() {
   const { data, isLoading } = useQuery({
     queryKey: ['documents'],
     queryFn: async () => {
-      const res = await api.get('/api/ai/document');
+      const res = await api.get('/api/documents');
       return (res.data?.documents ?? []) as Doc[];
+    },
+    refetchInterval: (query) => {
+      // Poll every 5 seconds if any document is processing
+      const docs = query.state.data ?? [];
+      const hasProcessing = docs.some((doc: Doc) => doc.ocrStatus === 'processing');
+      return hasProcessing ? 5000 : false;
     },
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post('/api/ai/document', formData, {
+      return api.post('/api/documents/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
     },
@@ -257,9 +284,26 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   cardBody: { flex: 1, gap: 4 },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexWrap: 'wrap',
+  },
   cardName: {
     fontSize: fontSize.sm,
     lineHeight: 20,
+    flex: 1,
+  },
+  badge: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: fontSize['2xs'],
+    lineHeight: 12,
   },
   cardMeta: {
     flexDirection: 'row',

@@ -274,3 +274,45 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: error.message || "Failed to generate lesson content" }, { status: 500 });
   }
 }
+
+/**
+ * DELETE a course along with its lessons and quizzes (final exams)
+ */
+export async function DELETE(request: Request) {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { db } = await connectToDatabase();
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get("id");
+
+    if (!courseId || !ObjectId.isValid(courseId)) {
+      return NextResponse.json({ error: "Valid course ID required" }, { status: 400 });
+    }
+
+    // Double-check the course belongs to this user before deleting
+    const course = await db.collection("courses").findOne({
+      _id: new ObjectId(courseId),
+      userId,
+    });
+
+    if (!course) {
+      return NextResponse.json({ error: "Course not found" }, { status: 404 });
+    }
+
+    // Delete course, its lessons, and any final exam quizzes
+    await Promise.all([
+      db.collection("courses").deleteOne({ _id: new ObjectId(courseId), userId }),
+      db.collection("lessons").deleteMany({ courseId, userId }),
+      db.collection("quizzes").deleteMany({ examForCourse: courseId, userId }),
+    ]);
+
+    return NextResponse.json({ success: true, message: "Course deleted successfully" });
+  } catch (error: any) {
+    console.error("DELETE Course Error:", error);
+    return NextResponse.json({ error: "Failed to delete course" }, { status: 500 });
+  }
+}

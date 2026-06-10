@@ -43,6 +43,8 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
   const [error, setError] = useState("");
   const [showOutline, setShowOutline] = useState(true);
   const [generatingExam, setGeneratingExam] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCourse();
@@ -117,6 +119,28 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
       setError("Something went wrong");
     } finally {
       setGeneratingExam(false);
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!course) return;
+    setDeletingCourseId(course._id);
+    setError("");
+    try {
+      const res = await fetch(`/api/ai/course?id=${course._id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCourseToDelete(null);
+        router.push("/dashboard/courses");
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete course");
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setDeletingCourseId(null);
     }
   };
 
@@ -195,7 +219,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
           <h2 className="font-[family-name:var(--font-display)] text-lg font-bold leading-tight">
             {course.title}
           </h2>
-          <ShareButton id={course._id} type="course" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <ShareButton id={course._id} type="course" />
+            <button
+              onClick={() => setCourseToDelete(course)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/10 transition-all"
+              title="Delete course"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Progress overview */}
@@ -322,6 +358,53 @@ export default function CourseDetailPage({ params }: { params: Promise<{ id: str
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      {courseToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setCourseToDelete(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow-lg)]"
+          >
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-bold mb-2">
+              Delete Course
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-6 leading-relaxed">
+              Are you sure you want to delete &quot;{courseToDelete.title}&quot;? This will permanently delete the course outline, all generated lessons, and any associated final exams. This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCourseToDelete(null)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all"
+                disabled={deletingCourseId !== null}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteCourse}
+                className="px-4 py-2 rounded-xl bg-[var(--danger)] text-white text-sm font-semibold hover:bg-[var(--danger)]/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                disabled={deletingCourseId !== null}
+              >
+                {deletingCourseId === courseToDelete._id ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -35,6 +35,8 @@ export default function CoursesPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [optimisticCourse, setOptimisticCourse] = useState<Course | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [deletingCourseId, setDeletingCourseId] = useState<string | null>(null);
 
   const fetchCourses = useCallback(async () => {
     setFetchError(false);
@@ -101,6 +103,27 @@ export default function CoursesPage() {
     } finally {
       setGenerating(false);
       setOptimisticCourse(null);
+    }
+  };
+
+  const handleDeleteCourse = async (id: string) => {
+    setDeletingCourseId(id);
+    setError("");
+    try {
+      const res = await fetch(`/api/ai/course?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setCourses((prev) => prev.filter((c) => c._id !== id));
+        setCourseToDelete(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Failed to delete course");
+      }
+    } catch {
+      setError("Something went wrong");
+    } finally {
+      setDeletingCourseId(null);
     }
   };
 
@@ -180,47 +203,110 @@ export default function CoursesPage() {
             const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
             const isComplete = totalLessons > 0 && completedLessons === totalLessons;
             return (
-              <Link
-                key={course._id}
-                href={`/dashboard/courses/${course._id}`}
-                className="block p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all"
-              >
-                <div className="flex items-start justify-between gap-3 mb-1">
-                  <h3 className="font-[family-name:var(--font-display)] text-base font-semibold">
-                    {course.title}
-                  </h3>
-                  {isComplete && (
-                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                      Completed
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-[var(--text-muted)] mb-3">
-                  {course.outline?.modules?.length || 0} modules • {totalLessons} lessons •{" "}
-                  {new Date(course.createdAt).toLocaleDateString()}
-                </p>
-                {totalLessons > 0 && (
-                  <>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[11px] text-[var(--text-secondary)]">
-                        {completedLessons} of {totalLessons} lessons
+              <div key={course._id} className="relative group">
+                <Link
+                  href={`/dashboard/courses/${course._id}`}
+                  className="block p-5 pr-14 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--text-muted)] transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-1">
+                    <h3 className="font-[family-name:var(--font-display)] text-base font-semibold">
+                      {course.title}
+                    </h3>
+                    {isComplete && (
+                      <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[var(--success)]/10 text-[var(--success)] border border-[var(--success)]/20">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        Completed
                       </span>
-                      <span className="text-[11px] text-[var(--text-muted)]">{percent}%</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percent}%`, backgroundColor: isComplete ? "var(--success)" : "var(--accent)" }}
-                      />
-                    </div>
-                  </>
-                )}
-              </Link>
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] mb-3">
+                    {course.outline?.modules?.length || 0} modules • {totalLessons} lessons •{" "}
+                    {new Date(course.createdAt).toLocaleDateString()}
+                  </p>
+                  {totalLessons > 0 && (
+                    <>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] text-[var(--text-secondary)]">
+                          {completedLessons} of {totalLessons} lessons
+                        </span>
+                        <span className="text-[11px] text-[var(--text-muted)]">{percent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${percent}%`, backgroundColor: isComplete ? "var(--success)" : "var(--accent)" }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </Link>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCourseToDelete(course);
+                  }}
+                  className="absolute top-5 right-5 p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]/15 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  title="Delete course"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {courseToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setCourseToDelete(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-elevated)] shadow-[var(--shadow-lg)]"
+          >
+            <h3 className="font-[family-name:var(--font-display)] text-lg font-bold mb-2">
+              Delete Course
+            </h3>
+            <p className="text-sm text-[var(--text-secondary)] mb-6 leading-relaxed">
+              Are you sure you want to delete &quot;{courseToDelete.title}&quot;? This will permanently delete the course outline, all generated lessons, and any associated final exams. This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setCourseToDelete(null)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all"
+                disabled={deletingCourseId !== null}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteCourse(courseToDelete._id)}
+                className="px-4 py-2 rounded-xl bg-[var(--danger)] text-white text-sm font-semibold hover:bg-[var(--danger)]/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                disabled={deletingCourseId !== null}
+              >
+                {deletingCourseId === courseToDelete._id ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

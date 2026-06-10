@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth } from "@/lib/auth-context";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, loading, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -77,18 +79,39 @@ export function Navbar() {
             )}
           </button>
 
-          <Link
-            href="/login"
-            className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-4 py-2 hidden sm:block"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="text-sm font-medium bg-[var(--accent)] text-[var(--bg-primary)] px-5 py-2.5 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
-          >
-            Get started
-          </Link>
+          {loading ? (
+            <div className="h-9 w-24 rounded-full bg-[var(--border-subtle)]/30 animate-pulse" />
+          ) : user ? (
+            <>
+              <button
+                onClick={logout}
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-4 py-2 hidden sm:block cursor-pointer"
+              >
+                Sign out
+              </button>
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium bg-[var(--accent)] text-[var(--bg-primary)] px-5 py-2.5 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Go to Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors px-4 py-2 hidden sm:block"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/register"
+                className="text-sm font-medium bg-[var(--accent)] text-[var(--bg-primary)] px-5 py-2.5 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

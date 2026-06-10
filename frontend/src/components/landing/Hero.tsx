@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { BetaBadge } from "@/components/BetaBadge";
+import { useAuth } from "@/lib/auth-context";
 
 export function Hero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -11,6 +12,7 @@ export function Hero() {
   const subRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const orbRef = useRef<HTMLDivElement>(null);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -89,10 +91,12 @@ export function Hero() {
 
         <div ref={ctaRef} className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 opacity-0">
           <Link
-            href="/register"
+            href={(!loading && user) ? "/dashboard" : "/register"}
             className="group relative px-8 py-3.5 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] font-semibold text-sm overflow-hidden transition-all hover:shadow-[0_0_30px_rgba(232,168,56,0.3)]"
           >
-            <span className="relative z-10">Start to learn free</span>
+            <span className="relative z-10">
+              {loading ? "Start to learn free" : user ? "Go to Dashboard" : "Start to learn free"}
+            </span>
           </Link>
           <a
             href="#how-it-works"

@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useAuth } from "@/lib/auth-context";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,6 +12,7 @@ export function CTA() {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const illustrationRef = useRef<HTMLDivElement>(null);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -75,10 +77,10 @@ export function CTA() {
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <Link
-                href="/register"
+                href={(!loading && user) ? "/dashboard" : "/register"}
                 className="px-6 py-3.5 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] font-semibold hover:bg-[var(--accent-hover)] transition-all shadow-lg shadow-[var(--accent)]/10 text-sm md:text-base"
               >
-                Get Started for Free
+                {loading ? "Get Started for Free" : user ? "Go to Dashboard" : "Get Started for Free"}
               </Link>
               <Link
                 href="#pricing"

@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useAuth } from "@/lib/auth-context";
 
 export function Footer() {
+  const { user, loading } = useAuth();
+
   return (
     <footer className="border-t border-[var(--border-subtle)] py-12 px-6">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
@@ -23,12 +28,22 @@ export function Footer() {
         </p>
 
         <div className="flex items-center gap-6">
-          <Link href="/login" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
-            Sign in
-          </Link>
-          <Link href="/register" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
-            Get started
-          </Link>
+          {loading ? (
+            <div className="h-4 w-24 rounded bg-[var(--border-subtle)]/30 animate-pulse" />
+          ) : user ? (
+            <Link href="/dashboard" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+              Go to Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                Sign in
+              </Link>
+              <Link href="/register" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </footer>

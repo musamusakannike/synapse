@@ -5,11 +5,13 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { BetaBadge } from "@/components/BetaBadge";
+import { useAuth } from "@/lib/auth-context";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export function Pricing() {
   const sectionRef = useRef<HTMLElement>(null);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -76,10 +78,10 @@ export function Pricing() {
               ))}
             </ul>
             <Link
-              href="/register"
+              href={(!loading && user) ? "/dashboard" : "/register"}
               className="block w-full text-center py-3 rounded-full border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all"
             >
-              Get started
+              {loading ? "Get started" : user ? "Go to Dashboard" : "Get started"}
             </Link>
           </div>
 
@@ -120,7 +122,7 @@ export function Pricing() {
               })}
             </ul>
             <Link
-              href="/register"
+              href={(!loading && user) ? "/dashboard/billing" : "/register"}
               className="block w-full text-center py-3 rounded-full bg-[var(--accent)] text-[var(--bg-primary)] text-sm font-semibold hover:bg-[var(--accent-hover)] transition-colors"
             >
               Upgrade to Premium

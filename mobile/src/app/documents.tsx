@@ -52,6 +52,7 @@ function DocIcon({ mimeType }: { mimeType: string }) {
 }
 
 function DocCard({ doc, index }: { doc: Doc; index: number }) {
+  const router = useRouter();
   const { c } = useTheme();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -80,54 +81,61 @@ function DocCard({ doc, index }: { doc: Doc; index: number }) {
     );
   };
 
+  const handleCardPress = () => {
+    haptics.light();
+    router.push(`/document/${doc._id}`);
+  };
+
   const isProcessing = doc.ocrStatus === 'processing';
   const isFailed = doc.ocrStatus === 'failed';
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 40).duration(350)}>
-      <View style={[styles.card, { backgroundColor: c.bgSecondary, borderColor: c.borderSubtle }]}>
-        <DocIcon mimeType={doc.mimeType} />
-        <View style={styles.cardBody}>
-          <View style={styles.cardHeader}>
-            <Text
-              style={[styles.cardName, { color: c.textPrimary, fontFamily: typography.body.semiBold }]}
-              numberOfLines={2}
-            >
-              {doc.fileName}
-            </Text>
-            {isProcessing && (
-              <View style={[styles.badge, { backgroundColor: `${c.accent}22`, borderColor: `${c.accent}33` }]}>
-                <Text style={[styles.badgeText, { color: c.accent, fontFamily: typography.body.semiBold }]}>
-                  Reading...
-                </Text>
-              </View>
-            )}
-            {isFailed && (
-              <View style={[styles.badge, { backgroundColor: '#EF444422', borderColor: '#EF444433' }]}>
-                <Text style={[styles.badgeText, { color: '#EF4444', fontFamily: typography.body.semiBold }]}>
-                  Failed
-                </Text>
-              </View>
-            )}
+      <Pressable onPress={handleCardPress}>
+        <View style={[styles.card, { backgroundColor: c.bgSecondary, borderColor: c.borderSubtle }]}>
+          <DocIcon mimeType={doc.mimeType} />
+          <View style={styles.cardBody}>
+            <View style={styles.cardHeader}>
+              <Text
+                style={[styles.cardName, { color: c.textPrimary, fontFamily: typography.body.semiBold }]}
+                numberOfLines={2}
+              >
+                {doc.fileName}
+              </Text>
+              {isProcessing && (
+                <View style={[styles.badge, { backgroundColor: `${c.accent}22`, borderColor: `${c.accent}33` }]}>
+                  <Text style={[styles.badgeText, { color: c.accent, fontFamily: typography.body.semiBold }]}>
+                    Reading...
+                  </Text>
+                </View>
+              )}
+              {isFailed && (
+                <View style={[styles.badge, { backgroundColor: '#EF444422', borderColor: '#EF444433' }]}>
+                  <Text style={[styles.badgeText, { color: '#EF4444', fontFamily: typography.body.semiBold }]}>
+                    Failed
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.cardMeta}>
+              <Text style={[styles.metaText, { color: c.textMuted, fontFamily: typography.body.regular }]}>
+                {formatBytes(doc.sizeBytes)}
+              </Text>
+              <Text style={[styles.dot, { color: c.border }]}>·</Text>
+              <Clock size={11} color={c.textMuted} strokeWidth={1.5} />
+              <Text style={[styles.metaText, { color: c.textMuted, fontFamily: typography.body.regular }]}>
+                {new Date(doc.createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </Text>
+            </View>
           </View>
-          <View style={styles.cardMeta}>
-            <Text style={[styles.metaText, { color: c.textMuted, fontFamily: typography.body.regular }]}>
-              {formatBytes(doc.sizeBytes)}
-            </Text>
-            <Text style={[styles.dot, { color: c.border }]}>·</Text>
-            <Clock size={11} color={c.textMuted} strokeWidth={1.5} />
-            <Text style={[styles.metaText, { color: c.textMuted, fontFamily: typography.body.regular }]}>
-              {new Date(doc.createdAt).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Text>
-          </View>
+          <Pressable onPress={handleDelete} hitSlop={8} onPressIn={(e) => e.stopPropagation()}>
+            <Trash2 size={16} color={c.danger} strokeWidth={1.5} />
+          </Pressable>
         </View>
-        <Pressable onPress={handleDelete} hitSlop={8}>
-          <Trash2 size={16} color={c.danger} strokeWidth={1.5} />
-        </Pressable>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }

@@ -13,30 +13,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "idToken is required" }, { status: 400 });
     }
 
-    let email: string | undefined;
-    let name: string | undefined;
-
     // Verify token using Firebase Admin
     const decodedToken = await verifyGoogleToken(idToken);
 
-    if (decodedToken) {
-      email = decodedToken.email;
-      name = decodedToken.name || decodedToken.email?.split("@")[0] || "Google User";
-    } else {
-      // In local development, if Firebase Admin fails to initialize (e.g. invalid certificates or private key details),
-      // we can attempt a secure client-side JWT decode fallback so we don't break local manual testing of the Google sign-in UI.
-      try {
-        const payloadBase64 = idToken.split(".")[1];
-        if (payloadBase64) {
-          const payloadJson = Buffer.from(payloadBase64, "base64").toString("utf-8");
-          const payload = JSON.parse(payloadJson);
-          email = payload.email;
-          name = payload.name || payload.email?.split("@")[0] || "Google User";
-        }
-      } catch (decodeErr) {
-        console.error("Local token decode fallback failed:", decodeErr);
-      }
-    }
+    const email = decodedToken.email;
+    const name = decodedToken.name || decodedToken.email?.split("@")[0] || "Google User";
 
     if (!email) {
       return NextResponse.json({ error: "Failed to authenticate Google user token." }, { status: 401 });

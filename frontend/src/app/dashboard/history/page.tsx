@@ -24,7 +24,7 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "pinned">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [converting, setConverting] = useState<string | null>(null);
+  const [converting, setConverting] = useState<{ id: string; type: ConvertType } | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -98,7 +98,7 @@ export default function HistoryPage() {
   };
 
   const convertAnswer = async (questionId: string, convertTo: ConvertType) => {
-    setConverting(questionId);
+    setConverting({ id: questionId, type: convertTo });
     try {
       const res = await fetch("/api/ai/history/convert", {
         method: "POST",
@@ -350,7 +350,7 @@ interface QuestionCardProps {
   togglePin: (id: string, pinned: boolean) => void;
   deleteQuestion: (id: string) => void;
   convertAnswer: (id: string, type: ConvertType) => void;
-  converting: string | null;
+  converting: { id: string; type: ConvertType } | null;
   deleting: string | null;
   formatDate: (date: string) => string;
   truncateText: (text: string, maxLength: number) => string;
@@ -369,7 +369,8 @@ function QuestionCard({
   truncateText,
 }: QuestionCardProps) {
   const isExpanded = expandedId === question._id;
-  const isConverting = converting === question._id;
+  const isConverting = converting?.id === question._id;
+  const convertingType = converting?.id === question._id ? converting.type : null;
   const isDeleting = deleting === question._id;
   const [showConvertMenu, setShowConvertMenu] = useState(false);
 
@@ -488,7 +489,7 @@ function QuestionCard({
               disabled={isConverting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--bg-elevated)] hover:bg-[var(--accent-muted)] text-[var(--text-secondary)] hover:text-[var(--accent)] border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all disabled:opacity-50"
             >
-              {isConverting ? (
+              {convertingType === "quiz" ? (
                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -504,7 +505,7 @@ function QuestionCard({
               disabled={isConverting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--bg-elevated)] hover:bg-[var(--accent-muted)] text-[var(--text-secondary)] hover:text-[var(--accent)] border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all disabled:opacity-50"
             >
-              {isConverting ? (
+              {convertingType === "course" ? (
                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -520,7 +521,7 @@ function QuestionCard({
               disabled={isConverting}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--bg-elevated)] hover:bg-[var(--accent-muted)] text-[var(--text-secondary)] hover:text-[var(--accent)] border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all disabled:opacity-50"
             >
-              {isConverting ? (
+              {convertingType === "video" ? (
                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

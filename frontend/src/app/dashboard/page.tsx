@@ -330,8 +330,8 @@ function DashboardContent() {
       {/* Header */}
       <div className="flex-shrink-0 pl-4 pr-16 sm:pl-6 sm:pr-16 md:px-8 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] flex items-center justify-between">
         <div>
-          <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">
-            {currentQuestionId ? "Continuing Chat Thread" : `Welcome back, ${user?.name?.split(" ")[0]}`}
+          <h1 className="font-[family-name:var(--font-display)] text-sm sm:text-lg font-bold">
+            {currentQuestionId ? "Continuing Chat" : `Welcome back, ${user?.name?.split(" ")[0]}`}
           </h1>
           <p className="text-xs text-[var(--text-muted)] mt-0.5 hidden lg:block">
             {currentQuestionId
@@ -347,9 +347,9 @@ function DashboardContent() {
               setMessages([]);
               setAttachedDocs([]);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
+            className="flex items-center gap-0.5 px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[10px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
             New Chat
@@ -462,7 +462,7 @@ function DashboardContent() {
                   </div>
                 ) : (
                   // Assistant message
-                  <div className="max-w-[90%] sm:max-w-[80%] px-4 py-3 rounded-2xl rounded-bl-md bg-[var(--bg-secondary)] border border-[var(--border)]">
+                  <div className="max-w-[95%] sm:max-w-[80%] sm:px-4 py-3">
                     <div
                       className="prose prose-invert prose-sm max-w-none [&_h1]:font-[family-name:var(--font-display)] [&_h2]:font-[family-name:var(--font-display)] [&_h3]:font-[family-name:var(--font-display)] [&_p]:text-[var(--text-secondary)] [&_p]:leading-relaxed [&_li]:text-[var(--text-secondary)] [&_strong]:text-[var(--text-primary)] [&_code]:bg-[var(--bg-elevated)] [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[var(--accent)] [&_code]:text-xs"
                       dangerouslySetInnerHTML={{

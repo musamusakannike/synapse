@@ -51,58 +51,104 @@ export function DocumentUpload({
 
   const uploadFile = useCallback(
     async (file: File) => {
+      // 1. Front-end size check (20MB limit)
+      if (file.size > 20 * 1024 * 1024) {
+        console.warn(`[DocumentUpload Component] File "${file.name}" is too large: ${file.size} bytes`);
+        onError?.("File too large. Maximum size is 20 MB.");
+        return;
+      }
+
       setUploading(true);
       setProgress(0);
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      console.log(`[DocumentUpload Component] Starting upload for file: "${file.name}" (Type: ${file.type}, Size: ${file.size} bytes)`);
+      console.log(`[DocumentUpload Component] Starting upload process for file: "${file.name}" (Type: ${file.type}, Size: ${file.size} bytes)`);
 
       try {
-        const xhr = new XMLHttpRequest();
+        // Step 1: Get presigned upload URL from Next.js backend
+        console.log(`[DocumentUpload Component] Fetching presigned upload URL for: "${file.name}"`);
+        const presignRes = await fetch("/api/documents/presign", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            mimeType: file.type,
+            sizeBytes: file.size,
+          }),
+        });
 
-        const uploadPromise = new Promise<UploadedDoc>((resolve, reject) => {
+        if (!presignRes.ok) {
+          const resData = await presignRes.json().catch(() => ({}));
+          throw new Error(resData.error || "Failed to generate upload signature");
+        }
+
+        const { uploadUrl, publicUrl, r2Key } = await presignRes.json();
+        console.log(`[DocumentUpload Component] Presigned URL retrieved successfully. Destination key: "${r2Key}"`);
+
+        // Step 2: Upload raw file bytes directly to Cloudflare R2 via PUT using XMLHttpRequest
+        const xhr = new XMLHttpRequest();
+        const uploadPromise = new Promise<void>((resolve, reject) => {
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
+              // Scale progress to 90% while uploading to storage
               const pct = Math.round((e.loaded / e.total) * 90);
               setProgress(pct);
-              console.log(`[DocumentUpload Component] Upload progress for "${file.name}": ${pct}%`);
+              console.log(`[DocumentUpload Component] Storage upload progress for "${file.name}": ${pct}%`);
             }
           };
 
           xhr.onload = () => {
-            setProgress(100);
-            console.log(`[DocumentUpload Component] Response received for "${file.name}". HTTP status: ${xhr.status}`);
-            try {
-              const data = JSON.parse(xhr.responseText);
-              if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-                console.log(`[DocumentUpload Component] Upload succeeded for "${file.name}". Response:`, data);
-                resolve(data.document);
-              } else {
-                console.error(`[DocumentUpload Component] Upload failed for "${file.name}". Error returned: ${data.error || "Unknown error"}`);
-                reject(new Error(data.error || "Upload failed"));
-              }
-            } catch (err) {
-              console.error(`[DocumentUpload Component] Failed to parse JSON response for "${file.name}". Response text:`, xhr.responseText);
-              reject(new Error("Invalid response from server"));
+            console.log(`[DocumentUpload Component] Storage upload response received. HTTP status: ${xhr.status}`);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              reject(new Error(`Storage upload failed with status ${xhr.status}`));
             }
           };
 
           xhr.onerror = () => {
-            console.error(`[DocumentUpload Component] Network error during upload of "${file.name}"`);
-            reject(new Error("Network error during upload"));
+            console.error(`[DocumentUpload Component] Network error during storage upload of "${file.name}"`);
+            reject(new Error("Network error during storage upload"));
           };
-          
-          xhr.open("POST", "/api/documents/upload");
-          xhr.send(formData);
+
+          xhr.open("PUT", uploadUrl);
+          xhr.setRequestHeader("Content-Type", file.type);
+          xhr.send(file);
         });
 
-        const doc = await uploadPromise;
-        onUploadComplete(doc);
+        await uploadPromise;
+        console.log(`[DocumentUpload Component] Successfully uploaded "${file.name}" directly to R2.`);
+
+        // Step 3: Register the uploaded document in MongoDB
+        console.log(`[DocumentUpload Component] Registering file metadata with API backend`);
+        const registerRes = await fetch("/api/documents/upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fileName: file.name,
+            mimeType: file.type,
+            sizeBytes: file.size,
+            r2Key,
+            publicUrl,
+          }),
+        });
+
+        if (!registerRes.ok) {
+          const resData = await registerRes.json().catch(() => ({}));
+          throw new Error(resData.error || "Failed to register document metadata on server");
+        }
+
+        const data = await registerRes.json();
+        console.log(`[DocumentUpload Component] Document registration succeeded. MongoDB ID: ${data.document._id}`);
+
+        setProgress(100);
+        onUploadComplete(data.document);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Upload failed";
-        console.error(`[DocumentUpload Component] Upload failed: ${message}`, err);
+        console.error(`[DocumentUpload Component] Upload process failed: ${message}`, err);
         onError?.(message);
       } finally {
         setUploading(false);

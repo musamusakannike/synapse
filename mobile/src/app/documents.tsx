@@ -161,16 +161,50 @@ export default function DocumentsScreen() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      return api.post('/api/documents/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+    mutationFn: async (asset: DocumentPicker.DocumentPickerAsset) => {
+      // 1. Get presigned upload URL from API
+      const presignRes = await api.post('/api/documents/presign', {
+        fileName: asset.name,
+        mimeType: asset.mimeType ?? 'application/octet-stream',
+        sizeBytes: asset.size ?? 0,
+      });
+
+      const { uploadUrl, publicUrl, r2Key } = presignRes.data;
+
+      // 2. Fetch the local URI as a blob (React Native native fetch supports file/content URIs)
+      const fileResponse = await fetch(asset.uri);
+      const blob = await fileResponse.blob();
+
+      // 3. Upload raw file bytes directly to Cloudflare R2 via PUT
+      const putResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: blob,
+        headers: {
+          'Content-Type': asset.mimeType ?? 'application/octet-stream',
+        },
+      });
+
+      if (!putResponse.ok) {
+        throw new Error('Failed to upload file to storage');
+      }
+
+      // 4. Register the uploaded file metadata in the backend
+      return api.post('/api/documents/upload', {
+        fileName: asset.name,
+        mimeType: asset.mimeType ?? 'application/octet-stream',
+        sizeBytes: asset.size ?? 0,
+        r2Key,
+        publicUrl,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast.success('Document uploaded');
     },
-    onError: () => toast.error('Upload failed'),
+    onError: (err) => {
+      console.error('[Upload Mutation Error]', err);
+      toast.error('Upload failed');
+    },
   });
 
   const handlePick = async () => {
@@ -180,14 +214,15 @@ export default function DocumentsScreen() {
     });
     if (result.canceled || !result.assets?.length) return;
     const asset = result.assets[0];
-    const formData = new FormData();
-    formData.append('file', {
-      uri: asset.uri,
-      name: asset.name,
-      type: asset.mimeType ?? 'application/octet-stream',
-    } as any);
+
+    // File size check (20MB limit)
+    if (asset.size && asset.size > 20 * 1024 * 1024) {
+      toast.error('File too large. Maximum size is 20 MB.');
+      return;
+    }
+
     haptics.medium();
-    uploadMutation.mutate(formData);
+    uploadMutation.mutate(asset);
   };
 
   return (

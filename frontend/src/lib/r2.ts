@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const R2_ACCOUNT_ID = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.CLOUDFLARE_R2_ACCESS_KEY_ID;
@@ -117,4 +118,33 @@ export function r2PublicUrl(key: string): string {
   const baseUrl = (R2_PUBLIC_URL || "").replace(/\/$/, "");
   const cleanKey = key.replace(/^\//, "");
   return `${baseUrl}/${cleanKey}`;
+}
+
+/**
+ * Generates a presigned URL for uploading a file directly from client-side to R2.
+ */
+export async function getPresignedUploadUrl(key: string, contentType: string): Promise<{ uploadUrl: string; publicUrl: string }> {
+  if (!isR2Configured || !s3Client || !R2_BUCKET_NAME || !R2_PUBLIC_URL) {
+    throw new Error("Cannot get presigned URL: Cloudflare R2 is not fully configured.");
+  }
+
+  try {
+    const command = new PutObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: key,
+      ContentType: contentType,
+    });
+
+    // URL expires in 15 minutes (900 seconds)
+    const uploadUrl = await getSignedUrl(s3Client as any, command as any, { expiresIn: 900 });
+
+    const baseUrl = R2_PUBLIC_URL.replace(/\/$/, "");
+    const cleanKey = key.replace(/^\//, "");
+    const publicUrl = `${baseUrl}/${cleanKey}`;
+
+    return { uploadUrl, publicUrl };
+  } catch (error: any) {
+    console.error("Cloudflare R2 Presign Error:", error);
+    throw new Error(`Failed to generate presigned URL: ${error.message}`);
+  }
 }

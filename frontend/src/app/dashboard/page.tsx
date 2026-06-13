@@ -26,7 +26,6 @@ export default function DashboardPage() {
   const [input, setInput] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeMode, setActiveMode] = useState<
     "ask" | "course" | "quiz" | "video" | null
   >(null);
@@ -38,7 +37,6 @@ export default function DashboardPage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const canSubmit = !loading && (input.trim() !== "" || attachedDocs.length > 0);
 
@@ -56,22 +54,6 @@ export default function DashboardPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-    if (dropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [dropdownOpen]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -260,44 +242,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDropdownAction = (action: string) => {
-    setDropdownOpen(false);
-    if (action === "attach") {
-      setPickerOpen(true);
-      return;
-    }
-    const modeMap: Record<string, "course" | "quiz" | "video"> = {
-      course: "course",
-      quiz: "quiz",
-      video: "video",
-    };
-    setActiveMode(modeMap[action] || null);
-    textareaRef.current?.focus();
-  };
 
-  const dropdownItems = [
-    {
-      key: "course",
-      label: "Create Course",
-      description: "Generate a full course on any topic",
-    },
-    {
-      key: "quiz",
-      label: "Create Quiz",
-      description: "Generate practice questions",
-    },
-    {
-      key: "attach",
-      label: "Attach Document",
-      description: "Upload or pick a document",
-    },
-    {
-      key: "video",
-      label: "Generate Video",
-      description: "Create an explanatory video",
-      beta: true,
-    },
-  ];
 
   const modeLabels: Record<string, string> = {
     course: "Course Mode",
@@ -343,27 +288,6 @@ export default function DashboardPage() {
               Type a question, create a course, generate a quiz, or attach a document.
               Use the <span className="font-semibold text-[var(--text-secondary)]">+</span> button to explore options.
             </p>
-
-            {/* Quick suggestion chips */}
-            <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-lg">
-              {[
-                { label: "Explain quantum computing", mode: "ask" as const },
-                { label: "Create a physics course", mode: "course" as const },
-                { label: "Quiz me on biology", mode: "quiz" as const },
-              ].map((chip) => (
-                <button
-                  key={chip.label}
-                  onClick={() => {
-                    setInput(chip.label.replace(/^(Create a |Quiz me on |Explain )/, ""));
-                    if (chip.mode !== "ask") setActiveMode(chip.mode);
-                    textareaRef.current?.focus();
-                  }}
-                  className="px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs text-[var(--text-secondary)] hover:border-[var(--accent)]/40 hover:text-[var(--accent)] transition-all"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -569,23 +493,104 @@ export default function DashboardPage() {
       {/* Input area */}
       <div className="flex-shrink-0 border-t border-[var(--border-subtle)] bg-[var(--bg-primary)]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 md:px-8 py-3 sm:py-4">
-          {/* Active mode indicator */}
-          {activeMode && (
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[var(--accent-muted)] text-[var(--accent)] border border-[var(--accent)]/15">
-                {modeLabels[activeMode]}
-                {activeMode === "video" && (
-                  <BetaBadge className="text-[8px] px-1 py-0" />
-                )}
-              </span>
-              <button
-                onClick={() => setActiveMode(null)}
-                className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
-              >
-                Clear
-              </button>
-            </div>
-          )}
+          {/* Segmented Mode Bar */}
+          <div className="flex items-center p-1 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl mb-2 relative">
+            {[
+              {
+                id: "ask" as const,
+                label: "Ask AI",
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                ),
+              },
+              {
+                id: "course" as const,
+                label: "Course",
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                ),
+              },
+              {
+                id: "quiz" as const,
+                label: "Quiz",
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 11l3 3L22 4" />
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                  </svg>
+                ),
+              },
+              {
+                id: "video" as const,
+                label: "Video",
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                ),
+                beta: true,
+              },
+            ].map((modeItem, idx) => {
+              const itemActive =
+                (activeMode === null && modeItem.id === "ask") ||
+                activeMode === modeItem.id;
+              const activeIndex =
+                activeMode === null
+                  ? 0
+                  : activeMode === "ask"
+                  ? 0
+                  : activeMode === "course"
+                  ? 1
+                  : activeMode === "quiz"
+                  ? 2
+                  : 3;
+              return (
+                <button
+                  key={modeItem.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveMode(modeItem.id === "ask" ? null : modeItem.id);
+                    textareaRef.current?.focus();
+                  }}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative z-10",
+                    itemActive
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  )}
+                >
+                  {modeItem.icon}
+                  <span>{modeItem.label}</span>
+                  {modeItem.beta && <BetaBadge className="text-[8px] px-1 py-0 scale-90" />}
+                </button>
+              );
+            })}
+
+            {/* Sliding backdrop */}
+            <div
+              className="absolute top-1 bottom-1 bg-[var(--accent-subtle)] border border-[var(--accent)]/15 rounded-lg transition-all duration-300 ease-out"
+              style={{
+                left: `calc(${(activeMode === null ? 0 : activeMode === "ask" ? 0 : activeMode === "course" ? 1 : activeMode === "quiz" ? 2 : 3) * 25}% + 4px)`,
+                width: "calc(25% - 8px)",
+              }}
+            />
+          </div>
+
+          {/* Contextual Mode Subtitle Description */}
+          <p className="text-[10px] text-[var(--text-muted)] mb-3 px-1.5 transition-all duration-300">
+            {activeMode === "course"
+              ? "Course Mode: Generates a full structured learning course based on your topic or files."
+              : activeMode === "quiz"
+              ? "Quiz Mode: Creates practice quizzes (multiple choice, T/F) to test your recall."
+              : activeMode === "video"
+              ? "Video Mode (Beta): Transforms concepts into voiceover slides. Best for visual learners."
+              : "Ask AI: Clarify concepts, ask academic questions, or search summaries."}
+          </p>
 
           {/* Attached docs */}
           {attachedDocs.length > 0 && (
@@ -606,20 +611,17 @@ export default function DashboardPage() {
 
           {/* Input row */}
           <div className="flex items-end gap-2">
-            {/* Plus button */}
-            <div className="relative flex-shrink-0" ref={dropdownRef}>
+            {/* Attach Document button */}
+            <div className="relative flex-shrink-0">
               <button
                 type="button"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
+                onClick={() => setPickerOpen(true)}
                 disabled={loading}
-                className={cn(
-                  "w-10 h-10 rounded-xl border flex items-center justify-center transition-all disabled:opacity-50",
-                  dropdownOpen
-                    ? "bg-[var(--accent-muted)] border-[var(--accent)]/30 text-[var(--accent)]"
-                    : "bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
-                )}
+                title="Attach Document"
+                className="w-10 h-10 rounded-xl border flex items-center justify-center transition-all disabled:opacity-50 bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:border-[var(--text-muted)]"
               >
                 <svg
+                  xmlns="http://www.w3.org/2000/svg"
                   width="18"
                   height="18"
                   viewBox="0 0 24 24"
@@ -628,38 +630,10 @@ export default function DashboardPage() {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className={cn(
-                    "transition-transform duration-200",
-                    dropdownOpen && "rotate-45"
-                  )}
                 >
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
                 </svg>
               </button>
-
-              {/* Dropdown */}
-              {dropdownOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-64 py-1.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] shadow-lg z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-                  {dropdownItems.map((item) => (
-                    <button
-                      key={item.key}
-                      onClick={() => handleDropdownAction(item.key)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-hover)] transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[var(--text-primary)]">
-                          {item.label}
-                        </span>
-                        {item.beta && <BetaBadge />}
-                      </div>
-                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5">
-                        {item.description}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Textarea */}
@@ -711,12 +685,6 @@ export default function DashboardPage() {
               )}
             </button>
           </div>
-
-          <p className="text-[10px] text-[var(--text-muted)] mt-2 text-center">
-            {user?.premium
-              ? "Premium — unlimited generations"
-              : `Free plan — ${3 - (user?.generationsToday || 0)} generations left today`}
-          </p>
         </div>
       </div>
 

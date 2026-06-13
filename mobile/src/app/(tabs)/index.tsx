@@ -30,6 +30,7 @@ import {
   FileText,
   X,
   SquarePen,
+  MessageSquare,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/lib/auth-context';
@@ -45,6 +46,8 @@ interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: Date;
+  type?: 'text' | 'course-created' | 'quiz-created' | 'video-created';
+  meta?: { id?: string; title?: string };
 }
 
 const SUGGESTIONS = [
@@ -57,7 +60,19 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function MessageBubble({ message }: { message: Message }) {
   const { c } = useTheme();
+  const router = useRouter();
   const isUser = message.role === 'user';
+
+  const handleCtaPress = () => {
+    haptics.medium();
+    if (message.type === 'course-created' && message.meta?.id) {
+      router.push(`/course/${message.meta.id}`);
+    } else if (message.type === 'quiz-created' && message.meta?.id) {
+      router.push(`/quiz/${message.meta.id}`);
+    } else if (message.type === 'video-created') {
+      router.push('/videos');
+    }
+  };
 
   return (
     <Animated.View
@@ -95,63 +110,28 @@ function MessageBubble({ message }: { message: Message }) {
         >
           {message.content}
         </Text>
-      </View>
-    </Animated.View>
-  );
-}
 
-function QuickActions({
-  visible,
-  onClose,
-  onAction,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onAction: (type: string) => void;
-}) {
-  const { c } = useTheme();
-  if (!visible) return null;
-
-  const actions = [
-    { id: 'course', label: 'Create Course', icon: BookOpen, color: c.accent },
-    { id: 'quiz', label: 'Create Quiz', icon: HelpCircle, color: c.success },
-    { id: 'video', label: 'Generate Video', icon: Video, color: '#60A5FA' },
-    { id: 'document', label: 'Attach Document', icon: FileText, color: c.textSecondary },
-  ];
-
-  return (
-    <Animated.View
-      entering={FadeInUp.duration(200)}
-      style={[styles.quickActionsPanel, { backgroundColor: c.bgElevated, borderColor: c.border }]}
-    >
-      <View style={styles.quickActionsHeader}>
-        <Text style={[styles.quickActionsTitle, { color: c.textPrimary, fontFamily: typography.display.semiBold }]}>
-          Create
-        </Text>
-        <Pressable onPress={onClose} hitSlop={8}>
-          <X size={18} color={c.textMuted} strokeWidth={2} />
-        </Pressable>
-      </View>
-      {actions.map((action) => {
-        const IconComp = action.icon;
-        return (
+        {/* Action Button for Created Items */}
+        {!isUser && message.type && message.type !== 'text' && (
           <Pressable
-            key={action.id}
-            onPress={() => { haptics.medium(); onAction(action.id); onClose(); }}
+            onPress={handleCtaPress}
             style={({ pressed }) => [
-              styles.quickActionItem,
-              { backgroundColor: pressed ? c.bgHover : 'transparent' },
+              styles.bubbleButton,
+              {
+                backgroundColor: pressed ? c.accentHover : c.accent,
+              },
             ]}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: `${action.color}22` }]}>
-              <IconComp size={18} color={action.color} strokeWidth={2} />
-            </View>
-            <Text style={[styles.quickActionLabel, { color: c.textPrimary, fontFamily: typography.body.medium }]}>
-              {action.label}
+            <Text style={[styles.bubbleButtonText, { color: '#0C0C0E' }]}>
+              {message.type === 'course-created'
+                ? 'Open Course →'
+                : message.type === 'quiz-created'
+                ? 'Take Quiz →'
+                : 'Watch Video →'}
             </Text>
           </Pressable>
-        );
-      })}
+        )}
+      </View>
     </Animated.View>
   );
 }
@@ -165,13 +145,25 @@ export default function HomeScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showActions, setShowActions] = useState(false);
+  const [activeMode, setActiveMode] = useState<'ask' | 'course' | 'quiz' | 'video'>('ask');
+  const [segmentWidth, setSegmentWidth] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
+  const activeIndex = useSharedValue(0);
   const sendScale = useSharedValue(1);
+
   const sendAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sendScale.value }],
   }));
+
+  const singleSegmentWidth = segmentWidth > 0 ? segmentWidth / 4 : 0;
+
+  const sliderStyle = useAnimatedStyle(() => {
+    return {
+      left: singleSegmentWidth > 0 ? activeIndex.value * singleSegmentWidth + 4 : 0,
+      width: singleSegmentWidth > 0 ? singleSegmentWidth - 8 : 0,
+    };
+  });
 
   const addMessage = (role: Message['role'], content: string) => {
     const msg: Message = {
@@ -193,12 +185,86 @@ export default function HomeScreen() {
     setLoading(true);
     haptics.medium();
 
+    const mode = activeMode;
+
     try {
-      const res = await api.post('/api/ai/question', { question });
-      if (res.data?.answer) {
-        addMessage('assistant', res.data.answer);
+      if (mode === 'course') {
+        addMessage('system', 'Creating course...');
+        const res = await api.post('/api/ai/course', { topic: question });
+        setMessages((prev) => prev.filter((m) => m.role !== 'system'));
+
+        if (res.data?.course || res.data?.courseId) {
+          const course = res.data.course;
+          const courseId = course?._id || res.data.courseId;
+          const courseTitle = course?.title || question;
+
+          const msg: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            role: 'assistant',
+            content: `✅ **Course created:** "${courseTitle}"\n\nYour personalized course has been generated successfully. Tap below to start learning.`,
+            createdAt: new Date(),
+            type: 'course-created',
+            meta: { id: courseId, title: courseTitle },
+          };
+          setMessages((prev) => [...prev, msg]);
+        } else {
+          addMessage('assistant', 'Failed to create course. Please try again.');
+        }
+      } else if (mode === 'quiz') {
+        addMessage('system', 'Generating quiz...');
+        const res = await api.post('/api/ai/quiz', { topic: question, numQuestions: 5 });
+        setMessages((prev) => prev.filter((m) => m.role !== 'system'));
+
+        if (res.data?.quiz || res.data?.quizId) {
+          const quiz = res.data.quiz;
+          const quizId = quiz?._id || res.data.quizId;
+          const quizTitle = quiz?.title || question;
+
+          const msg: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            role: 'assistant',
+            content: `✅ **Quiz created:** "${quizTitle}"\n\nYour practice quiz with 5 questions is ready. Tap below to test your knowledge.`,
+            createdAt: new Date(),
+            type: 'quiz-created',
+            meta: { id: quizId, title: quizTitle },
+          };
+          setMessages((prev) => [...prev, msg]);
+        } else {
+          addMessage('assistant', 'Failed to create quiz. Please try again.');
+        }
+      } else if (mode === 'video') {
+        addMessage('system', 'Generating explanatory video...');
+        const res = await api.post('/api/ai/video', { topic: question, styleTheme: 'emerald', numScenes: 5 });
+        setMessages((prev) => prev.filter((m) => m.role !== 'system'));
+
+        if (res.data?.video || res.data?.videoId) {
+          const video = res.data.video;
+          const videoId = video?._id || res.data.videoId;
+          const videoTitle = video?.title || question;
+
+          const msg: Message = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            role: 'assistant',
+            content: `✅ **Video created:** "${videoTitle}"\n\nYour explanatory video presentation has been generated. Tap below to check it out.`,
+            createdAt: new Date(),
+            type: 'video-created',
+            meta: { id: videoId, title: videoTitle },
+          };
+          setMessages((prev) => [...prev, msg]);
+        } else {
+          addMessage('assistant', 'Failed to create video. Please try again.');
+        }
+      } else {
+        // Ask AI (default)
+        const res = await api.post('/api/ai/question', { question });
+        if (res.data?.answer) {
+          addMessage('assistant', res.data.answer);
+        } else {
+          addMessage('assistant', 'Failed to get a response.');
+        }
       }
     } catch (err: any) {
+      setMessages((prev) => prev.filter((m) => m.role !== 'system'));
       const msg = err.response?.data?.error || 'Failed to get a response';
       if (err.response?.data?.code === 'LIMIT_REACHED') {
         toast.warning('Daily limit reached', 'Upgrade to Premium for unlimited generations');
@@ -208,27 +274,11 @@ export default function HomeScreen() {
       addMessage('system', `⚠️ ${msg}`);
     } finally {
       setLoading(false);
+      setActiveMode('ask');
+      activeIndex.value = withSpring(0);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
   };
-
-  const handleAction = useCallback((type: string) => {
-    switch (type) {
-      case 'course':
-        addMessage('user', 'I want to create a course');
-        addMessage('assistant', 'Great! Head to the Courses tab and tap the + button to generate a new course with AI.');
-        break;
-      case 'quiz':
-        addMessage('user', 'I want to create a quiz');
-        addMessage('assistant', 'Sure! Go to the Quizzes tab and tap + to generate a new quiz on any topic.');
-        break;
-      case 'video':
-        toast.info('Coming soon', 'Video generation is available from the Chat on the web dashboard.');
-        break;
-      case 'document':
-        router.push('/documents');
-        break;
-    }
-  }, [router, toast]);
 
   const isEmpty = messages.length === 0;
 
@@ -284,7 +334,6 @@ export default function HomeScreen() {
       >
         {isEmpty ? (
           <Animated.View entering={FadeInDown.duration(500)} style={styles.emptyState}>
-
             <Text style={[styles.emptyTitle, { color: c.textPrimary, fontFamily: typography.display.bold }]}>
               Ask me anything
             </Text>
@@ -328,56 +377,125 @@ export default function HomeScreen() {
         )}
       </ScrollView>
 
-      {/* Quick Actions Popup */}
-      <View style={styles.actionsOverlay} pointerEvents="box-none">
-        <QuickActions
-          visible={showActions}
-          onClose={() => setShowActions(false)}
-          onAction={handleAction}
-        />
-      </View>
-
       {/* Input Bar */}
       <KeyboardStickyView offset={{ closed: 0, opened: 0 }}>
-        <View style={[styles.inputBar, { backgroundColor: c.bgPrimary, borderTopColor: c.borderSubtle }]}>
-          <Pressable
-            onPress={() => { haptics.light(); setShowActions((v) => !v); }}
-            style={[styles.addBtn, { backgroundColor: c.bgSecondary, borderColor: c.border }]}
+        <View style={{ backgroundColor: c.bgPrimary, borderTopWidth: 1, borderTopColor: c.borderSubtle, paddingTop: spacing.sm, paddingBottom: Platform.OS === 'ios' ? spacing.sm : spacing.xs }}>
+          {/* Segment Bar */}
+          <View
+            onLayout={(e) => {
+              setSegmentWidth(e.nativeEvent.layout.width);
+            }}
+            style={[styles.segmentContainer, { backgroundColor: c.bgSecondary, borderColor: c.border }]}
           >
-            <Plus size={20} color={c.textSecondary} strokeWidth={2} />
-          </Pressable>
+            {/* Sliding backdrop */}
+            {singleSegmentWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.slider,
+                  {
+                    backgroundColor: c.accentMuted,
+                    borderColor: `${c.accent}22`,
+                  },
+                  sliderStyle,
+                ]}
+              />
+            )}
 
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            placeholder="Ask anything..."
-            placeholderTextColor={c.textMuted}
-            multiline
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: c.bgSecondary,
-                borderColor: c.border,
-                color: c.textPrimary,
-                fontFamily: typography.body.regular,
-              },
-            ]}
-            onSubmitEditing={handleSend}
-          />
+            {[
+              { id: 'ask' as const, label: 'Ask AI', icon: MessageSquare },
+              { id: 'course' as const, label: 'Course', icon: BookOpen },
+              { id: 'quiz' as const, label: 'Quiz', icon: HelpCircle },
+              { id: 'video' as const, label: 'Video', icon: Video },
+            ].map((modeItem, idx) => {
+              const IconComp = modeItem.icon;
+              const isModeActive = activeMode === modeItem.id;
+              return (
+                <Pressable
+                  key={modeItem.id}
+                  onPress={() => {
+                    haptics.light();
+                    setActiveMode(modeItem.id);
+                    activeIndex.value = withSpring(idx, { damping: 18 });
+                  }}
+                  style={styles.segmentBtn}
+                >
+                  <IconComp size={13} color={isModeActive ? c.accent : c.textSecondary} strokeWidth={2} />
+                  <Text
+                    style={[
+                      styles.segmentBtnText,
+                      {
+                        color: isModeActive ? c.accent : c.textSecondary,
+                        fontFamily: isModeActive ? typography.body.bold : typography.body.medium,
+                      },
+                    ]}
+                  >
+                    {modeItem.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
-          <AnimatedPressable
-            onPress={handleSend}
-            onPressIn={() => { sendScale.value = withSpring(0.9); }}
-            onPressOut={() => { sendScale.value = withSpring(1); }}
-            disabled={!input.trim() || loading}
-            style={[
-              sendAnimStyle,
-              styles.sendBtn,
-              { backgroundColor: input.trim() ? c.accent : c.bgTertiary },
-            ]}
-          >
-            <Send size={18} color={input.trim() ? '#0C0C0E' : c.textMuted} strokeWidth={2} />
-          </AnimatedPressable>
+          {/* Mode Subtitle Info */}
+          <Text style={{ fontSize: 9, color: c.textMuted, fontFamily: typography.body.regular, marginHorizontal: spacing.xl, marginBottom: spacing.xs }}>
+            {activeMode === 'course'
+              ? '📚 Course: Generates a full structured learning course.'
+              : activeMode === 'quiz'
+              ? '📝 Quiz: Generates a 5-question practice quiz to test recall.'
+              : activeMode === 'video'
+              ? '🎥 Video: Generates a voiceover summary slideshow.'
+              : '✨ Ask AI: Ask academic questions or summarize text.'}
+          </Text>
+
+          {/* Input Row */}
+          <View style={styles.inputRow}>
+            <Pressable
+              onPress={() => { haptics.light(); router.push('/documents'); }}
+              style={[styles.addBtn, { backgroundColor: c.bgSecondary, borderColor: c.border }]}
+            >
+              <FileText size={18} color={c.textSecondary} strokeWidth={2} />
+            </Pressable>
+
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder={
+                activeMode === 'course'
+                  ? 'Enter a topic for your course...'
+                  : activeMode === 'quiz'
+                  ? 'Enter a topic for your quiz...'
+                  : activeMode === 'video'
+                  ? 'Enter a topic for your video...'
+                  : 'Ask anything...'
+              }
+              placeholderTextColor={c.textMuted}
+              multiline
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: c.bgSecondary,
+                  borderColor: c.border,
+                  color: c.textPrimary,
+                  fontFamily: typography.body.regular,
+                },
+              ]}
+              onSubmitEditing={handleSend}
+            />
+
+            <AnimatedPressable
+              onPress={handleSend}
+              onPressIn={() => { sendScale.value = withSpring(0.9); }}
+              onPressOut={() => { sendScale.value = withSpring(1); }}
+              disabled={!input.trim() || loading}
+              style={[
+                sendAnimStyle,
+                styles.sendBtn,
+                { backgroundColor: input.trim() ? c.accent : c.bgTertiary },
+              ]}
+            >
+              <Send size={18} color={input.trim() ? '#0C0C0E' : c.textMuted} strokeWidth={2} />
+            </AnimatedPressable>
+          </View>
         </View>
       </KeyboardStickyView>
     </SafeAreaView>
@@ -489,58 +607,56 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     lineHeight: 20,
   },
-  actionsOverlay: {
-    position: 'absolute',
-    bottom: 80,
-    left: spacing.lg,
-    right: spacing.lg,
-    zIndex: 100,
-  },
-  quickActionsPanel: {
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    padding: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  quickActionsHeader: {
+  bubbleButton: {
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.md,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  bubbleButtonText: {
+    fontSize: fontSize.xs,
+    fontFamily: typography.body.bold,
+  },
+  segmentContainer: {
+    flexDirection: 'row',
+    padding: 4,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.xs,
-  },
-  quickActionsTitle: {
-    fontSize: fontSize.sm,
-    letterSpacing: -0.2,
-  },
-  quickActionItem: {
-    flexDirection: 'row',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    position: 'relative',
+    height: 38,
     alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.md,
   },
-  quickActionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
+  segmentBtn: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs + 1,
+    borderRadius: radius.sm,
+    zIndex: 10,
   },
-  quickActionLabel: { fontSize: fontSize.sm },
-  inputBar: {
+  segmentBtnText: {
+    fontSize: fontSize['2xs'] + 1,
+  },
+  slider: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     gap: spacing.sm,
-    borderTopWidth: 1,
   },
   addBtn: {
     width: 40,

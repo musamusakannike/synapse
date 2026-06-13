@@ -53,6 +53,14 @@ export function formatMarkdown(md: string): string {
     html = processed;
   }
 
+  // Wrap standard markdown tables in responsive containers
+  try {
+    html = html.replaceAll("<table>", '<div class="table-wrapper"><table>')
+               .replaceAll("</table>", "</table></div>");
+  } catch (err) {
+    console.error("Failed to wrap tables:", err);
+  }
+
   // 6. Restore block math with KaTeX
   blockMathBlocks.forEach((math, index) => {
     const placeholder = `MATHBLOCKPLACEHOLDER${index}`;

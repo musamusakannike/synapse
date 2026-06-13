@@ -760,7 +760,8 @@ Instructions:
 export async function generateTutorAnswer(
   question: string,
   userProfile: { style: string; level: string; goals: string },
-  documentContext?: string
+  documentContext?: string,
+  history?: Array<{ role: "user" | "assistant" | "system"; content: string }>
 ): Promise<string> {
   const systemPrompt = `You are Sabi Learn's Elite Academic AI Tutor.
 Provide a highly personalized, clear, and comprehensive explanation to the student's question.
@@ -776,13 +777,25 @@ Formatting Guidelines:
 - Conclude with a helpful quick summary.
 - Respond directly in rich Markdown.`;
 
+  const messages: DeepSeekMessage[] = [
+    { role: "system", content: systemPrompt },
+  ];
+
+  if (history && history.length > 0) {
+    for (const msg of history) {
+      messages.push({
+        role: msg.role === "system" ? "system" : msg.role === "user" ? "user" : "assistant",
+        content: msg.content,
+      });
+    }
+  }
+
   let userContent = question;
   if (documentContext) {
     userContent += `\n\nReference material provided by the student:\n${documentContext}`;
   }
 
-  return await callDeepSeek([
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userContent },
-  ]);
+  messages.push({ role: "user", content: userContent });
+
+  return await callDeepSeek(messages);
 }

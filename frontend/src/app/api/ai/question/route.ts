@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Parse body
-    const { question, documentIds } = await request.json();
+    const { question, documentIds, questionId } = await request.json();
     if ((!question || question.trim() === "") && (!documentIds || documentIds.length === 0)) {
       return NextResponse.json({ error: "Please provide a question or upload a document" }, { status: 400 });
     }
@@ -66,24 +66,79 @@ export async function POST(request: Request) {
 
     // 6. Query DeepSeek API
     const questionText = question?.trim() || "Analyze and explain the key concepts from the uploaded document(s).";
-    const answerMarkdown = await generateTutorAnswer(questionText, userProfile, documentContext);
+
+    // Retrieve previous messages history if questionId is provided
+    let history = [];
+    let existingQuestion = null;
+    if (questionId) {
+      if (ObjectId.isValid(questionId)) {
+        existingQuestion = await db.collection("questions").findOne({
+          _id: new ObjectId(questionId),
+          userId: session.userId,
+        });
+      }
+      if (existingQuestion) {
+        if (existingQuestion.messages && Array.isArray(existingQuestion.messages)) {
+          history = existingQuestion.messages;
+        } else {
+          // Backward compatibility: create initial history messages
+          history = [
+            { role: "user", content: existingQuestion.question, createdAt: existingQuestion.createdAt },
+            { role: "assistant", content: existingQuestion.answer, createdAt: existingQuestion.createdAt }
+          ];
+        }
+      }
+    }
+
+    const answerMarkdown = await generateTutorAnswer(questionText, userProfile, documentContext, history);
 
     // 7. Log Q&A activity in database
-    const result = await db.collection("questions").insertOne({
-      userId: session.userId,
-      question: questionText,
-      documentIds: documentIds || [],
-      answer: answerMarkdown,
-      createdAt: new Date(),
-    });
+    if (questionId && existingQuestion) {
+      const updatedMessages = [
+        ...history,
+        { role: "user", content: questionText, createdAt: new Date() },
+        { role: "assistant", content: answerMarkdown, createdAt: new Date() }
+      ];
+      await db.collection("questions").updateOne(
+        { _id: new ObjectId(questionId), userId: session.userId },
+        {
+          $set: {
+            messages: updatedMessages,
+            answer: answerMarkdown,
+            updatedAt: new Date(),
+          }
+        }
+      );
 
-    return NextResponse.json({
-      success: true,
-      questionId: result.insertedId.toString(),
-      answer: answerMarkdown,
-      generationsToday: usage.generationsToday,
-      limit: usage.limit,
-    });
+      return NextResponse.json({
+        success: true,
+        questionId: questionId,
+        answer: answerMarkdown,
+        generationsToday: usage.generationsToday,
+        limit: usage.limit,
+      });
+    } else {
+      const newMessages = [
+        { role: "user", content: questionText, createdAt: new Date() },
+        { role: "assistant", content: answerMarkdown, createdAt: new Date() }
+      ];
+      const result = await db.collection("questions").insertOne({
+        userId: session.userId,
+        question: questionText,
+        documentIds: documentIds || [],
+        answer: answerMarkdown,
+        messages: newMessages,
+        createdAt: new Date(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        questionId: result.insertedId.toString(),
+        answer: answerMarkdown,
+        generationsToday: usage.generationsToday,
+        limit: usage.limit,
+      });
+    }
   } catch (error: any) {
     if (usageRefundUserId) await refundUsage(usageRefundUserId).catch(() => {});
     console.error("AI Tutor Route Error:", error);

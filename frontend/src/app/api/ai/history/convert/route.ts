@@ -83,8 +83,16 @@ export async function POST(request: Request) {
     };
 
     const topic = questionDoc.question;
-    // Use the answer as document context for better relevance
-    const documentContext = `Based on the following Q&A context:\nQuestion: ${questionDoc.question}\n\nAnswer: ${questionDoc.answer}`;
+    // Use the messages as context for better relevance
+    let documentContext = "";
+    if (questionDoc.messages && Array.isArray(questionDoc.messages)) {
+      documentContext = `Based on the following conversation context:\n` +
+        questionDoc.messages
+          .map((m: any) => `${m.role === "user" ? "User" : "AI"}: ${m.content}`)
+          .join("\n\n");
+    } else {
+      documentContext = `Based on the following Q&A context:\nQuestion: ${questionDoc.question}\n\nAnswer: ${questionDoc.answer}`;
+    }
 
     // Reserve a refund of this generation in case the AI call fails after the increment
     if (!usage.premium) usageRefundUserId = userId;

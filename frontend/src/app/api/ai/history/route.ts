@@ -24,6 +24,22 @@ export async function GET(request: Request) {
 
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (id) {
+      if (!ObjectId.isValid(id)) {
+        return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+      }
+      const question = await db.collection("questions").findOne({
+        _id: new ObjectId(id),
+        userId,
+      });
+      if (!question) {
+        return NextResponse.json({ error: "Question not found" }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, question });
+    }
+
     const search = searchParams.get("search")?.toLowerCase();
     const pinnedOnly = searchParams.get("pinned") === "true";
 

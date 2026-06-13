@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { formatMarkdown } from "@/lib/markdown";
 import { BetaBadge } from "@/components/BetaBadge";
@@ -19,9 +19,13 @@ interface ChatMessage {
   meta?: { id?: string; title?: string };
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const continueId = searchParams.get("continue");
+  const [currentQuestionId, setCurrentQuestionId] = useState<string | null>(null);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [attachedDocs, setAttachedDocs] = useState<UploadedDoc[]>([]);
@@ -63,6 +67,70 @@ export default function DashboardPage() {
         Math.min(textareaRef.current.scrollHeight, 160) + "px";
     }
   }, [input]);
+
+  // Load question if `continue` search param is active
+  useEffect(() => {
+    if (!continueId) {
+      setCurrentQuestionId(null);
+      setMessages([]);
+      setAttachedDocs([]);
+      return;
+    }
+
+    const loadContinuedChat = async () => {
+      setLoading(true);
+      try {
+        // 1. Fetch the question details
+        const questionRes = await fetch(`/api/ai/history?id=${continueId}`);
+        const questionData = await questionRes.json();
+        if (questionData.success && questionData.question) {
+          const qDoc = questionData.question;
+          setCurrentQuestionId(qDoc._id);
+
+          // 2. Fetch user's documents to map meta info if any documentIds are attached
+          let matchedDocs: UploadedDoc[] = [];
+          if (qDoc.documentIds && qDoc.documentIds.length > 0) {
+            const docsRes = await fetch("/api/documents");
+            const docsData = await docsRes.json();
+            if (docsData.success && docsData.documents) {
+              matchedDocs = docsData.documents.filter((d: UploadedDoc) =>
+                qDoc.documentIds.includes(d._id)
+              );
+            }
+          }
+          setAttachedDocs(matchedDocs);
+
+          // 3. Build message list
+          const formattedMessages: ChatMessage[] = qDoc.messages?.map((m: any) => ({
+            id: m.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.createdAt || qDoc.createdAt),
+          })) || [
+            {
+              id: `user-${qDoc._id}`,
+              role: "user",
+              content: qDoc.question,
+              timestamp: new Date(qDoc.createdAt),
+            },
+            {
+              id: `assistant-${qDoc._id}`,
+              role: "assistant",
+              content: qDoc.answer,
+              timestamp: new Date(qDoc.createdAt),
+            }
+          ];
+          setMessages(formattedMessages);
+        }
+      } catch (err) {
+        console.error("Failed to load continued chat:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContinuedChat();
+  }, [continueId]);
 
   const addMessage = useCallback(
     (
@@ -218,13 +286,21 @@ export default function DashboardPage() {
         const res = await fetch("/api/ai/question", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: userInput, documentIds: docIds }),
+          body: JSON.stringify({
+            question: userInput,
+            documentIds: docIds,
+            questionId: currentQuestionId || undefined,
+          }),
         });
         const data = await res.json();
         if (!res.ok) {
           addMessage("assistant", data.error || "Failed to get answer.");
         } else {
           addMessage("assistant", data.answer || "No response received.");
+          if (data.questionId && !currentQuestionId) {
+            setCurrentQuestionId(data.questionId);
+            window.history.replaceState(null, "", `/dashboard?continue=${data.questionId}`);
+          }
         }
       }
     } catch {
@@ -233,7 +309,7 @@ export default function DashboardPage() {
       setLoading(false);
       setActiveMode(null);
     }
-  }, [canSubmit, input, attachedDocs, activeMode, addMessage]);
+  }, [canSubmit, input, attachedDocs, activeMode, addMessage, currentQuestionId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -241,8 +317,6 @@ export default function DashboardPage() {
       handleSend();
     }
   };
-
-
 
   const modeLabels: Record<string, string> = {
     course: "Course Mode",
@@ -254,13 +328,33 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="hidden md:block flex-shrink-0 px-4 sm:px-6 md:px-8 py-4 border-b border-[var(--border-subtle)]">
-        <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">
-          Welcome back, {user?.name?.split(" ")[0]}
-        </h1>
-        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-          Ask anything, create courses, quizzes, or videos — all from here.
-        </p>
+      <div className="flex-shrink-0 pl-4 pr-16 sm:pl-6 sm:pr-16 md:px-8 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg-primary)] flex items-center justify-between">
+        <div>
+          <h1 className="font-[family-name:var(--font-display)] text-lg sm:text-xl font-bold">
+            {currentQuestionId ? "Continuing Chat Thread" : `Welcome back, ${user?.name?.split(" ")[0]}`}
+          </h1>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5 hidden lg:block">
+            {currentQuestionId
+              ? "You are continuing a past Q&A session. Ask follow-up questions below."
+              : "Ask anything, create courses, quizzes, or videos — all from here."}
+          </p>
+        </div>
+        {currentQuestionId && (
+          <button
+            onClick={() => {
+              router.push("/dashboard");
+              setCurrentQuestionId(null);
+              setMessages([]);
+              setAttachedDocs([]);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            New Chat
+          </button>
+        )}
       </div>
 
       {/* Chat area */}
@@ -284,10 +378,6 @@ export default function DashboardPage() {
             <h2 className="font-[family-name:var(--font-display)] text-base font-semibold mb-1.5">
               How can I help you learn today?
             </h2>
-            <p className="text-sm text-[var(--text-muted)] max-w-md">
-              Type a question, create a course, generate a quiz, or attach a document.
-              Use the <span className="font-semibold text-[var(--text-secondary)]">+</span> button to explore options.
-            </p>
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -539,16 +629,6 @@ export default function DashboardPage() {
               const itemActive =
                 (activeMode === null && modeItem.id === "ask") ||
                 activeMode === modeItem.id;
-              const activeIndex =
-                activeMode === null
-                  ? 0
-                  : activeMode === "ask"
-                  ? 0
-                  : activeMode === "course"
-                  ? 1
-                  : activeMode === "quiz"
-                  ? 2
-                  : 3;
               return (
                 <button
                   key={modeItem.id}
@@ -582,15 +662,17 @@ export default function DashboardPage() {
           </div>
 
           {/* Contextual Mode Subtitle Description */}
-          <p className="text-[10px] text-[var(--text-muted)] mb-3 px-1.5 transition-all duration-300">
-            {activeMode === "course"
-              ? "Course Mode: Generates a full structured learning course based on your topic or files."
-              : activeMode === "quiz"
-              ? "Quiz Mode: Creates practice quizzes (multiple choice, T/F) to test your recall."
-              : activeMode === "video"
-              ? "Video Mode (Beta): Transforms concepts into voiceover slides. Best for visual learners."
-              : "Ask AI: Clarify concepts, ask academic questions, or search summaries."}
-          </p>
+          {messages.length === 0 && (
+            <p className="text-[10px] text-[var(--text-muted)] mb-3 px-1.5 transition-all duration-300">
+              {activeMode === "course"
+                ? "Course Mode: Generates a full structured learning course based on your topic or files."
+                : activeMode === "quiz"
+                ? "Quiz Mode: Creates practice quizzes (multiple choice, T/F) to test your recall."
+                : activeMode === "video"
+                ? "Video Mode (Beta): Transforms concepts into voiceover slides. Best for visual learners."
+                : "Ask AI: Clarify concepts, ask academic questions, or search summaries."}
+            </p>
+          )}
 
           {/* Attached docs */}
           {attachedDocs.length > 0 && (
@@ -705,5 +787,19 @@ export default function DashboardPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 flex items-center justify-center h-full min-h-[50vh]">
+          <div className="w-6 h-6 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

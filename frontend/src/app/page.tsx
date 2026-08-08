@@ -32,7 +32,7 @@ export default function LandingPage() {
       <Navbar links={navLinks} />
 
       <section className="relative px-6 sm:px-8 py-20 sm:py-28 overflow-hidden">
-        <div className="max-w-[var(--container-max)] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-[var(--container-max)] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
           <div>
             <span className="inline-block px-3 py-1 rounded-[var(--radius-full)] bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-xs font-semibold uppercase tracking-wide mb-5">
               For every Nigerian learner
@@ -48,7 +48,7 @@ export default function LandingPage() {
               <Link href="/dashboard/courses"><Button size="lg" variant="secondary">Browse courses</Button></Link>
             </div>
           </div>
-          <div className="relative rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-xl)] aspect-[4/3]">
+          <div className="relative rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-xl)] h-full min-h-[350px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/students-stairs.jpg" alt="Students studying together" className="w-full h-full object-cover" />
           </div>

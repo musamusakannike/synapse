@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import api, { authApi, userApi } from '@/lib/api';
 import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithRedirect, getRedirectResult, UserCredential } from 'firebase/auth';
 import { User, IUserSettings } from '@/lib/types';
 
 interface AuthState {
@@ -13,7 +13,8 @@ interface AuthState {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: { firstName: string; lastName: string; email: string; password: string; level: string }) => Promise<{ success: boolean; error?: string }>;
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: () => Promise<void>;
+  completeGoogleRedirect: () => Promise<{ success: boolean; error?: string } | null>;
   logout: () => void;
   fetchMe: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
@@ -55,8 +56,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   loginWithGoogle: async () => {
+    await signInWithRedirect(auth, googleProvider);
+  },
+
+  completeGoogleRedirect: async () => {
+    let result: UserCredential | null;
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      result = await getRedirectResult(auth);
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Google sign-in failed. Please try again.';
+      return { success: false, error: message };
+    }
+    if (!result) return null;
+    try {
       const idToken = await result.user.getIdToken();
       const res = await authApi.google(idToken);
       const { token, user } = res.data;
@@ -65,9 +77,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ user, token, isAuthenticated: true });
       return { success: true };
     } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        return { success: false, error: 'Sign-in popup was closed before completing.' };
-      }
       const message = error.response?.data?.message || 'Google sign-in failed. Please try again.';
       return { success: false, error: message };
     }

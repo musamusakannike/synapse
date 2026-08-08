@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
@@ -23,19 +24,29 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const { register, loginWithGoogle } = useAuthStore();
+  const { register, loginWithGoogle, completeGoogleRedirect } = useAuthStore();
+
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const result = await completeGoogleRedirect();
+      if (result) {
+        if (result.success) {
+          setSuccess(true);
+          setTimeout(() => router.push('/dashboard'), 800);
+        } else {
+          setError(result.error || 'Google sign-up failed.');
+        }
+      }
+      setIsLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGoogleLogin = async () => {
     setError('');
     setIsLoading(true);
-    const result = await loginWithGoogle();
-    if (result.success) {
-      setSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 800);
-    } else {
-      setError(result.error || 'Google sign-up failed.');
-    }
-    setIsLoading(false);
+    await loginWithGoogle();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,7 +77,8 @@ export default function RegisterPage() {
         disabled={isLoading}
         className="mt-6 w-full flex items-center justify-center gap-3 rounded-[var(--radius-full)] border border-[var(--line)] bg-[var(--surface-card)] py-3 px-4 text-sm font-semibold text-[var(--ink-900)] hover:border-[var(--line-strong)] disabled:opacity-60"
       >
-        Continue with Google
+        <Image src="/google.png" alt="Google logo" width={20} height={20} className="h-5 w-5 shrink-0" />
+        <span>Continue with Google</span>
       </button>
 
       <div className="my-6 flex items-center gap-4">

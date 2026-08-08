@@ -32,6 +32,10 @@ h6 {
   letter-spacing: var(--tracking-tight);
 }
 
+button {
+  cursor: pointer;
+}
+
 ::selection {
   background: var(--brand-gold-100);
 }

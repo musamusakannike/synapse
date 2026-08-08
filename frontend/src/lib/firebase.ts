@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from 'firebase/auth';
 
 // Placeholder values keep `initializeApp`/`getAuth` from throwing during build or
 // local dev when NEXT_PUBLIC_FIREBASE_* env vars aren't set yet. Google sign-in will
@@ -17,3 +17,8 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// Default indexedDBLocalPersistence intermittently throws "Database is
+// closing/hidden" when the sign-in popup steals focus from the main tab
+// (firebase-js-sdk#7013). localStorage-backed persistence avoids that.
+setPersistence(auth, browserLocalPersistence);

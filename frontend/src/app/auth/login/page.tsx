@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -20,29 +20,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const { login, loginWithGoogle, completeGoogleRedirect } = useAuthStore();
-
-  useEffect(() => {
-    (async () => {
-      setIsLoading(true);
-      const result = await completeGoogleRedirect();
-      if (result) {
-        if (result.success) {
-          setSuccess(true);
-          setTimeout(() => router.push('/dashboard'), 800);
-        } else {
-          setError(result.error || 'Google login failed.');
-        }
-      }
-      setIsLoading(false);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { login, loginWithGoogle } = useAuthStore();
 
   const handleGoogleLogin = async () => {
     setError('');
     setIsLoading(true);
-    await loginWithGoogle();
+    const result = await loginWithGoogle();
+    if (result.success) {
+      setSuccess(true);
+      setTimeout(() => router.push('/dashboard'), 800);
+    } else {
+      setError(result.error || 'Google login failed.');
+    }
+    setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

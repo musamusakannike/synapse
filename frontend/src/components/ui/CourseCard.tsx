@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Badge from './Badge';
+import { formatKobo } from '@/lib/money';
 
 interface CourseCardProps {
   id: string;
@@ -9,6 +10,7 @@ interface CourseCardProps {
   title: string;
   category?: string;
   free?: boolean;
+  /** Price in kobo (NGN smallest unit). */
   price?: number;
   progress?: number;
   topicCount?: number;
@@ -46,7 +48,7 @@ export default function CourseCard({ id, image, level = 'Beginner', title, categ
         ) : (
           <div className="flex justify-between items-center mt-2">
             <span className="font-[var(--font-display)] font-bold text-[var(--ink-900)]">
-              {free ? 'Free' : `₦${price?.toLocaleString?.() ?? price}`}
+              {free ? 'Free' : formatKobo(price ?? 0)}
             </span>
             {typeof topicCount === 'number' && <span className="text-xs text-[var(--text-muted)]">{topicCount} topics</span>}
           </div>

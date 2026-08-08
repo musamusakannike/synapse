@@ -94,6 +94,13 @@ export const progressApi = {
     api.post('/progress/mcq-session', data),
 };
 
+export const paymentApi = {
+  initializeCoursePurchase: (courseId: string) => api.post(`/payments/courses/${courseId}/initialize`),
+  initializeSubscription: () => api.post('/payments/subscription/initialize'),
+  verify: (reference: string) => api.get(`/payments/verify/${reference}`),
+  me: () => api.get('/payments/me'),
+};
+
 export const userApi = {
   profile: () => api.get('/users/me'),
   updateProfile: (data: Record<string, unknown>) => api.put('/users/me', data),

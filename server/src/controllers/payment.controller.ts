@@ -12,6 +12,14 @@ import {
 
 const generateReference = (prefix: string) => `${prefix}_${crypto.randomBytes(12).toString('hex')}`;
 
+/** Web sends its own callback route; mobile (deep link) will override via req.body.callbackUrl. */
+const resolveCallbackUrl = (req: AuthenticatedRequest): string | undefined => {
+  const override = req.body?.callbackUrl;
+  if (typeof override === 'string' && override.length > 0) return override;
+  const base = process.env.CLIENT_URL;
+  return base ? `${base}/dashboard/checkout/callback` : undefined;
+};
+
 export const initializeCoursePurchase = async (
   req: AuthenticatedRequest,
   res: Response,
@@ -58,6 +66,7 @@ export const initializeCoursePurchase = async (
       email: user.email,
       amount: course.price,
       reference,
+      callback_url: resolveCallbackUrl(req),
       metadata: {
         userId: String(user._id),
         courseId: String(course._id),
@@ -114,6 +123,7 @@ export const initializeSubscription = async (
       amount,
       reference,
       plan: planCode,
+      callback_url: resolveCallbackUrl(req),
       metadata: {
         userId: String(user._id),
         type: 'subscription',

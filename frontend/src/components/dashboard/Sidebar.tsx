@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2 } from 'lucide-react';
+import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/dashboard/courses', label: 'Courses', icon: BookOpen },
   { href: '/dashboard/playground', label: 'Playground', icon: Code2 },
   { href: '/dashboard/progress', label: 'Progress', icon: TrendingUp },
+  { href: '/dashboard/subscribe', label: 'Subscription', icon: Sparkles },
   { href: '/dashboard/profile', label: 'Profile', icon: User },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },

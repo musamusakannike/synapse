@@ -2,28 +2,38 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { Check, BookOpen, ArrowLeft, CreditCard, HelpCircle, ChevronRight } from 'lucide-react';
-import { courseApi, topicApi } from '@/lib/api';
-import { Course, Topic } from '@/lib/types';
+import { useParams, useRouter } from 'next/navigation';
+import { Check, BookOpen, ArrowLeft, CreditCard, HelpCircle, ChevronRight, Lock, Sparkles } from 'lucide-react';
+import { courseApi, topicApi, paymentApi } from '@/lib/api';
+import { Course, Topic, PaymentStatus } from '@/lib/types';
+import { formatKobo } from '@/lib/money';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 
 export default function CourseDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [course, setCourse] = useState<Course | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [courseRes, topicsRes] = await Promise.all([courseApi.get(id), topicApi.byCourse(id)]);
+        const [courseRes, topicsRes, paymentRes] = await Promise.all([
+          courseApi.get(id),
+          topicApi.byCourse(id),
+          paymentApi.me(),
+        ]);
         setCourse(courseRes.data.data);
         setTopics(topicsRes.data.data || []);
+        setPaymentStatus(paymentRes.data.data);
       } catch (e) {
         console.error(e);
       } finally {
@@ -31,6 +41,31 @@ export default function CourseDetailsPage() {
       }
     })();
   }, [id]);
+
+  const hasAccess =
+    !course ||
+    course.isFree ||
+    paymentStatus?.subscription.status === 'active' ||
+    !!paymentStatus?.purchasedCourseIds.includes(course._id);
+
+  const handleBuyCourse = async () => {
+    if (!course) return;
+    setIsPurchasing(true);
+    try {
+      const res = await paymentApi.initializeCoursePurchase(course._id);
+      window.location.href = res.data.data.authorizationUrl;
+    } catch (e) {
+      console.error(e);
+      setIsPurchasing(false);
+    }
+  };
+
+  const handleTopicClick = (e: React.MouseEvent) => {
+    if (hasAccess) return;
+    // Locked topics don't navigate — the purchase/subscribe card above is the call to action.
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (isLoading) {
     return (
@@ -72,10 +107,37 @@ export default function CourseDetailsPage() {
         <div className="flex items-center gap-3 mb-3">
           <Badge tone="neutral">{course.category}</Badge>
           <Badge tone="gold">{course.difficulty}</Badge>
+          {!course.isFree && <Badge tone={hasAccess ? 'success' : 'dark'}>{hasAccess ? 'Unlocked' : formatKobo(course.price)}</Badge>}
         </div>
         <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-3">{course.title}</h1>
         <p className="text-[var(--text-muted)] leading-[var(--leading-relaxed)]">{course.longDescription || course.description}</p>
       </div>
+
+      {!hasAccess && (
+        <Card className="p-5 border border-[var(--brand-gold-100)] bg-[var(--brand-gold-50,var(--surface-sunken))]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[var(--brand-gold-100)] flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5 text-[var(--brand-gold-600)]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--ink-900)]">This is a premium course</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                  Buy it once for {formatKobo(course.price)}, or get it (and everything else) with a monthly subscription.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="secondary" size="sm" onClick={() => router.push('/dashboard/subscribe')}>
+                <Sparkles className="w-4 h-4" /> Go all-access
+              </Button>
+              <Button size="sm" onClick={handleBuyCourse} loading={isPurchasing}>
+                Buy for {formatKobo(course.price)}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <div className="flex flex-wrap items-center gap-6 py-4 border-y border-[var(--line)]">
         <div className="flex items-center gap-2 text-[var(--ink-900)]">
@@ -115,7 +177,11 @@ export default function CourseDetailsPage() {
         ) : (
           <div className="gap-y-2 flex flex-col">
             {topics.map((topic, i) => (
-              <Link key={topic._id} href={`/dashboard/courses/${course._id}/topics/${topic._id}`}>
+              <Link
+                key={topic._id}
+                href={`/dashboard/courses/${course._id}/topics/${topic._id}`}
+                onClick={handleTopicClick}
+              >
                 <Card className="p-4 hover:shadow-[var(--shadow-sm)] transition-shadow cursor-pointer">
                   <div className="flex items-center gap-4">
                     <span className="w-8 h-8 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-sm font-semibold flex items-center justify-center shrink-0">
@@ -132,7 +198,11 @@ export default function CourseDetailsPage() {
                         {!!topic.mcqCount && <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" /> {topic.mcqCount}</span>}
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-[var(--ink-300)] shrink-0" />
+                    {hasAccess ? (
+                      <ChevronRight className="w-5 h-5 text-[var(--ink-300)] shrink-0" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-[var(--ink-300)] shrink-0" />
+                    )}
                   </div>
                 </Card>
               </Link>

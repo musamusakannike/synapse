@@ -11,7 +11,7 @@
       "policy": "appVersion"
     },
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.codiac.sabilearn",
       "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
@@ -26,9 +26,9 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#F5F3EE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/icon-android.png",
+        "backgroundImage": "./assets/images/icon-android.png",
+        "monochromeImage": "./assets/images/icon-android.png"
       },
       "predictiveBackGestureEnabled": false
     },

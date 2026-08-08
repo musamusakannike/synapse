@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight } from '@tabler/icons-react-native';
-import { courseApi, topicApi } from '@/lib/api';
-import { Course, Topic } from '@/lib/types';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight, IconLock, IconSparkles } from '@tabler/icons-react-native';
+import { courseApi, topicApi, paymentApi } from '@/lib/api';
+import { Course, Topic, PaymentStatus } from '@/lib/types';
+import { formatKobo } from '@/lib/money';
 import { cacheFlashcards } from '@/lib/offlineSync';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
@@ -19,14 +20,20 @@ export default function CourseDetailScreen() {
   const { colors } = useTheme();
   const [course, setCourse] = useState<Course | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const [courseRes, topicsRes] = await Promise.all([courseApi.get(id), topicApi.byCourse(id)]);
+      const [courseRes, topicsRes, paymentRes] = await Promise.all([
+        courseApi.get(id),
+        topicApi.byCourse(id),
+        paymentApi.me(),
+      ]);
       setCourse(courseRes.data.data);
       setTopics(topicsRes.data.data);
+      setPaymentStatus(paymentRes.data.data);
     } catch {
       // silently fail
     } finally {
@@ -38,8 +45,18 @@ export default function CourseDetailScreen() {
     load();
   }, [load]);
 
+  // Re-check on return from the checkout modal so an unlocked course reflects immediately.
+  useFocusEffect(
+    useCallback(() => {
+      paymentApi.me().then((res) => setPaymentStatus(res.data.data)).catch(() => {});
+    }, [])
+  );
+
   if (isLoading) return <LoadingSpinner />;
   if (!course) return <EmptyState title="Course not found" />;
+
+  const hasAccess =
+    course.isFree || paymentStatus?.subscription.status === 'active' || !!paymentStatus?.purchasedCourseIds.includes(course._id);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
@@ -56,10 +73,45 @@ export default function CourseDetailScreen() {
         </View>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{course.longDescription || course.description}</Text>
 
+        {!course.isFree && !hasAccess && (
+          <Card style={{ backgroundColor: colors.brandPrimarySoft }}>
+            <View style={styles.lockRow}>
+              <View style={[styles.lockIcon, { backgroundColor: colors.surfaceCard }]}>
+                <IconLock size={18} color={colors.brandPrimaryHover} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.lockTitle, { color: colors.textPrimary }]}>Premium course</Text>
+                <Text style={[styles.lockMessage, { color: colors.textSecondary }]}>
+                  Buy it once for {formatKobo(course.price)}, or get all-access with a monthly subscription.
+                </Text>
+              </View>
+            </View>
+            <View style={styles.lockActions}>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<IconSparkles size={16} color={colors.textPrimary} />}
+                onPress={() => { haptics.light(); router.push('/subscribe' as any); }}
+                style={{ flex: 1 }}
+              >
+                Go all-access
+              </Button>
+              <Button
+                size="sm"
+                onPress={() => { haptics.light(); router.push({ pathname: '/checkout', params: { type: 'course', courseId: course._id } } as any); }}
+                style={{ flex: 1 }}
+              >
+                Buy for {formatKobo(course.price)}
+              </Button>
+            </View>
+          </Card>
+        )}
+
         <View style={styles.actionsRow}>
           <Button
             variant="secondary"
             icon={<IconCards size={16} color={colors.textPrimary} />}
+            disabled={!hasAccess}
             onPress={() => { haptics.light(); router.push(`/course/${id}/flashcards` as any); }}
             style={{ flex: 1 }}
           >
@@ -68,6 +120,7 @@ export default function CourseDetailScreen() {
           <Button
             variant="secondary"
             icon={<IconHelpCircle size={16} color={colors.textPrimary} />}
+            disabled={!hasAccess}
             onPress={() => { haptics.light(); router.push(`/course/${id}/mcq` as any); }}
             style={{ flex: 1 }}
           >
@@ -93,7 +146,11 @@ export default function CourseDetailScreen() {
               {topics.map((topic, i) => (
                 <Card
                   key={topic._id}
-                  onPress={() => { haptics.light(); router.push(`/course/${id}/topic/${topic._id}` as any); }}
+                  onPress={() => {
+                    if (!hasAccess) return;
+                    haptics.light();
+                    router.push(`/course/${id}/topic/${topic._id}` as any);
+                  }}
                 >
                   <View style={styles.topicRow}>
                     <View style={[styles.topicIndex, { backgroundColor: colors.surfaceSunken }]}>
@@ -105,7 +162,11 @@ export default function CourseDetailScreen() {
                         {topic.flashcardCount ?? 0} flashcards {'·'} {topic.mcqCount ?? 0} MCQs
                       </Text>
                     </View>
-                    <IconChevronRight size={16} color={colors.textTertiary} />
+                    {hasAccess ? (
+                      <IconChevronRight size={16} color={colors.textTertiary} />
+                    ) : (
+                      <IconLock size={16} color={colors.textTertiary} />
+                    )}
                   </View>
                 </Card>
               ))}
@@ -134,4 +195,9 @@ const styles = StyleSheet.create({
   topicIndexText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansSemiBold },
   topicTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansMedium },
   topicMeta: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, marginTop: 2 },
+  lockRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  lockIcon: { width: 32, height: 32, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
+  lockTitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansSemiBold },
+  lockMessage: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, marginTop: 2, lineHeight: fontSizes.xs * 1.5 },
+  lockActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
 });

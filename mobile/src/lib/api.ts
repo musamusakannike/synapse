@@ -101,3 +101,16 @@ export const notificationApi = {
 export const searchApi = {
   global: (q: string) => api.get('/search', { params: { q } }),
 };
+
+// The app's `scheme` (app.json) is `sabilearn`, so Paystack's checkout WebView
+// redirects here once payment completes; the checkout screen watches for it.
+export const PAYMENT_CALLBACK_URL = 'sabilearn://payment-callback';
+
+export const paymentApi = {
+  initializeCoursePurchase: (courseId: string) =>
+    api.post(`/payments/courses/${courseId}/initialize`, { callbackUrl: PAYMENT_CALLBACK_URL }),
+  initializeSubscription: () =>
+    api.post('/payments/subscription/initialize', { callbackUrl: PAYMENT_CALLBACK_URL }),
+  verify: (reference: string) => api.get(`/payments/verify/${reference}`),
+  me: () => api.get('/payments/me'),
+};

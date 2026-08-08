@@ -85,9 +85,35 @@ export interface Course {
   whatYouWillLearn: string[];
   isPublished: boolean;
   order: number;
+  isFree: boolean;
+  /** Price in kobo (NGN smallest unit). Ignored when isFree is true. */
+  price: number;
   topicCount?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'none';
+
+export interface PaymentStatus {
+  subscription: {
+    status: SubscriptionStatus;
+    currentPeriodEnd?: string;
+  };
+  purchasedCourseIds: string[];
+}
+
+export interface CheckoutInitResponse {
+  authorizationUrl: string;
+  accessCode: string;
+  reference: string;
+}
+
+export type TransactionStatus = 'pending' | 'success' | 'failed';
+
+export interface VerifyResponse {
+  status: TransactionStatus;
+  type: 'course_purchase' | 'subscription';
 }
 
 export interface Flashcard {

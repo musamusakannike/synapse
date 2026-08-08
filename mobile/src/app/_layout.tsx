@@ -119,6 +119,8 @@ function AppContent() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="checkout" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="subscribe" options={{ presentation: 'modal' }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

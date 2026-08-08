@@ -74,6 +74,7 @@
     },
     "extra": {
       "apiUrl": "https://sabilearn.onrender.com/api/v1",
+      "subscriptionPriceKobo": 250000,
       "router": {},
       "eas": {
         "projectId": "424de974-a590-4b82-90c4-c390a80163c1"

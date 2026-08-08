@@ -20,10 +20,10 @@ export default function CourseCard({ id, image, level = 'Beginner', title, categ
       href={`/dashboard/courses/${id}`}
       className="flex flex-col rounded-[var(--radius-2xl)] bg-[var(--surface-card)] overflow-hidden shadow-[var(--shadow-sm)] font-[var(--font-body)] transition-shadow duration-[var(--duration-normal)] hover:shadow-[var(--shadow-md)]"
     >
-      <div className="relative w-full aspect-[4/3] bg-[var(--surface-sunken)] overflow-hidden">
+      <div className="relative w-full aspect-[16/9] bg-[var(--surface-sunken)] overflow-hidden flex items-center justify-center">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={title} className="w-full h-full object-cover" />
+          <img src={image} alt={title} className="w-full h-full object-contain" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[var(--ink-300)] font-[var(--font-display)] text-2xl font-bold">
             {title.charAt(0)}

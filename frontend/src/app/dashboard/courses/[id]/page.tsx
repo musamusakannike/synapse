@@ -58,10 +58,12 @@ export default function CourseDetailsPage() {
       </Link>
 
       {course.banner ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={course.banner} alt={course.title} className="w-full h-48 md:h-64 object-cover rounded-[var(--radius-xl)]" />
+        <div className="relative w-full aspect-[16/9] bg-[var(--surface-sunken)] rounded-[var(--radius-xl)] overflow-hidden flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={course.banner} alt={course.title} className="w-full h-full object-contain" />
+        </div>
       ) : (
-        <div className="h-48 md:h-64 bg-[var(--brand-gold-100)] rounded-[var(--radius-xl)] flex items-center justify-center">
+        <div className="w-full aspect-[16/9] bg-[var(--brand-gold-100)] rounded-[var(--radius-xl)] flex items-center justify-center">
           <BookOpen className="w-16 h-16 text-[var(--brand-gold-600)]/50" />
         </div>
       )}
@@ -111,7 +113,7 @@ export default function CourseDetailsPage() {
         {topics.length === 0 ? (
           <EmptyState icon={<BookOpen className="w-12 h-12" />} title="No topics yet" description="Topics for this course will appear here once published." />
         ) : (
-          <div className="space-y-2">
+          <div className="gap-y-2 flex flex-col">
             {topics.map((topic, i) => (
               <Link key={topic._id} href={`/dashboard/courses/${course._id}/topics/${topic._id}`}>
                 <Card className="p-4 hover:shadow-[var(--shadow-sm)] transition-shadow cursor-pointer">

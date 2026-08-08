@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Exercise Runner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/idea.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --ink-900:#0E0E1A;--ink-500:#6B6B80;--ink-300:#A9A9BC;
+    --surface-page:#F5F3EE;--surface-card:#FFFFFF;
+    --line:#DEDAD0;--line-strong:#C7C2B6;
+    --brand-gold:#F2A900;--brand-gold-600:#D89400;
+    --danger:#E5484D;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-mono:'Space Mono','Space Grotesk',monospace;
+    --radius-sm:8px;--radius-md:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--surface-page);color:var(--ink-900);
+    font-family:var(--font-display);display:flex;flex-direction:column;overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  .editor-wrap{flex:1 1 55%;min-height:0;overflow:hidden;border-bottom:1px solid var(--line);}
+  .CodeMirror{height:100%;font-family:var(--font-mono);font-size:14px;line-height:1.55;}
+  .cm-s-idea{background:var(--surface-card);}
+
+  .toolbar{
+    display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-card);
+    border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .btn{
+    appearance:none;border:none;cursor:pointer;font-family:var(--font-display);font-weight:600;
+    font-size:13px;padding:8px 16px;border-radius:var(--radius-sm);
+    display:inline-flex;align-items:center;gap:6px;background:var(--brand-gold);color:var(--ink-900);
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .status{font-size:12px;color:var(--ink-500);}
+
+  .console-wrap{flex:1 1 45%;min-height:0;position:relative;background:var(--ink-900);}
+  .console{
+    height:100%;overflow:auto;color:#EDEDF5;
+    font-family:var(--font-mono);font-size:13px;line-height:1.6;padding:14px;white-space:pre-wrap;word-break:break-word;
+  }
+  .console .line-err{color:#FF8A8F;}
+  .console .line-muted{color:#8B8BA0;}
+  .console:empty::before{content:'Output will appear here once you run your code.';color:#8B8BA0;}
+
+  .loading-overlay{
+    position:absolute;inset:0;background:rgba(14,14,26,.92);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;font-size:13px;color:#EDEDF5;
+  }
+  .spinner{
+    width:22px;height:22px;border-radius:50%;border:2.5px solid #35354A;
+    border-top-color:var(--brand-gold);animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="btn" id="runBtn">Run</button>
+  <span class="status" id="statusText">Ready</span>
+</div>
+
+<div class="editor-wrap"><textarea id="editor"></textarea></div>
+
+<div class="console-wrap">
+  <div class="console" id="console"></div>
+  <div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div>Loading Python runtime…</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script>
+(function(){
+  var editor = null;
+  var pyodide = null;
+  var pyodideLoading = null;
+
+  var els = {
+    console: document.getElementById('console'),
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    statusText: document.getElementById('statusText'),
+    runBtn: document.getElementById('runBtn'),
+  };
+
+  editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+    mode: 'python',
+    theme: 'idea',
+    lineNumbers: true,
+    lineWrapping: true,
+    indentUnit: 4,
+    tabSize: 4,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    extraKeys: {
+      'Ctrl-Enter': runPython,
+      'Cmd-Enter': runPython,
+    }
+  });
+
+  function appendConsole(text, cls){
+    var span = document.createElement('div');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    els.console.appendChild(span);
+    els.console.scrollTop = els.console.scrollHeight;
+  }
+
+  function ensurePyodide(){
+    if (pyodide) return Promise.resolve(pyodide);
+    if (pyodideLoading) return pyodideLoading;
+
+    els.loadingOverlay.classList.remove('hidden');
+    els.statusText.textContent = 'Loading Python…';
+
+    pyodideLoading = new Promise(function(resolve, reject){
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js';
+      script.onload = function(){
+        loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/' })
+          .then(function(inst){
+            pyodide = inst;
+            pyodide.setStdout({ batched: function(s){ appendConsole(s); } });
+            pyodide.setStderr({ batched: function(s){ appendConsole(s, 'line-err'); } });
+            els.loadingOverlay.classList.add('hidden');
+            resolve(pyodide);
+          })
+          .catch(reject);
+      };
+      script.onerror = function(){ reject(new Error('Could not load the Python runtime. Check your connection and try again.')); };
+      document.body.appendChild(script);
+    });
+
+    return pyodideLoading;
+  }
+
+  function postToParent(message){
+    (window.parent || window).postMessage(message, '*');
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(message));
+    }
+  }
+
+  function runPython(){
+    els.console.innerHTML = '';
+    appendConsole('Running…', 'line-muted');
+    els.statusText.textContent = 'Running…';
+    els.runBtn.disabled = true;
+
+    var stdout = '';
+    var stderr = '';
+
+    ensurePyodide()
+      .then(function(py){
+        els.console.innerHTML = '';
+        py.setStdout({ batched: function(s){ stdout += s + '\n'; appendConsole(s); } });
+        py.setStderr({ batched: function(s){ stderr += s + '\n'; appendConsole(s, 'line-err'); } });
+        return py.runPythonAsync(editor.getValue());
+      })
+      .then(function(){
+        els.statusText.textContent = 'Finished';
+        postToParent({ type: 'result', stdout: stdout, stderr: stderr, ok: true });
+      })
+      .catch(function(err){
+        var msg = String(err && err.message ? err.message : err);
+        appendConsole(msg, 'line-err');
+        stderr += msg + '\n';
+        els.statusText.textContent = 'Error';
+        postToParent({ type: 'result', stdout: stdout, stderr: stderr, ok: false });
+      })
+      .finally(function(){
+        els.runBtn.disabled = false;
+        els.loadingOverlay.classList.add('hidden');
+      });
+  }
+
+  els.runBtn.addEventListener('click', runPython);
+
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runPython(); }
+  });
+
+  function handleIncoming(event){
+    var data = event.data;
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch (e) { return; }
+    }
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'init') {
+      editor.setValue(data.code || '');
+      editor.clearHistory();
+      postToParent({ type: 'ready' });
+    } else if (data.type === 'run') {
+      runPython();
+    }
+  }
+
+  window.addEventListener('message', handleIncoming);
+  document.addEventListener('message', handleIncoming);
+
+  postToParent({ type: 'ready' });
+})();
+</script>
+</body>
+</html>

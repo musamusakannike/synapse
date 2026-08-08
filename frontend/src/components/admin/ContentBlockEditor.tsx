@@ -18,13 +18,13 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, Plus, Type, Sigma, Video, Music, Play, Image as ImageIcon, Code2 } from 'lucide-react';
+import { GripVertical, Trash2, Plus, Type, Sigma, Video, Music, Play, Image as ImageIcon, Code2, HelpCircle, Terminal } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MediaUploader from '@/components/admin/MediaUploader';
-import { TopicContent, TopicContentType } from '@/lib/types';
+import { TopicContent, TopicContentType, TopicQuizOption } from '@/lib/types';
 
 const CONTENT_TYPES: { type: TopicContentType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { type: 'text', label: 'Text', icon: Type },
@@ -34,6 +34,8 @@ const CONTENT_TYPES: { type: TopicContentType; label: string; icon: React.Compon
   { type: 'image', label: 'Image', icon: ImageIcon },
   { type: 'video', label: 'Video', icon: Video },
   { type: 'audio', label: 'Audio', icon: Music },
+  { type: 'quiz', label: 'Quiz', icon: HelpCircle },
+  { type: 'exercise', label: 'Exercise', icon: Terminal },
 ];
 
 const ICON_MAP: Record<TopicContentType, React.ComponentType<{ className?: string }>> = {
@@ -44,19 +46,132 @@ const ICON_MAP: Record<TopicContentType, React.ComponentType<{ className?: strin
   image: ImageIcon,
   video: Video,
   audio: Music,
+  quiz: HelpCircle,
+  exercise: Terminal,
 };
 
 const CODE_LANGUAGES = ['python', 'javascript', 'typescript', 'java', 'c', 'cpp', 'sql', 'bash', 'other'];
+const EXERCISE_LANGUAGES = ['python', 'javascript', 'typescript', 'java', 'c', 'cpp', 'sql', 'bash', 'other'];
+
+function QuizBlockEditor({ block, onQuizChange }: { block: TopicContent; onQuizChange: (quiz: NonNullable<TopicContent['quiz']>) => void }) {
+  const quiz = block.quiz || { question: '', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }], explanation: '' };
+
+  const updateOption = (i: number, patch: Partial<TopicQuizOption>) => {
+    onQuizChange({ ...quiz, options: quiz.options.map((o, oi) => (oi === i ? { ...o, ...patch } : o)) });
+  };
+
+  const addOption = () => {
+    if (quiz.options.length >= 6) return;
+    onQuizChange({ ...quiz, options: [...quiz.options, { text: '', isCorrect: false }] });
+  };
+
+  const removeOption = (i: number) => {
+    if (quiz.options.length <= 2) return;
+    onQuizChange({ ...quiz, options: quiz.options.filter((_, oi) => oi !== i) });
+  };
+
+  return (
+    <div className="space-y-3">
+      <textarea
+        value={quiz.question}
+        onChange={(e) => onQuizChange({ ...quiz, question: e.target.value })}
+        placeholder="Question"
+        rows={2}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+      />
+      <div className="space-y-2">
+        {quiz.options.map((opt, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={opt.isCorrect}
+              onChange={() => onQuizChange({ ...quiz, options: quiz.options.map((o, oi) => ({ ...o, isCorrect: oi === i })) })}
+              aria-label="Correct answer"
+            />
+            <input
+              type="text"
+              value={opt.text}
+              onChange={(e) => updateOption(i, { text: e.target.value })}
+              placeholder={`Option ${i + 1}`}
+              className="flex-1 px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors"
+            />
+            <button onClick={() => removeOption(i)} disabled={quiz.options.length <= 2} className="text-[var(--ink-300)] hover:text-[var(--danger)] disabled:opacity-30 cursor-pointer" aria-label="Remove option">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+        <button onClick={addOption} disabled={quiz.options.length >= 6} className="text-sm text-[var(--brand-gold-600)] hover:opacity-80 disabled:opacity-30 cursor-pointer">
+          + Add option
+        </button>
+      </div>
+      <textarea
+        value={quiz.explanation || ''}
+        onChange={(e) => onQuizChange({ ...quiz, explanation: e.target.value })}
+        placeholder="Explanation shown after answering (optional)"
+        rows={2}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+      />
+    </div>
+  );
+}
+
+function ExerciseBlockEditor({ block, onExerciseChange }: { block: TopicContent; onExerciseChange: (exercise: NonNullable<TopicContent['exercise']>) => void }) {
+  const exercise = block.exercise || { instructions: '', starterCode: '', language: 'python', expectedOutput: '', solution: '' };
+
+  return (
+    <div className="space-y-3">
+      <textarea
+        value={exercise.instructions}
+        onChange={(e) => onExerciseChange({ ...exercise, instructions: e.target.value })}
+        placeholder="Instructions for the learner"
+        rows={2}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+      />
+      <Select
+        label="Language"
+        value={exercise.language || 'python'}
+        onChange={(e) => onExerciseChange({ ...exercise, language: e.target.value })}
+        options={EXERCISE_LANGUAGES}
+      />
+      {exercise.language !== 'python' && (
+        <p className="text-xs text-[var(--text-muted)]">Only Python exercises are runnable in-app right now; other languages render as a read-only code block.</p>
+      )}
+      <textarea
+        value={exercise.starterCode}
+        onChange={(e) => onExerciseChange({ ...exercise, starterCode: e.target.value })}
+        placeholder={'Starter code, e.g. print("   ")'}
+        rows={6}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+      />
+      <textarea
+        value={exercise.expectedOutput || ''}
+        onChange={(e) => onExerciseChange({ ...exercise, expectedOutput: e.target.value })}
+        placeholder="Expected output (matched against the learner's stdout, optional)"
+        rows={2}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+      />
+      <textarea
+        value={exercise.solution || ''}
+        onChange={(e) => onExerciseChange({ ...exercise, solution: e.target.value })}
+        placeholder="Reference solution (admin-only, not shown to learners)"
+        rows={3}
+        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+      />
+    </div>
+  );
+}
 
 interface SortableBlockProps {
   block: TopicContent;
   index: number;
   onChange: (content: string) => void;
   onLanguageChange: (language: string) => void;
+  onQuizChange: (quiz: NonNullable<TopicContent['quiz']>) => void;
+  onExerciseChange: (exercise: NonNullable<TopicContent['exercise']>) => void;
   onRemove: () => void;
 }
 
-function SortableBlock({ block, index, onChange, onLanguageChange, onRemove }: SortableBlockProps) {
+function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange, onExerciseChange, onRemove }: SortableBlockProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index });
   const Icon = ICON_MAP[block.type];
 
@@ -75,7 +190,11 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onRemove }: S
           ? 'Enter LaTeX formula (e.g. \\frac{a}{b})'
           : block.type === 'code'
             ? 'Enter code…'
-            : 'Enter text content...';
+            : block.type === 'quiz'
+              ? 'Quiz'
+              : block.type === 'exercise'
+                ? 'Exercise'
+                : 'Enter text content...';
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -109,7 +228,21 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onRemove }: S
               />
             )}
 
-            {block.type === 'text' || block.type === 'latex' || block.type === 'code' ? (
+            {(block.type === 'quiz' || block.type === 'exercise') && (
+              <input
+                type="text"
+                value={block.content}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="Step title (shown at the top of the step)"
+                className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors font-semibold"
+              />
+            )}
+
+            {block.type === 'quiz' ? (
+              <QuizBlockEditor block={block} onQuizChange={onQuizChange} />
+            ) : block.type === 'exercise' ? (
+              <ExerciseBlockEditor block={block} onExerciseChange={onExerciseChange} />
+            ) : block.type === 'text' || block.type === 'latex' || block.type === 'code' ? (
               <textarea
                 value={block.content}
                 onChange={(e) => onChange(e.target.value)}
@@ -158,7 +291,21 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
   };
 
   const handleAddBlock = (type: TopicContentType) => {
-    onChange([...contents, type === 'code' ? { type, content: '', language: 'other' } : { type, content: '' }]);
+    if (type === 'code') {
+      onChange([...contents, { type, content: '', language: 'other' }]);
+    } else if (type === 'quiz') {
+      onChange([
+        ...contents,
+        { type, content: 'Quiz', quiz: { question: '', options: [{ text: '', isCorrect: true }, { text: '', isCorrect: false }], explanation: '' } },
+      ]);
+    } else if (type === 'exercise') {
+      onChange([
+        ...contents,
+        { type, content: 'Exercise', exercise: { instructions: '', starterCode: '', language: 'python', expectedOutput: '', solution: '' } },
+      ]);
+    } else {
+      onChange([...contents, { type, content: '' }]);
+    }
     setShowAddMenu(false);
   };
 
@@ -168,6 +315,14 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
 
   const handleLanguageChange = (index: number, language: string) => {
     onChange(contents.map((c, i) => (i === index ? { ...c, language } : c)));
+  };
+
+  const handleQuizChange = (index: number, quiz: NonNullable<TopicContent['quiz']>) => {
+    onChange(contents.map((c, i) => (i === index ? { ...c, quiz } : c)));
+  };
+
+  const handleExerciseChange = (index: number, exercise: NonNullable<TopicContent['exercise']>) => {
+    onChange(contents.map((c, i) => (i === index ? { ...c, exercise } : c)));
   };
 
   const handleBlockRemove = (index: number) => {
@@ -186,6 +341,8 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
                 index={index}
                 onChange={(content) => handleBlockChange(index, content)}
                 onLanguageChange={(language) => handleLanguageChange(index, language)}
+                onQuizChange={(quiz) => handleQuizChange(index, quiz)}
+                onExerciseChange={(exercise) => handleExerciseChange(index, exercise)}
                 onRemove={() => handleBlockRemove(index)}
               />
             ))}

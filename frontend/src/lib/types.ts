@@ -20,12 +20,34 @@ export interface User {
   settings?: IUserSettings;
 }
 
-export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code';
+export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise';
+
+export interface TopicQuizOption {
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface TopicQuiz {
+  question: string;
+  options: TopicQuizOption[];
+  explanation?: string;
+}
+
+export interface TopicExercise {
+  instructions: string;
+  starterCode: string;
+  language: string;
+  expectedOutput?: string;
+  solution?: string;
+}
 
 export interface TopicContent {
   type: TopicContentType;
   content: string;
   language?: string;
+  title?: string;
+  quiz?: TopicQuiz;
+  exercise?: TopicExercise;
 }
 
 export interface Topic {

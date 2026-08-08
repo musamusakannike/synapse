@@ -28,7 +28,11 @@ export default function LearnPage() {
     })();
   }, [topicId]);
 
-  const handleClose = () => router.push(`/dashboard/courses/${courseId}/topics/${topicId}`);
+  const isGuidedDefault = topic?.defaultFlow === 'guided';
+  const handleClose = () =>
+    router.push(
+      isGuidedDefault ? `/dashboard/courses/${courseId}` : `/dashboard/courses/${courseId}/topics/${topicId}`
+    );
 
   if (isLoading) {
     return (
@@ -49,5 +53,11 @@ export default function LearnPage() {
     );
   }
 
-  return <StepPlayer topic={topic} onClose={handleClose} />;
+  return (
+    <StepPlayer
+      topic={topic}
+      onClose={handleClose}
+      altViewHref={isGuidedDefault ? `/dashboard/courses/${courseId}/topics/${topicId}?view=flat` : undefined}
+    />
+  );
 }

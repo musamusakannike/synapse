@@ -7,7 +7,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import StepPlayer from '@/components/lesson/StepPlayer';
 
 export default function TopicLearnScreen() {
-  const { topicId } = useLocalSearchParams<{ id: string; topicId: string }>();
+  const { id, topicId } = useLocalSearchParams<{ id: string; topicId: string }>();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,5 +30,19 @@ export default function TopicLearnScreen() {
   if (isLoading) return <LoadingSpinner />;
   if (!topic) return <EmptyState title="Topic not found" />;
 
-  return <StepPlayer topic={topic} onClose={() => router.back()} />;
+  const handleClose = () => {
+    if (topic.defaultFlow === 'guided') {
+      router.replace(`/course/${id}` as any);
+    } else {
+      router.back();
+    }
+  };
+
+  return (
+    <StepPlayer
+      topic={topic}
+      onClose={handleClose}
+      altViewHref={topic.defaultFlow === 'guided' ? `/course/${id}/topic/${topicId}?flat=1` : undefined}
+    />
+  );
 }

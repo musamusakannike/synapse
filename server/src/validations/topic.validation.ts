@@ -45,6 +45,10 @@ export const validateCreateTopic = (req: Request, res: Response, next: NextFunct
     errors.push('Topic title is required.');
   }
 
+  if (req.body.defaultFlow !== undefined && !['flat', 'guided'].includes(req.body.defaultFlow)) {
+    errors.push('defaultFlow must be either "flat" or "guided".');
+  }
+
   if (contents !== undefined) {
     if (!Array.isArray(contents)) {
       errors.push('Contents must be an array.');
@@ -73,6 +77,10 @@ export const validateUpdateTopic = (req: Request, res: Response, next: NextFunct
 
   if (req.body.title !== undefined && (typeof req.body.title !== 'string' || req.body.title.trim().length === 0)) {
     errors.push('Topic title cannot be empty.');
+  }
+
+  if (req.body.defaultFlow !== undefined && !['flat', 'guided'].includes(req.body.defaultFlow)) {
+    errors.push('defaultFlow must be either "flat" or "guided".');
   }
 
   if (contents !== undefined) {

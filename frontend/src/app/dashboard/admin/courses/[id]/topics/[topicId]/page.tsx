@@ -50,7 +50,12 @@ function AdminTopicDetailContent() {
   const [showMcqBulk, setShowMcqBulk] = useState(false);
 
   const [showEditTopicModal, setShowEditTopicModal] = useState(false);
-  const [topicForm, setTopicForm] = useState({ title: '', description: '', isPublished: false });
+  const [topicForm, setTopicForm] = useState<{ title: string; description: string; isPublished: boolean; defaultFlow: 'flat' | 'guided' }>({
+    title: '',
+    description: '',
+    isPublished: false,
+    defaultFlow: 'flat',
+  });
 
   useEffect(() => {
     (async () => {
@@ -200,7 +205,7 @@ function AdminTopicDetailContent() {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <Badge tone={topic.isPublished ? 'success' : 'warning'}>{topic.isPublished ? 'Published' : 'Draft'}</Badge>
-          <Button variant="ghost" size="sm" onClick={() => { setTopicForm({ title: topic.title, description: topic.description || '', isPublished: topic.isPublished }); setShowEditTopicModal(true); }}>
+          <Button variant="ghost" size="sm" onClick={() => { setTopicForm({ title: topic.title, description: topic.description || '', isPublished: topic.isPublished, defaultFlow: topic.defaultFlow || 'flat' }); setShowEditTopicModal(true); }}>
             <Pencil className="w-3.5 h-3.5" /> Edit
           </Button>
         </div>
@@ -344,6 +349,31 @@ function AdminTopicDetailContent() {
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Description</span>
             <textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[var(--ink-900)]">Default view for learners</span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'flat' })}
+                className={`text-left px-3.5 py-2.5 rounded-[var(--radius-md)] border text-sm transition-colors cursor-pointer ${
+                  topicForm.defaultFlow === 'flat' ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]' : 'border-[var(--line)] bg-[var(--surface-card)]'
+                }`}
+              >
+                <span className="block font-semibold text-[var(--ink-900)]">Flat</span>
+                <span className="block text-xs text-[var(--text-muted)]">All content on one scrollable page</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'guided' })}
+                className={`text-left px-3.5 py-2.5 rounded-[var(--radius-md)] border text-sm transition-colors cursor-pointer ${
+                  topicForm.defaultFlow === 'guided' ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]' : 'border-[var(--line)] bg-[var(--surface-card)]'
+                }`}
+              >
+                <span className="block font-semibold text-[var(--ink-900)]">Guided</span>
+                <span className="block text-xs text-[var(--text-muted)]">Step-by-step lesson flow</span>
+              </button>
+            </div>
           </div>
           <Checkbox checked={topicForm.isPublished} onChange={(v) => setTopicForm({ ...topicForm, isPublished: v })} label="Publish topic" />
           <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">

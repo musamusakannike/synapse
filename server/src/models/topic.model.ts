@@ -30,6 +30,8 @@ export interface ITopicContent {
   exercise?: ITopicExercise;
 }
 
+export type TopicFlow = 'flat' | 'guided';
+
 export interface ITopic extends Document {
   course: mongoose.Types.ObjectId;
   title: string;
@@ -37,6 +39,7 @@ export interface ITopic extends Document {
   contents: ITopicContent[];
   order: number;
   isPublished: boolean;
+  defaultFlow: TopicFlow;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -126,6 +129,11 @@ const TopicSchema: Schema = new Schema<ITopic>(
     isPublished: {
       type: Boolean,
       default: false,
+    },
+    defaultFlow: {
+      type: String,
+      enum: ['flat', 'guided'],
+      default: 'flat',
     },
   },
   {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { IconX, IconConfetti } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import { Topic } from '@/lib/types';
@@ -20,7 +21,7 @@ const STEP_LABELS: Record<string, string> = {
   exercise: 'Exercise',
 };
 
-export default function StepPlayer({ topic, onClose }: { topic: Topic; onClose: () => void }) {
+export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Topic; onClose: () => void; altViewHref?: string }) {
   const { colors } = useTheme();
   const steps = topic.contents || [];
   const [index, setIndex] = useState(0);
@@ -85,7 +86,14 @@ export default function StepPlayer({ topic, onClose }: { topic: Topic; onClose: 
         <Pressable onPress={onClose} hitSlop={10}>
           <IconX size={22} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>{index + 1}/{total}</Text>
+        <View style={styles.headerRight}>
+          {!!altViewHref && (
+            <Pressable onPress={() => router.push(altViewHref as any)}>
+              <Text style={[styles.altViewLink, { color: colors.textLink }]}>View as reading list</Text>
+            </Pressable>
+          )}
+          <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>{index + 1}/{total}</Text>
+        </View>
       </View>
       <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSunken }]}>
         <View style={[styles.progressFill, { backgroundColor: colors.success, width: `${((index + 1) / total) * 100}%` }]} />
@@ -122,6 +130,8 @@ export default function StepPlayer({ topic, onClose }: { topic: Topic; onClose: 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  altViewLink: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium },
   progressLabel: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium },
   progressTrack: { height: 6, borderRadius: radii.full, marginHorizontal: spacing.xl, marginTop: spacing.sm, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: radii.full },

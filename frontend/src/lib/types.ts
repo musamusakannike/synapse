@@ -50,6 +50,8 @@ export interface TopicContent {
   exercise?: TopicExercise;
 }
 
+export type TopicFlow = 'flat' | 'guided';
+
 export interface Topic {
   _id: string;
   course: string;
@@ -58,6 +60,7 @@ export interface Topic {
   contents: TopicContent[];
   order: number;
   isPublished: boolean;
+  defaultFlow: TopicFlow;
   flashcardCount?: number;
   mcqCount?: number;
   createdAt: string;

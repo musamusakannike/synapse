@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { BookOpen, FileQuestion, CreditCard, HelpCircle, Play, Volume2, FileText, Image as ImageIcon, Code2, Terminal, GraduationCap } from 'lucide-react';
 import { topicApi, courseApi } from '@/lib/api';
 import { Topic, Course, TopicContent } from '@/lib/types';
@@ -48,6 +48,9 @@ function ContentBlock({ content, index, topicTitle }: { content: TopicContent; i
 
 export default function TopicDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const forceFlat = searchParams.get('view') === 'flat';
   const courseId = params.id as string;
   const topicId = params.topicId as string;
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -68,7 +71,13 @@ export default function TopicDetailPage() {
     })();
   }, [courseId, topicId]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (topic && topic.defaultFlow === 'guided' && !forceFlat) {
+      router.replace(`/dashboard/courses/${courseId}/topics/${topicId}/learn`);
+    }
+  }, [topic, forceFlat, router, courseId, topicId]);
+
+  if (isLoading || (topic && topic.defaultFlow === 'guided' && !forceFlat)) {
     return (
       <div className="flex items-center justify-center py-20">
         <LoadingSpinner size="lg" />

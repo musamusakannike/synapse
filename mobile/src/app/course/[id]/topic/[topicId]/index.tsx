@@ -13,7 +13,7 @@ import { useTheme, fontFamilies, fontSizes, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
 export default function TopicContentScreen() {
-  const { id, topicId } = useLocalSearchParams<{ id: string; topicId: string }>();
+  const { id, topicId, flat } = useLocalSearchParams<{ id: string; topicId: string; flat?: string }>();
   const { colors } = useTheme();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,8 +34,15 @@ export default function TopicContentScreen() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (topic && topic.defaultFlow === 'guided' && flat !== '1') {
+      router.replace(`/course/${id}/topic/${topicId}/learn` as any);
+    }
+  }, [topic, flat, id, topicId]);
+
   if (isLoading) return <LoadingSpinner />;
   if (!topic) return <EmptyState title="Topic not found" />;
+  if (topic.defaultFlow === 'guided' && flat !== '1') return <LoadingSpinner />;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>

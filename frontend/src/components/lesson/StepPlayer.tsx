@@ -19,7 +19,7 @@ const STEP_LABELS: Record<string, string> = {
   exercise: 'Exercise',
 };
 
-export default function StepPlayer({ topic, onClose }: { topic: Topic; onClose: () => void }) {
+export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Topic; onClose: () => void; altViewHref?: string }) {
   const steps = topic.contents || [];
   const [index, setIndex] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState(false);
@@ -80,7 +80,14 @@ export default function StepPlayer({ topic, onClose }: { topic: Topic; onClose: 
           <button onClick={onClose} aria-label="Close" className="text-[var(--ink-300)] hover:text-[var(--ink-900)] cursor-pointer">
             <X className="w-5 h-5" />
           </button>
-          <span className="text-xs font-semibold text-[var(--text-muted)]">{index + 1}/{total}</span>
+          <div className="flex items-center gap-3">
+            {altViewHref && (
+              <a href={altViewHref} className="text-xs font-medium text-[var(--brand-gold-600)] hover:opacity-80">
+                View as reading list
+              </a>
+            )}
+            <span className="text-xs font-semibold text-[var(--text-muted)]">{index + 1}/{total}</span>
+          </div>
         </div>
         <div className="h-1.5 bg-[var(--surface-sunken)] rounded-full overflow-hidden">
           <div

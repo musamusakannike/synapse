@@ -1,0 +1,27 @@
+<!-- @dsCard group="Components" viewport="700x260" name="Feedback" subtitle="Badge, progress bar, toast" -->
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<div id="root" style="background:var(--surface-page);padding:20px;box-sizing:border-box"></div>
+<script type="text/babel">
+const { Badge, ProgressBar, Toast } = window.SabiLearnDesignSystem_2075a4;
+function Demo(){
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:"18px",fontFamily:"var(--font-body)"}}>
+      <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
+        <Badge tone="gold">Free</Badge>
+        <Badge tone="violet">AI-generated</Badge>
+        <Badge tone="success">Completed</Badge>
+        <Badge tone="warning">In progress</Badge>
+        <Badge tone="danger">Overdue</Badge>
+        <Badge tone="dark">Certificate</Badge>
+      </div>
+      <ProgressBar value={7} max={10} label="Module 3 progress" />
+      <Toast tone="success">Flashcards saved to your deck.</Toast>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo />);
+</script>

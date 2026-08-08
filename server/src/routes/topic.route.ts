@@ -5,6 +5,8 @@ import { validateCreateTopic, validateUpdateTopic } from '../validations/topic.v
 
 const router = Router();
 
+// Topic titles stay visible even for locked courses (acts as a preview/marketing list);
+// the actual study content (flashcards/mcqs) is what's gated, see flashcard/mcq routes.
 router.get('/course/:courseId', getTopicsByCourse);
 router.get('/:id', getTopicById);
 router.post('/', protect, authorize('admin'), validateCreateTopic, createTopic);

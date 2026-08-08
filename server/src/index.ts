@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notification.route';
 import adminRoutes from './routes/admin.route';
 import searchRoutes from './routes/search.route';
 import mediaRoutes from './routes/media.route';
+import paymentRoutes from './routes/payment.route';
 import { errorHandler } from './middlewares/error.middleware';
 import { startScheduler } from './jobs/scheduler';
 
@@ -37,6 +38,10 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true,
 }));
+// Mounted before express.json() so the webhook route's express.raw() middleware
+// sees the untouched request body — required for Paystack signature verification.
+app.use('/api/v1/payments', paymentRoutes);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

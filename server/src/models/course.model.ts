@@ -10,6 +10,10 @@ export interface ICourse extends Document {
   whatYouWillLearn: string[];
   isPublished: boolean;
   order: number;
+  /** Free courses are accessible to everyone regardless of subscription/purchase. */
+  isFree: boolean;
+  /** Price in kobo (NGN smallest unit). Ignored when isFree is true. */
+  price: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +56,15 @@ const CourseSchema: Schema = new Schema<ICourse>(
     order: {
       type: Number,
       default: 0,
+    },
+    isFree: {
+      type: Boolean,
+      default: true,
+    },
+    price: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {

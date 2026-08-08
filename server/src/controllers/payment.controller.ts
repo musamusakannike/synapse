@@ -1,0 +1,291 @@
+import { Response, NextFunction } from 'express';
+import crypto from 'crypto';
+import Course from '../models/course.model';
+import Transaction from '../models/transaction.model';
+import Subscription from '../models/subscription.model';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import {
+  initializeTransaction,
+  verifyTransaction as verifyPaystackTransaction,
+  verifyWebhookSignature,
+} from '../services/paystack.service';
+
+const generateReference = (prefix: string) => `${prefix}_${crypto.randomBytes(12).toString('hex')}`;
+
+export const initializeCoursePurchase = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { courseId } = req.params;
+    const user = req.user!;
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      res.status(404).json({ success: false, message: 'Course not found.' });
+      return;
+    }
+
+    if (course.isFree) {
+      res.status(400).json({ success: false, message: 'This course is free and does not require purchase.' });
+      return;
+    }
+
+    const existingPurchase = await Transaction.findOne({
+      user: user._id,
+      course: course._id,
+      type: 'course_purchase',
+      status: 'success',
+    });
+    if (existingPurchase) {
+      res.status(400).json({ success: false, message: 'You already have access to this course.' });
+      return;
+    }
+
+    const reference = generateReference('course');
+
+    const transaction = await Transaction.create({
+      user: user._id,
+      reference,
+      type: 'course_purchase',
+      course: course._id,
+      amount: course.price,
+      status: 'pending',
+    });
+
+    const paystackRes = await initializeTransaction({
+      email: user.email,
+      amount: course.price,
+      reference,
+      metadata: {
+        userId: String(user._id),
+        courseId: String(course._id),
+        type: 'course_purchase',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        authorizationUrl: paystackRes.data.authorization_url,
+        accessCode: paystackRes.data.access_code,
+        reference: transaction.reference,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const initializeSubscription = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const user = req.user!;
+    const planCode = process.env.PAYSTACK_SUBSCRIPTION_PLAN_CODE;
+    const amount = Number(process.env.SUBSCRIPTION_AMOUNT_KOBO);
+
+    if (!planCode || !amount) {
+      res.status(500).json({ success: false, message: 'Subscription plan is not configured.' });
+      return;
+    }
+
+    const activeSub = await Subscription.findOne({ user: user._id, status: 'active' });
+    if (activeSub) {
+      res.status(400).json({ success: false, message: 'You already have an active subscription.' });
+      return;
+    }
+
+    const reference = generateReference('sub');
+
+    await Transaction.create({
+      user: user._id,
+      reference,
+      type: 'subscription',
+      amount,
+      status: 'pending',
+    });
+
+    const paystackRes = await initializeTransaction({
+      email: user.email,
+      amount,
+      reference,
+      plan: planCode,
+      metadata: {
+        userId: String(user._id),
+        type: 'subscription',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        authorizationUrl: paystackRes.data.authorization_url,
+        accessCode: paystackRes.data.access_code,
+        reference,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * UX-only confirmation for the client right after checkout. The webhook remains
+ * the sole source of truth for actually granting access — this just checks
+ * Paystack directly so the UI isn't stuck waiting on a webhook that may be delayed.
+ */
+export const verifyReference = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const reference = String(req.params.reference);
+
+    const transaction = await Transaction.findOne({ reference, user: req.user!._id });
+    if (!transaction) {
+      res.status(404).json({ success: false, message: 'Transaction not found.' });
+      return;
+    }
+
+    if (transaction.status === 'pending') {
+      const paystackRes = await verifyPaystackTransaction(reference);
+      if (paystackRes.data.status === 'success' || paystackRes.data.status === 'failed') {
+        // Reflects the latest state for the UI; the webhook independently performs the actual grant.
+        transaction.status = paystackRes.data.status === 'success' ? 'success' : 'failed';
+        await transaction.save();
+      }
+    }
+
+    res.status(200).json({ success: true, data: { status: transaction.status, type: transaction.type } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMyPaymentStatus = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const user = req.user!;
+
+    const subscription = await Subscription.findOne({ user: user._id });
+    const purchasedCourses = await Transaction.find({
+      user: user._id,
+      type: 'course_purchase',
+      status: 'success',
+    }).select('course');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        subscription: subscription
+          ? { status: subscription.status, currentPeriodEnd: subscription.currentPeriodEnd }
+          : { status: 'none' },
+        purchasedCourseIds: purchasedCourses.map((t) => t.course),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const handleWebhook = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const signatureHeader = req.headers['x-paystack-signature'];
+  const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
+  const rawBody = req.body as Buffer;
+
+  if (!verifyWebhookSignature(rawBody, signature)) {
+    res.status(401).json({ success: false, message: 'Invalid signature.' });
+    return;
+  }
+
+  // Acknowledge immediately; Paystack retries on non-2xx/timeout, and we don't
+  // want a slow downstream side-effect (email, push) to cause spurious retries.
+  res.status(200).json({ received: true });
+
+  let event: any;
+  try {
+    event = JSON.parse(rawBody.toString('utf8'));
+  } catch {
+    return;
+  }
+
+  try {
+    switch (event.event) {
+      case 'charge.success':
+        await handleChargeSuccess(event.data);
+        break;
+      case 'subscription.create':
+        await handleSubscriptionCreate(event.data);
+        break;
+      case 'subscription.disable':
+        await handleSubscriptionDisable(event.data);
+        break;
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data);
+        break;
+      default:
+        break;
+    }
+  } catch (error) {
+    console.error(`[Paystack Webhook] Failed to process event ${event.event}:`, error);
+  }
+};
+
+const handleChargeSuccess = async (data: any) => {
+  const reference: string = data.reference;
+
+  const transaction = await Transaction.findOne({ reference });
+  if (!transaction || transaction.status === 'success') return; // already processed (idempotency)
+
+  transaction.status = 'success';
+  transaction.paystackPayload = data;
+  await transaction.save();
+
+  if (transaction.type === 'subscription') {
+    await Subscription.findOneAndUpdate(
+      { user: transaction.user },
+      {
+        user: transaction.user,
+        planCode: data.plan?.plan_code || process.env.PAYSTACK_SUBSCRIPTION_PLAN_CODE,
+        paystackCustomerCode: data.customer?.customer_code,
+        status: 'active',
+      },
+      { upsert: true }
+    );
+  }
+  // course_purchase access is derived from Transaction.status === 'success', no further write needed.
+};
+
+const handleSubscriptionCreate = async (data: any) => {
+  await Subscription.findOneAndUpdate(
+    { paystackCustomerCode: data.customer?.customer_code },
+    {
+      paystackSubscriptionCode: data.subscription_code,
+      paystackEmailToken: data.email_token,
+      status: data.status === 'active' ? 'active' : 'past_due',
+      currentPeriodEnd: data.next_payment_date ? new Date(data.next_payment_date) : undefined,
+    }
+  );
+};
+
+const handleSubscriptionDisable = async (data: any) => {
+  await Subscription.findOneAndUpdate(
+    { paystackSubscriptionCode: data.subscription_code },
+    { status: 'cancelled' }
+  );
+};
+
+const handleInvoicePaymentFailed = async (data: any) => {
+  await Subscription.findOneAndUpdate(
+    { paystackCustomerCode: data.customer?.customer_code },
+    { status: 'past_due' }
+  );
+};

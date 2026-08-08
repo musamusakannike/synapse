@@ -1,0 +1,9 @@
+:root{
+--font-display:'Space Grotesk',system-ui,sans-serif;
+--font-body:'Space Grotesk',system-ui,sans-serif;
+--font-mono:'Space Mono','Space Grotesk',monospace;
+--text-xs:12px;--text-sm:14px;--text-base:16px;--text-md:18px;--text-lg:20px;
+--text-xl:24px;--text-2xl:30px;--text-3xl:38px;--text-4xl:48px;--text-5xl:60px;
+--leading-tight:1.1;--leading-snug:1.25;--leading-normal:1.5;--leading-relaxed:1.65;
+--tracking-tight:-0.02em;--tracking-normal:0em;--tracking-wide:0.04em;
+}

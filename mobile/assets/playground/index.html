@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Code Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/idea.min.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --ink-900:#0E0E1A;--ink-700:#35354A;--ink-500:#6B6B80;--ink-300:#A9A9BC;--ink-100:#DEDAD0;
+    --surface-page:#F5F3EE;--surface-card:#FFFFFF;--surface-sunken:#ECE8DF;--surface-inverse:#0E0E1A;
+    --line:#DEDAD0;--line-strong:#C7C2B6;
+    --brand-gold:#F2A900;--brand-gold-600:#D89400;--brand-gold-100:#FBDDB0;
+    --brand-violet:#5B4FE8;--brand-violet-600:#4A3FD1;--brand-violet-100:#E7E3FB;
+    --success:#1F9D55;--success-100:#DDF3E4;
+    --danger:#E5484D;--danger-100:#FBE1E2;
+    --warning:#E8890C;--warning-100:#FBEAD2;
+    --font-display:'Space Grotesk',system-ui,sans-serif;
+    --font-body:'Space Grotesk',system-ui,sans-serif;
+    --font-mono:'Space Mono','Space Grotesk',monospace;
+    --radius-sm:8px;--radius-md:12px;--radius-lg:16px;--radius-xl:20px;--radius-full:999px;
+    --shadow-xs:0 1px 2px rgba(14,14,26,0.06);
+    --shadow-sm:0 2px 8px rgba(14,14,26,0.08);
+    --shadow-md:0 8px 24px rgba(14,14,26,0.10);
+    --ease-standard:cubic-bezier(0.4,0,0.2,1);
+    --duration-fast:120ms;--duration-normal:200ms;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--surface-page);color:var(--ink-900);
+    font-family:var(--font-body);display:flex;flex-direction:column;overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 14px;background:var(--surface-card);border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .lang-tabs{
+    display:flex;gap:2px;background:var(--surface-sunken);padding:3px;border-radius:var(--radius-md);
+    overflow-x:auto;-ms-overflow-style:none;scrollbar-width:none;
+  }
+  .lang-tabs::-webkit-scrollbar{display:none;}
+  .lang-tab{
+    appearance:none;border:none;background:transparent;color:var(--ink-500);
+    font-family:var(--font-display);font-weight:600;font-size:13px;
+    padding:7px 13px;border-radius:var(--radius-sm);cursor:pointer;white-space:nowrap;
+    transition:all var(--duration-fast) var(--ease-standard);
+  }
+  .lang-tab[aria-selected="true"]{background:var(--surface-card);color:var(--ink-900);box-shadow:var(--shadow-xs);}
+  .lang-tab:hover:not([aria-selected="true"]){color:var(--ink-900);}
+
+  .spacer{flex:1;min-width:8px;}
+
+  .btn{
+    appearance:none;border:none;cursor:pointer;font-family:var(--font-display);font-weight:600;
+    font-size:13px;padding:8px 16px;border-radius:var(--radius-sm);
+    display:inline-flex;align-items:center;gap:6px;
+    transition:all var(--duration-fast) var(--ease-standard);
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--brand-gold);color:var(--ink-900);}
+  .btn-primary:hover{background:var(--brand-gold-600);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-ghost{background:transparent;color:var(--ink-500);}
+  .btn-ghost:hover{background:var(--surface-sunken);color:var(--ink-900);}
+  .btn svg{width:14px;height:14px;}
+
+  .status{
+    font-size:12px;color:var(--ink-500);display:flex;align-items:center;gap:6px;
+    padding:0 4px;white-space:nowrap;
+  }
+  .status.busy .dot{background:var(--warning);animation:pulse 1s infinite;}
+  .status.ok .dot{background:var(--success);}
+  .status.err .dot{background:var(--danger);}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--ink-300);flex-shrink:0;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  /* ---------- view switch (narrow screens) ---------- */
+  .view-switch{display:none;gap:2px;background:var(--surface-sunken);padding:3px;border-radius:var(--radius-md);}
+  .view-switch button{
+    appearance:none;border:none;background:transparent;color:var(--ink-500);font-family:var(--font-display);
+    font-weight:600;font-size:12px;padding:6px 12px;border-radius:var(--radius-sm);cursor:pointer;
+  }
+  .view-switch button[aria-selected="true"]{background:var(--surface-card);color:var(--ink-900);box-shadow:var(--shadow-xs);}
+
+  /* ---------- panes ---------- */
+  .panes{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0;}
+  .pane{display:flex;flex-direction:column;min-height:0;min-width:0;}
+  .pane-editor{border-right:1px solid var(--line);}
+  .pane-header{
+    padding:8px 14px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--ink-300);background:var(--surface-page);border-bottom:1px solid var(--line);flex-shrink:0;
+  }
+  .editor-wrap{flex:1;min-height:0;overflow:hidden;}
+  .CodeMirror{height:100%;font-family:var(--font-mono);font-size:13.5px;line-height:1.55;}
+  .cm-s-idea{background:var(--surface-card);}
+
+  .output-wrap{flex:1;min-height:0;position:relative;background:var(--surface-card);}
+  iframe.preview{width:100%;height:100%;border:none;background:#fff;}
+
+  .console{
+    flex:1;min-height:0;overflow:auto;background:var(--ink-900);color:#EDEDF5;
+    font-family:var(--font-mono);font-size:13px;line-height:1.6;padding:14px;white-space:pre-wrap;word-break:break-word;
+  }
+  .console .line-err{color:#FF8A8F;}
+  .console .line-muted{color:#8B8BA0;}
+  .console:empty::before{content:'Output will appear here once you run your code.';color:#8B8BA0;}
+
+  .empty-hint{
+    display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-300);
+    font-size:13px;text-align:center;padding:24px;
+  }
+
+  .loading-overlay{
+    position:absolute;inset:0;background:rgba(245,243,238,.92);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--ink-500);
+  }
+  .spinner{
+    width:22px;height:22px;border-radius:50%;border:2.5px solid var(--line-strong);
+    border-top-color:var(--brand-gold);animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .hidden{display:none !important;}
+
+  @media (max-width:820px){
+    .panes{grid-template-columns:1fr;}
+    .pane{display:none;}
+    .pane.active-mobile{display:flex;}
+    .pane-editor{border-right:none;}
+    .view-switch{display:flex;}
+    .topbar{padding:8px 10px;gap:8px;}
+    .status{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="lang-tabs" role="tablist" aria-label="Language">
+    <button class="lang-tab" data-lang="html" role="tab" aria-selected="true">HTML</button>
+    <button class="lang-tab" data-lang="css" role="tab" aria-selected="false">CSS</button>
+    <button class="lang-tab" data-lang="javascript" role="tab" aria-selected="false">JavaScript</button>
+    <button class="lang-tab" data-lang="python" role="tab" aria-selected="false">Python</button>
+  </div>
+
+  <div class="view-switch" role="tablist" aria-label="View">
+    <button data-view="code" aria-selected="true">Code</button>
+    <button data-view="output" aria-selected="false">Output</button>
+  </div>
+
+  <div class="spacer"></div>
+  <span class="status ok" id="status"><span class="dot"></span><span id="statusText">Ready</span></span>
+  <button class="btn btn-ghost" id="resetBtn" title="Reset to starter code">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    Reset
+  </button>
+  <button class="btn btn-primary" id="runBtn" title="Run (Ctrl / Cmd + Enter)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    Run
+  </button>
+</div>
+
+<div class="panes">
+  <div class="pane pane-editor active-mobile" id="paneEditor">
+    <div class="pane-header" id="editorLabel">HTML</div>
+    <div class="editor-wrap"><textarea id="editor"></textarea></div>
+  </div>
+  <div class="pane pane-output" id="paneOutput">
+    <div class="pane-header" id="outputLabel">Preview</div>
+    <div class="output-wrap" id="outputWrap">
+      <iframe class="preview" id="preview" title="Preview" sandbox="allow-scripts allow-modals"></iframe>
+      <div class="console hidden" id="console"></div>
+      <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Loading Python runtime…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script>
+(function(){
+  var STORAGE_PREFIX = 'synapse-playground:';
+
+  var STARTERS = {
+    html: '<!-- Edit the HTML, CSS and JavaScript tabs — the preview updates as you type. -->\n<h1>Hello, world!</h1>\n<p>Start building your page here.</p>\n<button id="greet">Say hi</button>',
+    css: 'body {\n  font-family: system-ui, sans-serif;\n  padding: 24px;\n  color: #0E0E1A;\n}\n\nh1 {\n  color: #F2A900;\n}\n\nbutton {\n  padding: 8px 16px;\n  border-radius: 8px;\n  border: none;\n  background: #5B4FE8;\n  color: white;\n  cursor: pointer;\n}',
+    javascript: 'document.getElementById("greet").addEventListener("click", function () {\n  alert("Hello from JavaScript!");\n});\n\nconsole.log("Script loaded.");',
+    python: '# Press Run (or Ctrl / Cmd + Enter) to execute.\nname = "world"\nprint(f"Hello, {name}!")\n\nfor i in range(3):\n    print("Counting:", i)'
+  };
+
+  var MODES = { html: 'htmlmixed', css: 'css', javascript: 'javascript', python: 'python' };
+  var LABELS = { html: 'HTML', css: 'CSS', javascript: 'JavaScript', python: 'Python' };
+
+  var currentLang = 'html';
+  var currentView = 'code';
+  var editor = null;
+  var docs = {};
+  var pyodide = null;
+  var pyodideLoading = null;
+  var debounceTimer = null;
+
+  var els = {
+    editorLabel: document.getElementById('editorLabel'),
+    outputLabel: document.getElementById('outputLabel'),
+    preview: document.getElementById('preview'),
+    console: document.getElementById('console'),
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    loadingText: document.getElementById('loadingText'),
+    status: document.getElementById('status'),
+    statusText: document.getElementById('statusText'),
+    runBtn: document.getElementById('runBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    paneEditor: document.getElementById('paneEditor'),
+    paneOutput: document.getElementById('paneOutput'),
+  };
+
+  function loadDoc(lang){
+    var saved = null;
+    try { saved = localStorage.getItem(STORAGE_PREFIX + lang); } catch (e) {}
+    return saved !== null ? saved : STARTERS[lang];
+  }
+  function saveDoc(lang, value){
+    try { localStorage.setItem(STORAGE_PREFIX + lang, value); } catch (e) {}
+  }
+
+  ['html','css','javascript','python'].forEach(function(l){ docs[l] = loadDoc(l); });
+
+  editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+    mode: MODES.html,
+    theme: 'idea',
+    lineNumbers: true,
+    lineWrapping: true,
+    indentUnit: 2,
+    tabSize: 2,
+    autoCloseBrackets: true,
+    autoCloseTags: true,
+    matchBrackets: true,
+    extraKeys: {
+      'Ctrl-Enter': runCurrent,
+      'Cmd-Enter': runCurrent,
+    }
+  });
+  editor.setValue(docs.html);
+
+  editor.on('change', function(){
+    docs[currentLang] = editor.getValue();
+    saveDoc(currentLang, docs[currentLang]);
+    if (currentLang === 'python') {
+      setStatus('idle', 'Edited — press Run');
+    } else {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(renderWebPreview, 350);
+    }
+  });
+
+  function setStatus(kind, text){
+    els.status.className = 'status ' + kind;
+    els.statusText.textContent = text;
+  }
+
+  function switchLang(lang){
+    currentLang = lang;
+    document.querySelectorAll('.lang-tab').forEach(function(btn){
+      btn.setAttribute('aria-selected', btn.dataset.lang === lang ? 'true' : 'false');
+    });
+    els.editorLabel.textContent = LABELS[lang];
+    editor.setOption('mode', MODES[lang]);
+    editor.setValue(docs[lang]);
+    editor.clearHistory();
+
+    var isPython = lang === 'python';
+    els.outputLabel.textContent = isPython ? 'Console' : 'Preview';
+    els.preview.classList.toggle('hidden', isPython);
+    els.console.classList.toggle('hidden', !isPython);
+    els.runBtn.classList.toggle('hidden', !isPython);
+
+    if (isPython) {
+      setStatus('idle', pyodide ? 'Ready' : 'Press Run to start');
+    } else {
+      setStatus('ok', 'Live preview');
+      renderWebPreview();
+    }
+  }
+
+  document.querySelectorAll('.lang-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchLang(btn.dataset.lang); });
+  });
+
+  document.querySelectorAll('.view-switch button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      currentView = btn.dataset.view;
+      document.querySelectorAll('.view-switch button').forEach(function(b){
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      els.paneEditor.classList.toggle('active-mobile', currentView === 'code');
+      els.paneOutput.classList.toggle('active-mobile', currentView === 'output');
+    });
+  });
+
+  function renderWebPreview(){
+    var doc = '<!doctype html><html><head><style>' + docs.css + '</style></head><body>' +
+      docs.html + '<script>' + docs.javascript + '<' + '/script></body></html>';
+    els.preview.srcdoc = doc;
+  }
+
+  function appendConsole(text, cls){
+    var span = document.createElement('div');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    els.console.appendChild(span);
+    els.console.scrollTop = els.console.scrollHeight;
+  }
+
+  function ensurePyodide(){
+    if (pyodide) return Promise.resolve(pyodide);
+    if (pyodideLoading) return pyodideLoading;
+
+    els.loadingOverlay.classList.remove('hidden');
+    els.loadingText.textContent = 'Loading Python runtime — this happens once…';
+    setStatus('busy', 'Loading Python…');
+
+    pyodideLoading = new Promise(function(resolve, reject){
+      var script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js';
+      script.onload = function(){
+        loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.28.3/full/' })
+          .then(function(inst){
+            pyodide = inst;
+            pyodide.setStdout({ batched: function(s){ appendConsole(s); } });
+            pyodide.setStderr({ batched: function(s){ appendConsole(s, 'line-err'); } });
+            els.loadingOverlay.classList.add('hidden');
+            resolve(pyodide);
+          })
+          .catch(reject);
+      };
+      script.onerror = function(){ reject(new Error('Could not load the Python runtime. Check your connection and try again.')); };
+      document.body.appendChild(script);
+    });
+
+    return pyodideLoading;
+  }
+
+  function runPython(){
+    els.console.innerHTML = '';
+    appendConsole('Running…', 'line-muted');
+    setStatus('busy', 'Running…');
+    els.runBtn.disabled = true;
+
+    ensurePyodide()
+      .then(function(py){
+        els.console.innerHTML = '';
+        return py.runPythonAsync(docs.python);
+      })
+      .then(function(){
+        setStatus('ok', 'Finished');
+      })
+      .catch(function(err){
+        appendConsole(String(err && err.message ? err.message : err), 'line-err');
+        setStatus('err', 'Error');
+      })
+      .finally(function(){
+        els.runBtn.disabled = false;
+        els.loadingOverlay.classList.add('hidden');
+        if (window.innerWidth <= 820) {
+          document.querySelector('.view-switch button[data-view="output"]').click();
+        }
+      });
+  }
+
+  function runCurrent(){
+    if (currentLang === 'python') runPython();
+    else renderWebPreview();
+  }
+
+  els.runBtn.addEventListener('click', runCurrent);
+
+  els.resetBtn.addEventListener('click', function(){
+    docs[currentLang] = STARTERS[currentLang];
+    saveDoc(currentLang, docs[currentLang]);
+    editor.setValue(docs[currentLang]);
+    if (currentLang === 'python') { els.console.innerHTML = ''; setStatus('idle', 'Reverted to starter code'); }
+    else renderWebPreview();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCurrent(); }
+  });
+
+  renderWebPreview();
+})();
+</script>
+</body>
+</html>

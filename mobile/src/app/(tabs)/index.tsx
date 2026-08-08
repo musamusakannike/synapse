@@ -10,6 +10,7 @@ import {
   IconBrain,
   IconCards,
   IconMessageCircle,
+  IconCode,
 } from '@tabler/icons-react-native';
 import { useProgressStore } from '@/store/progress.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -80,6 +81,21 @@ export default function DashboardHome() {
         <View style={s.header}>
           <Text style={s.title}>Hi{user?.firstName ? `, ${user.firstName}` : ''}</Text>
           <Text style={s.subtitle}>Continue your learning journey</Text>
+        </View>
+
+        <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
+          <Card onPress={() => { haptics.light(); router.push('/playground' as any); }}>
+            <View style={s.playgroundRow}>
+              <View style={[s.playgroundIcon, { backgroundColor: colors.brandPrimarySoft }]}>
+                <IconCode size={20} color={colors.brandPrimaryHover} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.cardTitle}>Code Playground</Text>
+                <Text style={s.playgroundDescription}>Write and run HTML, CSS, JavaScript and Python</Text>
+              </View>
+              <IconArrowRight size={18} color={colors.brandPrimaryHover} />
+            </View>
+          </Card>
         </View>
 
         {continueStudying.length > 0 && (
@@ -186,6 +202,9 @@ function makeStyles(c: any) {
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm, gap: spacing.sm },
     cardOverline: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium, color: c.brandPrimaryHover, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.xs },
     cardTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold, color: c.textPrimary },
+    playgroundRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+    playgroundIcon: { width: 40, height: 40, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
+    playgroundDescription: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, color: c.textSecondary, marginTop: spacing.xs / 2 },
     progressSection: { gap: spacing.xs, marginBottom: spacing.sm },
     progressHeader: { flexDirection: 'row', justifyContent: 'space-between' },
     progressLabelText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, color: c.textSecondary },

@@ -103,9 +103,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loginWithGoogle: async () => {
     set({ isLoading: true });
     try {
-      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const signInResult = await GoogleSignin.signIn();
-      const idToken = signInResult.data?.idToken;
+      const idToken = signInResult.data?.idToken || (signInResult as any).idToken;
       if (!idToken) {
         set({ isLoading: false });
         return { success: false, error: 'Google sign-in failed. No ID token received.' };

@@ -69,9 +69,9 @@ export default function Button({
           paddingHorizontal: padH,
           borderRadius: radii.md,
           opacity: isDisabled ? 0.6 : pressed ? 0.9 : 1,
-          transform: pressed && !isDisabled ? [{ translateY: -1 }] : undefined,
           width: fullWidth ? '100%' : undefined,
         },
+        pressed && !isDisabled && styles.pressed,
         style,
       ]}
       {...rest}
@@ -95,7 +95,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
+  pressed: {
+    transform: [{ translateY: -1 }],
+  },
   label: {
     fontFamily: fontFamilies.sansMedium,
   },
 });
+

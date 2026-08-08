@@ -183,11 +183,13 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'none';
+export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'none' | 'expired';
+export type SubscriptionBillingType = 'recurring' | 'manual';
 
 export interface PaymentStatus {
   subscription: {
     status: SubscriptionStatus;
+    billingType?: SubscriptionBillingType;
     currentPeriodEnd?: string;
   };
   purchasedCourseIds: string[];

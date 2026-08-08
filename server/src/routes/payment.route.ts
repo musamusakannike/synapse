@@ -4,6 +4,7 @@ import { protect } from '../middlewares/auth.middleware';
 import {
   initializeCoursePurchase,
   initializeSubscription,
+  initializeManualSubscription,
   verifyReference,
   getMyPaymentStatus,
   handleWebhook,
@@ -17,6 +18,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook
 
 router.post('/courses/:courseId/initialize', protect, initializeCoursePurchase);
 router.post('/subscription/initialize', protect, initializeSubscription);
+router.post('/subscription/manual/initialize', protect, initializeManualSubscription);
 router.get('/verify/:reference', protect, verifyReference);
 router.get('/me', protect, getMyPaymentStatus);
 

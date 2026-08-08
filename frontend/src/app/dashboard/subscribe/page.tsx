@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Sparkles, Check, Infinity as InfinityIcon } from 'lucide-react';
+import { Sparkles, Check, Infinity as InfinityIcon, Landmark, CreditCard } from 'lucide-react';
 import { paymentApi } from '@/lib/api';
 import { PaymentStatus } from '@/lib/types';
 import { formatKobo } from '@/lib/money';
@@ -15,20 +15,26 @@ const DISPLAY_PRICE_KOBO = Number(process.env.NEXT_PUBLIC_SUBSCRIPTION_PRICE_KOB
 const PERKS = [
   'Every premium course, current and future',
   'No per-course purchases — one flat monthly price',
-  'Cancel anytime, keep access until the period ends',
 ];
+
+type Checkout = 'manual' | 'recurring' | null;
 
 export default function SubscribePage() {
   const [status, setStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [checkoutInFlight, setCheckoutInFlight] = useState<Checkout>(null);
   const [error, setError] = useState<string | null>(null);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await paymentApi.me();
-        setStatus(res.data.data);
+        const data: PaymentStatus = res.data.data;
+        setStatus(data);
+        if (data.subscription.currentPeriodEnd) {
+          setDaysLeft(Math.max(0, Math.ceil((new Date(data.subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -37,18 +43,20 @@ export default function SubscribePage() {
     })();
   }, []);
 
-  const isActive = status?.subscription.status === 'active';
+  const sub = status?.subscription;
+  const isActive = sub?.status === 'active';
+  const isManual = sub?.billingType === 'manual';
 
-  const handleSubscribe = async () => {
+  const startCheckout = async (kind: Exclude<Checkout, null>) => {
     setError(null);
-    setIsSubscribing(true);
+    setCheckoutInFlight(kind);
     try {
-      const res = await paymentApi.initializeSubscription();
+      const res = kind === 'manual' ? await paymentApi.initializeManualSubscription() : await paymentApi.initializeSubscription();
       window.location.href = res.data.data.authorizationUrl;
     } catch (e) {
       const message = (e as { response?: { data?: { message?: string } } }).response?.data?.message;
       setError(message || 'Could not start checkout. Please try again.');
-      setIsSubscribing(false);
+      setCheckoutInFlight(null);
     }
   };
 
@@ -70,49 +78,87 @@ export default function SubscribePage() {
         <p className="text-[var(--text-muted)] mt-2">Unlock every premium course on SabiLearn for one monthly price.</p>
       </div>
 
-      <Card className="p-6">
-        {isActive ? (
-          <div className="text-center space-y-4">
-            <Badge tone="success">Active</Badge>
-            <p className="text-sm text-[var(--text-muted)]">
-              You have all-access.
-              {status?.subscription.currentPeriodEnd && (
-                <> Renews on {new Date(status.subscription.currentPeriodEnd).toLocaleDateString()}.</>
-              )}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-end gap-1 justify-center mb-1">
-              <span className="text-3xl font-bold text-[var(--ink-900)]">{formatKobo(DISPLAY_PRICE_KOBO)}</span>
-              <span className="text-sm text-[var(--text-muted)] mb-1">/month</span>
-            </div>
-            {status?.subscription.status === 'past_due' && (
-              <p className="text-center text-xs text-[var(--danger)] mb-3">Your last payment failed — resubscribe to restore access.</p>
+      {isActive && (
+        <Card className="p-6 text-center space-y-3">
+          <Badge tone="success">Active</Badge>
+          <p className="text-sm text-[var(--text-muted)]">
+            You have all-access.
+            {sub?.currentPeriodEnd && (
+              <>
+                {' '}
+                {isManual ? 'Access ends' : 'Renews'} on {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+                {isManual && daysLeft !== null && <> ({daysLeft} day{daysLeft === 1 ? '' : 's'} left)</>}.
+              </>
             )}
-            <div className="space-y-3 my-5">
-              {PERKS.map((perk) => (
-                <div key={perk} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
-                    <Check className="w-3 h-3 text-[var(--success)]" />
-                  </div>
-                  <p className="text-sm text-[var(--text-muted)]">{perk}</p>
-                </div>
-              ))}
-              <div className="flex items-start gap-3">
+          </p>
+          {isManual && (
+            <p className="text-xs text-[var(--text-muted)]">
+              This plan doesn&apos;t auto-renew — pay again any time before it ends to keep access going without a gap.
+            </p>
+          )}
+        </Card>
+      )}
+
+      {(!isActive || isManual) && (
+        <Card className="p-6">
+          <div className="flex items-end gap-1 justify-center mb-1">
+            <span className="text-3xl font-bold text-[var(--ink-900)]">{formatKobo(DISPLAY_PRICE_KOBO)}</span>
+            <span className="text-sm text-[var(--text-muted)] mb-1">/month</span>
+          </div>
+          {sub?.status === 'expired' && (
+            <p className="text-center text-xs text-[var(--danger)] mb-3">Your subscription expired — pay again to restore access.</p>
+          )}
+          {sub?.status === 'past_due' && (
+            <p className="text-center text-xs text-[var(--danger)] mb-3">Your last card payment failed — resubscribe to restore access.</p>
+          )}
+          <div className="space-y-3 my-5">
+            {PERKS.map((perk) => (
+              <div key={perk} className="flex items-start gap-3">
                 <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
-                  <InfinityIcon className="w-3 h-3 text-[var(--success)]" />
+                  <Check className="w-3 h-3 text-[var(--success)]" />
                 </div>
-                <p className="text-sm text-[var(--text-muted)]">Prefer to pay once instead? Every course also has a one-off price on its own page.</p>
+                <p className="text-sm text-[var(--text-muted)]">{perk}</p>
               </div>
+            ))}
+            <div className="flex items-start gap-3">
+              <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
+                <InfinityIcon className="w-3 h-3 text-[var(--success)]" />
+              </div>
+              <p className="text-sm text-[var(--text-muted)]">Prefer to pay once instead? Every course also has a one-off price on its own page.</p>
             </div>
-            {error && <p className="text-sm text-[var(--danger)] text-center mb-3">{error}</p>}
-            <Button fullWidth onClick={handleSubscribe} loading={isSubscribing}>
-              Subscribe monthly
+          </div>
+
+          {error && <p className="text-sm text-[var(--danger)] text-center mb-3">{error}</p>}
+
+          <div className="space-y-3">
+            <Button
+              fullWidth
+              onClick={() => startCheckout('manual')}
+              loading={checkoutInFlight === 'manual'}
+              disabled={checkoutInFlight === 'recurring'}
+            >
+              <Landmark className="w-4 h-4" /> {isManual ? 'Renew now' : 'Subscribe'} with bank transfer / USSD
             </Button>
-          </>
-        )}
-      </Card>
+            <p className="text-center text-xs text-[var(--text-muted)]">No card needed — pays instantly, renew manually each month.</p>
+
+            <div className="flex items-center gap-3 py-1">
+              <div className="h-px flex-1 bg-[var(--line)]" />
+              <span className="text-xs text-[var(--text-muted)]">or</span>
+              <div className="h-px flex-1 bg-[var(--line)]" />
+            </div>
+
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => startCheckout('recurring')}
+              loading={checkoutInFlight === 'recurring'}
+              disabled={checkoutInFlight === 'manual'}
+            >
+              <CreditCard className="w-4 h-4" /> Subscribe with card (auto-renews)
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

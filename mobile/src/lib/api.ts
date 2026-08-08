@@ -111,6 +111,8 @@ export const paymentApi = {
     api.post(`/payments/courses/${courseId}/initialize`, { callbackUrl: PAYMENT_CALLBACK_URL }),
   initializeSubscription: () =>
     api.post('/payments/subscription/initialize', { callbackUrl: PAYMENT_CALLBACK_URL }),
+  initializeManualSubscription: () =>
+    api.post('/payments/subscription/manual/initialize', { callbackUrl: PAYMENT_CALLBACK_URL }),
   verify: (reference: string) => api.get(`/payments/verify/${reference}`),
   me: () => api.get('/payments/me'),
 };

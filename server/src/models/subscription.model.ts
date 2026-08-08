@@ -1,13 +1,20 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export type SubscriptionStatus = 'active' | 'cancelled' | 'past_due' | 'none';
+/**
+ * 'recurring' = Paystack Plan, card-only, auto-debits monthly.
+ * 'manual' = one-off charge (any channel, incl. bank transfer/USSD) that grants
+ * 30 days of access; the user has to come back and pay again to renew.
+ */
+export type SubscriptionBillingType = 'recurring' | 'manual';
 
 export interface ISubscription extends Document {
   user: mongoose.Types.ObjectId;
+  billingType: SubscriptionBillingType;
   paystackCustomerCode?: string;
   paystackSubscriptionCode?: string;
   paystackEmailToken?: string;
-  planCode: string;
+  planCode?: string;
   status: SubscriptionStatus;
   currentPeriodEnd?: Date;
   createdAt: Date;
@@ -23,6 +30,11 @@ const SubscriptionSchema: Schema = new Schema<ISubscription>(
       unique: true,
       index: true,
     },
+    billingType: {
+      type: String,
+      enum: ['recurring', 'manual'],
+      default: 'manual',
+    },
     paystackCustomerCode: {
       type: String,
     },
@@ -34,7 +46,6 @@ const SubscriptionSchema: Schema = new Schema<ISubscription>(
     },
     planCode: {
       type: String,
-      required: true,
     },
     status: {
       type: String,

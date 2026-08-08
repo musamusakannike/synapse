@@ -5,6 +5,7 @@ import Topic from '../models/topic.model';
 import Transaction from '../models/transaction.model';
 import Subscription from '../models/subscription.model';
 import { AuthenticatedRequest } from './auth.middleware';
+import { isSubscriptionActive } from '../utils/subscription.util';
 
 /**
  * Gates a route to users who can access a given course: it's free, they hold an
@@ -41,8 +42,8 @@ export const requireCourseAccess = (
         return;
       }
 
-      const activeSubscription = await Subscription.exists({ user: user._id, status: 'active' });
-      if (activeSubscription) {
+      const subscription = await Subscription.findOne({ user: user._id }).select('status currentPeriodEnd');
+      if (isSubscriptionActive(subscription)) {
         next();
         return;
       }

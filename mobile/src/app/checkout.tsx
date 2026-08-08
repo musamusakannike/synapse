@@ -14,7 +14,7 @@ type Phase = 'initializing' | 'checkout' | 'verifying' | 'result' | 'error';
 
 export default function CheckoutScreen() {
   const { colors } = useTheme();
-  const { type, courseId } = useLocalSearchParams<{ type: 'course' | 'subscription'; courseId?: string }>();
+  const { type, courseId } = useLocalSearchParams<{ type: 'course' | 'subscription' | 'subscription-manual'; courseId?: string }>();
   const webviewRef = useRef<WebView>(null);
   const [phase, setPhase] = useState<Phase>('initializing');
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
@@ -30,7 +30,9 @@ export default function CheckoutScreen() {
       const res =
         type === 'subscription'
           ? await paymentApi.initializeSubscription()
-          : await paymentApi.initializeCoursePurchase(courseId!);
+          : type === 'subscription-manual'
+            ? await paymentApi.initializeManualSubscription()
+            : await paymentApi.initializeCoursePurchase(courseId!);
       setCheckoutUrl(res.data.data.authorizationUrl);
       setPhase('checkout');
     } catch (e) {

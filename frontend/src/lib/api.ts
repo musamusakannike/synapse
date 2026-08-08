@@ -97,6 +97,7 @@ export const progressApi = {
 export const paymentApi = {
   initializeCoursePurchase: (courseId: string) => api.post(`/payments/courses/${courseId}/initialize`),
   initializeSubscription: () => api.post('/payments/subscription/initialize'),
+  initializeManualSubscription: () => api.post('/payments/subscription/manual/initialize'),
   verify: (reference: string) => api.get(`/payments/verify/${reference}`),
   me: () => api.get('/payments/me'),
 };

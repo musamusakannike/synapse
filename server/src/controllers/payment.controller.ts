@@ -4,6 +4,7 @@ import Course from '../models/course.model';
 import Transaction from '../models/transaction.model';
 import Subscription from '../models/subscription.model';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { isSubscriptionActive, MANUAL_SUBSCRIPTION_DAYS } from '../utils/subscription.util';
 import {
   initializeTransaction,
   verifyTransaction as verifyPaystackTransaction,
@@ -102,8 +103,8 @@ export const initializeSubscription = async (
       return;
     }
 
-    const activeSub = await Subscription.findOne({ user: user._id, status: 'active' });
-    if (activeSub) {
+    const existingSub = await Subscription.findOne({ user: user._id });
+    if (isSubscriptionActive(existingSub)) {
       res.status(400).json({ success: false, message: 'You already have an active subscription.' });
       return;
     }
@@ -114,6 +115,7 @@ export const initializeSubscription = async (
       user: user._id,
       reference,
       type: 'subscription',
+      billingType: 'recurring',
       amount,
       status: 'pending',
     });
@@ -127,6 +129,69 @@ export const initializeSubscription = async (
       metadata: {
         userId: String(user._id),
         type: 'subscription',
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        authorizationUrl: paystackRes.data.authorization_url,
+        accessCode: paystackRes.data.access_code,
+        reference,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Bank transfer / USSD-friendly alternative to the card-only recurring plan above —
+ * most entry-level Nigerian students don't have a debit card Paystack can authorize
+ * for recurring billing. This is a plain one-off charge (no `plan`, so every channel
+ * Paystack has enabled is offered) that grants MANUAL_SUBSCRIPTION_DAYS of access.
+ * There's no auto-renewal: the user has to come back and pay again next month.
+ */
+export const initializeManualSubscription = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const user = req.user!;
+    const amount = Number(process.env.SUBSCRIPTION_AMOUNT_KOBO);
+
+    if (!amount) {
+      res.status(500).json({ success: false, message: 'Subscription pricing is not configured.' });
+      return;
+    }
+
+    const existingSub = await Subscription.findOne({ user: user._id });
+    if (isSubscriptionActive(existingSub)) {
+      res.status(400).json({ success: false, message: 'You already have an active subscription.' });
+      return;
+    }
+
+    const reference = generateReference('submanual');
+
+    await Transaction.create({
+      user: user._id,
+      reference,
+      type: 'subscription',
+      billingType: 'manual',
+      amount,
+      status: 'pending',
+    });
+
+    const paystackRes = await initializeTransaction({
+      email: user.email,
+      amount,
+      reference,
+      callback_url: resolveCallbackUrl(req),
+      metadata: {
+        userId: String(user._id),
+        type: 'subscription',
+        billingType: 'manual',
       },
     });
 
@@ -192,11 +257,23 @@ export const getMyPaymentStatus = async (
       status: 'success',
     }).select('course');
 
+    // 'expired' only makes sense for the manual, non-webhook-backed billing type —
+    // a recurring subscription's `status` is already kept current by Paystack's webhooks.
+    const isExpiredManual =
+      !!subscription &&
+      subscription.status === 'active' &&
+      subscription.billingType === 'manual' &&
+      !isSubscriptionActive(subscription);
+
     res.status(200).json({
       success: true,
       data: {
         subscription: subscription
-          ? { status: subscription.status, currentPeriodEnd: subscription.currentPeriodEnd }
+          ? {
+              status: isExpiredManual ? 'expired' : subscription.status,
+              billingType: subscription.billingType,
+              currentPeriodEnd: subscription.currentPeriodEnd,
+            }
           : { status: 'none' },
         purchasedCourseIds: purchasedCourses.map((t) => t.course),
       },
@@ -259,11 +336,31 @@ const handleChargeSuccess = async (data: any) => {
   transaction.paystackPayload = data;
   await transaction.save();
 
-  if (transaction.type === 'subscription') {
+  if (transaction.type === 'subscription' && transaction.billingType === 'manual') {
+    const existing = await Subscription.findOne({ user: transaction.user });
+    // Renewing before expiry extends from the current end date rather than from
+    // "now", so paying a few days early doesn't cost the user those days.
+    const base = existing?.currentPeriodEnd && existing.currentPeriodEnd.getTime() > Date.now() ? existing.currentPeriodEnd : new Date();
+    const currentPeriodEnd = new Date(base.getTime() + MANUAL_SUBSCRIPTION_DAYS * 24 * 60 * 60 * 1000);
+
     await Subscription.findOneAndUpdate(
       { user: transaction.user },
       {
         user: transaction.user,
+        billingType: 'manual',
+        status: 'active',
+        currentPeriodEnd,
+      },
+      { upsert: true }
+    );
+  } else if (transaction.type === 'subscription') {
+    // Recurring (card, Paystack Plan) charge — subscription.create carries the
+    // subscription/plan codes, this just flips access on immediately.
+    await Subscription.findOneAndUpdate(
+      { user: transaction.user },
+      {
+        user: transaction.user,
+        billingType: 'recurring',
         planCode: data.plan?.plan_code || process.env.PAYSTACK_SUBSCRIPTION_PLAN_CODE,
         paystackCustomerCode: data.customer?.customer_code,
         status: 'active',

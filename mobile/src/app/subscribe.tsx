@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
-import { IconArrowLeft, IconSparkles, IconCheck, IconInfinity } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconSparkles, IconCheck, IconInfinity, IconBuildingBank, IconCreditCard } from '@tabler/icons-react-native';
 import { paymentApi } from '@/lib/api';
 import { PaymentStatus } from '@/lib/types';
 import { formatKobo } from '@/lib/money';
@@ -19,25 +19,38 @@ const DISPLAY_PRICE_KOBO = Number(Constants.expoConfig?.extra?.subscriptionPrice
 const PERKS = [
   'Every premium course, current and future',
   'No per-course purchases — one flat monthly price',
-  'Cancel anytime, keep access until the period ends',
 ];
 
 export default function SubscribeScreen() {
   const { colors } = useTheme();
   const [status, setStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   const load = useCallback(() => {
     paymentApi
       .me()
-      .then((res) => setStatus(res.data.data))
+      .then((res) => {
+        const data: PaymentStatus = res.data.data;
+        setStatus(data);
+        if (data.subscription.currentPeriodEnd) {
+          setDaysLeft(Math.max(0, Math.ceil((new Date(data.subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))));
+        }
+      })
       .catch(() => {})
       .finally(() => setIsLoading(false));
   }, []);
 
   useFocusEffect(load);
 
-  const isActive = status?.subscription.status === 'active';
+  const sub = status?.subscription;
+  const isActive = sub?.status === 'active';
+  const isManual = sub?.billingType === 'manual';
+
+  const goToCheckout = (type: 'subscription' | 'subscription-manual') => {
+    haptics.light();
+    router.push({ pathname: '/checkout', params: { type } } as any);
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
@@ -61,55 +74,81 @@ export default function SubscribeScreen() {
             Unlock every premium course on SabiLearn for one monthly price.
           </Text>
 
-          <Card style={{ marginTop: spacing.lg }}>
-            {isActive ? (
+          {isActive && (
+            <Card style={{ marginTop: spacing.lg, width: '100%' }}>
               <View style={styles.activeWrap}>
                 <Badge variant="success">Active</Badge>
                 <Text style={[styles.subtitle, { color: colors.textSecondary, marginTop: spacing.sm }]}>
                   You have all-access.
-                  {status?.subscription.currentPeriodEnd
-                    ? ` Renews on ${new Date(status.subscription.currentPeriodEnd).toLocaleDateString()}.`
+                  {sub?.currentPeriodEnd
+                    ? ` ${isManual ? 'Access ends' : 'Renews'} on ${new Date(sub.currentPeriodEnd).toLocaleDateString()}${isManual && daysLeft !== null ? ` (${daysLeft} day${daysLeft === 1 ? '' : 's'} left)` : ''}.`
                     : ''}
                 </Text>
-              </View>
-            ) : (
-              <>
-                <View style={styles.priceRow}>
-                  <Text style={[styles.price, { color: colors.textPrimary }]}>{formatKobo(DISPLAY_PRICE_KOBO)}</Text>
-                  <Text style={[styles.pricePeriod, { color: colors.textSecondary }]}>/month</Text>
-                </View>
-                {status?.subscription.status === 'past_due' && (
-                  <Text style={[styles.pastDue, { color: colors.danger }]}>
-                    Your last payment failed — resubscribe to restore access.
+                {isManual && (
+                  <Text style={[styles.subtitle, { color: colors.textTertiary, marginTop: spacing.xs }]}>
+                    This plan doesn&apos;t auto-renew — pay again any time before it ends to avoid a gap.
                   </Text>
                 )}
-                <View style={{ gap: spacing.sm, marginVertical: spacing.lg }}>
-                  {PERKS.map((perk) => (
-                    <View key={perk} style={styles.perkRow}>
-                      <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
-                        <IconCheck size={12} color={colors.success} />
-                      </View>
-                      <Text style={[styles.perkText, { color: colors.textSecondary }]}>{perk}</Text>
-                    </View>
-                  ))}
-                  <View style={styles.perkRow}>
+              </View>
+            </Card>
+          )}
+
+          {(!isActive || isManual) && (
+            <Card style={{ marginTop: spacing.lg, width: '100%' }}>
+              <View style={styles.priceRow}>
+                <Text style={[styles.price, { color: colors.textPrimary }]}>{formatKobo(DISPLAY_PRICE_KOBO)}</Text>
+                <Text style={[styles.pricePeriod, { color: colors.textSecondary }]}>/month</Text>
+              </View>
+              {sub?.status === 'expired' && (
+                <Text style={[styles.pastDue, { color: colors.danger }]}>
+                  Your subscription expired — pay again to restore access.
+                </Text>
+              )}
+              {sub?.status === 'past_due' && (
+                <Text style={[styles.pastDue, { color: colors.danger }]}>
+                  Your last card payment failed — resubscribe to restore access.
+                </Text>
+              )}
+              <View style={{ gap: spacing.sm, marginVertical: spacing.lg }}>
+                {PERKS.map((perk) => (
+                  <View key={perk} style={styles.perkRow}>
                     <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
-                      <IconInfinity size={12} color={colors.success} />
+                      <IconCheck size={12} color={colors.success} />
                     </View>
-                    <Text style={[styles.perkText, { color: colors.textSecondary }]}>
-                      Prefer to pay once? Every course also has a one-off price on its own page.
-                    </Text>
+                    <Text style={[styles.perkText, { color: colors.textSecondary }]}>{perk}</Text>
                   </View>
+                ))}
+                <View style={styles.perkRow}>
+                  <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
+                    <IconInfinity size={12} color={colors.success} />
+                  </View>
+                  <Text style={[styles.perkText, { color: colors.textSecondary }]}>
+                    Prefer to pay once? Every course also has a one-off price on its own page.
+                  </Text>
                 </View>
-                <Button
-                  fullWidth
-                  onPress={() => { haptics.light(); router.push({ pathname: '/checkout', params: { type: 'subscription' } } as any); }}
-                >
-                  Subscribe monthly
-                </Button>
-              </>
-            )}
-          </Card>
+              </View>
+
+              <Button fullWidth icon={<IconBuildingBank size={16} color={colors.brandOnPrimary} />} onPress={() => goToCheckout('subscription-manual')}>
+                {isManual ? 'Renew now' : 'Subscribe'} with bank transfer / USSD
+              </Button>
+              <Text style={[styles.hint, { color: colors.textTertiary }]}>No card needed — pays instantly, renew manually each month.</Text>
+
+              <View style={styles.dividerRow}>
+                <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
+                <Text style={[styles.dividerLabel, { color: colors.textTertiary }]}>or</Text>
+                <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
+              </View>
+
+              <Button
+                fullWidth
+                variant="secondary"
+                icon={<IconCreditCard size={16} color={colors.textPrimary} />}
+                onPress={() => goToCheckout('subscription')}
+              >
+                Subscribe with card (auto-renews)
+              </Button>
+            </Card>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -139,4 +178,8 @@ const styles = StyleSheet.create({
   perkRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   perkIcon: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   perkText: { flex: 1, fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, lineHeight: fontSizes.sm * 1.5 },
+  hint: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, textAlign: 'center', marginTop: spacing.sm },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.base },
+  divider: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerLabel: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans },
 });

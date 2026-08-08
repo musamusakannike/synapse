@@ -89,6 +89,7 @@
   var editor = null;
   var pyodide = null;
   var pyodideLoading = null;
+  var lastInitCode = null;
 
   var els = {
     console: document.getElementById('console'),
@@ -201,9 +202,12 @@
     }
     if (!data || typeof data !== 'object') return;
     if (data.type === 'init') {
-      editor.setValue(data.code || '');
-      editor.clearHistory();
-      postToParent({ type: 'ready' });
+      var newCode = data.code || '';
+      if (lastInitCode !== newCode || data.force) {
+        lastInitCode = newCode;
+        editor.setValue(newCode);
+        editor.clearHistory();
+      }
     } else if (data.type === 'run') {
       runPython();
     }

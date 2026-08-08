@@ -41,11 +41,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+app.use(morgan('dev'));
 
 // Base/Health Check Route
 app.get('/health', (req, res) => {

@@ -198,7 +198,7 @@ const seedDatabase = async (): Promise<void> => {
     const userPassword = await bcrypt.hash('user123', 10);
 
     const admin = await User.create({
-      email: 'admin@sabilearn.com',
+      email: 'admin@sabilearn.online',
       password: adminPassword,
       name: 'Admin User',
       firstName: 'Admin',
@@ -209,7 +209,7 @@ const seedDatabase = async (): Promise<void> => {
     });
 
     const user = await User.create({
-      email: 'student@sabilearn.com',
+      email: 'student@sabilearn.online',
       password: userPassword,
       name: 'John Doe',
       firstName: 'John',
@@ -315,8 +315,8 @@ const seedDatabase = async (): Promise<void> => {
     console.log('\n========================================');
     console.log('Seed completed successfully!');
     console.log('========================================');
-    console.log('Admin login:  admin@sabilearn.com / admin123');
-    console.log('User login:   student@sabilearn.com / user123');
+    console.log('Admin login:  admin@sabilearn.online / admin123');
+    console.log('User login:   student@sabilearn.online / user123');
     console.log(`Created: ${coursesSeed.length} courses, ${totalTopics} topics, ${totalFlashcards} flashcards, ${totalMcqs} MCQs`);
     console.log('========================================\n');
 

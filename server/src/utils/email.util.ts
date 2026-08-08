@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
-const DEFAULT_FROM = 'SabiLearn <noreply@sabilearn.com>';
+const DEFAULT_FROM = 'SabiLearn <noreply@sabilearn.online>';
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)

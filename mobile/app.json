@@ -73,7 +73,14 @@
       "reactCompiler": true
     },
     "extra": {
-      "apiUrl": "https://sabilearn.onrender.com/api/v1"
+      "apiUrl": "https://sabilearn.onrender.com/api/v1",
+      "router": {},
+      "eas": {
+        "projectId": "424de974-a590-4b82-90c4-c390a80163c1"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/424de974-a590-4b82-90c4-c390a80163c1"
     }
   }
 }

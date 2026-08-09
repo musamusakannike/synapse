@@ -28,11 +28,7 @@ export default function LearnPage() {
     })();
   }, [topicId]);
 
-  const isGuidedDefault = topic?.defaultFlow === 'guided';
-  const handleClose = () =>
-    router.push(
-      isGuidedDefault ? `/dashboard/courses/${courseId}` : `/dashboard/courses/${courseId}/topics/${topicId}`
-    );
+  const handleClose = () => router.push(`/dashboard/courses/${courseId}`);
 
   if (isLoading) {
     return (
@@ -57,7 +53,7 @@ export default function LearnPage() {
     <StepPlayer
       topic={topic}
       onClose={handleClose}
-      altViewHref={isGuidedDefault ? `/dashboard/courses/${courseId}/topics/${topicId}?view=flat` : undefined}
+      altViewHref={`/dashboard/courses/${courseId}/topics/${topicId}?view=flat`}
     />
   );
 }

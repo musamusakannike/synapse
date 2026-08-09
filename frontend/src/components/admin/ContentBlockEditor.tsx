@@ -201,6 +201,17 @@ function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: Top
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
+          {child.type === 'code' && (
+            <select
+              value={child.language || 'python'}
+              onChange={(e) => handleUpdateChild(idx, { language: e.target.value })}
+              className="w-full px-2.5 py-1.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs text-[var(--ink-900)] outline-none font-sans"
+            >
+              {CODE_LANGUAGES.map((lang) => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
+          )}
           {child.type === 'text' || child.type === 'code' || child.type === 'latex' ? (
             <textarea
               value={child.content}

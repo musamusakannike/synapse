@@ -31,18 +31,14 @@ export default function TopicLearnScreen() {
   if (!topic) return <EmptyState title="Topic not found" />;
 
   const handleClose = () => {
-    if (topic.defaultFlow === 'guided') {
-      router.replace(`/course/${id}` as any);
-    } else {
-      router.back();
-    }
+    router.replace(`/course/${id}` as any);
   };
 
   return (
     <StepPlayer
       topic={topic}
       onClose={handleClose}
-      altViewHref={topic.defaultFlow === 'guided' ? `/course/${id}/topic/${topicId}?flat=1` : undefined}
+      altViewHref={`/course/${id}/topic/${topicId}?flat=1`}
     />
   );
 }

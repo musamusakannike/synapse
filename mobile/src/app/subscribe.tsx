@@ -2,23 +2,20 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import Constants from 'expo-constants';
-import { IconArrowLeft, IconSparkles, IconCheck, IconInfinity, IconBuildingBank, IconCreditCard } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconSparkles, IconCheck, IconShieldCheck, IconDeviceLaptop } from '@tabler/icons-react-native';
 import { paymentApi } from '@/lib/api';
 import { PaymentStatus } from '@/lib/types';
-import { formatKobo } from '@/lib/money';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useTheme, fontFamilies, fontSizes, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
-const DISPLAY_PRICE_KOBO = Number(Constants.expoConfig?.extra?.subscriptionPriceKobo ?? 0);
-
-const PERKS = [
-  'Every premium course, current and future',
-  'No per-course purchases — one flat monthly price',
+const PREMIUM_PERKS = [
+  'Access to all generated courses and study modules',
+  'Unlimited AI Tutor questions & practice quizzes',
+  'Document analysis and custom course generation',
+  'Multi-device syncing across Web and Mobile',
 ];
 
 export default function SubscribeScreen() {
@@ -34,7 +31,9 @@ export default function SubscribeScreen() {
         const data: PaymentStatus = res.data.data;
         setStatus(data);
         if (data.subscription.currentPeriodEnd) {
-          setDaysLeft(Math.max(0, Math.ceil((new Date(data.subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24))));
+          setDaysLeft(
+            Math.max(0, Math.ceil((new Date(data.subscription.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+          );
         }
       })
       .catch(() => {})
@@ -45,12 +44,6 @@ export default function SubscribeScreen() {
 
   const sub = status?.subscription;
   const isActive = sub?.status === 'active';
-  const isManual = sub?.billingType === 'manual';
-
-  const goToCheckout = (type: 'subscription' | 'subscription-manual') => {
-    haptics.light();
-    router.push({ pathname: '/checkout', params: { type } } as any);
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
@@ -58,7 +51,7 @@ export default function SubscribeScreen() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <IconArrowLeft size={20} color={colors.textPrimary} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Subscription</Text>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Account Plan</Text>
         <View style={{ width: 20 }} />
       </View>
 
@@ -69,86 +62,58 @@ export default function SubscribeScreen() {
           <View style={[styles.iconWrap, { backgroundColor: colors.brandPrimarySoft }]}>
             <IconSparkles size={24} color={colors.brandPrimaryHover} />
           </View>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>All-access subscription</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>SabiLearn Account</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Unlock every premium course on SabiLearn for one monthly price.
+            Track your account subscription status and feature availability.
           </Text>
 
-          {isActive && (
+          {isActive ? (
             <Card style={{ marginTop: spacing.lg, width: '100%' }}>
               <View style={styles.activeWrap}>
-                <Badge variant="success">Active</Badge>
-                <Text style={[styles.subtitle, { color: colors.textSecondary, marginTop: spacing.sm }]}>
-                  You have all-access.
-                  {sub?.currentPeriodEnd
-                    ? ` ${isManual ? 'Access ends' : 'Renews'} on ${new Date(sub.currentPeriodEnd).toLocaleDateString()}${isManual && daysLeft !== null ? ` (${daysLeft} day${daysLeft === 1 ? '' : 's'} left)` : ''}.`
-                    : ''}
+                <Badge variant="success">Active Premium</Badge>
+                <Text style={[styles.activeTitle, { color: colors.textPrimary, marginTop: spacing.sm }]}>
+                  All-Access Active
                 </Text>
-                {isManual && (
-                  <Text style={[styles.subtitle, { color: colors.textTertiary, marginTop: spacing.xs }]}>
-                    This plan doesn&apos;t auto-renew — pay again any time before it ends to avoid a gap.
-                  </Text>
-                )}
+                <Text style={[styles.subtitle, { color: colors.textSecondary, marginTop: spacing.xs }]}>
+                  {sub?.currentPeriodEnd
+                    ? `Your premium subscription is active until ${new Date(sub.currentPeriodEnd).toLocaleDateString()}${daysLeft !== null ? ` (${daysLeft} day${daysLeft === 1 ? '' : 's'} remaining)` : ''}.`
+                    : 'You have full access to all premium features.'}
+                </Text>
               </View>
             </Card>
-          )}
-
-          {(!isActive || isManual) && (
+          ) : (
             <Card style={{ marginTop: spacing.lg, width: '100%' }}>
-              <View style={styles.priceRow}>
-                <Text style={[styles.price, { color: colors.textPrimary }]}>{formatKobo(DISPLAY_PRICE_KOBO)}</Text>
-                <Text style={[styles.pricePeriod, { color: colors.textSecondary }]}>/month</Text>
-              </View>
-              {sub?.status === 'expired' && (
-                <Text style={[styles.pastDue, { color: colors.danger }]}>
-                  Your subscription expired — pay again to restore access.
+              <View style={styles.activeWrap}>
+                <Badge variant="default">Free Account</Badge>
+                <Text style={[styles.activeTitle, { color: colors.textPrimary, marginTop: spacing.sm }]}>
+                  Standard Access
                 </Text>
-              )}
-              {sub?.status === 'past_due' && (
-                <Text style={[styles.pastDue, { color: colors.danger }]}>
-                  Your last card payment failed — resubscribe to restore access.
+                <Text style={[styles.subtitle, { color: colors.textSecondary, marginTop: spacing.xs }]}>
+                  You are currently on the Free Plan.
                 </Text>
-              )}
-              <View style={{ gap: spacing.sm, marginVertical: spacing.lg }}>
-                {PERKS.map((perk) => (
-                  <View key={perk} style={styles.perkRow}>
-                    <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
-                      <IconCheck size={12} color={colors.success} />
-                    </View>
-                    <Text style={[styles.perkText, { color: colors.textSecondary }]}>{perk}</Text>
-                  </View>
-                ))}
-                <View style={styles.perkRow}>
-                  <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
-                    <IconInfinity size={12} color={colors.success} />
-                  </View>
-                  <Text style={[styles.perkText, { color: colors.textSecondary }]}>
-                    Prefer to pay once? Every course also has a one-off price on its own page.
+                <View style={[styles.noticeBox, { backgroundColor: colors.surfaceSunken, borderColor: colors.borderSubtle }]}>
+                  <IconDeviceLaptop size={20} color={colors.brandPrimaryHover} />
+                  <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
+                    Subscriptions and account upgrades are managed through your account on our website at sabilearn.online.
                   </Text>
                 </View>
               </View>
-
-              <Button fullWidth icon={<IconBuildingBank size={16} color={colors.brandOnPrimary} />} onPress={() => goToCheckout('subscription-manual')}>
-                {isManual ? 'Renew now' : 'Subscribe'} with bank transfer / USSD
-              </Button>
-              <Text style={[styles.hint, { color: colors.textTertiary }]}>No card needed — pays instantly, renew manually each month.</Text>
-
-              <View style={styles.dividerRow}>
-                <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-                <Text style={[styles.dividerLabel, { color: colors.textTertiary }]}>or</Text>
-                <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-              </View>
-
-              <Button
-                fullWidth
-                variant="secondary"
-                icon={<IconCreditCard size={16} color={colors.textPrimary} />}
-                onPress={() => goToCheckout('subscription')}
-              >
-                Subscribe with card (auto-renews)
-              </Button>
             </Card>
           )}
+
+          <View style={{ width: '100%', marginTop: spacing.xl }}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Included Features</Text>
+            <View style={{ gap: spacing.md, marginTop: spacing.md }}>
+              {PREMIUM_PERKS.map((perk) => (
+                <View key={perk} style={styles.perkRow}>
+                  <View style={[styles.perkIcon, { backgroundColor: colors.successBg }]}>
+                    <IconCheck size={12} color={colors.success} />
+                  </View>
+                  <Text style={[styles.perkText, { color: colors.textSecondary }]}>{perk}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -169,17 +134,21 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing['2xl'], alignItems: 'center' },
   iconWrap: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold, marginTop: spacing.md, textAlign: 'center' },
-  subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, textAlign: 'center', marginTop: spacing.xs },
+  subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, textAlign: 'center', marginTop: spacing.xs, lineHeight: fontSizes.sm * 1.5 },
   activeWrap: { alignItems: 'center', paddingVertical: spacing.sm },
-  priceRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: spacing.xs },
-  price: { fontSize: fontSizes['2xl'], fontFamily: fontFamilies.displaySemiBold },
-  pricePeriod: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, marginBottom: 4 },
-  pastDue: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, textAlign: 'center', marginTop: spacing.sm },
+  activeTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold },
+  noticeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: spacing.md,
+  },
+  noticeText: { flex: 1, fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, lineHeight: fontSizes.xs * 1.5 },
+  sectionTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold },
   perkRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
   perkIcon: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   perkText: { flex: 1, fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, lineHeight: fontSizes.sm * 1.5 },
-  hint: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, textAlign: 'center', marginTop: spacing.sm },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.base },
-  divider: { flex: 1, height: StyleSheet.hairlineWidth },
-  dividerLabel: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans },
 });

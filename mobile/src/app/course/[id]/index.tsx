@@ -2,10 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight, IconLock, IconSparkles } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight, IconLock } from '@tabler/icons-react-native';
 import { courseApi, topicApi, paymentApi } from '@/lib/api';
 import { Course, Topic, PaymentStatus } from '@/lib/types';
-import { formatKobo } from '@/lib/money';
 import { cacheFlashcards } from '@/lib/offlineSync';
 import { useProgressStore } from '@/store/progress.store';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -50,7 +49,6 @@ export default function CourseDetailScreen() {
     load();
   }, [load]);
 
-  // Re-check on return from the checkout modal so an unlocked course reflects immediately.
   useFocusEffect(
     useCallback(() => {
       paymentApi.me().then((res) => setPaymentStatus(res.data.data)).catch(() => {});
@@ -97,29 +95,11 @@ export default function CourseDetailScreen() {
                 <IconLock size={18} color={colors.brandPrimaryHover} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.lockTitle, { color: colors.textPrimary }]}>Premium course</Text>
+                <Text style={[styles.lockTitle, { color: colors.textPrimary }]}>Premium Course</Text>
                 <Text style={[styles.lockMessage, { color: colors.textSecondary }]}>
-                  Buy it once for {formatKobo(course.price)}, or get all-access with a monthly subscription.
+                  This course requires an active subscription. Manage your account on sabilearn.online.
                 </Text>
               </View>
-            </View>
-            <View style={styles.lockActions}>
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<IconSparkles size={16} color={colors.textPrimary} />}
-                onPress={() => { haptics.light(); router.push('/subscribe' as any); }}
-                style={{ flex: 1 }}
-              >
-                Go all-access
-              </Button>
-              <Button
-                size="sm"
-                onPress={() => { haptics.light(); router.push({ pathname: '/checkout', params: { type: 'course', courseId: course._id } } as any); }}
-                style={{ flex: 1 }}
-              >
-                Buy for {formatKobo(course.price)}
-              </Button>
             </View>
           </Card>
         )}

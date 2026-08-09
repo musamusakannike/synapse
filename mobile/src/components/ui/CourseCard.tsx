@@ -2,7 +2,6 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { IconBook2 } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import { Course } from '@/lib/types';
-import { formatKobo } from '@/lib/money';
 import Card from './Card';
 import Badge from './Badge';
 
@@ -33,14 +32,9 @@ export default function CourseCard({ course, onPress }: CourseCardProps) {
         </Text>
         <View style={styles.footerRow}>
           <Text style={[styles.category, { color: colors.textTertiary }]}>{course.category}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <Text style={[styles.topicCount, { color: course.isFree ? colors.textTertiary : colors.brandPrimaryHover }]}>
-              {course.isFree ? 'Free' : formatKobo(course.price)}
-            </Text>
-            <Text style={[styles.topicCount, { color: colors.textTertiary }]}>
-              {course.topicCount ?? 0} topics
-            </Text>
-          </View>
+          <Text style={[styles.topicCount, { color: colors.textTertiary }]}>
+            {course.topicCount ?? 0} topics
+          </Text>
         </View>
       </View>
     </Card>

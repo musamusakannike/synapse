@@ -46,8 +46,11 @@ export default function NotificationsScreen() {
     if (!n.isRead) {
       try {
         await notificationApi.markRead(n._id);
-        setItems((prev) => prev.map((i) => (i._id === n._id ? { ...i, isRead: true } : i)));
-        setBadgeCount(items.filter((i) => !i.isRead && i._id !== n._id).length);
+        setItems((prev) => {
+          const updated = prev.map((i) => (i._id === n._id ? { ...i, isRead: true } : i));
+          setBadgeCount(updated.filter((i) => !i.isRead).length);
+          return updated;
+        });
       } catch {
         // non-fatal
       }
@@ -89,10 +92,17 @@ export default function NotificationsScreen() {
           )}
           <Text style={[styles.title, { color: colors.textPrimary }]}>Alerts</Text>
         </View>
-        {items.some((i) => !i.isRead) && (
-          <Pressable onPress={markAllRead}>
+        {items.some((i) => !i.isRead) ? (
+          <Pressable
+            onPress={markAllRead}
+            hitSlop={8}
+            accessibilityLabel="Mark all as read"
+            accessibilityRole="button"
+          >
             <Text style={[styles.markAll, { color: colors.brandPrimaryHover }]}>Mark all read</Text>
           </Pressable>
+        ) : (
+          <View style={{ height: 20 }} />
         )}
       </View>
       <FlatList
@@ -101,12 +111,27 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
         renderItem={({ item }) => (
-          <Card onPress={() => handlePress(item)} style={!item.isRead ? { borderWidth: 1, borderColor: colors.brandPrimarySoft } : undefined}>
+          <Card
+            onPress={() => handlePress(item)}
+            style={
+              !item.isRead
+                ? {
+                    borderWidth: 1,
+                    borderColor: colors.brandPrimarySoft,
+                    backgroundColor: 'rgba(251, 221, 176, 0.25)',
+                  }
+                : {
+                    borderWidth: 1,
+                    borderColor: colors.borderSubtle,
+                    backgroundColor: colors.surfaceCard,
+                  }
+            }
+          >
             <View style={styles.row}>
               {!item.isRead ? (
                 <View style={[styles.dot, { backgroundColor: colors.brandPrimary }]} />
               ) : (
-                <IconCircleCheck size={16} color={colors.textTertiary} />
+                <IconCircleCheck size={16} color={colors.textTertiary} style={{ marginTop: 2 }} />
               )}
               <View style={{ flex: 1 }}>
                 <Text style={[styles.notifTitle, { color: colors.textPrimary }]}>{item.title}</Text>

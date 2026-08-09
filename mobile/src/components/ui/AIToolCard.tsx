@@ -29,7 +29,7 @@ export default function AIToolCard({ icon, title, description, onPress }: AITool
       ]}
     >
       <View style={styles.iconWrap}>{icon}</View>
-      <Text style={styles.title}>{title}</Text>
+      <Text numberOfLines={1} style={styles.title}>{title}</Text>
       <Text style={styles.description} numberOfLines={2}>{description}</Text>
       <View style={styles.footer}>
         <Text style={styles.cta}>Open tool</Text>

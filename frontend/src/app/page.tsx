@@ -4,6 +4,7 @@ import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
 import AIToolCard from '@/components/ui/AIToolCard';
+import ContinueToDashboardPrompt from '@/components/ui/ContinueToDashboardPrompt';
 
 const navLinks = [
   { label: 'Courses', href: '/dashboard/courses' },
@@ -29,6 +30,7 @@ const faqs = [
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
+      <ContinueToDashboardPrompt />
       <Navbar links={navLinks} />
 
       <section className="relative px-6 sm:px-8 py-20 sm:py-28 overflow-hidden">

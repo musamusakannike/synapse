@@ -209,6 +209,32 @@ export interface CheckoutInitResponse {
   reference: string;
 }
 
+export interface BlogAuthor {
+  _id: string;
+  name: string;
+  avatar?: string;
+}
+
+export interface BlogPost {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  category: string;
+  tags: string[];
+  author: BlogAuthor | string;
+  isPublished: boolean;
+  publishedAt: string | null;
+  readingTimeMinutes: number;
+  views: number;
+  seoTitle: string;
+  seoDescription: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type TransactionStatus = 'pending' | 'success' | 'failed';
 
 export interface VerifyResponse {

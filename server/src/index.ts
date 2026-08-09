@@ -20,6 +20,7 @@ import adminRoutes from './routes/admin.route';
 import searchRoutes from './routes/search.route';
 import mediaRoutes from './routes/media.route';
 import paymentRoutes from './routes/payment.route';
+import blogRoutes from './routes/blog.route';
 import { errorHandler } from './middlewares/error.middleware';
 import { startScheduler } from './jobs/scheduler';
 
@@ -69,6 +70,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/media', mediaRoutes);
+app.use('/api/v1/blog', blogRoutes);
 
 // Handle 404 routes
 app.use((req, res) => {

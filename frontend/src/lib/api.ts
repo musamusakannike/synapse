@@ -133,6 +133,16 @@ export const mediaApi = {
   upload: (data: FormData) => api.post('/media/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };
 
+export const blogApi = {
+  list: (params?: Record<string, unknown>) => api.get('/blog', { params }),
+  categories: () => api.get('/blog/categories'),
+  bySlug: (slug: string) => api.get(`/blog/slug/${slug}`),
+  get: (id: string) => api.get(`/blog/${id}`),
+  create: (data: FormData) => api.post('/blog', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  update: (id: string, data: FormData) => api.put(`/blog/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  remove: (id: string) => api.delete(`/blog/${id}`),
+};
+
 export const adminApi = {
   analytics: () => api.get('/admin/analytics'),
   coursePerformance: () => api.get('/admin/course-performance'),

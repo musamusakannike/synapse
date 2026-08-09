@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60,
     // Matches the Cloudflare R2 public bucket URL pattern (server/.env R2_PUBLIC_URL).
     // Uses a wildcard so a bucket ID rotation doesn't silently break next/image.
     remotePatterns: [

@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const progress_controller_1 = require("../controllers/progress.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const progress_validation_1 = require("../validations/progress.validation");
+const router = (0, express_1.Router)();
+router.get('/', auth_middleware_1.protect, progress_controller_1.getDashboard);
+router.get('/stats', auth_middleware_1.protect, progress_controller_1.getProgress);
+router.get('/continue', auth_middleware_1.protect, progress_controller_1.getContinueStudying);
+router.get('/needs-improvement', auth_middleware_1.protect, progress_controller_1.getNeedsImprovement);
+router.get('/course/:courseId', auth_middleware_1.protect, progress_controller_1.getCourseProgress);
+router.get('/topic/:topicId', auth_middleware_1.protect, progress_controller_1.getTopicProgress);
+router.post('/flashcard-session', auth_middleware_1.protect, progress_validation_1.validateFlashcardSession, progress_controller_1.submitFlashcardSession);
+router.post('/mcq-session', auth_middleware_1.protect, progress_validation_1.validateMcqSession, progress_controller_1.submitMcqSession);
+router.post('/content-position', auth_middleware_1.protect, progress_validation_1.validateContentPosition, progress_controller_1.updateContentPosition);
+exports.default = router;

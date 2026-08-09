@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const mcq_controller_1 = require("../controllers/mcq.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const access_middleware_1 = require("../middlewares/access.middleware");
+const mcq_validation_1 = require("../validations/mcq.validation");
+const router = (0, express_1.Router)();
+router.get('/topic/:topicId', auth_middleware_1.protect, (0, access_middleware_1.requireCourseAccess)((0, access_middleware_1.resolveCourseIdFromTopicParam)('topicId')), mcq_controller_1.getMcqsByTopic);
+router.post('/', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), mcq_validation_1.validateCreateMcq, mcq_controller_1.createMcq);
+router.post('/bulk', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), mcq_validation_1.validateBulkCreateMcqs, mcq_controller_1.bulkCreateMcqs);
+router.put('/:id', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), mcq_validation_1.validateUpdateMcq, mcq_controller_1.updateMcq);
+router.delete('/:id', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), mcq_controller_1.deleteMcq);
+exports.default = router;

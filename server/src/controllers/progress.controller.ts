@@ -5,6 +5,7 @@ import Course from '../models/course.model';
 import Flashcard from '../models/flashcard.model';
 import MCQ from '../models/mcq.model';
 import StudySession from '../models/studySession.model';
+import Topic from '../models/topic.model';
 import UserProgress from '../models/userProgress.model';
 import { recordStudyDay, announceStreakProgress } from '../services/streak.service';
 import { sendAchievement } from '../services/notification.service';
@@ -80,15 +81,19 @@ export const getProgress = async (req: AuthenticatedRequest, res: Response, next
     // Read the stored streak rather than recomputing it here: the scheduler and
     // the achievement notifications work off the same field, and two
     // independent calculations would eventually disagree.
-    const user = await User.findById(userId).select('currentStreak longestStreak lastStudyDate');
+    const user = await User.findById(userId).select('currentStreak longestStreak lastStudyDate settings.dailyGoalMinutes');
     const streak = user?.currentStreak ?? 0;
     const longestStreak = user?.longestStreak ?? 0;
+    const dailyGoalMinutes = user?.settings?.dailyGoalMinutes ?? 15;
 
     const totalFlashcards = sessions.reduce((sum, s) => sum + s.flashcardsStudied, 0);
     const mcqSessions = sessions.filter((s) => s.type === 'mcq');
     const totalMcqAnswered = mcqSessions.reduce((sum, s) => sum + s.mcqAnswered, 0);
     const totalMcqCorrect = mcqSessions.reduce((sum, s) => sum + s.mcqCorrect, 0);
     const avgAccuracy = totalMcqAnswered > 0 ? Math.round((totalMcqCorrect / totalMcqAnswered) * 100) : 0;
+
+    const todayStudyMinutes = Math.round(todayStudyTime / 60);
+    const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(100, Math.round((todayStudyMinutes / dailyGoalMinutes) * 100)) : 0;
 
     res.status(200).json({
       success: true,
@@ -99,6 +104,12 @@ export const getProgress = async (req: AuthenticatedRequest, res: Response, next
         totalSessions: sessions.length,
         totalFlashcards,
         avgAccuracy,
+        dailyGoal: {
+          minutes: dailyGoalMinutes,
+          studiedMinutes: todayStudyMinutes,
+          progress: dailyGoalProgress,
+          met: todayStudyMinutes >= dailyGoalMinutes,
+        },
       },
     });
   } catch (error) {
@@ -259,6 +270,70 @@ export const submitMcqSession = async (req: AuthenticatedRequest, res: Response,
     void awardStreakAchievements(userId);
 
     res.status(200).json({ success: true, message: 'MCQ session recorded.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Saves exactly which content block within a topic the learner is on, so
+ * "continue studying" can resume mid-lesson instead of restarting the topic.
+ * Called frequently (e.g. as the learner scrolls/steps through content), so
+ * it deliberately skips the streak/session bookkeeping that the flashcard and
+ * MCQ endpoints do.
+ */
+export const updateContentPosition = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!._id;
+    const { course, topic, contentIndex } = req.body;
+
+    const progress = await UserProgress.findOneAndUpdate(
+      { user: userId, course, topic },
+      { $set: { lastContentIndex: contentIndex, lastStudiedAt: new Date() } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(200).json({ success: true, data: progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * The learner's saved position within a single topic, so the lesson player can
+ * resume at the exact content block instead of restarting from the top.
+ */
+export const getTopicProgress = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!._id;
+    const { topicId } = req.params;
+
+    const progress = await UserProgress.findOne({ user: userId, topic: topicId }).select('lastContentIndex isCompleted lastStudiedAt');
+
+    res.status(200).json({ success: true, data: progress || { lastContentIndex: 0, isCompleted: false, lastStudiedAt: null } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Percent of a course's topics the learner has completed, for the course-level
+ * progress bar shown on the course/dashboard screens.
+ */
+export const getCourseProgress = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!._id;
+    const { courseId } = req.params;
+
+    const totalTopics = await Topic.countDocuments({ course: courseId, isPublished: true });
+    const completedTopics = await UserProgress.countDocuments({ user: userId, course: courseId, isCompleted: true });
+
+    const percentComplete = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+    res.status(200).json({
+      success: true,
+      data: { course: courseId, totalTopics, completedTopics, percentComplete },
+    });
   } catch (error) {
     next(error);
   }

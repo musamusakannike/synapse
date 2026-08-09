@@ -10,6 +10,7 @@ export interface IUserSettings {
   reminderHour?: number;
   reminderMinute?: number;
   timezoneOffset?: number;
+  dailyGoalMinutes?: number;
 }
 
 export interface User {
@@ -192,10 +193,17 @@ export interface DashboardData {
 
 export interface ProgressStats {
   streak: number;
+  longestStreak: number;
   todayStudyTime: number;
   totalSessions: number;
   totalFlashcards: number;
   avgAccuracy: number;
+  dailyGoal: {
+    minutes: number;
+    studiedMinutes: number;
+    progress: number;
+    met: boolean;
+  };
 }
 
 export interface PaginatedResponse<T> {

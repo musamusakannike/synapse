@@ -10,6 +10,8 @@ export interface IUserProgress extends Document {
   mcqsCorrect: number;
   lastStudiedAt: Date;
   isCompleted: boolean;
+  /** Index into the topic's `contents` array where the learner last left off. */
+  lastContentIndex: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,6 +58,10 @@ const UserProgressSchema: Schema = new Schema<IUserProgress>(
     isCompleted: {
       type: Boolean,
       default: false,
+    },
+    lastContentIndex: {
+      type: Number,
+      default: 0,
     },
   },
   {

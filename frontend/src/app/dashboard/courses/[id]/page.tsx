@@ -7,9 +7,11 @@ import { Check, BookOpen, ArrowLeft, CreditCard, HelpCircle, ChevronRight, Lock,
 import { courseApi, topicApi, paymentApi } from '@/lib/api';
 import { Course, Topic, PaymentStatus } from '@/lib/types';
 import { formatKobo } from '@/lib/money';
+import { useProgressStore } from '@/store/progress.store';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -22,6 +24,8 @@ export default function CourseDetailsPage() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [courseProgress, setCourseProgress] = useState<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>(null);
+  const { fetchCourseProgress } = useProgressStore();
 
   useEffect(() => {
     (async () => {
@@ -34,13 +38,14 @@ export default function CourseDetailsPage() {
         setCourse(courseRes.data.data);
         setTopics(topicsRes.data.data || []);
         setPaymentStatus(paymentRes.data.data);
+        fetchCourseProgress(id).then(setCourseProgress);
       } catch (e) {
         console.error(e);
       } finally {
         setIsLoading(false);
       }
     })();
-  }, [id]);
+  }, [id, fetchCourseProgress]);
 
   const hasAccess =
     !course ||
@@ -112,6 +117,14 @@ export default function CourseDetailsPage() {
         <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-3">{course.title}</h1>
         <p className="text-[var(--text-muted)] leading-[var(--leading-relaxed)]">{course.longDescription || course.description}</p>
       </div>
+
+      {hasAccess && courseProgress && courseProgress.totalTopics > 0 && (
+        <ProgressBar
+          value={courseProgress.percentComplete}
+          tone="success"
+          label={`${courseProgress.completedTopics} of ${courseProgress.totalTopics} topics complete`}
+        />
+      )}
 
       {!hasAccess && (
         <Card className="p-5 border border-[var(--brand-gold-100)] bg-[var(--brand-gold-50,var(--surface-sunken))]">

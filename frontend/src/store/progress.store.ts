@@ -16,6 +16,9 @@ interface ProgressState {
   fetchNeedsImprovement: () => Promise<void>;
   submitFlashcardSession: (data: { course: string; topic: string; flashcardsStudied: number; duration: number }) => Promise<void>;
   submitMcqSession: (data: { course: string; topic: string; mcqAnswered: number; mcqCorrect: number; score: number; duration: number }) => Promise<void>;
+  saveContentPosition: (data: { course: string; topic: string; contentIndex: number }) => Promise<void>;
+  fetchCourseProgress: (courseId: string) => Promise<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>;
+  fetchTopicProgress: (topicId: string) => Promise<{ lastContentIndex: number; isCompleted: boolean } | null>;
 }
 
 export const useProgressStore = create<ProgressState>((set) => ({
@@ -74,6 +77,34 @@ export const useProgressStore = create<ProgressState>((set) => ({
       await progressApi.submitMcqSession(data);
     } catch (error) {
       console.error('Failed to submit MCQ session:', error);
+    }
+  },
+
+  saveContentPosition: async (data) => {
+    try {
+      await progressApi.saveContentPosition(data);
+    } catch (error) {
+      console.error('Failed to save content position:', error);
+    }
+  },
+
+  fetchCourseProgress: async (courseId) => {
+    try {
+      const res = await progressApi.courseProgress(courseId);
+      return res.data.data;
+    } catch (error) {
+      console.error('Failed to fetch course progress:', error);
+      return null;
+    }
+  },
+
+  fetchTopicProgress: async (topicId) => {
+    try {
+      const res = await progressApi.topicProgress(topicId);
+      return res.data.data;
+    } catch (error) {
+      console.error('Failed to fetch topic progress:', error);
+      return null;
     }
   },
 }));

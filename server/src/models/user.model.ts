@@ -19,6 +19,8 @@ export interface IUserSettings {
    * without needing a timezone database on the server.
    */
   timezoneOffset: number;
+  /** Minutes of study the user wants to complete each day. */
+  dailyGoalMinutes: number;
 }
 
 export interface IUser extends Document {
@@ -112,6 +114,7 @@ const UserSchema: Schema = new Schema<IUser>(
       reminderHour: { type: Number, default: 19, min: 0, max: 23 },
       reminderMinute: { type: Number, default: 0, min: 0, max: 59 },
       timezoneOffset: { type: Number, default: 0, min: -840, max: 840 },
+      dailyGoalMinutes: { type: Number, default: 15, min: 1, max: 480 },
     },
     expoPushToken: {
       type: String,

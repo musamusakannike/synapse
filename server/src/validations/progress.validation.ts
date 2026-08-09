@@ -28,6 +28,30 @@ export const validateFlashcardSession = (req: Request, res: Response, next: Next
   next();
 };
 
+export const validateContentPosition = (req: Request, res: Response, next: NextFunction): void => {
+  const { course, topic, contentIndex } = req.body;
+  const errors: string[] = [];
+
+  if (!course || typeof course !== 'string') {
+    errors.push('Course ID is required.');
+  }
+
+  if (!topic || typeof topic !== 'string') {
+    errors.push('Topic ID is required.');
+  }
+
+  if (contentIndex === undefined || !Number.isInteger(contentIndex) || contentIndex < 0) {
+    errors.push('contentIndex must be a non-negative integer.');
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({ success: false, errors });
+    return;
+  }
+
+  next();
+};
+
 export const validateMcqSession = (req: Request, res: Response, next: NextFunction): void => {
   const { course, topic, mcqAnswered, mcqCorrect, score, duration } = req.body;
   const errors: string[] = [];

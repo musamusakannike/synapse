@@ -36,6 +36,21 @@ export default function ProgressScreen() {
           <StatCard icon={<IconStack2 size={18} color={colors.brandAi} />} label="Flashcards studied" value={stats?.totalFlashcards ?? 0} accent={colors.brandAi} />
         </View>
 
+        {!!stats?.dailyGoal && (
+          <Card>
+            <View style={styles.goalHeader}>
+              <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Today&apos;s goal</Text>
+              <Text style={[styles.cardSubtitle, { color: colors.textSecondary, marginBottom: 0 }]}>
+                {stats.dailyGoal.studiedMinutes}/{stats.dailyGoal.minutes} min
+              </Text>
+            </View>
+            <ProgressBar value={stats.dailyGoal.progress} color={stats.dailyGoal.met ? colors.success : colors.brandPrimary} />
+            {stats.dailyGoal.met && (
+              <Text style={[styles.goalMetText, { color: colors.success }]}>Goal reached today. Nice work!</Text>
+            )}
+          </Card>
+        )}
+
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Needs improvement</Text>
         {needsImprovement.length === 0 ? (
           <EmptyState title="You're on top of things" description="Nothing needs extra attention right now." />
@@ -73,4 +88,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold, marginTop: spacing.sm },
   cardTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold, marginBottom: spacing.xs },
   cardSubtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, marginBottom: spacing.sm },
+  goalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  goalMetText: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium, marginTop: spacing.sm },
 });

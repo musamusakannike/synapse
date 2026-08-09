@@ -67,6 +67,19 @@ export default function ProgressPage() {
         })}
       </div>
 
+      {stats?.dailyGoal && (
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-[var(--ink-900)]">Today&apos;s goal</h3>
+            <span className="text-sm text-[var(--text-muted)]">{stats.dailyGoal.studiedMinutes}/{stats.dailyGoal.minutes} min</span>
+          </div>
+          <ProgressBar value={stats.dailyGoal.progress} tone={stats.dailyGoal.met ? 'success' : 'gold'} />
+          {stats.dailyGoal.met && (
+            <p className="text-xs font-medium mt-2" style={{ color: 'var(--success)' }}>Goal reached today. Nice work!</p>
+          )}
+        </Card>
+      )}
+
       {continueStudying.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Continue studying</h2>

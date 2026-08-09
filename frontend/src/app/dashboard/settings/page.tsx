@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Globe, Shield, LogOut } from 'lucide-react';
+import { Bell, Globe, Shield, LogOut, Target } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { userApi } from '@/lib/api';
 import Card from '@/components/ui/Card';
@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Select from '@/components/ui/Select';
 import Switch from '@/components/ui/Switch';
+import Input from '@/components/ui/Input';
 import { toast } from 'sonner';
 
 const settingLabels: Record<string, string> = {
@@ -26,6 +27,7 @@ export default function SettingsPage() {
     pushNotifications: user?.settings?.pushNotifications ?? false,
     weeklyProgress: user?.settings?.weeklyProgress ?? true,
     language: user?.settings?.language ?? 'en',
+    dailyGoalMinutes: user?.settings?.dailyGoalMinutes ?? 15,
   });
 
   useEffect(() => {
@@ -101,6 +103,35 @@ export default function SettingsPage() {
                 }
               }}
               options={[{ value: 'en', label: 'English' }, { value: 'fr', label: 'French' }, { value: 'es', label: 'Spanish' }]}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--line)]">
+          <div className="flex items-center gap-3">
+            <Target className="w-5 h-5 text-[var(--text-muted)]" />
+            <div>
+              <p className="text-sm font-medium text-[var(--ink-900)]">Daily study goal</p>
+              <p className="text-xs text-[var(--ink-300)]">Minutes per day used to track your daily progress</p>
+            </div>
+          </div>
+          <div className="w-24">
+            <Input
+              type="number"
+              min={1}
+              max={480}
+              value={settings.dailyGoalMinutes}
+              onChange={(e) => setSettings({ ...settings, dailyGoalMinutes: Number(e.target.value) })}
+              onBlur={async () => {
+                const minutes = Math.min(480, Math.max(1, Math.round(settings.dailyGoalMinutes) || 15));
+                setSettings({ ...settings, dailyGoalMinutes: minutes });
+                const result = await updateSettings({ dailyGoalMinutes: minutes });
+                if (result.success) {
+                  toast.success('Daily goal updated');
+                } else {
+                  toast.error(result.error || 'Failed to update daily goal.');
+                }
+              }}
             />
           </div>
         </div>

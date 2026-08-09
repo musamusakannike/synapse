@@ -79,6 +79,13 @@ export const validateUpdateSettings = (req: Request, res: Response, next: NextFu
     }
   }
 
+  if (req.body.dailyGoalMinutes !== undefined) {
+    const minutes = req.body.dailyGoalMinutes;
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) {
+      errors.push('dailyGoalMinutes must be an integer between 1 and 480.');
+    }
+  }
+
   if (errors.length > 0) {
     res.status(400).json({ success: false, errors });
     return;

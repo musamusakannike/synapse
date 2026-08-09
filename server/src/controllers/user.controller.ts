@@ -159,6 +159,7 @@ export const updateSettings = async (req: AuthenticatedRequest, res: Response, n
       reminderHour,
       reminderMinute,
       timezoneOffset,
+      dailyGoalMinutes,
     } = req.body;
 
     const settingsUpdate: Record<string, unknown> = {};
@@ -171,6 +172,7 @@ export const updateSettings = async (req: AuthenticatedRequest, res: Response, n
     if (reminderHour !== undefined) settingsUpdate['settings.reminderHour'] = reminderHour;
     if (reminderMinute !== undefined) settingsUpdate['settings.reminderMinute'] = reminderMinute;
     if (timezoneOffset !== undefined) settingsUpdate['settings.timezoneOffset'] = timezoneOffset;
+    if (dailyGoalMinutes !== undefined) settingsUpdate['settings.dailyGoalMinutes'] = dailyGoalMinutes;
 
     const user = await User.findByIdAndUpdate(
       req.user!._id,

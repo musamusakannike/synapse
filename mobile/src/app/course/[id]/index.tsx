@@ -7,11 +7,13 @@ import { courseApi, topicApi, paymentApi } from '@/lib/api';
 import { Course, Topic, PaymentStatus } from '@/lib/types';
 import { formatKobo } from '@/lib/money';
 import { cacheFlashcards } from '@/lib/offlineSync';
+import { useProgressStore } from '@/store/progress.store';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import ProgressBar from '@/components/ui/ProgressBar';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
@@ -22,6 +24,8 @@ export default function CourseDetailScreen() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [courseProgress, setCourseProgress] = useState<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>(null);
+  const { fetchCourseProgress } = useProgressStore();
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -34,12 +38,13 @@ export default function CourseDetailScreen() {
       setCourse(courseRes.data.data);
       setTopics(topicsRes.data.data);
       setPaymentStatus(paymentRes.data.data);
+      fetchCourseProgress(id).then(setCourseProgress);
     } catch {
       // silently fail
     } finally {
       setIsLoading(false);
     }
-  }, [id]);
+  }, [id, fetchCourseProgress]);
 
   useEffect(() => {
     load();
@@ -72,6 +77,18 @@ export default function CourseDetailScreen() {
           <Badge variant={course.difficulty}>{course.difficulty}</Badge>
         </View>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{course.longDescription || course.description}</Text>
+
+        {hasAccess && courseProgress && courseProgress.totalTopics > 0 && (
+          <View style={styles.progressWrap}>
+            <View style={styles.goalHeader}>
+              <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>
+                {courseProgress.completedTopics} of {courseProgress.totalTopics} topics complete
+              </Text>
+              <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>{courseProgress.percentComplete}%</Text>
+            </View>
+            <ProgressBar value={courseProgress.percentComplete} color={colors.success} />
+          </View>
+        )}
 
         {!course.isFree && !hasAccess && (
           <Card style={{ backgroundColor: colors.brandPrimarySoft }}>
@@ -187,6 +204,8 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold },
   description: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, lineHeight: fontSizes.sm * 1.65 },
   actionsRow: { flexDirection: 'row', gap: spacing.sm },
+  progressWrap: { gap: spacing.xs },
+  goalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   section: { gap: spacing.sm, marginTop: spacing.sm },
   sectionTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold },
   bullet: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, lineHeight: fontSizes.sm * 1.5 },

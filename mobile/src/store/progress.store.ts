@@ -15,6 +15,9 @@ interface ProgressState {
   fetchNeedsImprovement: () => Promise<void>;
   submitFlashcardSession: (data: { course: string; topic?: string; flashcardsStudied: number; duration: number; knownCount: number; reviewCount: number }) => Promise<void>;
   submitMcqSession: (data: { course: string; topic?: string; mcqAnswered: number; mcqCorrect: number; duration: number; score: number }) => Promise<void>;
+  saveContentPosition: (data: { course: string; topic: string; contentIndex: number }) => Promise<void>;
+  fetchCourseProgress: (courseId: string) => Promise<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>;
+  fetchTopicProgress: (topicId: string) => Promise<{ lastContentIndex: number; isCompleted: boolean } | null>;
 }
 
 export const useProgressStore = create<ProgressState>((set) => ({
@@ -84,6 +87,37 @@ export const useProgressStore = create<ProgressState>((set) => ({
       await api.post('/progress/mcq-session', data);
     } catch {
       // silently fail
+    }
+  },
+
+  saveContentPosition: async (data) => {
+    try {
+      const online = await isOnline();
+      if (!online) {
+        await queueSession('/progress/content-position', data);
+        return;
+      }
+      await api.post('/progress/content-position', data);
+    } catch {
+      // silently fail — resuming exactly where the learner left off is a nice-to-have, not critical
+    }
+  },
+
+  fetchCourseProgress: async (courseId) => {
+    try {
+      const res = await api.get(`/progress/course/${courseId}`);
+      return res.data.data;
+    } catch {
+      return null;
+    }
+  },
+
+  fetchTopicProgress: async (topicId) => {
+    try {
+      const res = await api.get(`/progress/topic/${topicId}`);
+      return res.data.data;
+    } catch {
+      return null;
     }
   },
 }));

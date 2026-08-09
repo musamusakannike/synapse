@@ -92,6 +92,10 @@ export const progressApi = {
     api.post('/progress/flashcard-session', data),
   submitMcqSession: (data: { course: string; topic: string; mcqAnswered: number; mcqCorrect: number; score: number; duration: number }) =>
     api.post('/progress/mcq-session', data),
+  saveContentPosition: (data: { course: string; topic: string; contentIndex: number }) =>
+    api.post('/progress/content-position', data),
+  courseProgress: (courseId: string) => api.get(`/progress/course/${courseId}`),
+  topicProgress: (topicId: string) => api.get(`/progress/topic/${topicId}`),
 };
 
 export const paymentApi = {

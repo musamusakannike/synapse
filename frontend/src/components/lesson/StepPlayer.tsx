@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, PartyPopper } from 'lucide-react';
 import { Topic } from '@/lib/types';
+import { useProgressStore } from '@/store/progress.store';
 import InfoStepBlock from './InfoStepBlock';
 import QuizStep from './QuizStep';
 import ExerciseRunner from './ExerciseRunner';
@@ -24,8 +25,30 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
   const [index, setIndex] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
+  const { saveContentPosition, fetchTopicProgress } = useProgressStore();
 
   const total = steps.length;
+
+  // Resume where the learner last left off, instead of always restarting at step 1.
+  useEffect(() => {
+    let cancelled = false;
+    fetchTopicProgress(topic._id).then((progress) => {
+      if (!cancelled && progress && progress.lastContentIndex > 0 && progress.lastContentIndex < total) {
+        setIndex(progress.lastContentIndex);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topic._id]);
+
+  // Persist the learner's position as they move through the lesson.
+  useEffect(() => {
+    if (finished) return;
+    saveContentPosition({ course: topic.course, topic: topic._id, contentIndex: index });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, topic._id, finished]);
   const step = steps[index];
   const isLastStep = index === total - 1;
   const isQuizStep = step?.type === 'quiz';

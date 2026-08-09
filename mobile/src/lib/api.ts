@@ -2,7 +2,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { getToken, deleteToken } from './secureStorage';
 
-const DEFAULT_API_URL = 'https://sabilearn.onrender.com/api/v1';
+const DEFAULT_API_URL = 'https://api.sabilearn.online/api/v1';
 
 const API_BASE_URL: string =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? DEFAULT_API_URL;

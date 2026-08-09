@@ -24,13 +24,13 @@ export default function CheckoutScreen() {
         </View>
         <Text style={[styles.title, { color: colors.textPrimary }]}>Subscription & Billing</Text>
         <Text style={[styles.message, { color: colors.textSecondary }]}>
-          Course purchases and plan subscriptions are managed through your account on our web platform at sabilearn.online.
+          Course purchases and plan upgrades sync automatically across all devices signed into your account.
         </Text>
 
         <View style={[styles.card, { backgroundColor: colors.surfaceSunken, borderColor: colors.borderSubtle }]}>
           <IconDeviceLaptop size={24} color={colors.brandPrimaryHover} />
           <Text style={[styles.cardText, { color: colors.textSecondary }]}>
-            Log into your account on sabilearn.online using any web browser to manage your subscription. Changes will sync automatically to this app.
+            Feature access and active subscriptions associated with your account will update automatically in this app.
           </Text>
         </View>
 

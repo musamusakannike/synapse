@@ -94,7 +94,7 @@ export default function SubscribeScreen() {
                 <View style={[styles.noticeBox, { backgroundColor: colors.surfaceSunken, borderColor: colors.borderSubtle }]}>
                   <IconDeviceLaptop size={20} color={colors.brandPrimaryHover} />
                   <Text style={[styles.noticeText, { color: colors.textSecondary }]}>
-                    Subscriptions and account upgrades are managed through your account on our website at sabilearn.online.
+                    Account plan status and feature access sync automatically across all devices signed into your account.
                   </Text>
                 </View>
               </View>

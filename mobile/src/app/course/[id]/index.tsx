@@ -97,7 +97,7 @@ export default function CourseDetailScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={[styles.lockTitle, { color: colors.textPrimary }]}>Premium Course</Text>
                 <Text style={[styles.lockMessage, { color: colors.textSecondary }]}>
-                  This course requires an active subscription. Manage your account on sabilearn.online.
+                  This course requires an active Premium plan to access modules and quizzes.
                 </Text>
               </View>
             </View>

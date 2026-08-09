@@ -53,15 +53,15 @@ function AppContent() {
   useEffect(() => {
     if (!isInitialized || !fontsLoaded || !onboardingInitialized) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const isPublicPage = segments[0] === '(auth)' || segments[0] === 'privacy' || segments[0] === 'terms';
 
-    if (!isAuthenticated && !inAuthGroup) {
+    if (!isAuthenticated && !isPublicPage) {
       if (!hasOnboarded) {
         router.replace('/(auth)/onboarding');
       } else {
         router.replace('/(auth)/login');
       }
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (isAuthenticated && segments[0] === '(auth)') {
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, isInitialized, fontsLoaded, onboardingInitialized, hasOnboarded, segments, router]);
@@ -119,6 +119,8 @@ function AppContent() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="privacy" />
+          <Stack.Screen name="terms" />
           <Stack.Screen name="checkout" options={{ presentation: 'modal' }} />
           <Stack.Screen name="subscribe" options={{ presentation: 'modal' }} />
         </Stack>

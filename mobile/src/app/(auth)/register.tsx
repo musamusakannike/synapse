@@ -129,6 +129,18 @@ export default function RegisterScreen() {
               Create account
             </Button>
 
+            <Text style={[styles.legalNotice, { color: colors.textSecondary }]}>
+              By creating an account, you agree to our{' '}
+              <Text style={[styles.legalLink, { color: colors.brandPrimaryHover }]} onPress={() => router.push('/terms')}>
+                Terms of Service
+              </Text>{' '}
+              and{' '}
+              <Text style={[styles.legalLink, { color: colors.brandPrimaryHover }]} onPress={() => router.push('/privacy')}>
+                Privacy Policy
+              </Text>
+              .
+            </Text>
+
             <View style={styles.dividerRow}>
               <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
               <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or</Text>
@@ -176,4 +188,6 @@ const styles = StyleSheet.create({
   dividerText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans },
   footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.base },
   link: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium },
+  legalNotice: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, textAlign: 'center', marginVertical: spacing.xs, lineHeight: fontSizes.xs * 1.5 },
+  legalLink: { fontFamily: fontFamilies.sansSemiBold, textDecorationLine: 'underline' },
 });

@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, ScrollView, Pressable, Switch, TextInput
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { IconArrowLeft, IconUser, IconCamera } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight } from '@tabler/icons-react-native';
 import { useAuthStore, DEFAULT_SETTINGS } from '@/store/auth.store';
 import { userApi } from '@/lib/api';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
@@ -138,6 +138,20 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Legal & Privacy</Text>
+          <Pressable onPress={() => router.push('/privacy')} style={styles.linkRow}>
+            <IconShieldCheck size={18} color={colors.textSecondary} />
+            <Text style={[styles.settingLabel, { flex: 1, color: colors.textPrimary }]}>Privacy Policy</Text>
+            <IconChevronRight size={16} color={colors.textTertiary} />
+          </Pressable>
+          <Pressable onPress={() => router.push('/terms')} style={styles.linkRow}>
+            <IconFileText size={18} color={colors.textSecondary} />
+            <Text style={[styles.settingLabel, { flex: 1, color: colors.textPrimary }]}>Terms of Service</Text>
+            <IconChevronRight size={16} color={colors.textTertiary} />
+          </Pressable>
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.danger }]}>Danger zone</Text>
           <Button variant="secondary" onPress={handleDeleteAccount} style={{ borderColor: colors.danger }}>
             Delete account
@@ -179,4 +193,5 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: radii.sm, paddingHorizontal: spacing.base, paddingVertical: spacing.md, fontSize: fontSizes.base, fontFamily: fontFamilies.sans },
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
   settingLabel: { fontSize: fontSizes.base, fontFamily: fontFamilies.sans },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
 });

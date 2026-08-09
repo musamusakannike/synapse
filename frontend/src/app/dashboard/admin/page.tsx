@@ -120,8 +120,8 @@ function AdminOverview() {
           </div>
           <div className="space-y-2">
             {recentActivity.slice(0, 5).map((a) => {
-              const userName = typeof a.user === 'object' ? a.user.name || `${a.user.firstName} ${a.user.lastName}` : 'Unknown';
-              const courseTitle = typeof a.course === 'object' ? a.course.title : 'Unknown';
+              const userName = (a.user && typeof a.user === 'object') ? (a.user.name || `${a.user.firstName || ''} ${a.user.lastName || ''}`.trim() || 'Unknown') : (typeof a.user === 'string' ? a.user : 'Unknown');
+              const courseTitle = (a.course && typeof a.course === 'object') ? (a.course.title || 'Unknown') : (typeof a.course === 'string' ? a.course : 'Unknown');
               return (
                 <Card key={a._id} className="p-4">
                   <div className="flex items-center justify-between mb-1 gap-2">

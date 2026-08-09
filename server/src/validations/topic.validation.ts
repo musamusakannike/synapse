@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-const VALID_CONTENT_TYPES = ['text', 'latex', 'youtube', 'image', 'video', 'audio', 'code', 'quiz', 'exercise'];
+const VALID_CONTENT_TYPES = ['text', 'latex', 'youtube', 'image', 'video', 'audio', 'code', 'quiz', 'exercise', 'group'];
 
 function validateContentItem(item: any): string | null {
   if (!item.type || !VALID_CONTENT_TYPES.includes(item.type)) {

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import WebView, { WebViewMessageEvent } from 'react-native-webview';
+import { IconCopy, IconCheck } from '@tabler/icons-react-native';
 import { fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -63,6 +64,7 @@ export default function CodeRenderer({ code, language }: CodeRendererProps) {
   const webviewRef = useRef<WebView>(null);
   const [height, setHeight] = useState(80);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const html = buildHtml(code, language ?? '');
 
@@ -78,10 +80,35 @@ export default function CodeRenderer({ code, language }: CodeRendererProps) {
     }
   }, []);
 
+  const handleCopy = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(code);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <View style={[styles.container, { height }]}>
       <View style={styles.langBar}>
         <Text style={styles.langLabel}>{language ? language.toLowerCase() : 'code'}</Text>
+        <Pressable onPress={handleCopy} style={styles.copyBtn} hitSlop={8}>
+          {copied ? (
+            <View style={styles.copyRow}>
+              <IconCheck size={14} color="#1F9D55" />
+              <Text style={[styles.copyText, { color: '#1F9D55' }]}>Copied</Text>
+            </View>
+          ) : (
+            <View style={styles.copyRow}>
+              <IconCopy size={14} color="#8B8BA0" />
+              <Text style={styles.copyText}>Copy</Text>
+            </View>
+          )}
+        </Pressable>
       </View>
       {!isLoaded && (
         <View style={styles.loadingOverlay} pointerEvents="none">
@@ -115,6 +142,9 @@ const styles = StyleSheet.create({
   langBar: {
     paddingHorizontal: spacing.base,
     paddingTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   langLabel: {
     color: '#8B8BA0',
@@ -122,6 +152,20 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
+  },
+  copyBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: spacing.xs,
+  },
+  copyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  copyText: {
+    color: '#8B8BA0',
+    fontFamily: fontFamilies.sansMedium,
+    fontSize: fontSizes.xs,
   },
   loadingOverlay: {
     position: 'absolute',

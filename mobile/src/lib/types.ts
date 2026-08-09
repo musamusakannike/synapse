@@ -28,7 +28,7 @@ export interface User {
   settings?: IUserSettings;
 }
 
-export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise';
+export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise' | 'group';
 
 export interface TopicQuizOption {
   text: string;
@@ -56,6 +56,7 @@ export interface TopicContent {
   title?: string;
   quiz?: TopicQuiz;
   exercise?: TopicExercise;
+  blocks?: TopicContent[];
 }
 
 export type TopicFlow = 'flat' | 'guided';

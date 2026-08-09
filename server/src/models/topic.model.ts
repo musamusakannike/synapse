@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise';
+export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise' | 'group';
 
 export interface ITopicQuizOption {
   text: string;
@@ -28,6 +28,7 @@ export interface ITopicContent {
   title?: string;
   quiz?: ITopicQuiz;
   exercise?: ITopicExercise;
+  blocks?: ITopicContent[];
 }
 
 export type TopicFlow = 'flat' | 'guided';
@@ -76,7 +77,7 @@ const TopicContentSchema = new Schema<ITopicContent>(
   {
     type: {
       type: String,
-      enum: ['text', 'latex', 'youtube', 'image', 'video', 'audio', 'code', 'quiz', 'exercise'],
+      enum: ['text', 'latex', 'youtube', 'image', 'video', 'audio', 'code', 'quiz', 'exercise', 'group'],
       required: true,
     },
     content: {
@@ -97,6 +98,10 @@ const TopicContentSchema = new Schema<ITopicContent>(
     },
     exercise: {
       type: TopicExerciseSchema,
+      default: undefined,
+    },
+    blocks: {
+      type: [Schema.Types.Mixed],
       default: undefined,
     },
   },

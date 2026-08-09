@@ -18,7 +18,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2, Plus, Type, Sigma, Video, Music, Play, Image as ImageIcon, Code2, HelpCircle, Terminal } from 'lucide-react';
+import { GripVertical, Trash2, Plus, Type, Sigma, Video, Music, Play, Image as ImageIcon, Code2, HelpCircle, Terminal, Layers } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -36,6 +36,7 @@ const CONTENT_TYPES: { type: TopicContentType; label: string; icon: React.Compon
   { type: 'audio', label: 'Audio', icon: Music },
   { type: 'quiz', label: 'Quiz', icon: HelpCircle },
   { type: 'exercise', label: 'Exercise', icon: Terminal },
+  { type: 'group', label: 'Multi-Block Group', icon: Layers },
 ];
 
 const ICON_MAP: Record<TopicContentType, React.ComponentType<{ className?: string }>> = {
@@ -48,6 +49,7 @@ const ICON_MAP: Record<TopicContentType, React.ComponentType<{ className?: strin
   audio: Music,
   quiz: HelpCircle,
   exercise: Terminal,
+  group: Layers,
 };
 
 const CODE_LANGUAGES = ['python', 'javascript', 'typescript', 'java', 'c', 'cpp', 'sql', 'bash', 'other'];
@@ -161,6 +163,79 @@ function ExerciseBlockEditor({ block, onExerciseChange }: { block: TopicContent;
   );
 }
 
+function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: TopicContent; onBlocksChange: (blocks: TopicContent[]) => void; onTitleChange: (title: string) => void }) {
+  const childBlocks = block.blocks || [];
+
+  const handleAddChild = (type: TopicContentType) => {
+    if (type === 'group') return;
+    const newChild: TopicContent = { type, content: type === 'code' ? '' : '' };
+    if (type === 'code') newChild.language = 'python';
+    onBlocksChange([...childBlocks, newChild]);
+  };
+
+  const handleUpdateChild = (idx: number, patch: Partial<TopicContent>) => {
+    onBlocksChange(childBlocks.map((b, i) => (i === idx ? { ...b, ...patch } : b)));
+  };
+
+  const handleRemoveChild = (idx: number) => {
+    onBlocksChange(childBlocks.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-3 bg-[var(--surface-sunken)] p-3.5 rounded-[var(--radius-md)] border border-[var(--line)]">
+      <input
+        type="text"
+        value={block.content}
+        onChange={(e) => onTitleChange(e.target.value)}
+        placeholder="Group Section Title (e.g. Concept Overview)"
+        className="w-full px-3 py-2 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-sm)] text-sm font-semibold text-[var(--ink-900)] outline-none"
+      />
+      <div className="text-xs font-semibold text-[var(--ink-500)] uppercase tracking-wide">
+        Nested Blocks ({childBlocks.length})
+      </div>
+      {childBlocks.map((child, idx) => (
+        <div key={idx} className="bg-[var(--surface-card)] p-3 rounded-[var(--radius-sm)] border border-[var(--line)] space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase text-[var(--brand-gold-600)]">{child.type}</span>
+            <button onClick={() => handleRemoveChild(idx)} className="text-[var(--ink-300)] hover:text-[var(--danger)] cursor-pointer">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {child.type === 'text' || child.type === 'code' || child.type === 'latex' ? (
+            <textarea
+              value={child.content}
+              onChange={(e) => handleUpdateChild(idx, { content: e.target.value })}
+              placeholder={`Enter ${child.type} content...`}
+              rows={3}
+              className="w-full px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs font-mono text-[var(--ink-900)] outline-none resize-none"
+            />
+          ) : child.type === 'image' || child.type === 'video' || child.type === 'youtube' || child.type === 'audio' ? (
+            <input
+              type="text"
+              value={child.content}
+              onChange={(e) => handleUpdateChild(idx, { content: e.target.value })}
+              placeholder={`URL for ${child.type}...`}
+              className="w-full px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs text-[var(--ink-900)] outline-none"
+            />
+          ) : null}
+        </div>
+      ))}
+      <div className="flex flex-wrap gap-1.5 pt-1">
+        {['text', 'code', 'latex', 'image', 'youtube'].map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => handleAddChild(t as TopicContentType)}
+            className="px-2.5 py-1 text-xs bg-[var(--surface-card)] border border-[var(--line)] hover:border-[var(--brand-gold-600)] rounded-[var(--radius-sm)] font-medium cursor-pointer"
+          >
+            + {t}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface SortableBlockProps {
   block: TopicContent;
   index: number;
@@ -168,10 +243,11 @@ interface SortableBlockProps {
   onLanguageChange: (language: string) => void;
   onQuizChange: (quiz: NonNullable<TopicContent['quiz']>) => void;
   onExerciseChange: (exercise: NonNullable<TopicContent['exercise']>) => void;
+  onBlocksChange?: (blocks: TopicContent[]) => void;
   onRemove: () => void;
 }
 
-function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange, onExerciseChange, onRemove }: SortableBlockProps) {
+function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange, onExerciseChange, onBlocksChange, onRemove }: SortableBlockProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index });
   const Icon = ICON_MAP[block.type];
 
@@ -238,7 +314,9 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange,
               />
             )}
 
-            {block.type === 'quiz' ? (
+            {block.type === 'group' ? (
+              <GroupBlockEditor block={block} onBlocksChange={(b) => onBlocksChange?.(b)} onTitleChange={(t) => onChange(t)} />
+            ) : block.type === 'quiz' ? (
               <QuizBlockEditor block={block} onQuizChange={onQuizChange} />
             ) : block.type === 'exercise' ? (
               <ExerciseBlockEditor block={block} onExerciseChange={onExerciseChange} />
@@ -293,6 +371,8 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
   const handleAddBlock = (type: TopicContentType) => {
     if (type === 'code') {
       onChange([...contents, { type, content: '', language: 'other' }]);
+    } else if (type === 'group') {
+      onChange([...contents, { type, content: 'Group Section', blocks: [{ type: 'text', content: '' }] }]);
     } else if (type === 'quiz') {
       onChange([
         ...contents,
@@ -325,6 +405,10 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
     onChange(contents.map((c, i) => (i === index ? { ...c, exercise } : c)));
   };
 
+  const handleBlocksChange = (index: number, blocks: TopicContent[]) => {
+    onChange(contents.map((c, i) => (i === index ? { ...c, blocks } : c)));
+  };
+
   const handleBlockRemove = (index: number) => {
     onChange(contents.filter((_, i) => i !== index));
   };
@@ -343,6 +427,7 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
                 onLanguageChange={(language) => handleLanguageChange(index, language)}
                 onQuizChange={(quiz) => handleQuizChange(index, quiz)}
                 onExerciseChange={(exercise) => handleExerciseChange(index, exercise)}
+                onBlocksChange={(blocks) => handleBlocksChange(index, blocks)}
                 onRemove={() => handleBlockRemove(index)}
               />
             ))}

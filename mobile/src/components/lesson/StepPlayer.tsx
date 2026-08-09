@@ -66,6 +66,13 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
     setIndex((i) => i + 1);
   };
 
+  const handlePrev = () => {
+    if (index > 0) {
+      setQuizAnswered(true);
+      setIndex((i) => i - 1);
+    }
+  };
+
   if (total === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]}>
@@ -137,11 +144,19 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: colors.borderSubtle }]}>
+      <View style={[styles.footer, { borderTopColor: colors.borderSubtle, flexDirection: 'row', gap: spacing.md }]}>
+        {index > 0 && (
+          <Pressable
+            onPress={handlePrev}
+            style={[styles.prevBtn, { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Text style={[styles.prevBtnText, { color: colors.textPrimary }]}>Previous</Text>
+          </Pressable>
+        )}
         <Pressable
           onPress={handleNext}
           disabled={!canAdvance}
-          style={[styles.nextBtn, { backgroundColor: colors.danger, opacity: canAdvance ? 1 : 0.5 }]}
+          style={[styles.nextBtn, { backgroundColor: colors.danger, opacity: canAdvance ? 1 : 0.5, flex: 1 }]}
         >
           <Text style={styles.nextBtnText}>{isLastStep ? 'Finish' : 'Next'}</Text>
         </Pressable>
@@ -164,6 +179,8 @@ const styles = StyleSheet.create({
   footer: { paddingHorizontal: spacing.xl, paddingVertical: spacing.base, borderTopWidth: 1 },
   nextBtn: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
   nextBtnText: { color: '#FFFFFF', fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
+  prevBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
+  prevBtnText: { fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.base, paddingHorizontal: spacing.xl },
   congratsWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.base, paddingHorizontal: spacing.xl },
   congratsIcon: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },

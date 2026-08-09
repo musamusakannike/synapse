@@ -360,10 +360,15 @@
     setStatus('busy', 'Running…');
     els.runBtn.disabled = true;
 
+    var code = docs.python;
     ensurePyodide()
       .then(function(py){
         els.console.innerHTML = '';
-        return py.runPythonAsync(docs.python);
+        setStatus('busy', 'Loading packages…');
+        return py.loadPackagesFromImports(code).then(function(){
+          setStatus('busy', 'Running…');
+          return py.runPythonAsync(code);
+        });
       })
       .then(function(){
         setStatus('ok', 'Finished');

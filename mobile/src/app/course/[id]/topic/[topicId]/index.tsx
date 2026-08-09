@@ -34,15 +34,18 @@ export default function TopicContentScreen() {
     load();
   }, [load]);
 
+  const isProg = topic?.contents?.some((c) => c.type === 'code' || c.type === 'exercise');
+  const shouldBeGuided = topic && (topic.defaultFlow === 'guided' || isProg);
+
   useEffect(() => {
-    if (topic && topic.defaultFlow === 'guided' && flat !== '1') {
+    if (shouldBeGuided && flat !== '1') {
       router.replace(`/course/${id}/topic/${topicId}/learn` as any);
     }
-  }, [topic, flat, id, topicId]);
+  }, [shouldBeGuided, flat, id, topicId]);
 
   if (isLoading) return <LoadingSpinner />;
   if (!topic) return <EmptyState title="Topic not found" />;
-  if (topic.defaultFlow === 'guided' && flat !== '1') return <LoadingSpinner />;
+  if (shouldBeGuided && flat !== '1') return <LoadingSpinner />;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>

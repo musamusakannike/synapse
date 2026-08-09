@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { BookOpen, FileQuestion, CreditCard, HelpCircle, Play, Volume2, FileText, Image as ImageIcon, Code2, Terminal, GraduationCap } from 'lucide-react';
+import { BookOpen, FileQuestion, CreditCard, HelpCircle, Play, Volume2, FileText, Image as ImageIcon, Code2, Terminal, GraduationCap, Layers } from 'lucide-react';
 import { topicApi, courseApi } from '@/lib/api';
 import { Topic, Course, TopicContent } from '@/lib/types';
 import Card from '@/components/ui/Card';
@@ -24,9 +24,10 @@ function ContentBlock({ content, index, topicTitle }: { content: TopicContent; i
     audio: 'Audio',
     quiz: 'Quiz',
     exercise: 'Exercise',
+    group: 'Group',
   } as const)[content.type];
 
-  const Icon = ({ text: FileText, latex: FileText, code: Code2, youtube: Play, image: ImageIcon, video: Play, audio: Volume2, quiz: HelpCircle, exercise: Terminal } as const)[content.type];
+  const Icon = ({ text: FileText, latex: FileText, code: Code2, youtube: Play, image: ImageIcon, video: Play, audio: Volume2, quiz: HelpCircle, exercise: Terminal, group: Layers } as const)[content.type];
 
   return (
     <Card className="p-6">
@@ -44,6 +45,34 @@ function ContentBlock({ content, index, topicTitle }: { content: TopicContent; i
       )}
     </Card>
   );
+}
+
+function isProgrammingCourse(course: Course | null, topic: Topic | null): boolean {
+  if (!course && !topic) return false;
+  const PROGRAMMING_CATEGORIES = [
+    'web development',
+    'data science',
+    'mobile development',
+    'programming',
+    'computer science',
+    'software engineering',
+    'python',
+    'javascript',
+    'code',
+  ];
+  const cat = (course?.category || '').toLowerCase();
+  const title = (course?.title || '').toLowerCase();
+  const desc = (course?.description || '').toLowerCase();
+
+  const isCategoryMatch = PROGRAMMING_CATEGORIES.some(
+    (pc) => cat.includes(pc) || title.includes(pc) || desc.includes(pc)
+  );
+
+  const hasCodeOrExercise = topic?.contents?.some(
+    (c) => c.type === 'code' || c.type === 'exercise'
+  );
+
+  return isCategoryMatch || !!hasCodeOrExercise;
 }
 
 export default function TopicDetailPage() {
@@ -71,13 +100,15 @@ export default function TopicDetailPage() {
     })();
   }, [courseId, topicId]);
 
+  const shouldBeGuided = topic && (topic.defaultFlow === 'guided' || isProgrammingCourse(course, topic));
+
   useEffect(() => {
-    if (topic && topic.defaultFlow === 'guided' && !forceFlat) {
+    if (shouldBeGuided && !forceFlat) {
       router.replace(`/dashboard/courses/${courseId}/topics/${topicId}/learn`);
     }
-  }, [topic, forceFlat, router, courseId, topicId]);
+  }, [shouldBeGuided, forceFlat, router, courseId, topicId]);
 
-  if (isLoading || (topic && topic.defaultFlow === 'guided' && !forceFlat)) {
+  if (isLoading || (shouldBeGuided && !forceFlat)) {
     return (
       <div className="flex items-center justify-center py-20">
         <LoadingSpinner size="lg" />

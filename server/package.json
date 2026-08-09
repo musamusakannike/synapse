@@ -8,6 +8,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "seed": "tsx src/utils/seed.util.ts",
+    "seed:aiml": "tsx src/utils/seedAiMlCourse.util.ts",
     "replace-course": "tsx src/utils/replaceCourse.util.ts",
     "migrate:users": "tsx src/utils/migrateOldUsers.util.ts",
     "migrate": "tsx src/utils/migrate.util.ts",

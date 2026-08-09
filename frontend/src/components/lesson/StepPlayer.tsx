@@ -63,6 +63,13 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
     setIndex((i) => i + 1);
   };
 
+  const handlePrev = () => {
+    if (index > 0) {
+      setQuizAnswered(true);
+      setIndex((i) => i - 1);
+    }
+  };
+
   if (total === 0) {
     return (
       <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex flex-col items-center justify-center gap-4 p-6">
@@ -137,11 +144,19 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
         )}
       </div>
 
-      <div className="flex-shrink-0 px-6 py-4 border-t border-[var(--line)]">
+      <div className="flex-shrink-0 px-6 py-4 border-t border-[var(--line)] flex items-center gap-3">
+        {index > 0 && (
+          <button
+            onClick={handlePrev}
+            className="flex-1 py-3 bg-[var(--surface-sunken)] hover:bg-[var(--line)] text-[var(--ink-900)] font-semibold text-sm rounded-[var(--radius-md)] transition-colors cursor-pointer"
+          >
+            Previous
+          </button>
+        )}
         <button
           onClick={handleNext}
           disabled={!canAdvance}
-          className="w-full py-3 bg-[#E5484D] hover:opacity-90 disabled:opacity-50 text-white font-semibold text-sm rounded-[var(--radius-md)] transition-opacity cursor-pointer"
+          className={`${index > 0 ? 'flex-1' : 'w-full'} py-3 bg-[#E5484D] hover:opacity-90 disabled:opacity-50 text-white font-semibold text-sm rounded-[var(--radius-md)] transition-opacity cursor-pointer`}
         >
           {isLastStep ? 'Finish' : 'Next'}
         </button>

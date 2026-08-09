@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
+
+export const metadata: Metadata = {
+  title: 'Terms of service',
+  description: 'The terms and conditions for using SabiLearn — courses, AI study tools, pricing, and account rules.',
+  alternates: { canonical: '/terms' },
+};
 
 export default function TermsPage() {
   return (

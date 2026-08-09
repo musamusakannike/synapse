@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Clock } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import { BlogPost } from '@/lib/types';
@@ -18,11 +19,12 @@ export default function BlogPostCard({ post, featured = false }: { post: BlogPos
     >
       <div className={`relative bg-[var(--surface-sunken)] overflow-hidden ${featured ? 'lg:w-1/2 aspect-[16/9] lg:aspect-auto' : 'aspect-[16/9]'}`}>
         {post.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={post.coverImage}
             alt={post.title}
-            className="w-full h-full object-cover transition-transform duration-[var(--duration-normal)] group-hover:scale-[1.03]"
+            fill
+            sizes={featured ? '(max-width: 1024px) 100vw, 50vw' : '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw'}
+            className="object-cover transition-transform duration-[var(--duration-normal)] group-hover:scale-[1.03]"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[var(--ink-300)] font-[var(--font-display)] text-3xl font-bold">

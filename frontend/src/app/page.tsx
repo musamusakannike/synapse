@@ -1,10 +1,24 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, FileQuestion, Layers, MessageCircleQuestion, BookOpen, Users, Award, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
 import AIToolCard from '@/components/ui/AIToolCard';
 import ContinueToDashboardPrompt from '@/components/ui/ContinueToDashboardPrompt';
+
+export const metadata: Metadata = {
+  title: 'SabiLearn — Learn a skill. Sabi it for life.',
+  description: 'Courses, flashcards, practice quizzes, and AI study tools built for Nigerian learners. Start free, track your progress, and sabi a new skill for life.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'SabiLearn — Learn a skill. Sabi it for life.',
+    description: 'Courses, flashcards, practice quizzes, and AI study tools built for Nigerian learners.',
+    url: '/',
+    type: 'website',
+  },
+};
 
 const navLinks = [
   { label: 'Courses', href: '/dashboard/courses' },
@@ -51,8 +65,14 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="relative rounded-[var(--radius-2xl)] overflow-hidden shadow-[var(--shadow-xl)] h-full min-h-[350px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/students-stairs.jpg" alt="Students studying together" className="w-full h-full object-cover" />
+            <Image
+              src="/images/students-stairs.jpg"
+              alt="Nigerian students studying together on SabiLearn"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+            />
           </div>
         </div>
       </section>

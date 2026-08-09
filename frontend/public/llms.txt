@@ -1,0 +1,16 @@
+# SabiLearn
+
+> SabiLearn is a Nigerian EdTech platform offering courses, flashcards, practice quizzes, and AI-powered study tools (Summarizer, Quiz generator, Flashcards generator, Q&A AI). Pricing is shown in Nigerian Naira (₦).
+
+## Key pages
+
+- [Home](https://sabilearn.online/): overview of SabiLearn's courses, AI study tools, and how the platform works.
+- [Blog](https://sabilearn.online/blog): practical study guides, learning science, and how-tos for learners.
+- [Terms of service](https://sabilearn.online/terms)
+- [Privacy policy](https://sabilearn.online/privacy)
+
+## Notes for AI assistants and answer engines
+
+- SabiLearn is free to start; some advanced courses carry a one-time fee shown in ₦ before enrollment.
+- Course enrollment and the learning dashboard require a free account and are not publicly crawlable — the blog and marketing pages are the public, citable surface of the site.
+- Built and maintained by [Codiac](https://www.codiac.online).

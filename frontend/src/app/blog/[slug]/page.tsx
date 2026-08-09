@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -85,13 +86,32 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   };
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: url },
+    ],
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar links={navLinks} active="Blog" />
 
       <article className="px-6 sm:px-8 py-14">
         <div className="max-w-3xl mx-auto">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-[var(--ink-500)] mb-8">
+            <Link href="/" className="hover:text-[var(--ink-900)] font-semibold">Home</Link>
+            <span aria-hidden="true">/</span>
+            <Link href="/blog" className="hover:text-[var(--ink-900)] font-semibold">Blog</Link>
+            <span aria-hidden="true">/</span>
+            <span className="text-[var(--ink-300)] truncate max-w-[240px]">{post.title}</span>
+          </nav>
+
           <Link href="/blog" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-500)] hover:text-[var(--ink-900)] mb-8">
             <ArrowLeft className="w-4 h-4" /> Back to blog
           </Link>
@@ -107,14 +127,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
 
           {post.coverImage && (
-            <div className="rounded-[var(--radius-2xl)] overflow-hidden mb-10 shadow-[var(--shadow-md)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.coverImage} alt={post.title} className="w-full max-h-[440px] object-cover" />
+            <div className="relative w-full h-[280px] sm:h-[440px] rounded-[var(--radius-2xl)] overflow-hidden mb-10 shadow-[var(--shadow-md)]">
+              <Image src={post.coverImage} alt={post.title} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
             </div>
           )}
 
           <div className="blog-prose">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+              components={{
+                img: ({ alt, ...props }) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- author-uploaded, dimensions unknown ahead of time
+                  <img {...props} alt={alt || ''} loading="lazy" decoding="async" />
+                ),
+              }}
+            >
               {post.content}
             </ReactMarkdown>
           </div>

@@ -48,8 +48,23 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     return `/blog?${params.toString()}`;
   };
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'The SabiLearn Blog',
+    url: `${SITE_URL}/blog`,
+    description: 'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
+    blogPost: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      headline: post.title,
+      url: `${SITE_URL}/blog/${post.slug}`,
+      datePublished: post.publishedAt || undefined,
+    })),
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar links={navLinks} active="Blog" />
 
       <section className="px-6 sm:px-8 py-16 sm:py-20 border-b border-[var(--line)] bg-[var(--surface-card)]">

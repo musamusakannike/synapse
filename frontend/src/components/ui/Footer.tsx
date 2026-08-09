@@ -31,7 +31,11 @@ export default function Footer() {
         ))}
       </div>
       <div className="border-t border-white/10 mt-10 pt-5 text-center text-[var(--ink-300)] text-xs">
-        &copy; 2026 SabiLearn. Made in Nigeria.
+        &copy; 2026 SabiLearn. Made in Nigeria. Built by{' '}
+        <a href="https://www.codiac.online" target="_blank" rel="noopener" className="text-[var(--ink-300)] hover:text-white underline underline-offset-2">
+          Codiac
+        </a>
+        .
       </div>
     </footer>
   );

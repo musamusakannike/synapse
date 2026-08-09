@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import Navbar from '@/components/ui/Navbar';
 import Footer from '@/components/ui/Footer';
+
+export const metadata: Metadata = {
+  title: 'Privacy policy',
+  description: 'How SabiLearn collects, uses, and protects your personal data and study activity.',
+  alternates: { canonical: '/privacy' },
+};
 
 export default function PrivacyPage() {
   return (

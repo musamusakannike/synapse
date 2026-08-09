@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { IconBell, IconCircleCheck } from '@tabler/icons-react-native';
+import { IconBell, IconCircleCheck, IconArrowLeft } from '@tabler/icons-react-native';
 import { notificationApi } from '@/lib/api';
 import { Notification } from '@/lib/types';
 import { mapActionUrlToMobileRoute, setBadgeCount } from '@/lib/notifications';
@@ -73,7 +73,22 @@ export default function NotificationsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Notifications</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+          {router.canGoBack() && (
+            <Pressable
+              onPress={() => {
+                haptics.light();
+                router.back();
+              }}
+              hitSlop={8}
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+            >
+              <IconArrowLeft size={22} color={colors.textPrimary} />
+            </Pressable>
+          )}
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Alerts</Text>
+        </View>
         {items.some((i) => !i.isRead) && (
           <Pressable onPress={markAllRead}>
             <Text style={[styles.markAll, { color: colors.brandPrimaryHover }]}>Mark all read</Text>

@@ -11,10 +11,11 @@ import {
   IconCards,
   IconMessageCircle,
   IconCode,
+  IconBell,
 } from '@tabler/icons-react-native';
 import { useProgressStore } from '@/store/progress.store';
 import { useAuthStore } from '@/store/auth.store';
-import { courseApi } from '@/lib/api';
+import { courseApi, notificationApi } from '@/lib/api';
 import { Course, UserProgress, Topic } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -34,11 +35,23 @@ export default function DashboardHome() {
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [aiTool, setAiTool] = useState<AIToolKind | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  const fetchUnreadStatus = useCallback(async () => {
+    try {
+      const res = await notificationApi.list();
+      const items = res.data?.data || [];
+      setHasUnread(items.some((n: any) => !n.isRead));
+    } catch {
+      // silently fail — offline or unauthenticated
+    }
+  }, []);
 
   useEffect(() => {
     fetchDashboard();
     fetchPopularCourses();
-  }, [fetchDashboard]);
+    fetchUnreadStatus();
+  }, [fetchDashboard, fetchUnreadStatus]);
 
   const fetchPopularCourses = async () => {
     try {
@@ -52,9 +65,9 @@ export default function DashboardHome() {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     haptics.light();
-    await Promise.all([fetchDashboard(), fetchPopularCourses()]);
+    await Promise.all([fetchDashboard(), fetchPopularCourses(), fetchUnreadStatus()]);
     setRefreshing(false);
-  }, [fetchDashboard]);
+  }, [fetchDashboard, fetchUnreadStatus]);
 
   if (isLoading && !dashboard) {
     return <LoadingSpinner />;
@@ -79,8 +92,22 @@ export default function DashboardHome() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
       >
         <View style={s.header}>
-          <Text style={s.title}>Hi{user?.firstName ? `, ${user.firstName}` : ''}</Text>
-          <Text style={s.subtitle}>Continue your learning journey</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={s.title}>Hi{user?.firstName ? `, ${user.firstName}` : ''}</Text>
+            <Text style={s.subtitle}>Continue your learning journey</Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              router.push('/(tabs)/notifications' as any);
+            }}
+            style={s.bellButton}
+            accessibilityLabel="Alerts"
+            accessibilityRole="button"
+          >
+            <IconBell size={22} color={colors.textPrimary} />
+            {hasUnread && <View style={s.unreadBadge} />}
+          </Pressable>
         </View>
 
         <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
@@ -191,7 +218,35 @@ function makeStyles(c: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: c.bgApp },
     scroll: { flex: 1 },
-    header: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.md,
+    },
+    bellButton: {
+      width: 42,
+      height: 42,
+      borderRadius: radii.full,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.borderSubtle,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      marginLeft: spacing.md,
+    },
+    unreadBadge: {
+      position: 'absolute',
+      top: 9,
+      right: 9,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: c.danger,
+    },
     title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold, color: c.textPrimary, marginBottom: spacing.xs },
     subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.textSecondary },
     section: { marginTop: spacing.xl },

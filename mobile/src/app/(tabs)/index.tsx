@@ -167,7 +167,7 @@ export default function DashboardHome() {
           </View>
         )}
 
-        <View style={s.section}>
+        {/* <View style={s.section}>
           <Text style={s.sectionTitlePadded}>AI tools</Text>
           <View style={s.aiGrid}>
             {aiTools.map((tool) => (
@@ -176,7 +176,7 @@ export default function DashboardHome() {
               </View>
             ))}
           </View>
-        </View>
+        </View> */}
 
         <View style={s.section}>
           <View style={s.sectionHeader}>

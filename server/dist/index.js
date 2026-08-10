@@ -25,6 +25,7 @@ const search_route_1 = __importDefault(require("./routes/search.route"));
 const media_route_1 = __importDefault(require("./routes/media.route"));
 const payment_route_1 = __importDefault(require("./routes/payment.route"));
 const blog_route_1 = __importDefault(require("./routes/blog.route"));
+const ai_route_1 = __importDefault(require("./routes/ai.route"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 const scheduler_1 = require("./jobs/scheduler");
 const app = (0, express_1.default)();
@@ -67,6 +68,7 @@ app.use('/api/v1/admin', admin_route_1.default);
 app.use('/api/v1/search', search_route_1.default);
 app.use('/api/v1/media', media_route_1.default);
 app.use('/api/v1/blog', blog_route_1.default);
+app.use('/api/v1/ai', ai_route_1.default);
 // Handle 404 routes
 app.use((req, res) => {
     res.status(404).json({ success: false, message: 'API endpoint not found.' });

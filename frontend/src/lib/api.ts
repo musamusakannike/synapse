@@ -46,6 +46,7 @@ export const authApi = {
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   google: (idToken: string) => api.post('/auth/google', { idToken }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  requestAccountDeletion: (email: string, reason?: string) => api.post('/auth/request-account-deletion', { email, reason }),
   me: () => api.get('/auth/me'),
 };
 

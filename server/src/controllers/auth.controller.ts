@@ -344,3 +344,47 @@ export const forgotPassword = async (
     next(error);
   }
 };
+
+/**
+ * Request account deletion via email (for Play Store web requirement)
+ */
+export const requestAccountDeletion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email, reason } = req.body;
+
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      res.status(400).json({ success: false, message: 'A valid email address is required.' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
+    if (user) {
+      try {
+        await sendEmail({
+          to: email,
+          subject: 'Account Deletion Request Received - SabiLearn',
+          html: `<p>Hi ${user.firstName || user.name || 'there'},</p>
+                 <p>We received a request to delete your SabiLearn account associated with this email address.</p>
+                 <p><strong>Reason provided:</strong> ${reason ? String(reason) : 'None provided'}</p>
+                 <p>If you wish to proceed immediately, you can log in to your account on our website and confirm deletion directly. Otherwise, our team will process your deletion request within 7 business days.</p>
+                 <p>If you did not request this deletion, please log into your account immediately and change your password.</p>
+                 <p>Best regards,<br/>SabiLearn Privacy Team</p>`,
+        });
+      } catch (emailError) {
+        console.error('Failed to send deletion request email:', emailError);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'If an account exists for that email, account deletion instructions have been sent.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

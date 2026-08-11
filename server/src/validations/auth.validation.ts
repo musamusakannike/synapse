@@ -67,3 +67,20 @@ export const validateForgotPassword = (req: Request, res: Response, next: NextFu
 
   next();
 };
+
+export const validateRequestAccountDeletion = (req: Request, res: Response, next: NextFunction): void => {
+  const { email } = req.body;
+  const errors: string[] = [];
+
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    errors.push('A valid email address is required.');
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({ success: false, errors });
+    return;
+  }
+
+  next();
+};
+

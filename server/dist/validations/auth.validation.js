@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateForgotPassword = exports.validateLogin = exports.validateRegister = void 0;
+exports.validateRequestAccountDeletion = exports.validateForgotPassword = exports.validateLogin = exports.validateRegister = void 0;
 const validateRegister = (req, res, next) => {
     const { email, password, firstName, lastName } = req.body;
     const errors = [];
@@ -55,3 +55,16 @@ const validateForgotPassword = (req, res, next) => {
     next();
 };
 exports.validateForgotPassword = validateForgotPassword;
+const validateRequestAccountDeletion = (req, res, next) => {
+    const { email } = req.body;
+    const errors = [];
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+        errors.push('A valid email address is required.');
+    }
+    if (errors.length > 0) {
+        res.status(400).json({ success: false, errors });
+        return;
+    }
+    next();
+};
+exports.validateRequestAccountDeletion = validateRequestAccountDeletion;

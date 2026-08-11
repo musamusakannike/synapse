@@ -10,5 +10,6 @@ router.post('/login', auth_validation_1.validateLogin, auth_controller_1.login);
 router.post('/google', auth_controller_1.googleAuth);
 router.post('/apple', auth_controller_1.appleAuth);
 router.post('/forgot-password', auth_validation_1.validateForgotPassword, auth_controller_1.forgotPassword);
+router.post('/request-account-deletion', auth_validation_1.validateRequestAccountDeletion, auth_controller_1.requestAccountDeletion);
 router.get('/me', auth_middleware_1.protect, auth_controller_1.getMe);
 exports.default = router;

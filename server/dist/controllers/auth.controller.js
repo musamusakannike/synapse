@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forgotPassword = exports.appleAuth = exports.googleAuth = exports.getMe = exports.login = exports.register = void 0;
+exports.requestAccountDeletion = exports.forgotPassword = exports.appleAuth = exports.googleAuth = exports.getMe = exports.login = exports.register = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const auth_1 = require("firebase-admin/auth");
 const user_model_1 = __importDefault(require("../models/user.model"));
@@ -300,3 +300,41 @@ const forgotPassword = async (req, res, next) => {
     }
 };
 exports.forgotPassword = forgotPassword;
+/**
+ * Request account deletion via email (for Play Store web requirement)
+ */
+const requestAccountDeletion = async (req, res, next) => {
+    try {
+        const { email, reason } = req.body;
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+            res.status(400).json({ success: false, message: 'A valid email address is required.' });
+            return;
+        }
+        const user = await user_model_1.default.findOne({ email });
+        if (user) {
+            try {
+                await (0, email_util_1.sendEmail)({
+                    to: email,
+                    subject: 'Account Deletion Request Received - SabiLearn',
+                    html: `<p>Hi ${user.firstName || user.name || 'there'},</p>
+                 <p>We received a request to delete your SabiLearn account associated with this email address.</p>
+                 <p><strong>Reason provided:</strong> ${reason ? String(reason) : 'None provided'}</p>
+                 <p>If you wish to proceed immediately, you can log in to your account on our website and confirm deletion directly. Otherwise, our team will process your deletion request within 7 business days.</p>
+                 <p>If you did not request this deletion, please log into your account immediately and change your password.</p>
+                 <p>Best regards,<br/>SabiLearn Privacy Team</p>`,
+                });
+            }
+            catch (emailError) {
+                console.error('Failed to send deletion request email:', emailError);
+            }
+        }
+        res.status(200).json({
+            success: true,
+            message: 'If an account exists for that email, account deletion instructions have been sent.',
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.requestAccountDeletion = requestAccountDeletion;

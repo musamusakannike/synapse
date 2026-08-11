@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper } from 'lucide-react';
+import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Brain } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
   { href: '/dashboard/courses', label: 'Courses', icon: BookOpen },
+  { href: '/dashboard/ai/quiz', label: 'AI Quiz', icon: Brain },
   { href: '/dashboard/playground', label: 'Playground', icon: Code2 },
   { href: '/dashboard/progress', label: 'Progress', icon: TrendingUp },
   { href: '/dashboard/subscribe', label: 'Subscription', icon: Sparkles },

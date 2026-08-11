@@ -242,3 +242,21 @@ export interface VerifyResponse {
   status: TransactionStatus;
   type: 'course_purchase' | 'subscription';
 }
+
+export interface AiQuizQuestion {
+  question: string;
+  options: Array<{ text: string; isCorrect: boolean }>;
+  explanation: string;
+}
+
+export interface AiHistoryItem {
+  _id: string;
+  user: string;
+  type: 'summarize' | 'quiz' | 'flashcards' | 'qa' | 'course_quiz' | 'topic_quiz';
+  title: string;
+  prompt: string;
+  metadata?: Record<string, any>;
+  result: AiQuizQuestion[] | string | any;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -167,16 +167,28 @@ export default function DashboardHome() {
           </View>
         )}
 
-        {/* <View style={s.section}>
+        <View style={s.section}>
           <Text style={s.sectionTitlePadded}>AI tools</Text>
           <View style={s.aiGrid}>
             {aiTools.map((tool) => (
               <View key={tool.kind} style={s.aiGridItem}>
-                <AIToolCard icon={tool.icon} title={tool.title} description={tool.description} onPress={() => setAiTool(tool.kind)} />
+                <AIToolCard
+                  icon={tool.icon}
+                  title={tool.title}
+                  description={tool.description}
+                  onPress={() => {
+                    haptics.light();
+                    if (tool.kind === 'quiz') {
+                      router.push('/ai-quiz' as any);
+                    } else {
+                      setAiTool(tool.kind);
+                    }
+                  }}
+                />
               </View>
             ))}
           </View>
-        </View> */}
+        </View>
 
         <View style={s.section}>
           <View style={s.sectionHeader}>

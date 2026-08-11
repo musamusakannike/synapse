@@ -115,3 +115,13 @@ export const paymentApi = {
   verify: (reference: string) => api.get(`/payments/verify/${reference}`),
   me: () => api.get('/payments/me'),
 };
+
+export const aiApi = {
+  summarize: (text: string, stream: boolean = false) => api.post('/ai/summarize', { text, stream }),
+  generateQuiz: (topic: string, count: number = 5, stream: boolean = false) => api.post('/ai/generate-quiz', { topic, count, stream }),
+  generateFlashcards: (topic: string, count: number = 5, stream: boolean = false) => api.post('/ai/generate-flashcards', { topic, count, stream }),
+  qa: (question: string, context?: string, stream: boolean = false) => api.post('/ai/qa', { question, context, stream }),
+  history: (params?: { type?: string; page?: number; limit?: number }) => api.get('/ai/history', { params }),
+  getHistoryById: (id: string) => api.get(`/ai/history/${id}`),
+  deleteHistory: (id: string) => api.delete(`/ai/history/${id}`),
+};

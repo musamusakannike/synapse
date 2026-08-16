@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, FileQuestion, MessageCircleQuestion, Brain, Play, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, FileQuestion, MessageCircleQuestion, Play, CheckCircle2, ChevronRight } from 'lucide-react';
 import { progressApi } from '@/lib/api';
 import { Course, Chapter, Topic, ResumptionData } from '@/lib/types';
 import ProgressBar from '@/components/ui/ProgressBar';
@@ -64,12 +64,7 @@ export default function DashboardHome() {
       {/* AI Hero Card */}
       <div className="relative overflow-hidden rounded-3xl border border-violet-800/30 bg-gradient-to-r from-violet-950 via-indigo-900 to-slate-900 p-6 text-white shadow-xl md:p-10">
         <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-300 backdrop-blur-sm">
-            <Brain className="size-4" />
-            <span>AI Skill Guidance</span>
-          </div>
-
-          <h2 className="text-2xl leading-tight font-[var(--font-display)] font-extrabold md:text-3xl">
+          <h2 className="text-2xl leading-tight font-extrabold text-white md:text-3xl">
             Don&apos;t know where to start?
           </h2>
 

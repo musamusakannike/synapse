@@ -29,6 +29,7 @@ api.interceptors.response.use(
       localStorage.removeItem('sabilearn_token');
       localStorage.removeItem('sabilearn_user');
       if (!window.location.pathname.startsWith('/auth/')) {
+        /* eslint-disable-next-line @next/next/no-location-assign-relative-destination */
         window.location.href = '/auth/login';
       }
     }
@@ -102,7 +103,7 @@ export const progressApi = {
   continueStudying: () => api.get('/progress/continue'),
   needsImprovement: () => api.get('/progress/needs-improvement'),
   completeTopic: (data: { courseId: string; topicId: string }) => api.post('/progress/topic-complete', data),
-  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: any[] }) =>
+  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: unknown[] }) =>
     api.post('/progress/exercise-submit', data),
   savePosition: (data: { courseId: string; chapterId?: string; topicId?: string; contentIndex: number }) =>
     api.post('/progress/save-position', data),

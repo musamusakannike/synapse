@@ -14,7 +14,7 @@ const tones: Record<BadgeTone, string> = {
 
 export default function Badge({ children, tone = 'neutral', className = '' }: { children: React.ReactNode; tone?: BadgeTone; className?: string }) {
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-[var(--radius-full)] font-[var(--font-body)] text-xs font-semibold uppercase tracking-[var(--tracking-wide)] ${tones[tone]} ${className}`}>
+    <span className={`inline-flex items-center rounded-[var(--radius-full)] px-3 py-1 text-xs font-[var(--font-body)] font-semibold tracking-[var(--tracking-wide)] uppercase ${tones[tone]} ${className}`}>
       {children}
     </span>
   );

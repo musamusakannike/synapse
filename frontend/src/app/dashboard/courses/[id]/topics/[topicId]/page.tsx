@@ -31,9 +31,9 @@ function ContentBlock({ content, index, topicTitle }: { content: TopicContent; i
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-3 text-[var(--ink-300)]">
-        <Icon className="w-4 h-4" />
-        <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+      <div className="mb-3 flex items-center gap-2 text-[var(--ink-300)]">
+        <Icon className="size-4" />
+        <span className="text-xs font-semibold tracking-wide uppercase">{label}</span>
       </div>
 
       {content.type === 'quiz' && content.quiz ? (
@@ -119,7 +119,7 @@ export default function TopicDetailPage() {
   if (!topic) {
     return (
       <EmptyState
-        icon={<BookOpen className="w-12 h-12" />}
+        icon={<BookOpen className="size-12" />}
         title="Topic not found"
         description="This topic may have been removed or is not yet published."
       />
@@ -127,8 +127,8 @@ export default function TopicDetailPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] flex-wrap">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-muted)]">
         <Link href="/dashboard/courses" className="hover:text-[var(--ink-900)]">Courses</Link>
         <span className="text-[var(--ink-300)]">/</span>
         <Link href={`/dashboard/courses/${courseId}`} className="hover:text-[var(--ink-900)]">{course?.title || 'Course'}</Link>
@@ -137,27 +137,27 @@ export default function TopicDetailPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-2">{topic.title}</h1>
+        <h1 className="mb-2 text-2xl font-bold text-[var(--ink-900)]">{topic.title}</h1>
         {topic.description && <p className="text-[var(--text-muted)]">{topic.description}</p>}
       </div>
 
       {topic.contents?.length > 0 && (
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}/learn`} className="block">
           <Button fullWidth>
-            <GraduationCap className="w-4 h-4" /> Start lesson
+            <GraduationCap className="size-4" /> Start lesson
           </Button>
         </Link>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}/flashcards`} className="flex-1">
           <Button variant="secondary" fullWidth>
-            <CreditCard className="w-4 h-4" /> Start flashcards {topic.flashcardCount ? <Badge tone="gold" className="ml-1">{topic.flashcardCount}</Badge> : null}
+            <CreditCard className="size-4" /> Start flashcards {topic.flashcardCount ? <Badge tone="gold" className="ml-1">{topic.flashcardCount}</Badge> : null}
           </Button>
         </Link>
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}/mcq`} className="flex-1">
           <Button variant="secondary" fullWidth>
-            <HelpCircle className="w-4 h-4" /> Take practice test {topic.mcqCount ? <Badge tone="neutral" className="ml-1">{topic.mcqCount}</Badge> : null}
+            <HelpCircle className="size-4" /> Take practice test {topic.mcqCount ? <Badge tone="neutral" className="ml-1">{topic.mcqCount}</Badge> : null}
           </Button>
         </Link>
       </div>
@@ -169,15 +169,15 @@ export default function TopicDetailPage() {
           ))}
         </div>
       ) : (
-        <EmptyState icon={<FileText className="w-12 h-12" />} title="No content blocks" description="This topic focuses on flashcards and practice questions." />
+        <EmptyState icon={<FileText className="size-12" />} title="No content blocks" description="This topic focuses on flashcards and practice questions." />
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-[var(--line)]">
+      <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-4 sm:flex-row">
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}/flashcards`} className="flex-1">
-          <Button variant="ghost" fullWidth><CreditCard className="w-4 h-4" /> Study flashcards</Button>
+          <Button variant="ghost" fullWidth><CreditCard className="size-4" /> Study flashcards</Button>
         </Link>
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}/mcq`} className="flex-1">
-          <Button variant="ghost" fullWidth><FileQuestion className="w-4 h-4" /> Practice MCQs</Button>
+          <Button variant="ghost" fullWidth><FileQuestion className="size-4" /> Practice MCQs</Button>
         </Link>
       </div>
     </div>

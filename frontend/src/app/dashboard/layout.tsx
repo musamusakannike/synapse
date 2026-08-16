@@ -17,11 +17,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-[var(--surface-page)] flex">
+      <div className="flex min-h-screen bg-[var(--surface-page)]">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 p-4 lg:p-6 overflow-x-hidden">{children}</main>
+          <main className="flex-1 overflow-x-hidden p-4 lg:p-6">{children}</main>
         </div>
       </div>
     </AuthGuard>

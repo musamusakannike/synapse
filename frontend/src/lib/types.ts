@@ -332,8 +332,8 @@ export interface AiHistoryItem {
   type: 'summarize' | 'quiz' | 'flashcards' | 'qa' | 'course_quiz' | 'topic_quiz';
   title: string;
   prompt: string;
-  metadata?: Record<string, any>;
-  result: AiQuizQuestion[] | string | any;
+  metadata?: Record<string, unknown>;
+  result: AiQuizQuestion[] | string | unknown;
   createdAt: string;
   updatedAt: string;
 }

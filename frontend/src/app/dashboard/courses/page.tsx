@@ -1,16 +1,13 @@
 'use client';
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Search, BookOpen, GitBranch, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, BookOpen } from 'lucide-react';
 import { courseApi } from '@/lib/api';
 import { Course, PaginatedResponse } from '@/lib/types';
 import CourseCard from '@/components/ui/CourseCard';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import Badge from '@/components/ui/Badge';
-import Card from '@/components/ui/Card';
 
 const CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
 
@@ -55,9 +52,9 @@ function CoursesContent() {
   }, [fetchCourses]);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1">Courses</h1>
+        <h1 className="mb-1 text-2xl font-bold text-[var(--ink-900)]">Courses</h1>
         <p className="text-sm text-[var(--text-muted)]">Browse full SabiLearn catalog and free public interactive courses</p>
       </div>
 
@@ -88,14 +85,14 @@ function CoursesContent() {
         </div>
       </Card> */}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-300)]" />
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--ink-300)]" />
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search courses…"
-            className="w-full pl-10 pr-4 py-2.5 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none"
+            className="w-full rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] py-2.5 pr-4 pl-10 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
           />
         </div>
         <div className="w-full sm:w-52">
@@ -111,10 +108,10 @@ function CoursesContent() {
           <LoadingSpinner size="lg" />
         </div>
       ) : courses.length === 0 ? (
-        <EmptyState icon={<BookOpen className="w-12 h-12" />} title="No courses found" description="Try adjusting your search or filters." />
+        <EmptyState icon={<BookOpen className="size-12" />} title="No courses found" description="Try adjusting your search or filters." />
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => (
               <CourseCard
                 key={course._id}
@@ -135,7 +132,7 @@ function CoursesContent() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-9 h-9 rounded-[var(--radius-md)] text-sm font-semibold ${p === page ? 'bg-[var(--brand-gold)] text-[var(--ink-900)]' : 'bg-[var(--surface-card)] text-[var(--text-muted)] border border-[var(--line)]'}`}
+                  className={`size-9 rounded-[var(--radius-md)] text-sm font-semibold ${p === page ? 'bg-[var(--brand-gold)] text-[var(--ink-900)]' : 'border border-[var(--line)] bg-[var(--surface-card)] text-[var(--text-muted)]'}`}
                 >
                   {p}
                 </button>

@@ -43,7 +43,7 @@ export function SummarizerDialog({ open, onClose }: ToolDialogProps) {
       maxWidth="560px"
       footer={
         <Button variant="ai" onClick={run} disabled={loading || !text.trim()}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           {loading ? 'Summarizing…' : 'Generate'}
         </Button>
       }
@@ -55,11 +55,11 @@ export function SummarizerDialog({ open, onClose }: ToolDialogProps) {
           onChange={(e) => setText(e.target.value)}
           rows={5}
           placeholder="Paste your notes here…"
-          className="w-full rounded-[var(--radius-md)] bg-white/10 border border-white/20 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none resize-none"
+          className="w-full resize-none rounded-[var(--radius-md)] border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
         />
         {done && (
-          <div className="rounded-[var(--radius-md)] bg-white/10 border border-white/20 p-4 text-sm leading-relaxed">
-            <span className="font-semibold block mb-1">Summary</span>
+          <div className="rounded-[var(--radius-md)] border border-white/20 bg-white/10 p-4 text-sm leading-relaxed">
+            <span className="mb-1 block font-semibold">Summary</span>
             The passage explains the core idea in three points: definition, why it matters, and one practical example.
             Key terms are bolded in your original notes; review those first before attempting the flashcards for this topic.
           </div>
@@ -73,7 +73,7 @@ export function QuizGeneratorDialog({ open, onClose }: ToolDialogProps) {
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
   const [historyId, setHistoryId] = useState<string | null>(null);
-  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  const [generatedQuestions, setGeneratedQuestions] = useState<import('@/lib/types').AiQuizQuestion[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
@@ -88,8 +88,9 @@ export function QuizGeneratorDialog({ open, onClose }: ToolDialogProps) {
       } else {
         setError('Quiz generation failed.');
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error generating quiz.');
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      setError(errorObj?.response?.data?.message || 'Error generating quiz.');
     } finally {
       setLoading(false);
     }
@@ -114,16 +115,16 @@ export function QuizGeneratorDialog({ open, onClose }: ToolDialogProps) {
       tone="ai"
       maxWidth="560px"
       footer={
-        <div className="flex items-center justify-between w-full">
+        <div className="flex w-full items-center justify-between">
           <Link
             href="/dashboard/ai/quiz"
             onClick={onClose}
-            className="text-xs font-semibold text-white/80 hover:text-white underline"
+            className="text-xs font-semibold text-white/80 underline hover:text-white"
           >
             Go to Quiz Hub & History
           </Link>
           <Button variant="ai" onClick={handleGenerate} disabled={loading || !topic.trim()}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             {loading ? 'Generating…' : 'Generate'}
           </Button>
         </div>
@@ -135,27 +136,27 @@ export function QuizGeneratorDialog({ open, onClose }: ToolDialogProps) {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. JavaScript closures, Photosynthesis"
-          className="w-full rounded-[var(--radius-md)] bg-white/10 border border-white/20 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
+          className="w-full rounded-[var(--radius-md)] border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
           disabled={loading}
         />
 
-        {error && <p className="text-xs text-red-300 font-medium">{error}</p>}
+        {error && <p className="text-xs font-medium text-red-300">{error}</p>}
 
         {generatedQuestions.length > 0 && (
-          <div className="rounded-[var(--radius-md)] bg-white/10 border border-white/20 p-4 text-sm space-y-3">
+          <div className="space-y-3 rounded-[var(--radius-md)] border border-white/20 bg-white/10 p-4 text-sm">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-white">Generated {generatedQuestions.length} Questions</span>
               {historyId && (
                 <Link
                   href={`/dashboard/ai/quiz/${historyId}`}
                   onClick={onClose}
-                  className="px-3 py-1 rounded-md bg-white/20 hover:bg-white/30 text-xs font-semibold text-white transition-colors"
+                  className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/30"
                 >
                   Take Full Interactive Quiz →
                 </Link>
               )}
             </div>
-            <div className="space-y-2 text-white/90 text-xs border-t border-white/10 pt-2">
+            <div className="space-y-2 border-t border-white/10 pt-2 text-xs text-white/90">
               <p className="font-semibold">Sample Question 1:</p>
               <p>{generatedQuestions[0]?.question}</p>
             </div>
@@ -179,7 +180,7 @@ export function FlashcardsGeneratorDialog({ open, onClose }: ToolDialogProps) {
       maxWidth="560px"
       footer={
         <Button variant="ai" onClick={run} disabled={loading || !topic.trim()}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           {loading ? 'Building…' : 'Generate'}
         </Button>
       }
@@ -190,16 +191,16 @@ export function FlashcardsGeneratorDialog({ open, onClose }: ToolDialogProps) {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="e.g. Newton's laws of motion"
-          className="w-full rounded-[var(--radius-md)] bg-white/10 border border-white/20 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
+          className="w-full rounded-[var(--radius-md)] border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
         />
         {done && (
           <div className="space-y-2">
-            <div className="rounded-[var(--radius-md)] bg-white/10 border border-white/20 p-3 text-sm">
-              <span className="font-semibold block">Q: What is Newton&apos;s first law?</span>
+            <div className="rounded-[var(--radius-md)] border border-white/20 bg-white/10 p-3 text-sm">
+              <span className="block font-semibold">Q: What is Newton&apos;s first law?</span>
               <span className="text-white/80">A: An object stays at rest or in motion unless acted on by a net force.</span>
             </div>
-            <div className="rounded-[var(--radius-md)] bg-white/10 border border-white/20 p-3 text-sm">
-              <span className="font-semibold block">Q: What is Newton&apos;s second law?</span>
+            <div className="rounded-[var(--radius-md)] border border-white/20 bg-white/10 p-3 text-sm">
+              <span className="block font-semibold">Q: What is Newton&apos;s second law?</span>
               <span className="text-white/80">A: Force equals mass times acceleration (F = ma).</span>
             </div>
           </div>
@@ -222,22 +223,22 @@ export function QAAIDialog({ open, onClose }: ToolDialogProps) {
       maxWidth="560px"
       footer={
         <Button variant="ai" onClick={run} disabled={loading || !question.trim()}>
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
           {loading ? 'Thinking…' : 'Ask'}
         </Button>
       }
     >
       <div className="space-y-4">
-        <p className="text-sm text-white/80">Ask a question about anything you're studying.</p>
+        <p className="text-sm text-white/80">Ask a question about anything you&apos;re studying.</p>
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. What's the difference between let and var?"
-          className="w-full rounded-[var(--radius-md)] bg-white/10 border border-white/20 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
+          className="w-full rounded-[var(--radius-md)] border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white placeholder-white/50 outline-none"
         />
         {done && (
-          <div className="rounded-[var(--radius-md)] bg-white/10 border border-white/20 p-4 text-sm leading-relaxed">
-            <span className="font-semibold block mb-1">Answer</span>
+          <div className="rounded-[var(--radius-md)] border border-white/20 bg-white/10 p-4 text-sm leading-relaxed">
+            <span className="mb-1 block font-semibold">Answer</span>
             <code className="text-white">let</code> and <code className="text-white">const</code> are block-scoped, while{' '}
             <code className="text-white">var</code> is function-scoped and gets hoisted with a default value of{' '}
             <code className="text-white">undefined</code>. Prefer <code className="text-white">let</code>/<code className="text-white">const</code> in modern code.

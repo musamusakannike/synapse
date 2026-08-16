@@ -30,7 +30,8 @@ export default function McqPage() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [answers, setAnswers] = useState<{ mcqId: string; correct: boolean; selected: number }[]>([]);
   const [expandedReview, setExpandedReview] = useState<number | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const [quizDuration, setQuizDuration] = useState<number>(0);
+  const startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +72,7 @@ export default function McqPage() {
 
   const finishQuiz = async () => {
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+    setQuizDuration(duration);
     const correctCount = answers.filter((a) => a.correct).length;
     const score = Math.round((correctCount / activeMcqs.length) * 100);
     await submitMcqSession({ course: courseId, topic: topicId, mcqAnswered: activeMcqs.length, mcqCorrect: correctCount, score, duration });
@@ -83,8 +85,8 @@ export default function McqPage() {
 
   if (allMcqs.length === 0) {
     return (
-      <div className="text-center py-20">
-        <p className="text-[var(--text-muted)] mb-4">No MCQs available for this topic yet.</p>
+      <div className="py-20 text-center">
+        <p className="mb-4 text-[var(--text-muted)]">No MCQs available for this topic yet.</p>
         <Link href={`/dashboard/courses/${courseId}/topics/${topicId}`} className="text-[var(--brand-gold-600)] hover:opacity-80">Back to topic</Link>
       </div>
     );
@@ -93,22 +95,22 @@ export default function McqPage() {
   if (phase === 'setup') {
     const countOptions = [5, 10, 15, 20];
     return (
-      <div className="max-w-2xl mx-auto">
-        <Link href={`/dashboard/courses/${courseId}/topics/${topicId}`} className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)] mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to topic
+      <div className="mx-auto max-w-2xl">
+        <Link href={`/dashboard/courses/${courseId}/topics/${topicId}`} className="mb-6 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]">
+          <ArrowLeft className="size-4" /> Back to topic
         </Link>
-        <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-[var(--radius-xl)] p-8 text-center">
-          <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-2">Ready to test your knowledge?</h1>
-          <p className="text-[var(--text-muted)] mb-1">Select the number of questions</p>
-          <p className="text-sm text-[var(--ink-300)] mb-6">{allMcqs.length} questions available</p>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+        <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
+          <h1 className="mb-2 text-2xl font-bold text-[var(--ink-900)]">Ready to test your knowledge?</h1>
+          <p className="mb-1 text-[var(--text-muted)]">Select the number of questions</p>
+          <p className="mb-6 text-sm text-[var(--ink-300)]">{allMcqs.length} questions available</p>
+          <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-5">
             {countOptions.map((count) => (
               <button
                 key={count}
                 onClick={() => setQuestionCount(count)}
                 disabled={count > allMcqs.length}
-                className={`py-4 rounded-[var(--radius-md)] border text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${
-                  questionCount === count ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-[var(--ink-900)]' : 'border-[var(--line)] text-[var(--text-muted)] hover:border-[var(--line-strong)]'
+                className={`cursor-pointer rounded-[var(--radius-md)] border py-4 text-sm font-semibold disabled:pointer-events-none disabled:opacity-40 ${
+                  questionCount === count ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)] text-[var(--ink-900)]' : 'border-[var(--line)] text-[var(--text-muted)] hover:border-[var(--line-strong)]'
                 }`}
               >
                 {count}
@@ -116,8 +118,8 @@ export default function McqPage() {
             ))}
             <button
               onClick={() => setQuestionCount(0)}
-              className={`py-4 rounded-[var(--radius-md)] border text-sm font-semibold cursor-pointer ${
-                questionCount === 0 ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-[var(--ink-900)]' : 'border-[var(--line)] text-[var(--text-muted)] hover:border-[var(--line-strong)]'
+              className={`cursor-pointer rounded-[var(--radius-md)] border py-4 text-sm font-semibold ${
+                questionCount === 0 ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)] text-[var(--ink-900)]' : 'border-[var(--line)] text-[var(--text-muted)] hover:border-[var(--line-strong)]'
               }`}
             >
               All
@@ -133,13 +135,13 @@ export default function McqPage() {
     const mcq = activeMcqs[currentQ];
     const progress = ((currentQ + 1) / activeMcqs.length) * 100;
     return (
-      <div className="max-w-2xl mx-auto">
-        {topic && <p className="text-xs text-[var(--brand-gold-600)] font-semibold uppercase tracking-wide mb-4">{topic.title}</p>}
+      <div className="mx-auto max-w-2xl">
+        {topic && <p className="mb-4 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">{topic.title}</p>}
         <div className="mb-4">
           <ProgressBar value={progress} label={`Question ${currentQ + 1} of ${activeMcqs.length}`} />
         </div>
-        <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-[var(--radius-xl)] p-6 mb-4">
-          <p className="text-lg font-medium text-[var(--ink-900)] mb-6">{mcq.question}</p>
+        <div className="mb-4 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6">
+          <p className="mb-6 text-lg font-medium text-[var(--ink-900)]">{mcq.question}</p>
           <div className="space-y-2">
             {mcq.options.map((option, idx) => {
               const isSelected = selectedOption === idx;
@@ -153,11 +155,11 @@ export default function McqPage() {
                 cls = 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)] text-[var(--ink-900)]';
               }
               return (
-                <button key={idx} onClick={() => handleSelectOption(idx)} disabled={showFeedback} className={`w-full text-left p-4 rounded-[var(--radius-md)] border transition-all ${cls} ${!showFeedback ? 'cursor-pointer' : ''}`}>
+                <button key={idx} onClick={() => handleSelectOption(idx)} disabled={showFeedback} className={`w-full rounded-[var(--radius-md)] border p-4 text-left transition-all ${cls} ${!showFeedback ? 'cursor-pointer' : ''}`}>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">{option.text}</span>
-                    {showFeedback && isCorrect && <Check className="w-4 h-4 text-[var(--success)]" />}
-                    {showFeedback && isSelected && !isCorrect && <X className="w-4 h-4 text-[var(--danger)]" />}
+                    {showFeedback && isCorrect && <Check className="size-4 text-[var(--success)]" />}
+                    {showFeedback && isSelected && !isCorrect && <X className="size-4 text-[var(--danger)]" />}
                   </div>
                 </button>
               );
@@ -166,8 +168,8 @@ export default function McqPage() {
         </div>
 
         {showFeedback && (
-          <div className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-4 mb-4">
-            <p className="text-xs text-[var(--text-muted)] mb-1">Explanation</p>
+          <div className="mb-4 rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4">
+            <p className="mb-1 text-xs text-[var(--text-muted)]">Explanation</p>
             <p className="text-sm text-[var(--ink-900)]">{mcq.explanation || 'No explanation provided.'}</p>
           </div>
         )}
@@ -181,65 +183,65 @@ export default function McqPage() {
 
   const correctCount = answers.filter((a) => a.correct).length;
   const score = Math.round((correctCount / activeMcqs.length) * 100);
-  const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+  const duration = quizDuration;
   const tone = score >= 80 ? 'var(--success)' : score >= 50 ? 'var(--warning)' : 'var(--danger)';
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-[var(--radius-xl)] p-8 text-center">
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-6">Quiz results</h1>
-        <div className="relative w-44 h-44 mx-auto mb-6 flex items-center justify-center rounded-full" style={{ background: `conic-gradient(${tone} ${score}%, var(--surface-sunken) 0)` }}>
-          <div className="absolute inset-3 rounded-full bg-[var(--surface-card)] flex flex-col items-center justify-center">
+    <div className="mx-auto max-w-2xl">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
+        <h1 className="mb-6 text-2xl font-bold text-[var(--ink-900)]">Quiz results</h1>
+        <div className="relative mx-auto mb-6 flex size-44 items-center justify-center rounded-full" style={{ background: `conic-gradient(${tone} ${score}%, var(--surface-sunken) 0)` }}>
+          <div className="absolute inset-3 flex flex-col items-center justify-center rounded-full bg-[var(--surface-card)]">
             <span className="text-4xl font-bold" style={{ color: tone }}>{score}%</span>
-            <span className="text-xs text-[var(--ink-300)] mt-1">Score</span>
+            <span className="mt-1 text-xs text-[var(--ink-300)]">Score</span>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-4">
+        <div className="mb-6 grid grid-cols-3 gap-4">
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4">
             <p className="text-xl font-bold text-[var(--ink-900)]">{correctCount}/{activeMcqs.length}</p>
-            <p className="text-xs text-[var(--ink-300)] mt-1">Correct</p>
+            <p className="mt-1 text-xs text-[var(--ink-300)]">Correct</p>
           </div>
-          <div className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-4">
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4">
             <p className="text-xl font-bold text-[var(--ink-900)]">{Math.floor(duration / 60)}m {duration % 60}s</p>
-            <p className="text-xs text-[var(--ink-300)] mt-1">Time</p>
+            <p className="mt-1 text-xs text-[var(--ink-300)]">Time</p>
           </div>
-          <div className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-4">
+          <div className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4">
             <p className="text-xl font-bold text-[var(--ink-900)]">{score}%</p>
-            <p className="text-xs text-[var(--ink-300)] mt-1">Accuracy</p>
+            <p className="mt-1 text-xs text-[var(--ink-300)]">Accuracy</p>
           </div>
         </div>
-        <p className="text-sm mb-6" style={{ color: tone }}>
+        <p className="mb-6 text-sm" style={{ color: tone }}>
           {score >= 80 ? "Excellent work — you're mastering this topic." : score >= 50 ? 'Good effort. Keep practicing to improve.' : "Don't give up — review the material and try again."}
         </p>
-        <div className="flex gap-3 justify-center mb-6">
-          <Button variant="secondary" onClick={retry}><RotateCcw className="w-4 h-4" /> Retry</Button>
+        <div className="mb-6 flex justify-center gap-3">
+          <Button variant="secondary" onClick={retry}><RotateCcw className="size-4" /> Retry</Button>
           <Link href={`/dashboard/courses/${courseId}/topics/${topicId}`}><Button>Back to topic</Button></Link>
         </div>
         <div className="text-left">
-          <h2 className="text-sm font-semibold text-[var(--ink-900)] mb-3">Review answers</h2>
+          <h2 className="mb-3 text-sm font-semibold text-[var(--ink-900)]">Review answers</h2>
           <div className="space-y-2">
             {activeMcqs.map((mcq, i) => {
               const answer = answers[i];
               const isExpanded = expandedReview === i;
               return (
-                <div key={mcq._id} className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] overflow-hidden">
-                  <button onClick={() => setExpandedReview(isExpanded ? null : i)} className="w-full flex items-center justify-between p-3 text-left cursor-pointer">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${answer?.correct ? 'bg-[var(--success-100)]' : 'bg-[var(--danger-100)]'}`}>
-                        {answer?.correct ? <Check className="w-3 h-3 text-[var(--success)]" /> : <X className="w-3 h-3 text-[var(--danger)]" />}
+                <div key={mcq._id} className="overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-sunken)]">
+                  <button onClick={() => setExpandedReview(isExpanded ? null : i)} className="flex w-full cursor-pointer items-center justify-between p-3 text-left">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className={`flex size-5 shrink-0 items-center justify-center rounded-full ${answer?.correct ? 'bg-[var(--success-100)]' : 'bg-[var(--danger-100)]'}`}>
+                        {answer?.correct ? <Check className="size-3 text-[var(--success)]" /> : <X className="size-3 text-[var(--danger)]" />}
                       </span>
-                      <span className="text-sm text-[var(--ink-900)] truncate">{mcq.question}</span>
+                      <span className="truncate text-sm text-[var(--ink-900)]">{mcq.question}</span>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-[var(--ink-300)] shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`size-4 shrink-0 text-[var(--ink-300)] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                   </button>
                   {isExpanded && (
-                    <div className="px-3 pb-3 pl-10 space-y-1">
+                    <div className="space-y-1 px-3 pb-3 pl-10">
                       {mcq.options.map((opt, idx) => (
-                        <div key={idx} className={`text-xs px-2 py-1.5 rounded ${opt.isCorrect ? 'text-[var(--success)] bg-[var(--success-100)]' : idx === answer?.selected ? 'text-[var(--danger)] bg-[var(--danger-100)]' : 'text-[var(--text-muted)]'}`}>
+                        <div key={idx} className={`rounded px-2 py-1.5 text-xs ${opt.isCorrect ? 'bg-[var(--success-100)] text-[var(--success)]' : idx === answer?.selected ? 'bg-[var(--danger-100)] text-[var(--danger)]' : 'text-[var(--text-muted)]'}`}>
                           {opt.text} {opt.isCorrect && '(correct)'}
                         </div>
                       ))}
-                      {mcq.explanation && <p className="text-xs text-[var(--text-muted)] pt-1">{mcq.explanation}</p>}
+                      {mcq.explanation && <p className="pt-1 text-xs text-[var(--text-muted)]">{mcq.explanation}</p>}
                     </div>
                   )}
                 </div>

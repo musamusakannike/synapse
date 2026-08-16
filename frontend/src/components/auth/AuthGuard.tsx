@@ -23,7 +23,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading || (!isAuthenticated && token)) {
     return (
-      <div className="min-h-screen bg-[var(--surface-page)] flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--surface-page)]">
         <LoadingSpinner size="lg" />
       </div>
     );

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   BookOpen,
   ArrowLeft,
@@ -15,28 +15,17 @@ import {
   ChevronUp,
   Play,
   Check,
-  FileText,
-  HelpCircle,
-  Sparkles,
-  Code,
-  Video,
-  Volume2,
-  Youtube,
-  Award,
   ArrowRight,
 } from 'lucide-react';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
 import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import Card from '@/components/ui/Card';
 import ExerciseModal from '@/components/courses/ExerciseModal';
 
 export default function CourseDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -58,7 +47,6 @@ export default function CourseDetailsPage() {
 
   // Topic Reader Modal State
   const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
-  const [activeContentIndex, setActiveContentIndex] = useState<number>(0);
   const [readingModalOpen, setReadingModalOpen] = useState(false);
 
   // Exercise Modal State
@@ -66,12 +54,41 @@ export default function CourseDetailsPage() {
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchCourseData();
+    let active = true;
+    if (!id) return;
+
+    (async () => {
+      try {
+        const [courseRes, chaptersRes, paymentRes] = await Promise.all([
+          courseApi.get(id),
+          chapterApi.byCourse(id),
+          paymentApi.me().catch(() => ({ data: { data: null } })),
+        ]);
+
+        if (!active) return;
+        setCourse(courseRes.data.data);
+        const fetchedChapters: Chapter[] = chaptersRes.data.data || [];
+        setChapters(fetchedChapters);
+        setPaymentStatus(paymentRes.data.data);
+
+        // Default expand chapter 1
+        if (fetchedChapters.length > 0) {
+          setOpenChapters((prev) => ({ ...prev, [fetchedChapters[0]._id]: true }));
+        }
+      } catch (e) {
+        console.error('Failed to load course details:', e);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   const fetchCourseData = async () => {
     try {
-      setIsLoading(true);
       const [courseRes, chaptersRes, paymentRes] = await Promise.all([
         courseApi.get(id),
         chapterApi.byCourse(id),
@@ -82,15 +99,8 @@ export default function CourseDetailsPage() {
       const fetchedChapters: Chapter[] = chaptersRes.data.data || [];
       setChapters(fetchedChapters);
       setPaymentStatus(paymentRes.data.data);
-
-      // Default expand chapter 1
-      if (fetchedChapters.length > 0) {
-        setOpenChapters((prev) => ({ ...prev, [fetchedChapters[0]._id]: true }));
-      }
     } catch (e) {
-      console.error('Failed to load course details:', e);
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to reload course details:', e);
     }
   };
 
@@ -119,7 +129,6 @@ export default function CourseDetailsPage() {
   const handleOpenTopic = (chapter: Chapter, topic: Topic) => {
     if (!hasAccess || !topic.isUnlocked) return;
     setActiveTopic(topic);
-    setActiveContentIndex(0);
     setReadingModalOpen(true);
 
     // Save position
@@ -167,9 +176,9 @@ export default function CourseDetailsPage() {
 
   if (!course) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <p className="text-[var(--text-muted)]">Course not found.</p>
-        <Link href="/dashboard/courses" className="text-[var(--brand-gold-600)] hover:underline mt-2 inline-block font-semibold">
+        <Link href="/dashboard/courses" className="mt-2 inline-block font-semibold text-[var(--brand-gold-600)] hover:underline">
           Back to courses
         </Link>
       </div>
@@ -179,26 +188,27 @@ export default function CourseDetailsPage() {
   const authors = course.authors || [];
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl space-y-8">
       {/* Toast feedback for copied link */}
       {copiedToast && (
-        <div className="fixed top-6 right-6 z-50 px-4 py-3 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl flex items-center gap-2 border border-slate-800 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="animate-in fade-in fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-xs font-semibold text-white shadow-xl duration-200">
+          <CheckCircle2 className="size-4 text-emerald-400" />
           <span>Course link copied to clipboard!</span>
         </div>
       )}
 
       {/* Back button */}
-      <Link href="/dashboard/courses" className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)] transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to courses
+      <Link href="/dashboard/courses" className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--ink-900)]">
+        <ArrowLeft className="size-4" /> Back to courses
       </Link>
 
       {/* Hero Section */}
-      <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-3xl p-6 md:p-8 space-y-6 shadow-xs relative overflow-hidden">
+      <div className="relative space-y-6 overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-xs md:p-8">
         {/* Banner image if available */}
         {course.banner && (
-          <div className="w-full aspect-[21/9] bg-[var(--surface-sunken)] rounded-2xl overflow-hidden mb-4 border border-[var(--line)]">
-            <img src={course.banner} alt={course.title} className="w-full h-full object-cover" />
+          <div className="mb-4 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={course.banner} alt={course.title} className="size-full object-cover" />
           </div>
         )}
 
@@ -212,30 +222,31 @@ export default function CourseDetailsPage() {
           {/* Share Button */}
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--surface-sunken)] hover:bg-[var(--line)] text-[var(--ink-900)] font-semibold text-xs rounded-xl border border-[var(--line)] transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
           >
-            <Share2 className="w-4 h-4 text-[var(--brand-gold-600)]" />
+            <Share2 className="size-4 text-[var(--brand-gold-600)]" />
             <span>Share Course</span>
           </button>
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl md:text-3xl font-extrabold text-[var(--ink-900)] font-[var(--font-display)]">
+        <h1 className="text-2xl font-[var(--font-display)] font-extrabold text-[var(--ink-900)] md:text-3xl">
           {course.title}
         </h1>
 
         {/* Author(s) Profile */}
         {authors.length > 0 && (
-          <div className="flex items-center gap-3 pt-1 border-t border-[var(--line)] pt-4">
-            <div className="flex -space-x-2 overflow-hidden shrink-0">
+          <div className="flex items-center gap-3 border-t border-[var(--line)] pt-4">
+            <div className="flex shrink-0 -space-x-2 overflow-hidden">
               {authors.slice(0, expandedAuthors ? authors.length : 3).map((author, aIdx) => (
                 <div
                   key={aIdx}
-                  className="w-10 h-10 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] flex items-center justify-center font-bold text-sm border-2 border-white overflow-hidden shrink-0"
+                  className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[var(--brand-gold-100)] text-sm font-bold text-[var(--brand-gold-600)]"
                   title={author.name}
                 >
                   {author.avatar ? (
-                    <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={author.avatar} alt={author.name} className="size-full object-cover" />
                   ) : (
                     author.name.charAt(0).toUpperCase()
                   )}
@@ -244,8 +255,8 @@ export default function CourseDetailsPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-wider">Author(s)</p>
-              <p className="text-sm font-bold text-[var(--ink-900)] truncate">
+              <p className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">Author(s)</p>
+              <p className="truncate text-sm font-bold text-[var(--ink-900)]">
                 {expandedAuthors ? (
                   authors.map((a) => a.name).join(', ')
                 ) : (
@@ -267,26 +278,26 @@ export default function CourseDetailsPage() {
         )}
 
         {/* Hero Metadata Stats Row */}
-        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--line)] text-center">
-          <div className="p-3 bg-[var(--surface-sunken)] rounded-2xl border border-[var(--line)]">
-            <div className="flex items-center justify-center gap-1.5 text-xs text-[var(--text-muted)] mb-1 font-semibold">
-              <BookOpen className="w-4 h-4 text-[var(--brand-gold-600)]" />
+        <div className="grid grid-cols-3 gap-3 border-t border-[var(--line)] pt-4 text-center">
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <BookOpen className="size-4 text-[var(--brand-gold-600)]" />
               <span>Lessons</span>
             </div>
             <p className="text-lg font-extrabold text-[var(--ink-900)]">{course.lessonCount || 0}</p>
           </div>
 
-          <div className="p-3 bg-[var(--surface-sunken)] rounded-2xl border border-[var(--line)]">
-            <div className="flex items-center justify-center gap-1.5 text-xs text-[var(--text-muted)] mb-1 font-semibold">
-              <Users className="w-4 h-4 text-[var(--brand-gold-600)]" />
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <Users className="size-4 text-[var(--brand-gold-600)]" />
               <span>Registered</span>
             </div>
             <p className="text-lg font-extrabold text-[var(--ink-900)]">{course.registeredUsersCount || 0}</p>
           </div>
 
-          <div className="p-3 bg-[var(--surface-sunken)] rounded-2xl border border-[var(--line)]">
-            <div className="flex items-center justify-center gap-1.5 text-xs text-[var(--text-muted)] mb-1 font-semibold">
-              <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <Zap className="size-4 fill-amber-500 text-amber-500" />
               <span>Total XP</span>
             </div>
             <p className="text-lg font-extrabold text-amber-600">+{course.totalObtainableXp || 0}</p>
@@ -298,19 +309,19 @@ export default function CourseDetailsPage() {
       <div className="space-y-3">
         {/* What You'll Learn Accordion */}
         {course.whatYouWillLearn && course.whatYouWillLearn.length > 0 && (
-          <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-2xl overflow-hidden shadow-xs">
+          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
             <button
               onClick={() => toggleAccordion('learn')}
-              className="w-full px-6 py-4 flex items-center justify-between font-bold text-base text-[var(--ink-900)] text-left hover:bg-[var(--surface-sunken)] transition-colors"
+              className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
             >
-              <span>What you'll learn</span>
-              {accordionState.learn ? <ChevronUp className="w-5 h-5 text-[var(--text-muted)]" /> : <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />}
+              <span>What you&apos;ll learn</span>
+              {accordionState.learn ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
             </button>
             {accordionState.learn && (
-              <div className="px-6 pb-6 pt-2 border-t border-[var(--line)] bg-[var(--surface-card)] grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6 md:grid-cols-2">
                 {course.whatYouWillLearn.map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-gold-100)] text-xs font-bold text-[var(--brand-gold-600)]">
                       ✓
                     </div>
                     <p className="text-sm text-[var(--ink-800)]">{item}</p>
@@ -322,20 +333,20 @@ export default function CourseDetailsPage() {
         )}
 
         {/* Prerequisites Accordion */}
-        <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-2xl overflow-hidden shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
           <button
             onClick={() => toggleAccordion('prerequisites')}
-            className="w-full px-6 py-4 flex items-center justify-between font-bold text-base text-[var(--ink-900)] text-left hover:bg-[var(--surface-sunken)] transition-colors"
+            className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
           >
             <span>Prerequisites</span>
-            {accordionState.prerequisites ? <ChevronUp className="w-5 h-5 text-[var(--text-muted)]" /> : <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />}
+            {accordionState.prerequisites ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
           </button>
           {accordionState.prerequisites && (
-            <div className="px-6 pb-6 pt-2 border-t border-[var(--line)] bg-[var(--surface-card)] space-y-2">
+            <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
               {course.prerequisites && course.prerequisites.length > 0 ? (
                 course.prerequisites.map((prereq, idx) => (
-                  <p key={idx} className="text-sm text-[var(--ink-800)] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-gold)]" />
+                  <p key={idx} className="flex items-center gap-2 text-sm text-[var(--ink-800)]">
+                    <span className="size-1.5 rounded-full bg-[var(--brand-gold)]" />
                     <span>{prereq}</span>
                   </p>
                 ))
@@ -347,17 +358,17 @@ export default function CourseDetailsPage() {
         </div>
 
         {/* Description Accordion */}
-        <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-2xl overflow-hidden shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
           <button
             onClick={() => toggleAccordion('description')}
-            className="w-full px-6 py-4 flex items-center justify-between font-bold text-base text-[var(--ink-900)] text-left hover:bg-[var(--surface-sunken)] transition-colors"
+            className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
           >
             <span>Description</span>
-            {accordionState.description ? <ChevronUp className="w-5 h-5 text-[var(--text-muted)]" /> : <ChevronDown className="w-5 h-5 text-[var(--text-muted)]" />}
+            {accordionState.description ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
           </button>
           {accordionState.description && (
-            <div className="px-6 pb-6 pt-2 border-t border-[var(--line)] bg-[var(--surface-card)]">
-              <p className="text-sm text-[var(--ink-800)] leading-relaxed whitespace-pre-line">
+            <div className="border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
+              <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">
                 {course.longDescription || course.description}
               </p>
             </div>
@@ -367,13 +378,13 @@ export default function CourseDetailsPage() {
 
       {/* Chapters & Topics List */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-[var(--ink-900)] font-[var(--font-display)]">
+        <h2 className="text-xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
           Course Structure
         </h2>
 
         {chapters.length === 0 ? (
-          <div className="p-8 text-center bg-[var(--surface-card)] rounded-2xl border border-[var(--line)]">
-            <BookOpen className="w-10 h-10 text-[var(--ink-300)] mx-auto mb-2" />
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
+            <BookOpen className="mx-auto mb-2 size-10 text-[var(--ink-300)]" />
             <p className="text-sm text-[var(--text-muted)]">No chapters published yet for this course.</p>
           </div>
         ) : (
@@ -387,15 +398,15 @@ export default function CourseDetailsPage() {
               return (
                 <div
                   key={chapter._id}
-                  className={`bg-[var(--surface-card)] border rounded-2xl overflow-hidden transition-all shadow-xs ${
-                    isLocked ? 'opacity-70 border-[var(--line)]' : 'border-[var(--line)] hover:border-[var(--brand-gold-300)]'
+                  className={`overflow-hidden rounded-2xl border bg-[var(--surface-card)] shadow-xs transition-all ${
+                    isLocked ? 'border-[var(--line)] opacity-70' : 'border-[var(--line)] hover:border-[var(--brand-gold-300)]'
                   }`}
                 >
                   {/* Chapter Header Card */}
-                  <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
+                    <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex items-center gap-3">
-                        <span className="text-xs font-bold text-[var(--brand-gold-600)] uppercase tracking-wider">
+                        <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
                           Chapter {cIdx + 1}
                         </span>
                         <Badge tone={isCompleted ? 'success' : isLocked ? 'dark' : 'gold'}>
@@ -403,29 +414,29 @@ export default function CourseDetailsPage() {
                         </Badge>
                       </div>
 
-                      <h3 className="font-bold text-[var(--ink-900)] text-lg truncate">
+                      <h3 className="truncate text-lg font-bold text-[var(--ink-900)]">
                         {chapter.title}
                       </h3>
 
                       {chapter.description && (
-                        <p className="text-xs text-[var(--text-muted)] line-clamp-1">
+                        <p className="line-clamp-1 text-xs text-[var(--text-muted)]">
                           {chapter.description}
                         </p>
                       )}
 
                       {/* Progress Bar for In-Progress chapter */}
                       {isInProgress && (
-                        <div className="pt-2 max-w-md">
+                        <div className="max-w-md pt-2">
                           <ProgressBar value={chapter.progressPercent || 0} label={`${chapter.progressPercent || 0}% Completed`} />
                         </div>
                       )}
                     </div>
 
                     {/* Action Button & Toggle Dropdown */}
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex shrink-0 items-center gap-3">
                       {isLocked ? (
-                        <button disabled className="px-4 py-2 bg-slate-100 text-slate-400 font-semibold text-xs rounded-xl cursor-not-allowed flex items-center gap-1.5">
-                          <Lock className="w-3.5 h-3.5" />
+                        <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-400">
+                          <Lock className="size-3.5" />
                           <span>Locked</span>
                         </button>
                       ) : isCompleted ? (
@@ -435,9 +446,9 @@ export default function CourseDetailsPage() {
                               handleOpenTopic(chapter, chapter.topics[0]);
                             }
                           }}
-                          className="px-4 py-2 bg-[var(--surface-sunken)] hover:bg-[var(--line)] text-[var(--ink-900)] font-semibold text-xs rounded-xl border border-[var(--line)] transition-colors flex items-center gap-1.5"
+                          className="flex items-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
                         >
-                          <Play className="w-3.5 h-3.5 text-[var(--brand-gold-600)]" />
+                          <Play className="size-3.5 text-[var(--brand-gold-600)]" />
                           <span>Retake Chapter</span>
                         </button>
                       ) : (
@@ -448,25 +459,25 @@ export default function CourseDetailsPage() {
                               handleOpenTopic(chapter, firstUnlocked);
                             }
                           }}
-                          className="px-4 py-2 bg-[var(--brand-gold)] text-slate-950 font-bold text-xs rounded-xl hover:brightness-105 transition-all flex items-center gap-1.5 shadow-xs"
+                          className="flex items-center gap-1.5 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
                         >
-                          <Play className="w-3.5 h-3.5 fill-black" />
+                          <Play className="size-3.5 fill-black" />
                           <span>Continue Chapter</span>
                         </button>
                       )}
 
                       <button
                         onClick={() => toggleChapterDropdown(chapter._id)}
-                        className="p-2 text-[var(--text-muted)] hover:text-[var(--ink-900)] rounded-xl hover:bg-[var(--surface-sunken)] transition-colors"
+                        className="rounded-xl p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]"
                       >
-                        {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                        {isOpen ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
                       </button>
                     </div>
                   </div>
 
                   {/* Topics List Collapsed Dropdown */}
                   {isOpen && chapter.topics && chapter.topics.length > 0 && (
-                    <div className="border-t border-[var(--line)] bg-[var(--surface-sunken)]/40 p-4 space-y-2">
+                    <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-sunken)]/40 p-4">
                       {chapter.topics.map((topic, tIdx) => {
                         const tUnlocked = !!topic.isUnlocked;
                         const tCompleted = !!topic.isCompleted;
@@ -475,15 +486,15 @@ export default function CourseDetailsPage() {
                           <div
                             key={topic._id}
                             onClick={() => tUnlocked && handleOpenTopic(chapter, topic)}
-                            className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${
+                            className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
                               !tUnlocked
-                                ? 'bg-[var(--surface-card)]/50 border-[var(--line)] opacity-60 cursor-not-allowed'
-                                : 'bg-[var(--surface-card)] border-[var(--line)] hover:border-[var(--brand-gold-400)] cursor-pointer shadow-xs'
+                                ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/50 opacity-60'
+                                : 'cursor-pointer border-[var(--line)] bg-[var(--surface-card)] shadow-xs hover:border-[var(--brand-gold-400)]'
                             }`}
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex min-w-0 items-center gap-3">
                               <span
-                                className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center shrink-0 ${
+                                className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                                   tCompleted
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : tUnlocked
@@ -495,28 +506,28 @@ export default function CourseDetailsPage() {
                               </span>
 
                               <div className="min-w-0">
-                                <h4 className="text-sm font-semibold text-[var(--ink-900)] truncate">
+                                <h4 className="truncate text-sm font-semibold text-[var(--ink-900)]">
                                   {topic.title}
                                 </h4>
                                 {topic.description && (
-                                  <p className="text-xs text-[var(--text-muted)] truncate">
+                                  <p className="truncate text-xs text-[var(--text-muted)]">
                                     {topic.description}
                                   </p>
                                 )}
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex shrink-0 items-center gap-3">
                               {/* XP Badge */}
-                              <span className="text-xs font-bold text-amber-600 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                                <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                              <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
+                                <Zap className="size-3.5 fill-amber-500 text-amber-500" />
                                 +{topic.xp || 50} XP
                               </span>
 
                               {!tUnlocked ? (
-                                <Lock className="w-4 h-4 text-slate-400" />
+                                <Lock className="size-4 text-slate-400" />
                               ) : tCompleted ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                <CheckCircle2 className="size-4 text-emerald-500" />
                               ) : (
                                 <span className="text-xs font-bold text-[var(--brand-gold-600)]">Start →</span>
                               )}
@@ -535,11 +546,11 @@ export default function CourseDetailsPage() {
 
       {/* Topic Reader Modal */}
       {readingModalOpen && activeTopic && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-[var(--line)] flex items-center justify-between bg-[var(--surface-sunken)]/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunken)]/50 p-6">
               <div>
-                <span className="text-xs font-bold text-[var(--brand-gold-600)] uppercase tracking-wider">
+                <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
                   Lesson Content
                 </span>
                 <h3 className="text-lg font-bold text-[var(--ink-900)]">{activeTopic.title}</h3>
@@ -549,20 +560,20 @@ export default function CourseDetailsPage() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 space-y-6 overflow-y-auto p-6">
               {activeTopic.contents && activeTopic.contents.length > 0 ? (
                 activeTopic.contents.map((content, cIdx) => (
-                  <div key={cIdx} className="space-y-2 p-4 bg-[var(--surface-sunken)]/30 border border-[var(--line)] rounded-2xl">
-                    {content.title && <h4 className="font-bold text-sm text-[var(--ink-900)]">{content.title}</h4>}
-                    {content.type === 'text' && <p className="text-sm text-[var(--ink-800)] leading-relaxed whitespace-pre-line">{content.content}</p>}
+                  <div key={cIdx} className="space-y-2 rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]/30 p-4">
+                    {content.title && <h4 className="text-sm font-bold text-[var(--ink-900)]">{content.title}</h4>}
+                    {content.type === 'text' && <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">{content.content}</p>}
                     {content.type === 'code' && (
-                      <pre className="p-4 bg-slate-900 text-slate-100 rounded-xl text-xs font-mono overflow-x-auto">
+                      <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-slate-100">
                         <code>{content.content}</code>
                       </pre>
                     )}
                     {content.type === 'youtube' && (
-                      <div className="aspect-video w-full rounded-xl overflow-hidden border border-[var(--line)]">
-                        <iframe className="w-full h-full" src={content.content} title="Video lesson" allowFullScreen />
+                      <div className="aspect-video w-full overflow-hidden rounded-xl border border-[var(--line)]">
+                        <iframe className="size-full" src={content.content} title="Video lesson" allowFullScreen />
                       </div>
                     )}
                   </div>
@@ -572,25 +583,25 @@ export default function CourseDetailsPage() {
               )}
             </div>
 
-            <div className="p-4 border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 flex items-center justify-between">
-              <span className="text-xs text-[var(--text-muted)] font-semibold">
+            <div className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 p-4">
+              <span className="text-xs font-semibold text-[var(--text-muted)]">
                 Earn +{activeTopic.xp || 50} XP on completion
               </span>
 
               {activeTopic.exercise ? (
                 <button
                   onClick={handleLaunchTopicExercise}
-                  className="px-6 py-2.5 bg-[var(--brand-gold)] text-slate-950 font-bold text-xs rounded-xl hover:brightness-105 transition-all flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-6 py-2.5 text-xs font-bold text-slate-950 transition-all hover:brightness-105"
                 >
                   <span>Take Exercise</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="size-4" />
                 </button>
               ) : (
                 <button
                   onClick={handleCompleteTopicNoExercise}
-                  className="px-6 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700"
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="size-4" />
                   <span>Complete Topic</span>
                 </button>
               )}

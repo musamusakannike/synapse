@@ -39,8 +39,9 @@ export default function MediaUploader({ kind, value, onChange }: MediaUploaderPr
         const res = await mediaApi.upload(formData);
         onChange(res.data.data.url);
         toast.success('Upload complete');
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Upload failed');
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string } } };
+        toast.error(err.response?.data?.message || 'Upload failed');
       } finally {
         setProgress(null);
       }
@@ -51,21 +52,21 @@ export default function MediaUploader({ kind, value, onChange }: MediaUploaderPr
   return (
     <div className="space-y-3">
       {value ? (
-        <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-sunken)] overflow-hidden">
+        <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-sunken)]">
           <div className="relative">
             {kind === 'image' ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={value} alt="Uploaded preview" className="w-full max-h-72 object-contain bg-[var(--surface-sunken)]" />
+              <img src={value} alt="Uploaded preview" className="max-h-72 w-full bg-[var(--surface-sunken)] object-contain" />
             ) : (
-              <video src={value} controls className="w-full max-h-72 bg-black" />
+              <video src={value} controls className="max-h-72 w-full bg-black" />
             )}
-            <button type="button" onClick={() => onChange('')} className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 border border-[var(--line)] text-[var(--ink-500)] hover:text-[var(--danger)]">
-              <X className="w-4 h-4" />
+            <button type="button" onClick={() => onChange('')} className="absolute top-2 right-2 rounded-full border border-[var(--line)] bg-white/90 p-1.5 text-[var(--ink-500)] hover:text-[var(--danger)]">
+              <X className="size-4" />
             </button>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-[var(--line)]">
-            <LinkIcon className="w-3.5 h-3.5 text-[var(--ink-300)] shrink-0" />
-            <span className="flex-1 min-w-0 truncate text-xs text-[var(--text-muted)]">{value}</span>
+          <div className="flex items-center gap-2 border-t border-[var(--line)] px-3 py-2">
+            <LinkIcon className="size-3.5 shrink-0 text-[var(--ink-300)]" />
+            <span className="min-w-0 flex-1 truncate text-xs text-[var(--text-muted)]">{value}</span>
           </div>
         </div>
       ) : (
@@ -76,18 +77,18 @@ export default function MediaUploader({ kind, value, onChange }: MediaUploaderPr
           onClick={() => !isUploading && inputRef.current?.click()}
           role="button"
           tabIndex={0}
-          className={`flex flex-col items-center justify-center gap-2 px-6 py-8 rounded-[var(--radius-md)] border border-dashed cursor-pointer transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-[var(--radius-md)] border border-dashed px-6 py-8 transition-colors ${
             isDragging ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]/40' : 'border-[var(--line)] bg-[var(--surface-page)] hover:border-[var(--brand-gold)]'
           }`}
         >
           {isUploading ? (
             <>
-              <Loader2 className="w-6 h-6 text-[var(--brand-gold-600)] animate-spin" />
+              <Loader2 className="size-6 animate-spin text-[var(--brand-gold-600)]" />
               <span className="text-sm text-[var(--text-muted)]">Uploading… {progress}%</span>
             </>
           ) : (
             <>
-              <UploadCloud className="w-6 h-6 text-[var(--brand-gold-600)]" />
+              <UploadCloud className="size-6 text-[var(--brand-gold-600)]" />
               <span className="text-sm text-[var(--ink-900)]">Drag & drop {kind === 'image' ? 'an image' : 'a video'} here</span>
               <span className="text-xs text-[var(--ink-300)]">or click to pick · max {Math.round(MAX_BYTES[kind] / (1024 * 1024))}MB</span>
             </>
@@ -102,7 +103,7 @@ export default function MediaUploader({ kind, value, onChange }: MediaUploaderPr
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={`Or paste ${kind} URL`}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none"
+        className="w-full rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
       />
     </div>
   );

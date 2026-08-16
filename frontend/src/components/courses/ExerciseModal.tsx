@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, CheckCircle2, XCircle, Play, Zap, Award, ArrowRight, RotateCcw, Code } from 'lucide-react';
+import { X, XCircle, Play, Zap, Award, ArrowRight, RotateCcw } from 'lucide-react';
 import { Exercise, Question } from '@/lib/types';
 import { progressApi } from '@/lib/api';
 
@@ -50,8 +50,8 @@ export default function ExerciseModal({
       if (q.language === 'javascript' || !q.language) {
         const logs: string[] = [];
         const customConsole = {
-          log: (...args: any[]) => logs.push(args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')),
-          error: (...args: any[]) => logs.push('ERROR: ' + args.join(' ')),
+          log: (...args: unknown[]) => logs.push(args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')),
+          error: (...args: unknown[]) => logs.push('ERROR: ' + args.join(' ')),
         };
         const runFn = new Function('console', code);
         runFn(customConsole);
@@ -62,8 +62,9 @@ export default function ExerciseModal({
       }
 
       setCodeOutputs((prev) => ({ ...prev, [index]: output }));
-    } catch (err: any) {
-      setCodeOutputs((prev) => ({ ...prev, [index]: `Error: ${err.message}` }));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setCodeOutputs((prev) => ({ ...prev, [index]: `Error: ${message}` }));
     }
   };
 
@@ -124,12 +125,12 @@ export default function ExerciseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div className="bg-[var(--surface-card)] border border-[var(--line)] rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] shadow-2xl">
         {/* Modal Header */}
-        <div className="p-6 border-b border-[var(--line)] flex items-center justify-between bg-[var(--surface-sunken)]/50">
+        <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunken)]/50 p-6">
           <div>
-            <h2 className="text-xl font-bold text-[var(--ink-900)] font-[var(--font-display)]">
+            <h2 className="text-xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
               {exercise.title || 'Topic Exercise'}
             </h2>
             <p className="text-xs text-[var(--text-muted)]">
@@ -138,27 +139,27 @@ export default function ExerciseModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--ink-900)] hover:bg-[var(--surface-sunken)] transition-colors"
+            className="rounded-xl p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]"
           >
-            <X className="w-5 h-5" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+        <div className="flex-1 space-y-8 overflow-y-auto p-6">
           {submitted ? (
             /* Results Screen */
-            <div className="text-center py-8 space-y-6">
+            <div className="space-y-6 py-8 text-center">
               <div
-                className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-lg ${
+                className={`mx-auto flex size-20 items-center justify-center rounded-full shadow-lg ${
                   isPassed ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
                 }`}
               >
-                {isPassed ? <Award className="w-10 h-10" /> : <XCircle className="w-10 h-10" />}
+                {isPassed ? <Award className="size-10" /> : <XCircle className="size-10" />}
               </div>
 
               <div>
-                <h3 className="text-2xl font-extrabold text-[var(--ink-900)] font-[var(--font-display)] mb-1">
+                <h3 className="mb-1 text-2xl font-[var(--font-display)] font-extrabold text-[var(--ink-900)]">
                   {isPassed ? 'Exercise Passed!' : 'Needs Improvement'}
                 </h3>
                 <p className="text-sm text-[var(--text-muted)]">
@@ -168,9 +169,9 @@ export default function ExerciseModal({
                 </p>
               </div>
 
-              <div className="inline-flex items-center gap-6 px-6 py-4 bg-[var(--surface-sunken)] border border-[var(--line)] rounded-2xl">
+              <div className="inline-flex items-center gap-6 rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] px-6 py-4">
                 <div>
-                  <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                  <p className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
                     Score
                   </p>
                   <p className="text-2xl font-extrabold text-[var(--ink-900)]">{resultScore}%</p>
@@ -179,11 +180,11 @@ export default function ExerciseModal({
                 <div className="h-8 w-px bg-[var(--line)]" />
 
                 <div>
-                  <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                  <p className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
                     XP Earned
                   </p>
-                  <p className="text-2xl font-extrabold text-amber-600 flex items-center gap-1">
-                    <Zap className="w-5 h-5 fill-amber-500 text-amber-500" />
+                  <p className="flex items-center gap-1 text-2xl font-extrabold text-amber-600">
+                    <Zap className="size-5 fill-amber-500 text-amber-500" />
                     <span>+{earnedXp} XP</span>
                   </p>
                 </div>
@@ -193,19 +194,19 @@ export default function ExerciseModal({
                 {!isPassed && (
                   <button
                     onClick={handleReset}
-                    className="px-6 py-2.5 bg-[var(--surface-sunken)] text-[var(--ink-900)] font-semibold text-sm rounded-xl border border-[var(--line)] hover:bg-[var(--line)] transition-colors flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-6 py-2.5 text-sm font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    <RotateCcw className="size-4" />
                     <span>Retake Exercise</span>
                   </button>
                 )}
 
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 bg-[var(--brand-gold)] text-slate-950 font-bold text-sm rounded-xl hover:brightness-105 transition-all flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-6 py-2.5 text-sm font-bold text-slate-950 transition-all hover:brightness-105"
                 >
                   <span>Continue</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="size-4" />
                 </button>
               </div>
             </div>
@@ -214,19 +215,19 @@ export default function ExerciseModal({
             questions.map((q, idx) => (
               <div
                 key={q._id || idx}
-                className="p-5 bg-[var(--surface-card)] border border-[var(--line)] rounded-2xl space-y-4 shadow-xs"
+                className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-5 shadow-xs"
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-3 py-1 bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-xs font-bold rounded-full">
+                  <span className="rounded-full bg-[var(--brand-gold-100)] px-3 py-1 text-xs font-bold text-[var(--brand-gold-600)]">
                     Question {idx + 1}
                   </span>
-                  <span className="text-xs font-bold text-amber-600 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                    <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
+                    <Zap className="size-3.5 fill-amber-500 text-amber-500" />
                     +{q.xp || 20} XP
                   </span>
                 </div>
 
-                <p className="font-semibold text-[var(--ink-900)] text-base">{q.question}</p>
+                <p className="text-base font-semibold text-[var(--ink-900)]">{q.question}</p>
 
                 {/* Question Inputs */}
                 {q.type === 'mcq' && q.options && (
@@ -234,7 +235,7 @@ export default function ExerciseModal({
                     {q.options.map((opt, oIdx) => (
                       <label
                         key={oIdx}
-                        className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                        className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all ${
                           userAnswers[idx] === opt
                             ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]/30 font-semibold'
                             : 'border-[var(--line)] hover:bg-[var(--surface-sunken)]'
@@ -261,7 +262,7 @@ export default function ExerciseModal({
                       placeholder="Type your answer here..."
                       value={userAnswers[idx] || ''}
                       onChange={(e) => handleInputChange(idx, e.target.value)}
-                      className="w-full px-4 py-3 bg-[var(--surface-sunken)] border border-[var(--line)] rounded-xl text-sm font-medium text-[var(--ink-900)] focus:outline-none focus:border-[var(--brand-gold)]"
+                      className="w-full rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-3 text-sm font-medium text-[var(--ink-900)] focus:border-[var(--brand-gold)] focus:outline-none"
                     />
                   </div>
                 )}
@@ -274,7 +275,7 @@ export default function ExerciseModal({
                         placeholder={q.starterCode || '// Write your code here...'}
                         value={userAnswers[idx] !== undefined ? userAnswers[idx] : q.starterCode || ''}
                         onChange={(e) => handleInputChange(idx, e.target.value)}
-                        className="w-full p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full rounded-xl bg-slate-900 p-4 font-mono text-xs text-slate-100 focus:ring-2 focus:ring-amber-500 focus:outline-none"
                       />
                     </div>
 
@@ -282,16 +283,16 @@ export default function ExerciseModal({
                       <button
                         type="button"
                         onClick={() => handleRunCode(idx, q)}
-                        className="px-4 py-2 bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-700"
                       >
-                        <Play className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        <Play className="size-3.5 fill-amber-400 text-amber-400" />
                         <span>Run Code</span>
                       </button>
                     </div>
 
                     {codeOutputs[idx] !== undefined && (
-                      <div className="p-3.5 bg-slate-950 text-emerald-400 font-mono text-xs rounded-xl border border-slate-800">
-                        <p className="text-[10px] uppercase font-bold text-slate-500 mb-1">
+                      <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5 font-mono text-xs text-emerald-400">
+                        <p className="mb-1 text-[10px] font-bold text-slate-500 uppercase">
                           Output:
                         </p>
                         <pre className="whitespace-pre-wrap">{codeOutputs[idx] || 'No output'}</pre>
@@ -306,17 +307,17 @@ export default function ExerciseModal({
 
         {/* Modal Footer */}
         {!submitted && (
-          <div className="p-4 border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 flex justify-end gap-3">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 p-4">
             <button
               onClick={onClose}
-              className="px-5 py-2.5 text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--ink-900)] transition-colors"
+              className="px-5 py-2.5 text-xs font-semibold text-[var(--text-muted)] transition-colors hover:text-[var(--ink-900)]"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="px-6 py-2.5 bg-[var(--brand-gold)] text-slate-950 font-bold text-xs rounded-xl hover:brightness-105 transition-all shadow-xs disabled:opacity-50"
+              className="rounded-xl bg-[var(--brand-gold)] px-6 py-2.5 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105 disabled:opacity-50"
             >
               {submitting ? 'Submitting...' : 'Submit Exercise'}
             </button>

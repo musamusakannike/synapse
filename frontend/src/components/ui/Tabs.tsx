@@ -21,14 +21,14 @@ export default function Tabs({ tabs, active, onChange }: TabsProps) {
     onChange?.(v);
   };
   return (
-    <div className="flex gap-1 bg-[var(--surface-sunken)] p-1 rounded-[var(--radius-lg)] font-[var(--font-body)] w-fit overflow-x-auto max-w-full">
+    <div className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-[var(--radius-lg)] bg-[var(--surface-sunken)] p-1 font-[var(--font-body)]">
       {tabs.map((t) => {
         const isActive = t.value === current;
         return (
           <button
             key={t.value}
             onClick={() => set(t.value)}
-            className={`px-4.5 py-2 rounded-[var(--radius-md)] text-sm font-semibold cursor-pointer transition-all duration-[var(--duration-fast)] whitespace-nowrap ${
+            className={`cursor-pointer rounded-[var(--radius-md)] px-4.5 py-2 text-sm font-semibold whitespace-nowrap transition-all duration-[var(--duration-fast)] ${
               isActive ? 'bg-[var(--surface-card)] text-[var(--ink-900)] shadow-[var(--shadow-xs)]' : 'bg-transparent text-[var(--ink-500)]'
             }`}
           >

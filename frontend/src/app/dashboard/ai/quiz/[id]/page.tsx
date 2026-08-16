@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import {
   ArrowLeft,
   Brain,
   CheckCircle2,
   XCircle,
   RotateCcw,
-  Sparkles,
-  HelpCircle,
   Award,
   ChevronRight,
   ChevronLeft,
@@ -23,7 +21,6 @@ import Button from '@/components/ui/Button';
 
 export default function AIQuizAttemptPage() {
   const params = useParams();
-  const router = useRouter();
   const historyId = params.id as string;
 
   const [quizItem, setQuizItem] = useState<AiHistoryItem | null>(null);
@@ -36,48 +33,52 @@ export default function AIQuizAttemptPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const fetchQuiz = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await aiApi.getHistoryById(historyId);
-
-      if (res.data?.success && res.data?.data) {
-        const item = res.data.data;
-        setQuizItem(item);
-
-        let parsedQuestions: AiQuizQuestion[] = [];
-        if (Array.isArray(item.result)) {
-          parsedQuestions = item.result;
-        } else if (typeof item.result === 'string') {
-          try {
-            const clean = item.result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-            parsedQuestions = JSON.parse(clean);
-          } catch {
-            parsedQuestions = [];
-          }
-        }
-
-        if (parsedQuestions.length > 0) {
-          setQuestions(parsedQuestions);
-        } else {
-          setError('No valid questions found for this quiz.');
-        }
-      } else {
-        setError('Quiz not found.');
-      }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load quiz details.');
-    } finally {
-      setLoading(false);
-    }
-  }, [historyId]);
-
   useEffect(() => {
-    if (historyId) {
-      fetchQuiz();
-    }
-  }, [historyId, fetchQuiz]);
+    let active = true;
+    if (!historyId) return;
+
+    (async () => {
+      try {
+        const res = await aiApi.getHistoryById(historyId);
+        if (!active) return;
+
+        if (res.data?.success && res.data?.data) {
+          const item = res.data.data;
+          setQuizItem(item);
+
+          let parsedQuestions: AiQuizQuestion[] = [];
+          if (Array.isArray(item.result)) {
+            parsedQuestions = item.result;
+          } else if (typeof item.result === 'string') {
+            try {
+              const clean = item.result.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+              parsedQuestions = JSON.parse(clean);
+            } catch {
+              parsedQuestions = [];
+            }
+          }
+
+          if (parsedQuestions.length > 0) {
+            setQuestions(parsedQuestions);
+          } else {
+            setError('No valid questions found for this quiz.');
+          }
+        } else {
+          setError('Quiz not found.');
+        }
+      } catch (err: unknown) {
+        if (!active) return;
+        const errorObj = err as { response?: { data?: { message?: string } } };
+        setError(errorObj?.response?.data?.message || 'Failed to load quiz details.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [historyId]);
 
   const handleSelectOption = (questionIdx: number, optionIdx: number) => {
     if (isSubmitted) return;
@@ -127,26 +128,26 @@ export default function AIQuizAttemptPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--brand-violet)] mx-auto" />
-        <p className="text-sm text-[var(--ink-500)] font-medium">Loading AI Quiz...</p>
+      <div className="mx-auto max-w-4xl space-y-4 py-16 text-center">
+        <Loader2 className="mx-auto size-8 animate-spin text-[var(--brand-violet)]" />
+        <p className="text-sm font-medium text-[var(--ink-500)]">Loading AI Quiz...</p>
       </div>
     );
   }
 
   if (error || !quizItem || questions.length === 0) {
     return (
-      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <div className="w-12 h-12 rounded-full bg-[var(--danger-100)] text-[var(--danger)] flex items-center justify-center mx-auto">
-          <AlertCircle className="w-6 h-6" />
+      <div className="mx-auto max-w-xl space-y-4 py-16 text-center">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[var(--danger-100)] text-[var(--danger)]">
+          <AlertCircle className="size-6" />
         </div>
         <h2 className="text-xl font-bold text-[var(--ink-900)]">Quiz Error</h2>
         <p className="text-sm text-[var(--ink-500)]">{error || 'Could not load questions.'}</p>
         <Link
           href="/dashboard/ai/quiz"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] bg-[var(--brand-violet)] text-white text-sm font-medium hover:bg-[var(--brand-violet-600)] transition-colors"
+          className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--brand-violet)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--brand-violet-600)]"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="size-4" />
           Back to AI Quiz Hub
         </Link>
       </div>
@@ -159,36 +160,36 @@ export default function AIQuizAttemptPage() {
   const isAllAnswered = answeredCount === questions.length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       {/* Navigation Header */}
       <div className="flex items-center justify-between">
         <Link
           href="/dashboard/ai/quiz"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink-500)] hover:text-[var(--brand-violet)] transition-colors"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--ink-500)] transition-colors hover:text-[var(--brand-violet)]"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="size-4" />
           Back to Quiz Hub
         </Link>
 
-        <span className="px-3 py-1 rounded-full bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)] text-xs font-semibold uppercase tracking-wider">
+        <span className="rounded-full bg-[var(--brand-violet-100)] px-3 py-1 text-xs font-semibold tracking-wider text-[var(--brand-violet-600)] uppercase">
           Topic: {quizItem.prompt || 'Custom Topic'}
         </span>
       </div>
 
       {/* Quiz Overview Header */}
-      <div className="rounded-[var(--radius-xl)] bg-[var(--surface-card)] border border-[var(--line)] p-6 shadow-[var(--shadow-xs)] flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[var(--shadow-xs)]">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--ink-900)] font-[var(--font-display)]">
+          <h1 className="text-2xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
             {quizItem.title}
           </h1>
-          <p className="text-xs text-[var(--ink-500)] mt-1">
+          <p className="mt-1 text-xs text-[var(--ink-500)]">
             {questions.length} Multiple Choice Questions
           </p>
         </div>
 
         {isSubmitted && (
-          <div className="flex items-center gap-3 bg-[var(--surface-sunken)] px-4 py-2 rounded-[var(--radius-lg)] border border-[var(--line)]">
-            <Award className="w-6 h-6 text-[var(--brand-gold)]" />
+          <div className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2">
+            <Award className="size-6 text-[var(--brand-gold)]" />
             <div>
               <div className="text-xs font-semibold text-[var(--ink-500)] uppercase">Score</div>
               <div className="text-lg font-bold text-[var(--ink-900)]">
@@ -203,12 +204,12 @@ export default function AIQuizAttemptPage() {
       {!isSubmitted ? (
         <div className="space-y-6">
           {/* Stepper Progress Bar */}
-          <div className="rounded-[var(--radius-lg)] bg-[var(--surface-card)] border border-[var(--line)] p-4 space-y-2">
+          <div className="space-y-2 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface-card)] p-4">
             <div className="flex items-center justify-between text-xs font-semibold text-[var(--ink-500)]">
               <span>Question {currentIndex + 1} of {questions.length}</span>
               <span>{answeredCount} of {questions.length} Answered</span>
             </div>
-            <div className="w-full h-2 rounded-full bg-[var(--surface-sunken)] overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface-sunken)]">
               <div
                 className="h-full bg-[var(--brand-violet)] transition-all duration-300"
                 style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
@@ -217,12 +218,12 @@ export default function AIQuizAttemptPage() {
           </div>
 
           {/* Question Card */}
-          <div className="rounded-[var(--radius-xl)] bg-[var(--surface-card)] border border-[var(--line)] p-6 sm:p-8 shadow-[var(--shadow-xs)] space-y-6">
+          <div className="space-y-6 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-[var(--shadow-xs)] sm:p-8">
             <div className="space-y-2">
-              <span className="text-xs font-semibold text-[var(--brand-violet)] uppercase tracking-wider">
+              <span className="text-xs font-semibold tracking-wider text-[var(--brand-violet)] uppercase">
                 Question {currentIndex + 1}
               </span>
-              <h2 className="text-lg sm:text-xl font-bold text-[var(--ink-900)] leading-snug">
+              <h2 className="text-lg leading-snug font-bold text-[var(--ink-900)] sm:text-xl">
                 {currentQuestion.question}
               </h2>
             </div>
@@ -237,14 +238,14 @@ export default function AIQuizAttemptPage() {
                   <button
                     key={oIdx}
                     onClick={() => handleSelectOption(currentIndex, oIdx)}
-                    className={`w-full text-left p-4 rounded-[var(--radius-lg)] border transition-all flex items-center gap-4 ${
+                    className={`flex w-full items-center gap-4 rounded-[var(--radius-lg)] border p-4 text-left transition-all ${
                       isSelected
-                        ? 'bg-[var(--brand-violet-100)] border-[var(--brand-violet)] text-[var(--brand-violet-600)] shadow-xs'
-                        : 'bg-[var(--surface-card)] border-[var(--line)] text-[var(--ink-900)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-sunken)]'
+                        ? 'border-[var(--brand-violet)] bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)] shadow-xs'
+                        : 'border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-900)] hover:border-[var(--line-strong)] hover:bg-[var(--surface-sunken)]'
                     }`}
                   >
                     <span
-                      className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                      className={`flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
                         isSelected
                           ? 'bg-[var(--brand-violet)] text-white'
                           : 'bg-[var(--surface-sunken)] text-[var(--ink-700)]'
@@ -252,7 +253,7 @@ export default function AIQuizAttemptPage() {
                     >
                       {optionLabel}
                     </span>
-                    <span className="text-sm font-medium leading-normal">{opt.text}</span>
+                    <span className="text-sm leading-normal font-medium">{opt.text}</span>
                   </button>
                 );
               })}
@@ -264,13 +265,13 @@ export default function AIQuizAttemptPage() {
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className={`inline-flex items-center gap-1 px-4 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-1 rounded-[var(--radius-md)] px-4 py-2.5 text-sm font-medium transition-colors ${
                 currentIndex === 0
-                  ? 'opacity-40 cursor-not-allowed text-[var(--ink-300)]'
-                  : 'text-[var(--ink-700)] bg-[var(--surface-card)] border border-[var(--line)] hover:bg-[var(--surface-sunken)]'
+                  ? 'cursor-not-allowed text-[var(--ink-300)] opacity-40'
+                  : 'border border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)] hover:bg-[var(--surface-sunken)]'
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
               Previous
             </button>
 
@@ -278,7 +279,7 @@ export default function AIQuizAttemptPage() {
               {currentIndex < questions.length - 1 ? (
                 <Button variant="ai" onClick={handleNext}>
                   Next Question
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  <ChevronRight className="ml-1 size-4" />
                 </Button>
               ) : (
                 <Button
@@ -287,7 +288,7 @@ export default function AIQuizAttemptPage() {
                   disabled={!isAllAnswered}
                   title={!isAllAnswered ? 'Please answer all questions before submitting' : undefined}
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                  <CheckCircle2 className="mr-1.5 size-4" />
                   Submit Quiz
                 </Button>
               )}
@@ -298,12 +299,12 @@ export default function AIQuizAttemptPage() {
         /* Review Mode: Detailed Results & Explanations */
         <div className="space-y-8">
           {/* Summary Banner */}
-          <div className="rounded-[var(--radius-xl)] bg-[var(--surface-card)] border border-[var(--line)] p-6 sm:p-8 text-center space-y-4 shadow-[var(--shadow-sm)]">
-            <div className="w-16 h-16 rounded-full bg-[var(--brand-violet-100)] text-[var(--brand-violet)] flex items-center justify-center mx-auto">
-              <Award className="w-8 h-8 text-[var(--brand-gold)]" />
+          <div className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6 text-center shadow-[var(--shadow-sm)] sm:p-8">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[var(--brand-violet-100)] text-[var(--brand-violet)]">
+              <Award className="size-8 text-[var(--brand-gold)]" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-[var(--ink-900)] font-[var(--font-display)]">
+              <h2 className="text-2xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
                 Quiz Completed!
               </h2>
               <p className="text-sm text-[var(--ink-500)]">
@@ -315,16 +316,16 @@ export default function AIQuizAttemptPage() {
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <button
                 onClick={handleRetake}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[var(--radius-md)] bg-[var(--surface-sunken)] text-[var(--ink-900)] text-sm font-semibold hover:bg-[var(--line)] transition-colors"
+                className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-sunken)] px-4 py-2.5 text-sm font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="size-4" />
                 Retake Quiz
               </button>
               <Link
                 href="/dashboard/ai/quiz"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-md)] bg-[var(--brand-violet)] text-white text-sm font-semibold hover:bg-[var(--brand-violet-600)] transition-colors"
+                className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--brand-violet)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--brand-violet-600)]"
               >
-                <Brain className="w-4 h-4" />
+                <Brain className="size-4" />
                 Return to Quiz Hub
               </Link>
             </div>
@@ -342,7 +343,7 @@ export default function AIQuizAttemptPage() {
               return (
                 <div
                   key={qIdx}
-                  className={`rounded-[var(--radius-xl)] bg-[var(--surface-card)] border p-6 space-y-4 shadow-[var(--shadow-xs)] ${
+                  className={`space-y-4 rounded-[var(--radius-xl)] border bg-[var(--surface-card)] p-6 shadow-[var(--shadow-xs)] ${
                     isCorrect ? 'border-[var(--success)]/40' : 'border-[var(--danger)]/40'
                   }`}
                 >
@@ -353,12 +354,12 @@ export default function AIQuizAttemptPage() {
                           Question {qIdx + 1}
                         </span>
                         {isCorrect ? (
-                          <span className="px-2 py-0.5 rounded-full bg-[var(--success-100)] text-[var(--success)] text-xs font-bold flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Correct
+                          <span className="flex items-center gap-1 rounded-full bg-[var(--success-100)] px-2 py-0.5 text-xs font-bold text-[var(--success)]">
+                            <CheckCircle2 className="size-3" /> Correct
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full bg-[var(--danger-100)] text-[var(--danger)] text-xs font-bold flex items-center gap-1">
-                            <XCircle className="w-3 h-3" /> Incorrect
+                          <span className="flex items-center gap-1 rounded-full bg-[var(--danger-100)] px-2 py-0.5 text-xs font-bold text-[var(--danger)]">
+                            <XCircle className="size-3" /> Incorrect
                           </span>
                         )}
                       </div>
@@ -382,16 +383,16 @@ export default function AIQuizAttemptPage() {
                       return (
                         <div
                           key={oIdx}
-                          className={`p-3.5 rounded-[var(--radius-md)] border text-sm flex items-center justify-between ${styleClasses}`}
+                          className={`flex items-center justify-between rounded-[var(--radius-md)] border p-3.5 text-sm ${styleClasses}`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 rounded-full bg-white/60 flex items-center justify-center font-bold text-xs shrink-0">
+                            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-white/60 text-xs font-bold">
                               {String.fromCharCode(65 + oIdx)}
                             </span>
                             <span>{opt.text}</span>
                           </div>
-                          {isOptionCorrect && <CheckCircle2 className="w-4 h-4 text-[var(--success)] shrink-0" />}
-                          {isOptionSelected && !isOptionCorrect && <XCircle className="w-4 h-4 text-[var(--danger)] shrink-0" />}
+                          {isOptionCorrect && <CheckCircle2 className="size-4 shrink-0 text-[var(--success)]" />}
+                          {isOptionSelected && !isOptionCorrect && <XCircle className="size-4 shrink-0 text-[var(--danger)]" />}
                         </div>
                       );
                     })}
@@ -399,8 +400,8 @@ export default function AIQuizAttemptPage() {
 
                   {/* Explanation Box */}
                   {q.explanation && (
-                    <div className="p-4 rounded-[var(--radius-md)] bg-[var(--brand-violet-100)] border border-[var(--brand-violet)]/20 text-xs sm:text-sm text-[var(--ink-900)] space-y-1">
-                      <span className="font-bold text-[var(--brand-violet-600)] block">💡 Explanation</span>
+                    <div className="space-y-1 rounded-[var(--radius-md)] border border-[var(--brand-violet)]/20 bg-[var(--brand-violet-100)] p-4 text-xs text-[var(--ink-900)] sm:text-sm">
+                      <span className="block font-bold text-[var(--brand-violet-600)]">💡 Explanation</span>
                       <p className="leading-relaxed text-[var(--ink-700)]">{q.explanation}</p>
                     </div>
                   )}

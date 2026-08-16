@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, FileQuestion, MessageCircleQuestion, Brain, Play, CheckCircle2, ChevronRight, User as UserIcon } from 'lucide-react';
+import { ArrowRight, Sparkles, FileQuestion, MessageCircleQuestion, Brain, Play, CheckCircle2, ChevronRight } from 'lucide-react';
 import { progressApi } from '@/lib/api';
-import { Course, UserProgress, Chapter, Topic, ResumptionData } from '@/lib/types';
+import { Course, Chapter, Topic, ResumptionData } from '@/lib/types';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -50,10 +50,10 @@ export default function DashboardHome() {
   const { resumptionCards, totalUnfinished } = resumptionData;
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1 font-[var(--font-display)]">
+        <h1 className="mb-1 text-2xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
           Welcome back
         </h1>
         <p className="text-sm text-[var(--text-muted)]">
@@ -62,40 +62,40 @@ export default function DashboardHome() {
       </div>
 
       {/* AI Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-950 via-indigo-900 to-slate-900 text-white p-6 md:p-10 shadow-xl border border-violet-800/30">
+      <div className="relative overflow-hidden rounded-3xl border border-violet-800/30 bg-gradient-to-r from-violet-950 via-indigo-900 to-slate-900 p-6 text-white shadow-xl md:p-10">
         <div className="relative z-10 max-w-2xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/20 text-violet-300 text-xs font-semibold border border-violet-400/30 backdrop-blur-sm">
-            <Brain className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/30 bg-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-300 backdrop-blur-sm">
+            <Brain className="size-4" />
             <span>AI Skill Guidance</span>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-extrabold font-[var(--font-display)] leading-tight">
-            Don't know where to start?
+          <h2 className="text-2xl leading-tight font-[var(--font-display)] font-extrabold md:text-3xl">
+            Don&apos;t know where to start?
           </h2>
 
-          <p className="text-violet-100/90 text-sm md:text-base leading-relaxed">
+          <p className="text-sm leading-relaxed text-violet-100/90 md:text-base">
             Take our AI-powered skill assessment quiz to get personalized course recommendations tailored to your experience level and goals.
           </p>
 
           <div className="pt-2">
             <Link
               href="/dashboard/ai/quiz"
-              className="inline-flex items-center gap-2.5 px-6 py-3 bg-[var(--brand-gold)] text-slate-950 font-bold text-sm rounded-xl shadow-md hover:bg-amber-400 hover:scale-[1.02] transition-all"
+              className="inline-flex items-center gap-2.5 rounded-xl bg-[var(--brand-gold)] px-6 py-3 text-sm font-bold text-slate-950 shadow-md transition-all hover:scale-[1.02] hover:bg-amber-400"
             >
               <span>Start AI Quiz</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="size-4" />
             </Link>
           </div>
         </div>
 
         {/* Decorative background glow */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 -mb-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="pointer-events-none absolute top-0 right-0 -mt-16 -mr-16 size-80 rounded-full bg-violet-600/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-1/4 bottom-0 -mb-16 size-64 rounded-full bg-indigo-500/20 blur-2xl" />
       </div>
 
       {/* Course Resumption Section (Max 4 Unfinished Courses) */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-[var(--ink-900)]">Course Resumption</h2>
             <p className="text-xs text-[var(--text-muted)]">Continue reading from where you left off</p>
@@ -107,29 +107,29 @@ export default function DashboardHome() {
               className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-gold-600)] hover:underline"
             >
               <span>See More ({totalUnfinished})</span>
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </Link>
           )}
         </div>
 
         {resumptionCards.length === 0 ? (
-          <div className="p-8 text-center bg-[var(--surface-card)] rounded-2xl border border-[var(--line)] space-y-3">
-            <CheckCircle2 className="w-10 h-10 text-[var(--brand-gold-600)] mx-auto" />
-            <h3 className="font-bold text-[var(--ink-900)] text-base">No active course in progress</h3>
-            <p className="text-xs text-[var(--text-muted)] max-w-md mx-auto">
+          <div className="space-y-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
+            <CheckCircle2 className="mx-auto size-10 text-[var(--brand-gold-600)]" />
+            <h3 className="text-base font-bold text-[var(--ink-900)]">No active course in progress</h3>
+            <p className="mx-auto max-w-md text-xs text-[var(--text-muted)]">
               Start a new course today and your progress will automatically appear here for quick resumption.
             </p>
             <div className="pt-2">
               <Link
                 href="/dashboard/courses"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--brand-gold)] text-black font-semibold text-xs rounded-xl hover:brightness-105 transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-5 py-2.5 text-xs font-semibold text-black transition-all hover:brightness-105"
               >
                 Browse Courses
               </Link>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {resumptionCards.map((progress) => {
               const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
               const chapter = typeof progress.lastChapter === 'object' ? (progress.lastChapter as Chapter) : null;
@@ -140,15 +140,15 @@ export default function DashboardHome() {
               const authors = course?.authors || [];
 
               return (
-                <Card key={progress._id} className="p-5 flex flex-col justify-between border border-[var(--line)] hover:shadow-md transition-shadow">
+                <Card key={progress._id} className="flex flex-col justify-between border border-[var(--line)] p-5 transition-shadow hover:shadow-md">
                   <div className="space-y-3">
                     {/* Header: Course Title & Difficulty */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-[var(--brand-gold-600)] uppercase tracking-wider mb-1 truncate">
+                        <p className="mb-1 truncate text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
                           {course?.category || 'Course'}
                         </p>
-                        <h3 className="font-bold text-[var(--ink-900)] text-lg line-clamp-1">
+                        <h3 className="line-clamp-1 text-lg font-bold text-[var(--ink-900)]">
                           {course?.title || 'Course'}
                         </h3>
                       </div>
@@ -158,15 +158,16 @@ export default function DashboardHome() {
                     {/* Authors Display */}
                     {authors.length > 0 && (
                       <div className="flex items-center gap-2 pt-1">
-                        <div className="flex -space-x-2 overflow-hidden shrink-0">
+                        <div className="flex shrink-0 -space-x-2 overflow-hidden">
                           {authors.slice(0, isExpanded ? authors.length : 3).map((author, aIdx) => (
                             <div
                               key={aIdx}
-                              className="w-7 h-7 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] flex items-center justify-center font-bold text-xs border-2 border-white overflow-hidden shrink-0"
+                              className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[var(--brand-gold-100)] text-xs font-bold text-[var(--brand-gold-600)]"
                               title={author.name}
                             >
                               {author.avatar ? (
-                                <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={author.avatar} alt={author.name} className="size-full object-cover" />
                               ) : (
                                 author.name.charAt(0).toUpperCase()
                               )}
@@ -175,7 +176,7 @@ export default function DashboardHome() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-[var(--text-muted)] truncate">
+                          <p className="truncate text-xs text-[var(--text-muted)]">
                             {isExpanded ? (
                               authors.map((a) => a.name).join(', ')
                             ) : (
@@ -184,7 +185,7 @@ export default function DashboardHome() {
                                 {authors.length > 1 && (
                                   <button
                                     onClick={() => toggleExpandAuthors(courseId)}
-                                    className="ml-1 text-[var(--brand-gold-600)] font-semibold hover:underline"
+                                    className="ml-1 font-semibold text-[var(--brand-gold-600)] hover:underline"
                                   >
                                     +{authors.length - 1} more
                                   </button>
@@ -197,15 +198,15 @@ export default function DashboardHome() {
                     )}
 
                     {/* Progress Detail: Exact Chapter, Topic & Page */}
-                    <div className="p-3 bg-[var(--surface-sunken)] rounded-xl space-y-1.5 border border-[var(--line)]">
+                    <div className="space-y-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                       <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                        <span className="font-semibold text-[var(--ink-900)] truncate">
+                        <span className="truncate font-semibold text-[var(--ink-900)]">
                           {chapter ? `Chapter: ${chapter.title}` : 'Started Chapter'}
                         </span>
                         <span>Page {((progress.lastContentIndex || 0) + 1)}</span>
                       </div>
                       {topic && (
-                        <p className="text-xs font-medium text-[var(--ink-700)] truncate">
+                        <p className="truncate text-xs font-medium text-[var(--ink-700)]">
                           Topic: {topic.title}
                         </p>
                       )}
@@ -219,9 +220,9 @@ export default function DashboardHome() {
                   <div className="pt-4">
                     <Link
                       href={`/dashboard/courses/${courseId}`}
-                      className="inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[var(--brand-gold)] text-slate-950 font-bold text-xs rounded-xl hover:brightness-105 transition-all shadow-xs"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-gold)] px-4 py-2.5 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
                     >
-                      <Play className="w-3.5 h-3.5 fill-black" />
+                      <Play className="size-3.5 fill-black" />
                       <span>Continue Learning</span>
                     </Link>
                   </div>
@@ -234,24 +235,24 @@ export default function DashboardHome() {
 
       {/* AI Study Tools */}
       <div>
-        <h2 className="text-lg font-bold text-[var(--ink-900)] mb-4 font-[var(--font-display)]">
+        <h2 className="mb-4 text-lg font-[var(--font-display)] font-bold text-[var(--ink-900)]">
           AI Study Tools
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <AIToolCard
-            icon={<Sparkles className="w-5 h-5" />}
+            icon={<Sparkles className="size-5" />}
             title="Summarizer"
             description="Turn any lecture note into a clear, short summary."
             onClick={() => setActiveTool('summarizer')}
           />
           <AIToolCard
-            icon={<FileQuestion className="w-5 h-5" />}
+            icon={<FileQuestion className="size-5" />}
             title="Quiz Generator"
             description="Generate quick practice quizzes on any subject."
             onClick={() => setActiveTool('quiz')}
           />
           <AIToolCard
-            icon={<MessageCircleQuestion className="w-5 h-5" />}
+            icon={<MessageCircleQuestion className="size-5" />}
             title="Q&A AI"
             description="Ask any study question and get an instant clear answer."
             onClick={() => setActiveTool('qa')}

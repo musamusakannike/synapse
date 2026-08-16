@@ -56,19 +56,19 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1">Settings</h1>
+        <h1 className="mb-1 text-2xl font-bold text-[var(--ink-900)]">Settings</h1>
         <p className="text-sm text-[var(--text-muted)]">Manage your preferences and account</p>
       </div>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Notifications</h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--ink-900)]">Notifications</h2>
         <div className="space-y-4">
           {(['emailNotifications', 'pushNotifications', 'weeklyProgress'] as const).map((key) => (
             <div key={key} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-[var(--text-muted)]" />
+                <Bell className="size-5 text-[var(--text-muted)]" />
                 <div>
                   <p className="text-sm font-medium text-[var(--ink-900)]">{settingLabels[key]}</p>
                 </div>
@@ -80,10 +80,10 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Preferences</h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--ink-900)]">Preferences</h2>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-[var(--text-muted)]" />
+            <Globe className="size-5 text-[var(--text-muted)]" />
             <div>
               <p className="text-sm font-medium text-[var(--ink-900)]">Language</p>
               <p className="text-xs text-[var(--ink-300)]">Interface language</p>
@@ -107,9 +107,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[var(--line)]">
+        <div className="mt-4 flex items-center justify-between border-t border-[var(--line)] pt-4">
           <div className="flex items-center gap-3">
-            <Target className="w-5 h-5 text-[var(--text-muted)]" />
+            <Target className="size-5 text-[var(--text-muted)]" />
             <div>
               <p className="text-sm font-medium text-[var(--ink-900)]">Daily study goal</p>
               <p className="text-xs text-[var(--ink-300)]">Minutes per day used to track your daily progress</p>
@@ -138,11 +138,11 @@ export default function SettingsPage() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Account</h2>
+        <h2 className="mb-4 text-lg font-semibold text-[var(--ink-900)]">Account</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-[var(--text-muted)]" />
+              <Shield className="size-5 text-[var(--text-muted)]" />
               <div>
                 <p className="text-sm font-medium text-[var(--ink-900)]">Role</p>
                 <p className="text-xs text-[var(--ink-300)]">{user?.role}</p>
@@ -150,8 +150,8 @@ export default function SettingsPage() {
             </div>
             <Badge tone={user?.role === 'admin' ? 'success' : 'neutral'}>{user?.role}</Badge>
           </div>
-          <div className="pt-4 border-t border-[var(--line)]">
-            <Button variant="secondary" onClick={handleLogout}><LogOut className="w-4 h-4" /> Sign out</Button>
+          <div className="border-t border-[var(--line)] pt-4">
+            <Button variant="secondary" onClick={handleLogout}><LogOut className="size-4" /> Sign out</Button>
           </div>
         </div>
       </Card>

@@ -79,7 +79,7 @@ function QuizBlockEditor({ block, onQuizChange }: { block: TopicContent; onQuizC
         onChange={(e) => onQuizChange({ ...quiz, question: e.target.value })}
         placeholder="Question"
         rows={2}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
       <div className="space-y-2">
         {quiz.options.map((opt, i) => (
@@ -95,14 +95,14 @@ function QuizBlockEditor({ block, onQuizChange }: { block: TopicContent; onQuizC
               value={opt.text}
               onChange={(e) => updateOption(i, { text: e.target.value })}
               placeholder={`Option ${i + 1}`}
-              className="flex-1 px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors"
+              className="flex-1 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3 py-2 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
             />
-            <button onClick={() => removeOption(i)} disabled={quiz.options.length <= 2} className="text-[var(--ink-300)] hover:text-[var(--danger)] disabled:opacity-30 cursor-pointer" aria-label="Remove option">
-              <Trash2 className="w-4 h-4" />
+            <button onClick={() => removeOption(i)} disabled={quiz.options.length <= 2} className="cursor-pointer text-[var(--ink-300)] hover:text-[var(--danger)] disabled:opacity-30" aria-label="Remove option">
+              <Trash2 className="size-4" />
             </button>
           </div>
         ))}
-        <button onClick={addOption} disabled={quiz.options.length >= 6} className="text-sm text-[var(--brand-gold-600)] hover:opacity-80 disabled:opacity-30 cursor-pointer">
+        <button onClick={addOption} disabled={quiz.options.length >= 6} className="cursor-pointer text-sm text-[var(--brand-gold-600)] hover:opacity-80 disabled:opacity-30">
           + Add option
         </button>
       </div>
@@ -111,7 +111,7 @@ function QuizBlockEditor({ block, onQuizChange }: { block: TopicContent; onQuizC
         onChange={(e) => onQuizChange({ ...quiz, explanation: e.target.value })}
         placeholder="Explanation shown after answering (optional)"
         rows={2}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
     </div>
   );
@@ -127,7 +127,7 @@ function ExerciseBlockEditor({ block, onExerciseChange }: { block: TopicContent;
         onChange={(e) => onExerciseChange({ ...exercise, instructions: e.target.value })}
         placeholder="Instructions for the learner"
         rows={2}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
       <Select
         label="Language"
@@ -143,21 +143,21 @@ function ExerciseBlockEditor({ block, onExerciseChange }: { block: TopicContent;
         onChange={(e) => onExerciseChange({ ...exercise, starterCode: e.target.value })}
         placeholder={'Starter code, e.g. print("   ")'}
         rows={6}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 font-mono text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
       <textarea
         value={exercise.expectedOutput || ''}
         onChange={(e) => onExerciseChange({ ...exercise, expectedOutput: e.target.value })}
         placeholder="Expected output (matched against the learner's stdout, optional)"
         rows={2}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 font-mono text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
       <textarea
         value={exercise.solution || ''}
         onChange={(e) => onExerciseChange({ ...exercise, solution: e.target.value })}
         placeholder="Reference solution (admin-only, not shown to learners)"
         rows={3}
-        className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none font-mono"
+        className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 font-mono text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
       />
     </div>
   );
@@ -182,30 +182,30 @@ function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: Top
   };
 
   return (
-    <div className="space-y-3 bg-[var(--surface-sunken)] p-3.5 rounded-[var(--radius-md)] border border-[var(--line)]">
+    <div className="space-y-3 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-sunken)] p-3.5">
       <input
         type="text"
         value={block.content}
         onChange={(e) => onTitleChange(e.target.value)}
         placeholder="Group Section Title (e.g. Concept Overview)"
-        className="w-full px-3 py-2 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-sm)] text-sm font-semibold text-[var(--ink-900)] outline-none"
+        className="w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-card)] px-3 py-2 text-sm font-semibold text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
       />
-      <div className="text-xs font-semibold text-[var(--ink-500)] uppercase tracking-wide">
+      <div className="text-xs font-semibold tracking-wide text-[var(--ink-500)] uppercase">
         Nested Blocks ({childBlocks.length})
       </div>
       {childBlocks.map((child, idx) => (
-        <div key={idx} className="bg-[var(--surface-card)] p-3 rounded-[var(--radius-sm)] border border-[var(--line)] space-y-2">
+        <div key={idx} className="space-y-2 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-card)] p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase text-[var(--brand-gold-600)]">{child.type}</span>
-            <button onClick={() => handleRemoveChild(idx)} className="text-[var(--ink-300)] hover:text-[var(--danger)] cursor-pointer">
-              <Trash2 className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold text-[var(--brand-gold-600)] uppercase">{child.type}</span>
+            <button onClick={() => handleRemoveChild(idx)} className="cursor-pointer text-[var(--ink-300)] hover:text-[var(--danger)]">
+              <Trash2 className="size-3.5" />
             </button>
           </div>
           {child.type === 'code' && (
             <select
               value={child.language || 'python'}
               onChange={(e) => handleUpdateChild(idx, { language: e.target.value })}
-              className="w-full px-2.5 py-1.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs text-[var(--ink-900)] outline-none font-sans"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-page)] px-2.5 py-1.5 font-sans text-xs text-[var(--ink-900)] outline-none"
             >
               {CODE_LANGUAGES.map((lang) => (
                 <option key={lang} value={lang}>{lang}</option>
@@ -218,7 +218,7 @@ function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: Top
               onChange={(e) => handleUpdateChild(idx, { content: e.target.value })}
               placeholder={`Enter ${child.type} content...`}
               rows={3}
-              className="w-full px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs font-mono text-[var(--ink-900)] outline-none resize-none"
+              className="w-full resize-none rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-page)] px-3 py-2 font-mono text-xs text-[var(--ink-900)] outline-none"
             />
           ) : child.type === 'image' || child.type === 'video' || child.type === 'youtube' || child.type === 'audio' ? (
             <input
@@ -226,7 +226,7 @@ function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: Top
               value={child.content}
               onChange={(e) => handleUpdateChild(idx, { content: e.target.value })}
               placeholder={`URL for ${child.type}...`}
-              className="w-full px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-sm)] text-xs text-[var(--ink-900)] outline-none"
+              className="w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-page)] px-3 py-2 text-xs text-[var(--ink-900)] outline-none"
             />
           ) : null}
         </div>
@@ -237,7 +237,7 @@ function GroupBlockEditor({ block, onBlocksChange, onTitleChange }: { block: Top
             key={t}
             type="button"
             onClick={() => handleAddChild(t as TopicContentType)}
-            className="px-2.5 py-1 text-xs bg-[var(--surface-card)] border border-[var(--line)] hover:border-[var(--brand-gold-600)] rounded-[var(--radius-sm)] font-medium cursor-pointer"
+            className="cursor-pointer rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-card)] px-2.5 py-1 text-xs font-medium hover:border-[var(--brand-gold-600)]"
           >
             + {t}
           </button>
@@ -290,19 +290,19 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange,
           <button
             {...attributes}
             {...listeners}
-            className="mt-2 cursor-grab active:cursor-grabbing text-[var(--ink-300)] hover:text-[var(--ink-900)] transition-colors touch-none"
+            className="mt-2 cursor-grab touch-none text-[var(--ink-300)] transition-colors hover:text-[var(--ink-900)] active:cursor-grabbing"
             aria-label="Drag to reorder"
           >
-            <GripVertical className="w-5 h-5" />
+            <GripVertical className="size-5" />
           </button>
-          <div className="flex-1 min-w-0 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Icon className="w-4 h-4 text-[var(--brand-gold-600)]" />
+                <Icon className="size-4 text-[var(--brand-gold-600)]" />
                 <Badge tone="gold">{block.type}</Badge>
               </div>
-              <button onClick={onRemove} className="text-[var(--ink-300)] hover:text-[var(--danger)] transition-colors cursor-pointer" aria-label="Remove block">
-                <Trash2 className="w-4 h-4" />
+              <button onClick={onRemove} className="cursor-pointer text-[var(--ink-300)] transition-colors hover:text-[var(--danger)]" aria-label="Remove block">
+                <Trash2 className="size-4" />
               </button>
             </div>
 
@@ -321,7 +321,7 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange,
                 value={block.content}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="Step title (shown at the top of the step)"
-                className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors font-semibold"
+                className="w-full rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm font-semibold text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
               />
             )}
 
@@ -337,7 +337,7 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange,
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
                 rows={block.type === 'latex' ? 3 : block.type === 'code' ? 8 : 5}
-                className={`w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors resize-none ${
+                className={`w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)] ${
                   block.type === 'latex' || block.type === 'code' ? 'font-mono' : ''
                 }`}
               />
@@ -349,7 +349,7 @@ function SortableBlock({ block, index, onChange, onLanguageChange, onQuizChange,
                 value={block.content}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none transition-colors"
+                className="w-full rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] transition-colors outline-none focus:border-[var(--ink-900)]"
               />
             )}
           </div>
@@ -447,29 +447,29 @@ export default function ContentBlockEditor({ contents, onChange }: ContentBlockE
       </DndContext>
 
       {contents.length === 0 && (
-        <div className="text-center py-8 text-sm text-[var(--text-muted)]">No content blocks yet. Add one below.</div>
+        <div className="py-8 text-center text-sm text-[var(--text-muted)]">No content blocks yet. Add one below.</div>
       )}
 
       <div className="relative">
         {showAddMenu ? (
-          <div className="flex flex-wrap gap-2 p-3 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)]">
+          <div className="flex flex-wrap gap-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] p-3">
             {CONTENT_TYPES.map(({ type, label, icon: Icon }) => (
               <button
                 key={type}
                 onClick={() => handleAddBlock(type)}
-                className="flex items-center gap-2 px-3 py-2 bg-[var(--surface-card)] border border-[var(--line)] hover:border-[var(--brand-gold)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] transition-all cursor-pointer"
+                className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--ink-900)] transition-all hover:border-[var(--brand-gold)]"
               >
-                <Icon className="w-4 h-4 text-[var(--brand-gold-600)]" />
+                <Icon className="size-4 text-[var(--brand-gold-600)]" />
                 {label}
               </button>
             ))}
-            <button onClick={() => setShowAddMenu(false)} className="px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)] cursor-pointer">
+            <button onClick={() => setShowAddMenu(false)} className="cursor-pointer px-3 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]">
               Cancel
             </button>
           </div>
         ) : (
           <Button variant="secondary" onClick={() => setShowAddMenu(true)}>
-            <Plus className="w-4 h-4" /> Add content block
+            <Plus className="size-4" /> Add content block
           </Button>
         )}
       </div>

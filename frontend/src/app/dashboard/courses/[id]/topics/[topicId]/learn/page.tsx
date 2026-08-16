@@ -32,7 +32,7 @@ export default function LearnPage() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--surface-page)]">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -40,9 +40,9 @@ export default function LearnPage() {
 
   if (!topic) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex flex-col items-center justify-center gap-4">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)]">
         <p className="text-[var(--text-muted)]">Topic not found.</p>
-        <button onClick={handleClose} className="px-4 py-2 bg-[var(--brand-gold)] rounded-[var(--radius-sm)] font-semibold text-sm text-[var(--ink-900)] cursor-pointer">
+        <button onClick={handleClose} className="cursor-pointer rounded-[var(--radius-sm)] bg-[var(--brand-gold)] px-4 py-2 text-sm font-semibold text-[var(--ink-900)]">
           Go back
         </button>
       </div>

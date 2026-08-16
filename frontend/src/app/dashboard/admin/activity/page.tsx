@@ -35,19 +35,19 @@ function AdminActivityContent() {
   const filtered = filter === 'all' ? activities : activities.filter((a) => a.type === filter);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl space-y-6">
       <AdminPageHeader title="Recent activity" description="Latest study sessions across the platform" />
 
       <Tabs
         tabs={[{ value: 'all', label: 'All' }, { value: 'flashcard', label: 'Flashcards' }, { value: 'mcq', label: 'MCQs' }]}
         active={filter}
-        onChange={(v) => setFilter(v as any)}
+        onChange={(v) => setFilter(v as 'all' | 'flashcard' | 'mcq')}
       />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={<ActivityIcon className="w-12 h-12" />} title="No activity" description="No study sessions recorded yet." />
+        <EmptyState icon={<ActivityIcon className="size-12" />} title="No activity" description="No study sessions recorded yet." />
       ) : (
         <div className="space-y-2">
           {filtered.map((a) => {
@@ -56,15 +56,15 @@ function AdminActivityContent() {
             return (
               <Card key={a._id} className="p-4">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className={`w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center shrink-0 ${a.type === 'flashcard' ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]' : 'bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)]'}`}>
-                      {a.type === 'flashcard' ? <CreditCard className="w-5 h-5" /> : <HelpCircle className="w-5 h-5" />}
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className={`flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] ${a.type === 'flashcard' ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]' : 'bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)]'}`}>
+                      {a.type === 'flashcard' ? <CreditCard className="size-5" /> : <HelpCircle className="size-5" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm text-[var(--ink-900)]">
                         <span className="font-medium">{userName}</span> <span className="text-[var(--text-muted)]">studied</span> <span className="text-[var(--brand-gold-600)]">{courseTitle}</span>
                       </p>
-                      <p className="text-xs text-[var(--ink-300)] mt-1">
+                      <p className="mt-1 text-xs text-[var(--ink-300)]">
                         {a.type === 'flashcard' ? `${a.flashcardsStudied} flashcards studied` : `${a.mcqAnswered} MCQs answered (${a.mcqCorrect} correct, ${a.score}% score)`} · {new Date(a.createdAt).toLocaleString()}
                       </p>
                     </div>

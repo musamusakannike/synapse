@@ -39,14 +39,15 @@ export default function BulkImportModal({ isOpen, onClose, topicId, type, onImpo
     try {
       const res = type === 'flashcards'
         ? await flashcardApi.bulkCreate({ topic: topicId, flashcards: parsed as { question: string; answer: string }[] })
-        : await mcqApi.bulkCreate({ topic: topicId, mcqs: parsed as any[] });
+        : await mcqApi.bulkCreate({ topic: topicId, mcqs: parsed as Partial<import('@/lib/types').MCQ>[] });
       const count = res.data.count || res.data.data?.length || 0;
       toast.success(`${count} ${type} imported`);
       setJsonText('');
       onClose();
       onImported();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Import failed');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Import failed');
     } finally {
       setImporting(false);
     }
@@ -64,26 +65,26 @@ export default function BulkImportModal({ isOpen, onClose, topicId, type, onImpo
     <Dialog open={isOpen} onClose={onClose} title={`Bulk import ${type}`} maxWidth="600px">
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-[var(--ink-900)] mb-2">JSON data</label>
+          <label className="mb-2 block text-sm font-semibold text-[var(--ink-900)]">JSON data</label>
           <textarea
             value={jsonText}
             onChange={(e) => setJsonText(e.target.value)}
             placeholder={type === 'flashcards' ? flashcardHint : mcqHint}
             rows={10}
-            className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none font-mono resize-none"
+            className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 font-mono text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
           />
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] hover:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--text-muted)] cursor-pointer">
-            <FileJson className="w-4 h-4" />
+          <label className="flex cursor-pointer items-center gap-2 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3 py-2 text-sm text-[var(--text-muted)] hover:border-[var(--ink-900)]">
+            <FileJson className="size-4" />
             Upload .json file
             <input type="file" accept=".json,application/json" className="hidden" onChange={handleFileUpload} />
           </label>
           <span className="text-xs text-[var(--ink-300)]">or paste JSON above</span>
         </div>
-        <div className="pt-4 border-t border-[var(--line)]">
+        <div className="border-t border-[var(--line)] pt-4">
           <Button variant="primary" onClick={handleImport} disabled={importing || !jsonText.trim()} fullWidth>
-            <Upload className="w-4 h-4" /> {importing ? 'Importing…' : `Import ${type}`}
+            <Upload className="size-4" /> {importing ? 'Importing…' : `Import ${type}`}
           </Button>
         </div>
       </div>

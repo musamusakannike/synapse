@@ -59,21 +59,21 @@ function AdminOverview() {
   if (isLoading) return <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>;
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6">
       <AdminPageHeader title="Admin overview" description="Platform analytics and activity at a glance" />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <StatCard label="Total users" value={analytics?.totalUsers ?? 0} icon={<Users className="w-5 h-5" />} />
-        <StatCard label="Total courses" value={analytics?.totalCourses ?? 0} icon={<BookOpen className="w-5 h-5" />} />
-        <StatCard label="Total topics" value={analytics?.totalTopics ?? 0} icon={<Layers className="w-5 h-5" />} />
-        <StatCard label="Flashcards" value={analytics?.totalFlashcards ?? 0} icon={<CreditCard className="w-5 h-5" />} />
-        <StatCard label="MCQs" value={analytics?.totalMcqs ?? 0} icon={<HelpCircle className="w-5 h-5" />} />
-        <StatCard label="Active (24h)" value={analytics?.activeSessions ?? 0} icon={<ActivityIcon className="w-5 h-5" />} />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <StatCard label="Total users" value={analytics?.totalUsers ?? 0} icon={<Users className="size-5" />} />
+        <StatCard label="Total courses" value={analytics?.totalCourses ?? 0} icon={<BookOpen className="size-5" />} />
+        <StatCard label="Total topics" value={analytics?.totalTopics ?? 0} icon={<Layers className="size-5" />} />
+        <StatCard label="Flashcards" value={analytics?.totalFlashcards ?? 0} icon={<CreditCard className="size-5" />} />
+        <StatCard label="MCQs" value={analytics?.totalMcqs ?? 0} icon={<HelpCircle className="size-5" />} />
+        <StatCard label="Active (24h)" value={analytics?.activeSessions ?? 0} icon={<ActivityIcon className="size-5" />} />
       </div>
 
       {userGrowth.length > 0 && (
         <Card className="p-5">
-          <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">User growth (30 days)</h2>
+          <h2 className="mb-4 text-lg font-semibold text-[var(--ink-900)]">User growth (30 days)</h2>
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={userGrowth}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
@@ -86,35 +86,35 @@ function AdminOverview() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[var(--ink-900)]">Top courses</h2>
             <Link href="/dashboard/admin/courses" className="text-sm text-[var(--brand-gold-600)] hover:opacity-80">View all</Link>
           </div>
           <div className="space-y-2">
             {coursePerformance.slice(0, 5).map((c) => (
               <Link key={c.courseId} href={`/dashboard/admin/courses/${c.courseId}`}>
-                <Card className="p-4 hover:shadow-[var(--shadow-sm)] transition-shadow">
+                <Card className="p-4 transition-shadow hover:shadow-[var(--shadow-sm)]">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-medium text-[var(--ink-900)] truncate">{c.title}</h3>
-                      <p className="text-xs text-[var(--ink-300)] mt-1">{c.category}</p>
+                      <h3 className="truncate text-sm font-medium text-[var(--ink-900)]">{c.title}</h3>
+                      <p className="mt-1 text-xs text-[var(--ink-300)]">{c.category}</p>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
-                      <div className="text-center"><p className="text-[var(--ink-900)] font-semibold">{c.enrollment}</p><p className="text-[var(--ink-300)]">enrolled</p></div>
-                      <div className="text-center"><p className="text-[var(--ink-900)] font-semibold">{c.avgScore}%</p><p className="text-[var(--ink-300)]">avg</p></div>
+                      <div className="text-center"><p className="font-semibold text-[var(--ink-900)]">{c.enrollment}</p><p className="text-[var(--ink-300)]">enrolled</p></div>
+                      <div className="text-center"><p className="font-semibold text-[var(--ink-900)]">{c.avgScore}%</p><p className="text-[var(--ink-300)]">avg</p></div>
                     </div>
                   </div>
                 </Card>
               </Link>
             ))}
-            {coursePerformance.length === 0 && <p className="text-sm text-[var(--ink-300)] text-center py-8">No courses yet</p>}
+            {coursePerformance.length === 0 && <p className="py-8 text-center text-sm text-[var(--ink-300)]">No courses yet</p>}
           </div>
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-[var(--ink-900)]">Recent activity</h2>
             <Link href="/dashboard/admin/activity" className="text-sm text-[var(--brand-gold-600)] hover:opacity-80">View all</Link>
           </div>
@@ -124,8 +124,8 @@ function AdminOverview() {
               const courseTitle = (a.course && typeof a.course === 'object') ? (a.course.title || 'Unknown') : (typeof a.course === 'string' ? a.course : 'Unknown');
               return (
                 <Card key={a._id} className="p-4">
-                  <div className="flex items-center justify-between mb-1 gap-2">
-                    <p className="text-sm text-[var(--ink-900)] truncate">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <p className="truncate text-sm text-[var(--ink-900)]">
                       <span className="font-medium">{userName}</span> <span className="text-[var(--text-muted)]">studied</span> <span className="text-[var(--brand-gold-600)]">{courseTitle}</span>
                     </p>
                     <Badge tone={a.type === 'flashcard' ? 'gold' : 'violet'}>{a.type}</Badge>
@@ -136,7 +136,7 @@ function AdminOverview() {
                 </Card>
               );
             })}
-            {recentActivity.length === 0 && <p className="text-sm text-[var(--ink-300)] text-center py-8">No recent activity</p>}
+            {recentActivity.length === 0 && <p className="py-8 text-center text-sm text-[var(--ink-300)]">No recent activity</p>}
           </div>
         </div>
       </div>

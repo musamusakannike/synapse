@@ -72,9 +72,9 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
 
   if (total === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex flex-col items-center justify-center gap-4 p-6">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)] p-6">
         <p className="text-[var(--text-muted)]">This topic has no lesson steps yet.</p>
-        <button onClick={onClose} className="px-4 py-2 bg-[var(--brand-gold)] rounded-[var(--radius-sm)] font-semibold text-sm text-[var(--ink-900)] cursor-pointer">
+        <button onClick={onClose} className="cursor-pointer rounded-[var(--radius-sm)] bg-[var(--brand-gold)] px-4 py-2 text-sm font-semibold text-[var(--ink-900)]">
           Close
         </button>
       </div>
@@ -83,19 +83,19 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
 
   if (finished) {
     return (
-      <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex flex-col">
+      <div className="fixed inset-0 z-50 flex flex-col bg-[var(--surface-page)]">
         <div className="flex items-center justify-between px-6 py-4">
-          <button onClick={onClose} aria-label="Close" className="text-[var(--ink-300)] hover:text-[var(--ink-900)] cursor-pointer">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} aria-label="Close" className="cursor-pointer text-[var(--ink-300)] hover:text-[var(--ink-900)]">
+            <X className="size-5" />
           </button>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-[var(--brand-violet-100)] flex items-center justify-center">
-            <PartyPopper className="w-10 h-10 text-[var(--brand-violet)]" />
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-[var(--brand-violet-100)]">
+            <PartyPopper className="size-10 text-[var(--brand-violet)]" />
           </div>
           <h2 className="text-2xl font-bold text-[var(--ink-900)]">Congratulations!</h2>
           <p className="text-[var(--text-muted)]">You&apos;ve finished &ldquo;{topic.title}&rdquo;.</p>
-          <button onClick={onClose} className="mt-2 px-6 py-2.5 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-600)] rounded-[var(--radius-sm)] font-semibold text-sm text-[var(--ink-900)] cursor-pointer">
+          <button onClick={onClose} className="mt-2 cursor-pointer rounded-[var(--radius-sm)] bg-[var(--brand-gold)] px-6 py-2.5 text-sm font-semibold text-[var(--ink-900)] hover:bg-[var(--brand-gold-600)]">
             Done
           </button>
         </div>
@@ -104,11 +104,11 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[var(--surface-page)] flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--surface-page)]">
       <div className="flex-shrink-0 px-6 pt-4 pb-2">
-        <div className="flex items-center justify-between mb-3">
-          <button onClick={onClose} aria-label="Close" className="text-[var(--ink-300)] hover:text-[var(--ink-900)] cursor-pointer">
-            <X className="w-5 h-5" />
+        <div className="mb-3 flex items-center justify-between">
+          <button onClick={onClose} aria-label="Close" className="cursor-pointer text-[var(--ink-300)] hover:text-[var(--ink-900)]">
+            <X className="size-5" />
           </button>
           <div className="flex items-center gap-3">
             {altViewHref && (
@@ -119,7 +119,7 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
             <span className="text-xs font-semibold text-[var(--text-muted)]">{index + 1}/{total}</span>
           </div>
         </div>
-        <div className="h-1.5 bg-[var(--surface-sunken)] rounded-full overflow-hidden">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-sunken)]">
           <div
             className="h-full bg-[var(--success)] transition-all duration-300"
             style={{ width: `${((index + 1) / total) * 100}%` }}
@@ -127,12 +127,12 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 max-w-2xl w-full mx-auto">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-300)] mb-2">
+      <div className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto p-6">
+        <div className="mb-2 text-xs font-semibold tracking-wide text-[var(--ink-300)] uppercase">
           {STEP_LABELS[step.type] || step.type}
         </div>
         {step.title && step.type !== 'quiz' && (
-          <h2 className="text-xl font-bold text-[var(--ink-900)] mb-4">{step.title}</h2>
+          <h2 className="mb-4 text-xl font-bold text-[var(--ink-900)]">{step.title}</h2>
         )}
 
         {step.type === 'quiz' && step.quiz ? (
@@ -144,11 +144,11 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
         )}
       </div>
 
-      <div className="flex-shrink-0 px-6 py-4 border-t border-[var(--line)] flex items-center gap-3">
+      <div className="flex flex-shrink-0 items-center gap-3 border-t border-[var(--line)] px-6 py-4">
         {index > 0 && (
           <button
             onClick={handlePrev}
-            className="flex-1 py-3 bg-[var(--surface-sunken)] hover:bg-[var(--line)] text-[var(--ink-900)] font-semibold text-sm rounded-[var(--radius-md)] transition-colors cursor-pointer"
+            className="flex-1 cursor-pointer rounded-[var(--radius-md)] bg-[var(--surface-sunken)] py-3 text-sm font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
           >
             Previous
           </button>
@@ -156,7 +156,7 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
         <button
           onClick={handleNext}
           disabled={!canAdvance}
-          className={`${index > 0 ? 'flex-1' : 'w-full'} py-3 bg-[#E5484D] hover:opacity-90 disabled:opacity-50 text-white font-semibold text-sm rounded-[var(--radius-md)] transition-opacity cursor-pointer`}
+          className={`${index > 0 ? 'flex-1' : 'w-full'} cursor-pointer rounded-[var(--radius-md)] bg-[#E5484D] py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50`}
         >
           {isLastStep ? 'Finish' : 'Next'}
         </button>

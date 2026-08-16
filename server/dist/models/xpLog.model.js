@@ -34,12 +34,26 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const UserProgressSchema = new mongoose_1.Schema({
+const XpLogSchema = new mongoose_1.Schema({
     user: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         index: true,
+    },
+    xp: {
+        type: Number,
+        required: true,
+        min: 0,
+    },
+    sourceType: {
+        type: String,
+        enum: ['topic', 'exercise_question', 'chapter_exercise'],
+        required: true,
+    },
+    sourceId: {
+        type: String,
+        required: true,
     },
     course: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -47,49 +61,8 @@ const UserProgressSchema = new mongoose_1.Schema({
         required: true,
         index: true,
     },
-    lastChapter: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Chapter',
-        default: null,
-    },
-    lastTopic: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Topic',
-        default: null,
-    },
-    lastContentIndex: {
-        type: Number,
-        default: 0,
-    },
-    completedTopics: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Topic',
-        },
-    ],
-    completedChapters: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Chapter',
-        },
-    ],
-    passedExercises: [{ type: String }],
-    percentCompleted: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100,
-    },
-    isCompleted: {
-        type: Boolean,
-        default: false,
-    },
-    lastStudiedAt: {
-        type: Date,
-        default: Date.now,
-    },
 }, {
     timestamps: true,
 });
-UserProgressSchema.index({ user: 1, course: 1 }, { unique: true });
-exports.default = mongoose_1.default.model('UserProgress', UserProgressSchema);
+XpLogSchema.index({ user: 1, sourceType: 1, sourceId: 1 }, { unique: true });
+exports.default = mongoose_1.default.model('XpLog', XpLogSchema);

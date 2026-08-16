@@ -53,15 +53,47 @@ const getCourses = async (req, res, next) => {
     }
 };
 exports.getCourses = getCourses;
+const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const getCourseById = async (req, res, next) => {
     try {
-        const course = await course_model_1.default.findById(req.params.id)
-            .populate({ path: 'topicCount' });
+        const course = await course_model_1.default.findById(req.params.id);
         if (!course) {
             res.status(404).json({ success: false, message: 'Course not found.' });
             return;
         }
-        res.status(200).json({ success: true, data: course });
+        const registeredUsersCount = await userProgress_model_1.default.countDocuments({ course: req.params.id });
+        const topics = await topic_model_1.default.find({ course: req.params.id });
+        const chapters = await chapter_model_1.default.find({ course: req.params.id });
+        let lessonCount = 0;
+        let totalObtainableXp = 0;
+        for (const t of topics) {
+            if (t.contents && Array.isArray(t.contents)) {
+                lessonCount += t.contents.length;
+            }
+            totalObtainableXp += t.xp || 50;
+            if (t.exercise && t.exercise.questions && Array.isArray(t.exercise.questions)) {
+                for (const q of t.exercise.questions) {
+                    totalObtainableXp += q.xp || 20;
+                }
+            }
+        }
+        for (const c of chapters) {
+            if (c.exercise && c.exercise.questions && Array.isArray(c.exercise.questions)) {
+                for (const q of c.exercise.questions) {
+                    totalObtainableXp += q.xp || 20;
+                }
+            }
+        }
+        const courseObj = course.toObject();
+        res.status(200).json({
+            success: true,
+            data: {
+                ...courseObj,
+                registeredUsersCount,
+                lessonCount,
+                totalObtainableXp,
+            },
+        });
     }
     catch (error) {
         next(error);

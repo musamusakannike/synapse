@@ -86,6 +86,7 @@ export default function ProgressPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {continueStudying.map((progress) => {
               const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
+              if (!course || !course._id || course.isPublished === false) return null;
               const topic = typeof progress.topic === 'object' ? (progress.topic as Topic) : null;
               const totalFc = progress.flashcardsTotal || 0;
               const studiedFc = progress.flashcardsStudied || 0;

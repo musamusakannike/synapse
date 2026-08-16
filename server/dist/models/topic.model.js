@@ -34,22 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const TopicQuizOptionSchema = new mongoose_1.Schema({
-    text: { type: String, required: true, trim: true },
-    isCorrect: { type: Boolean, default: false },
-}, { _id: false });
-const TopicQuizSchema = new mongoose_1.Schema({
-    question: { type: String, required: true, trim: true },
-    options: { type: [TopicQuizOptionSchema], default: undefined },
-    explanation: { type: String, default: '', trim: true },
-}, { _id: false });
-const TopicExerciseSchema = new mongoose_1.Schema({
-    instructions: { type: String, required: true, trim: true },
-    starterCode: { type: String, default: '' },
-    language: { type: String, default: 'python' },
-    expectedOutput: { type: String, default: '' },
-    solution: { type: String, default: '' },
-}, { _id: false });
+const chapter_model_1 = require("./chapter.model");
 const TopicContentSchema = new mongoose_1.Schema({
     type: {
         type: String,
@@ -69,11 +54,11 @@ const TopicContentSchema = new mongoose_1.Schema({
         default: undefined,
     },
     quiz: {
-        type: TopicQuizSchema,
+        type: mongoose_1.Schema.Types.Mixed,
         default: undefined,
     },
     exercise: {
-        type: TopicExerciseSchema,
+        type: mongoose_1.Schema.Types.Mixed,
         default: undefined,
     },
     blocks: {
@@ -88,6 +73,12 @@ const TopicSchema = new mongoose_1.Schema({
         required: true,
         index: true,
     },
+    chapter: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Chapter',
+        required: false,
+        index: true,
+    },
     title: {
         type: String,
         required: true,
@@ -99,33 +90,25 @@ const TopicSchema = new mongoose_1.Schema({
         trim: true,
     },
     contents: [TopicContentSchema],
+    exercise: {
+        type: chapter_model_1.ExerciseSchema,
+        default: undefined,
+    },
+    xp: {
+        type: Number,
+        default: 50,
+        min: 0,
+    },
     order: {
         type: Number,
         default: 0,
     },
     isPublished: {
         type: Boolean,
-        default: false,
-    },
-    defaultFlow: {
-        type: String,
-        enum: ['flat', 'guided'],
-        default: 'flat',
+        default: true,
     },
 }, {
     timestamps: true,
-});
-TopicSchema.virtual('flashcardCount', {
-    ref: 'Flashcard',
-    localField: '_id',
-    foreignField: 'topic',
-    count: true,
-});
-TopicSchema.virtual('mcqCount', {
-    ref: 'MCQ',
-    localField: '_id',
-    foreignField: 'topic',
-    count: true,
 });
 TopicSchema.set('toJSON', { virtuals: true });
 TopicSchema.set('toObject', { virtuals: true });

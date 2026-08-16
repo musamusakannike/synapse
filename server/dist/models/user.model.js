@@ -122,6 +122,11 @@ const UserSchema = new mongoose_1.Schema({
         type: Number,
         default: 0,
     },
+    totalXp: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
 }, {
     timestamps: true,
 });

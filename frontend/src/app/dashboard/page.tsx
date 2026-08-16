@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, FileQuestion, MessageCircleQuestion, Play, CheckCircle2, ChevronRight } from 'lucide-react';
 import { progressApi } from '@/lib/api';
-import { Course, Chapter, Topic, ResumptionData } from '@/lib/types';
+import { Course, Chapter, Topic, UserProgress, ResumptionData } from '@/lib/types';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -25,7 +25,15 @@ export default function DashboardHome() {
       try {
         const res = await progressApi.dashboardResumption();
         if (res.data?.success) {
-          setResumptionData(res.data.data);
+          const rawData = res.data.data;
+          const filteredCards = (rawData.resumptionCards || []).filter((p: UserProgress) => {
+            const course = typeof p.course === 'object' ? (p.course as Course) : null;
+            return course && course._id && course.isPublished !== false;
+          });
+          setResumptionData({
+            resumptionCards: filteredCards,
+            totalUnfinished: rawData.totalUnfinished,
+          });
         }
       } catch (e) {
         console.error('Failed to load dashboard resumption data:', e);
@@ -127,12 +135,14 @@ export default function DashboardHome() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {resumptionCards.map((progress) => {
               const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
+              if (!course || !course._id || course.isPublished === false) return null;
+
               const chapter = typeof progress.lastChapter === 'object' ? (progress.lastChapter as Chapter) : null;
               const topic = typeof progress.lastTopic === 'object' ? (progress.lastTopic as Topic) : null;
-              const courseId = course?._id || (progress.course as string);
+              const courseId = course._id;
               const isExpanded = expandedAuthors[courseId];
 
-              const authors = course?.authors || [];
+              const authors = course.authors || [];
 
               return (
                 <Card key={progress._id} className="flex flex-col justify-between border border-[var(--line)] p-5 transition-shadow hover:shadow-md">

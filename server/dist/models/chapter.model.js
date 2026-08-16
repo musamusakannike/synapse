@@ -33,63 +33,61 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ExerciseSchema = exports.QuestionSchema = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const UserProgressSchema = new mongoose_1.Schema({
-    user: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+exports.QuestionSchema = new mongoose_1.Schema({
+    type: {
+        type: String,
+        enum: ['mcq', 'fill_in_blank', 'code_execution'],
         required: true,
-        index: true,
     },
+    question: { type: String, required: true, trim: true },
+    options: [{ type: String, trim: true }],
+    correctAnswer: { type: String, required: true, trim: true },
+    explanation: { type: String, default: '', trim: true },
+    starterCode: { type: String, default: '' },
+    expectedOutput: { type: String, default: '' },
+    language: { type: String, default: 'javascript' },
+    xp: { type: Number, default: 20, min: 0 },
+}, { _id: true });
+exports.ExerciseSchema = new mongoose_1.Schema({
+    title: { type: String, default: '' },
+    instructions: { type: String, default: '' },
+    questions: [exports.QuestionSchema],
+}, { _id: false });
+const ChapterSchema = new mongoose_1.Schema({
     course: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Course',
         required: true,
         index: true,
     },
-    lastChapter: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Chapter',
-        default: null,
+    title: {
+        type: String,
+        required: true,
+        trim: true,
     },
-    lastTopic: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Topic',
-        default: null,
+    description: {
+        type: String,
+        default: '',
+        trim: true,
     },
-    lastContentIndex: {
+    order: {
         type: Number,
         default: 0,
     },
-    completedTopics: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Topic',
-        },
-    ],
-    completedChapters: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'Chapter',
-        },
-    ],
-    passedExercises: [{ type: String }],
-    percentCompleted: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100,
-    },
-    isCompleted: {
-        type: Boolean,
-        default: false,
-    },
-    lastStudiedAt: {
-        type: Date,
-        default: Date.now,
+    exercise: {
+        type: exports.ExerciseSchema,
+        default: undefined,
     },
 }, {
     timestamps: true,
 });
-UserProgressSchema.index({ user: 1, course: 1 }, { unique: true });
-exports.default = mongoose_1.default.model('UserProgress', UserProgressSchema);
+ChapterSchema.virtual('topics', {
+    ref: 'Topic',
+    localField: '_id',
+    foreignField: 'chapter',
+});
+ChapterSchema.set('toJSON', { virtuals: true });
+ChapterSchema.set('toObject', { virtuals: true });
+exports.default = mongoose_1.default.model('Chapter', ChapterSchema);

@@ -34,13 +34,22 @@ export const getDashboardResumption = async (req: AuthenticatedRequest, res: Res
     const userId = req.user!._id;
 
     const progressList = await UserProgress.find({ user: userId, isCompleted: false })
-      .populate({ path: 'course', select: 'title description banner category difficulty authors' })
+      .populate({
+        path: 'course',
+        match: { isPublished: true },
+        select: 'title description banner category difficulty authors isPublished',
+      })
       .populate({ path: 'lastChapter', select: 'title' })
       .populate({ path: 'lastTopic', select: 'title' })
       .sort({ lastStudiedAt: -1 });
 
-    const totalUnfinished = progressList.length;
-    const cards = progressList.slice(0, 4);
+    const validProgressList = progressList.filter((p) => {
+      const course = p.course as any;
+      return course && course._id && course.isPublished !== false;
+    });
+
+    const totalUnfinished = validProgressList.length;
+    const cards = validProgressList.slice(0, 4);
 
     res.status(200).json({
       success: true,
@@ -228,10 +237,20 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response, nex
     const userId = req.user!._id;
 
     const progress = await UserProgress.find({ user: userId })
-      .populate({ path: 'course', select: 'title description banner category difficulty' })
+      .populate({
+        path: 'course',
+        match: { isPublished: true },
+        select: 'title description banner category difficulty isPublished',
+      })
       .populate({ path: 'topic', select: 'title description' })
-      .sort({ lastStudiedAt: -1 })
-      .limit(4);
+      .sort({ lastStudiedAt: -1 });
+
+    const validProgress = progress
+      .filter((p) => {
+        const course = p.course as any;
+        return course && course._id && course.isPublished !== false;
+      })
+      .slice(0, 4);
 
     const totalSessions = await StudySession.countDocuments({ user: userId });
     const totalFlashcards = await StudySession.aggregate([
@@ -251,7 +270,7 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response, nex
     res.status(200).json({
       success: true,
       data: {
-        continueStudying: progress,
+        continueStudying: validProgress,
         quickStats: {
           totalSessions,
           totalFlashcards: totalFlashcards[0]?.total || 0,
@@ -323,11 +342,20 @@ export const getContinueStudying = async (req: AuthenticatedRequest, res: Respon
       isCompleted: false,
       lastStudiedAt: { $ne: null },
     })
-      .populate({ path: 'course', select: 'title description banner category difficulty' })
+      .populate({
+        path: 'course',
+        match: { isPublished: true },
+        select: 'title description banner category difficulty isPublished',
+      })
       .populate({ path: 'topic', select: 'title description' })
       .sort({ lastStudiedAt: -1 });
 
-    res.status(200).json({ success: true, data: progress });
+    const validProgress = progress.filter((p) => {
+      const course = p.course as any;
+      return course && course._id && course.isPublished !== false;
+    });
+
+    res.status(200).json({ success: true, data: validProgress });
   } catch (error) {
     next(error);
   }

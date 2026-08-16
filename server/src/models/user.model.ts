@@ -43,6 +43,7 @@ export interface IUser extends Document {
   /** Midnight UTC of the user's local day on which they last studied. */
   lastStudyDate?: Date | null;
   totalStudyDays: number;
+  totalXp: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -135,6 +136,11 @@ const UserSchema: Schema = new Schema<IUser>(
     totalStudyDays: {
       type: Number,
       default: 0,
+    },
+    totalXp: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {

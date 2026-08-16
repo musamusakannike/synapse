@@ -84,11 +84,28 @@ export const mcqApi = {
   remove: (id: string) => api.delete(`/mcqs/${id}`),
 };
 
+export const chapterApi = {
+  byCourse: (courseId: string) => api.get(`/chapters/course/${courseId}`),
+  create: (data: Record<string, unknown>) => api.post('/chapters', data),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/chapters/${id}`, data),
+  remove: (id: string) => api.delete(`/chapters/${id}`),
+};
+
+export const leaderboardApi = {
+  get: (timeframe: string = '24h') => api.get('/leaderboard', { params: { timeframe } }),
+};
+
 export const progressApi = {
   dashboard: () => api.get('/progress'),
+  dashboardResumption: () => api.get('/progress/dashboard-resumption'),
   stats: () => api.get('/progress/stats'),
   continueStudying: () => api.get('/progress/continue'),
   needsImprovement: () => api.get('/progress/needs-improvement'),
+  completeTopic: (data: { courseId: string; topicId: string }) => api.post('/progress/topic-complete', data),
+  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: any[] }) =>
+    api.post('/progress/exercise-submit', data),
+  savePosition: (data: { courseId: string; chapterId?: string; topicId?: string; contentIndex: number }) =>
+    api.post('/progress/save-position', data),
   submitFlashcardSession: (data: { course: string; topic: string; flashcardsStudied: number; duration: number }) =>
     api.post('/progress/flashcard-session', data),
   submitMcqSession: (data: { course: string; topic: string; mcqAnswered: number; mcqCorrect: number; score: number; duration: number }) =>

@@ -10,11 +10,11 @@ import ContinueToDashboardPrompt from '@/components/ui/ContinueToDashboardPrompt
 
 export const metadata: Metadata = {
   title: 'SabiLearn — Learn a skill. Sabi it for life.',
-  description: 'Courses, flashcards, practice quizzes, and AI study tools built for Nigerian learners. Start free, track your progress, and sabi a new skill for life.',
+  description: 'Courses, interactive exercises, practice quizzes, and AI study tools built for Nigerian learners. Start free, track your progress, and sabi a new skill for life.',
   alternates: { canonical: '/' },
   openGraph: {
     title: 'SabiLearn — Learn a skill. Sabi it for life.',
-    description: 'Courses, flashcards, practice quizzes, and AI study tools built for Nigerian learners.',
+    description: 'Courses, interactive exercises, practice quizzes, and AI study tools built for Nigerian learners.',
     url: '/',
     type: 'website',
   },
@@ -30,15 +30,15 @@ const navLinks = [
 const steps = [
   { title: 'Create your account', description: 'Sign up free in under a minute — no card required.' },
   { title: 'Enroll in a course', description: 'Browse free and paid courses across web dev, design, business and more.' },
-  { title: 'Study your way', description: 'Read topics, flip flashcards, take practice quizzes, or lean on AI tools.' },
-  { title: 'Track your progress', description: 'See your streak, accuracy, and what needs more review.' },
+  { title: 'Study your way', description: 'Read topics, take interactive exercises, pass quizzes, or lean on AI tools.' },
+  { title: 'Track your progress', description: 'See your streak, earned XP leaderboard, and course resumption cards.' },
 ];
 
 const faqs = [
   { q: 'Is SabiLearn free?', a: 'Many courses are free to enroll in. Some advanced courses carry a one-time fee, shown clearly in ₦ before you enroll.' },
-  { q: 'What are the AI tools?', a: 'Summarizer, quiz generator, flashcards generator, and Q&A AI — built to help you study faster, not to replace studying.' },
+  { q: 'What are the AI tools?', a: 'Summarizer, quiz generator, and Q&A AI — built to help you study faster, not to replace studying.' },
   { q: 'Can I study on my phone?', a: 'Yes — SabiLearn works fully in your mobile browser, no app download required.' },
-  { q: 'How do I track my progress?', a: 'Your dashboard shows your study streak, accuracy, and topics that need review.' },
+  { q: 'How do I track my progress?', a: 'Your dashboard shows your study streak, XP leaderboard, and course progress.' },
 ];
 
 export default function LandingPage() {
@@ -57,7 +57,7 @@ export default function LandingPage() {
               Learn a skill. <span className="text-[var(--brand-gold)]">Sabi</span> it for life.
             </h1>
             <p className="text-lg text-[var(--text-muted)] leading-[var(--leading-relaxed)] mb-8 max-w-lg">
-              Courses, flashcards, practice quizzes, and AI study tools — built for how you actually learn.
+              Courses, interactive exercises, practice quizzes, and AI study tools — built for how you actually learn.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/auth/register"><Button size="lg">Get started free</Button></Link>
@@ -84,7 +84,7 @@ export default function LandingPage() {
             { icon: BookOpen, value: '120+', label: 'Courses' },
             { icon: Users, value: '15k+', label: 'Learners' },
             { icon: Award, value: '92%', label: 'Completion rate' },
-            { icon: Sparkles, value: '4', label: 'AI study tools' },
+            { icon: Sparkles, value: '3', label: 'AI study tools' },
           ].map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-2">
               <s.icon className="w-6 h-6 text-[var(--brand-gold-600)]" />
@@ -101,10 +101,9 @@ export default function LandingPage() {
             <h2 className="font-[var(--font-display)] text-3xl font-bold text-[var(--ink-900)] mb-3">Study smarter with AI</h2>
             <p className="text-[var(--text-muted)]">Task-first AI tools that fit into your study flow — not a replacement for it.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <AIToolCard icon={<Sparkles className="w-5 h-5" />} title="Summarizer" description="Turn any lecture note into a short summary." cta="Learn more" />
             <AIToolCard icon={<FileQuestion className="w-5 h-5" />} title="Quiz generator" description="Build a quick multiple-choice quiz from a topic." cta="Learn more" />
-            <AIToolCard icon={<Layers className="w-5 h-5" />} title="Flashcards generator" description="Generate a starter deck of flashcards in seconds." cta="Learn more" />
             <AIToolCard icon={<MessageCircleQuestion className="w-5 h-5" />} title="Q&A AI" description="Ask a study question, get a plain-English answer." cta="Learn more" />
           </div>
         </div>

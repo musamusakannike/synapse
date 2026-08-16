@@ -3,15 +3,15 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IUserProgress extends Document {
   user: mongoose.Types.ObjectId;
   course: mongoose.Types.ObjectId;
-  topic: mongoose.Types.ObjectId;
-  flashcardsStudied: number;
-  flashcardsTotal: number;
-  mcqsAttempted: number;
-  mcqsCorrect: number;
-  lastStudiedAt: Date;
-  isCompleted: boolean;
-  /** Index into the topic's `contents` array where the learner last left off. */
+  lastChapter?: mongoose.Types.ObjectId;
+  lastTopic?: mongoose.Types.ObjectId;
   lastContentIndex: number;
+  completedTopics: mongoose.Types.ObjectId[];
+  completedChapters: mongoose.Types.ObjectId[];
+  passedExercises: string[];
+  percentCompleted: number;
+  isCompleted: boolean;
+  lastStudiedAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +22,7 @@ const UserProgressSchema: Schema = new Schema<IUserProgress>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+      index: true,
     },
     course: {
       type: Schema.Types.ObjectId,
@@ -29,39 +30,46 @@ const UserProgressSchema: Schema = new Schema<IUserProgress>(
       required: true,
       index: true,
     },
-    topic: {
+    lastChapter: {
+      type: Schema.Types.ObjectId,
+      ref: 'Chapter',
+      default: null,
+    },
+    lastTopic: {
       type: Schema.Types.ObjectId,
       ref: 'Topic',
-      required: true,
-      index: true,
-    },
-    flashcardsStudied: {
-      type: Number,
-      default: 0,
-    },
-    flashcardsTotal: {
-      type: Number,
-      default: 0,
-    },
-    mcqsAttempted: {
-      type: Number,
-      default: 0,
-    },
-    mcqsCorrect: {
-      type: Number,
-      default: 0,
-    },
-    lastStudiedAt: {
-      type: Date,
       default: null,
+    },
+    lastContentIndex: {
+      type: Number,
+      default: 0,
+    },
+    completedTopics: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Topic',
+      },
+    ],
+    completedChapters: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Chapter',
+      },
+    ],
+    passedExercises: [{ type: String }],
+    percentCompleted: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
     isCompleted: {
       type: Boolean,
       default: false,
     },
-    lastContentIndex: {
-      type: Number,
-      default: 0,
+    lastStudiedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
@@ -69,6 +77,6 @@ const UserProgressSchema: Schema = new Schema<IUserProgress>(
   }
 );
 
-UserProgressSchema.index({ user: 1, course: 1, topic: 1 }, { unique: true });
+UserProgressSchema.index({ user: 1, course: 1 }, { unique: true });
 
 export default mongoose.model<IUserProgress>('UserProgress', UserProgressSchema);

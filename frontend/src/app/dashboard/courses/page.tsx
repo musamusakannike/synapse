@@ -1,13 +1,16 @@
 'use client';
 
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
-import { Search, BookOpen } from 'lucide-react';
+import Link from 'next/link';
+import { Search, BookOpen, GitBranch, Sparkles, ArrowRight } from 'lucide-react';
 import { courseApi } from '@/lib/api';
 import { Course, PaginatedResponse } from '@/lib/types';
 import CourseCard from '@/components/ui/CourseCard';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/Badge';
+import Card from '@/components/ui/Card';
 
 const CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
 
@@ -55,8 +58,35 @@ function CoursesContent() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1">Courses</h1>
-        <p className="text-sm text-[var(--text-muted)]">Browse the full SabiLearn course catalog</p>
+        <p className="text-sm text-[var(--text-muted)]">Browse full SabiLearn catalog and free public interactive courses</p>
       </div>
+
+      {/* Free Public Featured Course Section */}
+      {/* <Card className="p-5 border border-[var(--brand-gold-100)] bg-[var(--brand-gold-50,var(--surface-sunken))]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--brand-gold-100)] flex items-center justify-center shrink-0 text-[var(--brand-gold-600)]">
+              <GitBranch className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge tone="gold">Free Public Course</Badge>
+                <Badge tone="neutral">Interactive Terminal Flow</Badge>
+              </div>
+              <h3 className="text-base font-bold text-[var(--ink-900)]">Git & Version Control Mastery</h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5 max-w-xl">
+                Master repositories, branching, staging, merging, and remote collaboration with our custom interactive flow. No database or payment required.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/courses/free/git"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-400)] text-[var(--ink-900)] font-semibold text-sm rounded-[var(--radius-md)] transition-colors shrink-0"
+          >
+            Start Free Git Course <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </Card> */}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">

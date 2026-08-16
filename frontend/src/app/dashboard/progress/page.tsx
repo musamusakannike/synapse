@@ -87,13 +87,15 @@ export default function ProgressPage() {
             {continueStudying.map((progress) => {
               const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
               const topic = typeof progress.topic === 'object' ? (progress.topic as Topic) : null;
-              const pct = progress.flashcardsTotal > 0 ? (progress.flashcardsStudied / progress.flashcardsTotal) * 100 : 0;
+              const totalFc = progress.flashcardsTotal || 0;
+              const studiedFc = progress.flashcardsStudied || 0;
+              const pct = totalFc > 0 ? (studiedFc / totalFc) * 100 : progress.percentCompleted || 0;
               return (
                 <Card key={progress._id} className="p-5">
                   {topic && <p className="text-xs text-[var(--brand-gold-600)] font-semibold uppercase tracking-wide mb-1">{course?.title}</p>}
                   <h3 className="font-semibold text-[var(--ink-900)] mb-1">{topic?.title || course?.title}</h3>
                   <p className="text-xs text-[var(--ink-300)] mb-4">{course?.category}</p>
-                  <ProgressBar value={pct} label={`Flashcards ${progress.flashcardsStudied}/${progress.flashcardsTotal}`} />
+                  <ProgressBar value={pct} label={totalFc > 0 ? `Flashcards ${studiedFc}/${totalFc}` : `${progress.percentCompleted || 0}% complete`} />
                   {topic && course && (
                     <Link href={`/dashboard/courses/${course._id}/topics/${topic._id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-gold-600)] hover:opacity-80 mt-3">
                       Continue

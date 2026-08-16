@@ -1,5 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface ICourseAuthor {
+  name: string;
+  avatar: string;
+  role?: string;
+  bio?: string;
+}
+
 export interface ICourse extends Document {
   title: string;
   description: string;
@@ -7,7 +14,9 @@ export interface ICourse extends Document {
   banner: string;
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  authors: ICourseAuthor[];
   whatYouWillLearn: string[];
+  prerequisites: string[];
   isPublished: boolean;
   order: number;
   /** Free courses are accessible to everyone regardless of subscription/purchase. */
@@ -17,6 +26,16 @@ export interface ICourse extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+const CourseAuthorSchema = new Schema<ICourseAuthor>(
+  {
+    name: { type: String, required: true, trim: true },
+    avatar: { type: String, default: '' },
+    role: { type: String, default: 'Instructor' },
+    bio: { type: String, default: '' },
+  },
+  { _id: false }
+);
 
 const CourseSchema: Schema = new Schema<ICourse>(
   {
@@ -48,7 +67,12 @@ const CourseSchema: Schema = new Schema<ICourse>(
       enum: ['beginner', 'intermediate', 'advanced'],
       default: 'beginner',
     },
+    authors: {
+      type: [CourseAuthorSchema],
+      default: [],
+    },
     whatYouWillLearn: [{ type: String }],
+    prerequisites: [{ type: String }],
     isPublished: {
       type: Boolean,
       default: false,
@@ -71,6 +95,12 @@ const CourseSchema: Schema = new Schema<ICourse>(
     timestamps: true,
   }
 );
+
+CourseSchema.virtual('chapters', {
+  ref: 'Chapter',
+  localField: '_id',
+  foreignField: 'course',
+});
 
 CourseSchema.virtual('topicCount', {
   ref: 'Topic',

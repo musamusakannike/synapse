@@ -22,6 +22,8 @@ import mediaRoutes from './routes/media.route';
 import paymentRoutes from './routes/payment.route';
 import blogRoutes from './routes/blog.route';
 import aiRoutes from './routes/ai.route';
+import chapterRoutes from './routes/chapter.route';
+import leaderboardRoutes from './routes/leaderboard.route';
 import { errorHandler } from './middlewares/error.middleware';
 import { startScheduler } from './jobs/scheduler';
 
@@ -62,7 +64,9 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/chapters', chapterRoutes);
 app.use('/api/v1/topics', topicRoutes);
+app.use('/api/v1/leaderboard', leaderboardRoutes);
 app.use('/api/v1/flashcards', flashcardRoutes);
 app.use('/api/v1/mcqs', mcqRoutes);
 app.use('/api/v1/progress', progressRoutes);

@@ -177,6 +177,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return { success: false, error: res.data.message || 'Apple login failed.' };
     } catch (err: any) {
       set({ isLoading: false });
+      if (err.code === 'ERR_REQUEST_CANCELED' || err.code === '1001' || err.message?.includes('canceled') || err.message?.includes('cancelled')) {
+        return { success: false };
+      }
       return { success: false, error: err.response?.data?.message || err.message || 'Apple login failed. Please try again.' };
     }
   },

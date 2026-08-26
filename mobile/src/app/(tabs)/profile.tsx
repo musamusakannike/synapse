@@ -1,7 +1,7 @@
 import { View, Text, Image, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { IconUser, IconSettings, IconLogout, IconChevronRight, IconSparkles } from '@tabler/icons-react-native';
+import { IconUser, IconSettings, IconLogout, IconChevronRight } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
 import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
 import Badge from '@/components/ui/Badge';
@@ -47,7 +47,6 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.menu}>
-          <MenuRow icon={<IconSparkles size={18} color={colors.textSecondary} />} label="Subscription" onPress={() => router.push('/subscribe' as any)} />
           <MenuRow icon={<IconSettings size={18} color={colors.textSecondary} />} label="Settings" onPress={() => router.push('/settings')} />
           <MenuRow icon={<IconLogout size={18} color={colors.danger} />} label="Sign out" labelColor={colors.danger} onPress={handleLogout} />
         </View>

@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight, IconLock } from '@tabler/icons-react-native';
-import { courseApi, topicApi, paymentApi } from '@/lib/api';
-import { Course, Topic, PaymentStatus } from '@/lib/types';
+import { router, useLocalSearchParams } from 'expo-router';
+import { IconArrowLeft, IconCards, IconHelpCircle, IconChevronRight } from '@tabler/icons-react-native';
+import { courseApi, topicApi } from '@/lib/api';
+import { Course, Topic } from '@/lib/types';
 import { cacheFlashcards } from '@/lib/offlineSync';
 import { useProgressStore } from '@/store/progress.store';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -21,7 +21,6 @@ export default function CourseDetailScreen() {
   const { colors } = useTheme();
   const [course, setCourse] = useState<Course | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [courseProgress, setCourseProgress] = useState<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>(null);
   const { fetchCourseProgress } = useProgressStore();
@@ -29,14 +28,12 @@ export default function CourseDetailScreen() {
   const load = useCallback(async () => {
     if (!id) return;
     try {
-      const [courseRes, topicsRes, paymentRes] = await Promise.all([
+      const [courseRes, topicsRes] = await Promise.all([
         courseApi.get(id),
         topicApi.byCourse(id),
-        paymentApi.me(),
       ]);
       setCourse(courseRes.data.data);
       setTopics(topicsRes.data.data);
-      setPaymentStatus(paymentRes.data.data);
       fetchCourseProgress(id).then(setCourseProgress);
     } catch {
       // silently fail
@@ -49,17 +46,8 @@ export default function CourseDetailScreen() {
     load();
   }, [load]);
 
-  useFocusEffect(
-    useCallback(() => {
-      paymentApi.me().then((res) => setPaymentStatus(res.data.data)).catch(() => {});
-    }, [])
-  );
-
   if (isLoading) return <LoadingSpinner />;
   if (!course) return <EmptyState title="Course not found" />;
-
-  const hasAccess =
-    course.isFree || paymentStatus?.subscription.status === 'active' || !!paymentStatus?.purchasedCourseIds.includes(course._id);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
@@ -76,7 +64,7 @@ export default function CourseDetailScreen() {
         </View>
         <Text style={[styles.description, { color: colors.textSecondary }]}>{course.longDescription || course.description}</Text>
 
-        {hasAccess && courseProgress && courseProgress.totalTopics > 0 && (
+        {courseProgress && courseProgress.totalTopics > 0 && (
           <View style={styles.progressWrap}>
             <View style={styles.goalHeader}>
               <Text style={[styles.topicMeta, { color: colors.textSecondary }]}>
@@ -88,27 +76,10 @@ export default function CourseDetailScreen() {
           </View>
         )}
 
-        {!course.isFree && !hasAccess && (
-          <Card style={{ backgroundColor: colors.brandPrimarySoft }}>
-            <View style={styles.lockRow}>
-              <View style={[styles.lockIcon, { backgroundColor: colors.surfaceCard }]}>
-                <IconLock size={18} color={colors.brandPrimaryHover} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.lockTitle, { color: colors.textPrimary }]}>Premium Course</Text>
-                <Text style={[styles.lockMessage, { color: colors.textSecondary }]}>
-                  This course requires an active Premium plan to access modules and quizzes.
-                </Text>
-              </View>
-            </View>
-          </Card>
-        )}
-
         <View style={styles.actionsRow}>
           <Button
             variant="secondary"
             icon={<IconCards size={16} color={colors.textPrimary} />}
-            disabled={!hasAccess}
             onPress={() => { haptics.light(); router.push(`/course/${id}/flashcards` as any); }}
             style={{ flex: 1 }}
           >
@@ -117,7 +88,6 @@ export default function CourseDetailScreen() {
           <Button
             variant="secondary"
             icon={<IconHelpCircle size={16} color={colors.textPrimary} />}
-            disabled={!hasAccess}
             onPress={() => { haptics.light(); router.push(`/course/${id}/mcq` as any); }}
             style={{ flex: 1 }}
           >
@@ -144,7 +114,6 @@ export default function CourseDetailScreen() {
                 <Card
                   key={topic._id}
                   onPress={() => {
-                    if (!hasAccess) return;
                     haptics.light();
                     router.push(`/course/${id}/topic/${topic._id}` as any);
                   }}
@@ -159,11 +128,7 @@ export default function CourseDetailScreen() {
                         {topic.flashcardCount ?? 0} flashcards {'·'} {topic.mcqCount ?? 0} MCQs
                       </Text>
                     </View>
-                    {hasAccess ? (
-                      <IconChevronRight size={16} color={colors.textTertiary} />
-                    ) : (
-                      <IconLock size={16} color={colors.textTertiary} />
-                    )}
+                    <IconChevronRight size={16} color={colors.textTertiary} />
                   </View>
                 </Card>
               ))}
@@ -194,9 +159,4 @@ const styles = StyleSheet.create({
   topicIndexText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansSemiBold },
   topicTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansMedium },
   topicMeta: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, marginTop: 2 },
-  lockRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
-  lockIcon: { width: 32, height: 32, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
-  lockTitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansSemiBold },
-  lockMessage: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, marginTop: 2, lineHeight: fontSizes.xs * 1.5 },
-  lockActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
 });

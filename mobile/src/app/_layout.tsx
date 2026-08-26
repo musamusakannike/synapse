@@ -121,8 +121,6 @@ function AppContent() {
           <Stack.Screen name="settings" />
           <Stack.Screen name="privacy" />
           <Stack.Screen name="terms" />
-          <Stack.Screen name="checkout" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="subscribe" options={{ presentation: 'modal' }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

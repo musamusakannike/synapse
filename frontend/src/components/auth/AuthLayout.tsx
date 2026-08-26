@@ -16,7 +16,7 @@ export default function AuthLayout({ children, panelTitle, panelSubtitle }: Auth
       <div className="relative hidden md:flex md:w-1/2 lg:w-[45%] xl:w-[40%] min-h-screen flex-col justify-between overflow-hidden bg-[var(--ink-900)] p-8 lg:p-12 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/students-stairs.jpg"
+          src="/images/hero.webp"
           alt="Students studying"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />

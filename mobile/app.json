@@ -68,10 +68,12 @@
         "expo-build-properties",
         {
           "ios": {
-            "useFrameworks": "dynamic"
+            "useFrameworks": "static"
           }
         }
-      ]
+      ],
+      "expo-image",
+      "./plugins/withFirebasePodfile"
     ],
     "experiments": {
       "typedRoutes": true,

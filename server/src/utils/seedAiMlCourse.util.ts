@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from 'mongoose';
 import Course, { ICourse } from '../models/course.model';
+import Chapter from '../models/chapter.model';
 import Topic, { ITopicContent } from '../models/topic.model';
 import Flashcard from '../models/flashcard.model';
 import MCQ from '../models/mcq.model';
@@ -1092,18 +1093,44 @@ const run = async (): Promise<void> => {
     console.log('Creating "AI & Machine Learning with Scikit-Learn" course...');
     const course = await Course.create(aiMlCourseSeed.course);
 
+    // Create 3 structured Chapters for the curriculum
+    const chapters = await Chapter.create([
+      {
+        course: course._id,
+        title: 'Introduction to AI & Environment Setup',
+        description: 'Understand the fundamentals of machine learning, Google Colab, VS Code, and mobile environments.',
+        order: 0,
+      },
+      {
+        course: course._id,
+        title: 'Data Preparation, Pandas & Regression Models',
+        description: 'Clean, encode, scale datasets, and train linear and polynomial regression predictors.',
+        order: 1,
+      },
+      {
+        course: course._id,
+        title: 'Classification, Decision Trees & Model Evaluation',
+        description: 'Train classification models, decision trees, random forests, and evaluate with confusion matrices.',
+        order: 2,
+      },
+    ]);
+
     let totalTopics = 0;
     let totalFlashcards = 0;
     let totalMcqs = 0;
 
     for (let i = 0; i < aiMlCourseSeed.topics.length; i++) {
       const topicSeed = aiMlCourseSeed.topics[i];
+      const chapterId = i < 2 ? chapters[0]._id : i < 5 ? chapters[1]._id : chapters[2]._id;
+
       const topic = await Topic.create({
         course: course._id,
+        chapter: chapterId,
         title: topicSeed.title,
         description: topicSeed.description,
         contents: topicSeed.contents,
         order: i + 1,
+        xp: 50,
         isPublished: true,
       });
       totalTopics++;

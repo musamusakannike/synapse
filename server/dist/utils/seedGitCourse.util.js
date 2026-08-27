@@ -8,6 +8,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const mongoose_1 = __importDefault(require("mongoose"));
 const course_model_1 = __importDefault(require("../models/course.model"));
+const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
 const mcq_model_1 = __importDefault(require("../models/mcq.model"));
@@ -583,17 +584,42 @@ const run = async () => {
         }
         console.log(`Creating fresh "${exports.gitCourseSeed.course.title}" course...`);
         const course = await course_model_1.default.create(exports.gitCourseSeed.course);
+        // Create 3 structured Chapters for the curriculum
+        const chapters = await chapter_model_1.default.create([
+            {
+                course: course._id,
+                title: 'Foundations of Git & Configuration',
+                description: 'Learn why version control is critical, configure Git, and make your first commits.',
+                order: 0,
+            },
+            {
+                course: course._id,
+                title: 'Branching, Merging & Remote Workflows',
+                description: 'Master branch strategies, merge conflict resolution, and syncing with GitHub.',
+                order: 1,
+            },
+            {
+                course: course._id,
+                title: 'Advanced Collaboration & Best Practices',
+                description: 'Work with pull requests, code reviews, rebasing, and emergency recovery with reflog.',
+                order: 2,
+            },
+        ]);
         let totalTopics = 0;
         let totalFlashcards = 0;
         let totalMcqs = 0;
         for (let i = 0; i < exports.gitCourseSeed.topics.length; i++) {
             const topicSeed = exports.gitCourseSeed.topics[i];
+            // Distribute topics among the 3 chapters (0-2 in Ch 1, 3-5 in Ch 2, 6-7 in Ch 3)
+            const chapterId = i < 3 ? chapters[0]._id : i < 6 ? chapters[1]._id : chapters[2]._id;
             const topic = await topic_model_1.default.create({
                 course: course._id,
+                chapter: chapterId,
                 title: topicSeed.title,
                 description: topicSeed.description,
                 contents: topicSeed.contents,
                 order: i + 1,
+                xp: 50,
                 isPublished: true,
             });
             totalTopics++;

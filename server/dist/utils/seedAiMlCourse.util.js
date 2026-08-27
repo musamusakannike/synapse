@@ -7,6 +7,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const mongoose_1 = __importDefault(require("mongoose"));
 const course_model_1 = __importDefault(require("../models/course.model"));
+const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
 const mcq_model_1 = __importDefault(require("../models/mcq.model"));
@@ -1045,17 +1046,41 @@ const run = async () => {
         }
         console.log('Creating "AI & Machine Learning with Scikit-Learn" course...');
         const course = await course_model_1.default.create(aiMlCourseSeed.course);
+        // Create 3 structured Chapters for the curriculum
+        const chapters = await chapter_model_1.default.create([
+            {
+                course: course._id,
+                title: 'Introduction to AI & Environment Setup',
+                description: 'Understand the fundamentals of machine learning, Google Colab, VS Code, and mobile environments.',
+                order: 0,
+            },
+            {
+                course: course._id,
+                title: 'Data Preparation, Pandas & Regression Models',
+                description: 'Clean, encode, scale datasets, and train linear and polynomial regression predictors.',
+                order: 1,
+            },
+            {
+                course: course._id,
+                title: 'Classification, Decision Trees & Model Evaluation',
+                description: 'Train classification models, decision trees, random forests, and evaluate with confusion matrices.',
+                order: 2,
+            },
+        ]);
         let totalTopics = 0;
         let totalFlashcards = 0;
         let totalMcqs = 0;
         for (let i = 0; i < aiMlCourseSeed.topics.length; i++) {
             const topicSeed = aiMlCourseSeed.topics[i];
+            const chapterId = i < 2 ? chapters[0]._id : i < 5 ? chapters[1]._id : chapters[2]._id;
             const topic = await topic_model_1.default.create({
                 course: course._id,
+                chapter: chapterId,
                 title: topicSeed.title,
                 description: topicSeed.description,
                 contents: topicSeed.contents,
                 order: i + 1,
+                xp: 50,
                 isPublished: true,
             });
             totalTopics++;

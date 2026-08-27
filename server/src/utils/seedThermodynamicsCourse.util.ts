@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from 'mongoose';
 import Course, { ICourse } from '../models/course.model';
+import Chapter from '../models/chapter.model';
 import Topic, { ITopicContent } from '../models/topic.model';
 import Flashcard from '../models/flashcard.model';
 import MCQ from '../models/mcq.model';
@@ -644,18 +645,44 @@ const run = async (): Promise<void> => {
     console.log(`Creating fresh "${thermodynamicsCourseSeed.course.title}" course...`);
     const course = await Course.create(thermodynamicsCourseSeed.course);
 
+    // Create 3 structured Chapters for the curriculum
+    const chapters = await Chapter.create([
+      {
+        course: course._id,
+        title: 'Fundamental Concepts & Laws of Thermodynamics',
+        description: 'Understand macroscopic state variables, zeroth law, work, heat, and the First Law.',
+        order: 0,
+      },
+      {
+        course: course._id,
+        title: 'Entropy, Second Law & Heat Engines',
+        description: 'Master heat engines, Carnot efficiency, Clausius inequality, and entropy generation.',
+        order: 1,
+      },
+      {
+        course: course._id,
+        title: 'Pure Substances, Phase Equilibria & Gas Cycles',
+        description: 'Explore PVT surfaces, property tables, ideal gas approximations, and power cycles.',
+        order: 2,
+      },
+    ]);
+
     let totalTopics = 0;
     let totalFlashcards = 0;
     let totalMcqs = 0;
 
     for (let i = 0; i < thermodynamicsCourseSeed.topics.length; i++) {
       const topicSeed = thermodynamicsCourseSeed.topics[i];
+      const chapterId = i < 3 ? chapters[0]._id : i < 6 ? chapters[1]._id : chapters[2]._id;
+
       const topic = await Topic.create({
         course: course._id,
+        chapter: chapterId,
         title: topicSeed.title,
         description: topicSeed.description,
         contents: topicSeed.contents,
         order: i + 1,
+        xp: 50,
         isPublished: true,
       });
       totalTopics++;

@@ -3,6 +3,7 @@ dotenv.config();
 
 import mongoose from 'mongoose';
 import Course, { ICourse } from '../models/course.model';
+import Chapter from '../models/chapter.model';
 import Topic, { ITopicContent } from '../models/topic.model';
 import Flashcard from '../models/flashcard.model';
 import MCQ from '../models/mcq.model';
@@ -630,18 +631,45 @@ const run = async (): Promise<void> => {
     console.log(`Creating fresh "${gitCourseSeed.course.title}" course...`);
     const course = await Course.create(gitCourseSeed.course);
 
+    // Create 3 structured Chapters for the curriculum
+    const chapters = await Chapter.create([
+      {
+        course: course._id,
+        title: 'Foundations of Git & Configuration',
+        description: 'Learn why version control is critical, configure Git, and make your first commits.',
+        order: 0,
+      },
+      {
+        course: course._id,
+        title: 'Branching, Merging & Remote Workflows',
+        description: 'Master branch strategies, merge conflict resolution, and syncing with GitHub.',
+        order: 1,
+      },
+      {
+        course: course._id,
+        title: 'Advanced Collaboration & Best Practices',
+        description: 'Work with pull requests, code reviews, rebasing, and emergency recovery with reflog.',
+        order: 2,
+      },
+    ]);
+
     let totalTopics = 0;
     let totalFlashcards = 0;
     let totalMcqs = 0;
 
     for (let i = 0; i < gitCourseSeed.topics.length; i++) {
       const topicSeed = gitCourseSeed.topics[i];
+      // Distribute topics among the 3 chapters (0-2 in Ch 1, 3-5 in Ch 2, 6-7 in Ch 3)
+      const chapterId = i < 3 ? chapters[0]._id : i < 6 ? chapters[1]._id : chapters[2]._id;
+
       const topic = await Topic.create({
         course: course._id,
+        chapter: chapterId,
         title: topicSeed.title,
         description: topicSeed.description,
         contents: topicSeed.contents,
         order: i + 1,
+        xp: 50,
         isPublished: true,
       });
       totalTopics++;

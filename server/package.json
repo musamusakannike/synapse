@@ -14,6 +14,7 @@
     "replace-course": "tsx src/utils/replaceCourse.util.ts",
     "migrate:users": "tsx src/utils/migrateOldUsers.util.ts",
     "migrate": "tsx src/utils/migrate.util.ts",
+    "db:cleanup-courses": "tsx src/utils/cleanupLegacyCourses.util.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

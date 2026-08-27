@@ -8,6 +8,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const mongoose_1 = __importDefault(require("mongoose"));
 const course_model_1 = __importDefault(require("../models/course.model"));
+const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
 const mcq_model_1 = __importDefault(require("../models/mcq.model"));
@@ -600,17 +601,41 @@ const run = async () => {
         }
         console.log(`Creating fresh "${exports.thermodynamicsCourseSeed.course.title}" course...`);
         const course = await course_model_1.default.create(exports.thermodynamicsCourseSeed.course);
+        // Create 3 structured Chapters for the curriculum
+        const chapters = await chapter_model_1.default.create([
+            {
+                course: course._id,
+                title: 'Fundamental Concepts & Laws of Thermodynamics',
+                description: 'Understand macroscopic state variables, zeroth law, work, heat, and the First Law.',
+                order: 0,
+            },
+            {
+                course: course._id,
+                title: 'Entropy, Second Law & Heat Engines',
+                description: 'Master heat engines, Carnot efficiency, Clausius inequality, and entropy generation.',
+                order: 1,
+            },
+            {
+                course: course._id,
+                title: 'Pure Substances, Phase Equilibria & Gas Cycles',
+                description: 'Explore PVT surfaces, property tables, ideal gas approximations, and power cycles.',
+                order: 2,
+            },
+        ]);
         let totalTopics = 0;
         let totalFlashcards = 0;
         let totalMcqs = 0;
         for (let i = 0; i < exports.thermodynamicsCourseSeed.topics.length; i++) {
             const topicSeed = exports.thermodynamicsCourseSeed.topics[i];
+            const chapterId = i < 3 ? chapters[0]._id : i < 6 ? chapters[1]._id : chapters[2]._id;
             const topic = await topic_model_1.default.create({
                 course: course._id,
+                chapter: chapterId,
                 title: topicSeed.title,
                 description: topicSeed.description,
                 contents: topicSeed.contents,
                 order: i + 1,
+                xp: 50,
                 isPublished: true,
             });
             totalTopics++;

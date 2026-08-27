@@ -6,6 +6,7 @@ const auth_middleware_1 = require("../middlewares/auth.middleware");
 const router = (0, express_1.Router)();
 router.get('/course/:courseId', auth_middleware_1.optionalAuth, chapter_controller_1.getChaptersByCourse);
 router.post('/', auth_middleware_1.protect, auth_middleware_1.adminOnly, chapter_controller_1.createChapter);
+router.put('/reorder', auth_middleware_1.protect, auth_middleware_1.adminOnly, chapter_controller_1.reorderChapters);
 router.put('/:id', auth_middleware_1.protect, auth_middleware_1.adminOnly, chapter_controller_1.updateChapter);
 router.delete('/:id', auth_middleware_1.protect, auth_middleware_1.adminOnly, chapter_controller_1.deleteChapter);
 exports.default = router;

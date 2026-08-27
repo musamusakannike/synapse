@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteChapter = exports.updateChapter = exports.createChapter = exports.getChaptersByCourse = void 0;
+exports.deleteChapter = exports.reorderChapters = exports.updateChapter = exports.createChapter = exports.getChaptersByCourse = void 0;
 const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const userProgress_model_1 = __importDefault(require("../models/userProgress.model"));
@@ -117,6 +117,21 @@ const updateChapter = async (req, res, next) => {
     }
 };
 exports.updateChapter = updateChapter;
+const reorderChapters = async (req, res, next) => {
+    try {
+        const chapterIds = req.body.chapterIds || req.body.order;
+        if (!Array.isArray(chapterIds) || chapterIds.length === 0) {
+            res.status(400).json({ success: false, message: 'chapterIds or order array is required.' });
+            return;
+        }
+        await Promise.all(chapterIds.map((id, index) => chapter_model_1.default.findByIdAndUpdate(id, { order: index })));
+        res.status(200).json({ success: true, message: 'Chapters reordered successfully.' });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.reorderChapters = reorderChapters;
 const deleteChapter = async (req, res, next) => {
     try {
         const chapter = await chapter_model_1.default.findByIdAndDelete(req.params.id);

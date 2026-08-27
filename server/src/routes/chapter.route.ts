@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { getChaptersByCourse, createChapter, updateChapter, deleteChapter } from '../controllers/chapter.controller';
+import { getChaptersByCourse, createChapter, updateChapter, deleteChapter, reorderChapters } from '../controllers/chapter.controller';
 import { protect, optionalAuth, adminOnly } from '../middlewares/auth.middleware';
 
 const router = Router();
 
 router.get('/course/:courseId', optionalAuth, getChaptersByCourse);
 router.post('/', protect, adminOnly, createChapter);
+router.put('/reorder', protect, adminOnly, reorderChapters);
 router.put('/:id', protect, adminOnly, updateChapter);
 router.delete('/:id', protect, adminOnly, deleteChapter);
 

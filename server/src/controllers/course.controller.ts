@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import Course, { ICourse } from '../models/course.model';
+import Course, { ICourse, ICourseAuthor } from '../models/course.model';
 import Topic from '../models/topic.model';
+import Chapter from '../models/chapter.model';
 import Flashcard from '../models/flashcard.model';
 import MCQ from '../models/mcq.model';
 import UserProgress from '../models/userProgress.model';
@@ -48,9 +49,9 @@ export const getCourses = async (req: Request, res: Response, next: NextFunction
       success: true,
       data: courses,
       pagination: {
+        total,
         page,
         limit,
-        total,
         pages: Math.ceil(total / limit),
       },
     });
@@ -59,52 +60,41 @@ export const getCourses = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-import Chapter from '../models/chapter.model';
-
-export const getCourseById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const course = await Course.findById(req.params.id);
+    const course = await Course.findById(req.params.id)
+      .populate({
+        path: 'chapters',
+        options: { sort: { order: 1 } },
+        populate: {
+          path: 'topics',
+          options: { sort: { order: 1 } },
+          select: 'title description isPublished order defaultFlow',
+        },
+      });
 
     if (!course) {
-      res.status(404).json({ success: false, message: 'Course not found.' });
+      res.status(404).json({ success: false, message: 'Course not found' });
       return;
     }
 
-    const registeredUsersCount = await UserProgress.countDocuments({ course: req.params.id });
+    const registeredUsersCount = await UserProgress.distinct('user', {
+      course: req.params.id,
+    }).then((users) => users.length);
 
-    const topics = await Topic.find({ course: req.params.id });
-    const chapters = await Chapter.find({ course: req.params.id });
-
-    let lessonCount = 0;
-    let totalObtainableXp = 0;
-
-    for (const t of topics) {
-      if (t.contents && Array.isArray(t.contents)) {
-        lessonCount += t.contents.length;
-      }
-      totalObtainableXp += t.xp || 50;
-
-      if (t.exercise && t.exercise.questions && Array.isArray(t.exercise.questions)) {
-        for (const q of t.exercise.questions) {
-          totalObtainableXp += q.xp || 20;
-        }
-      }
-    }
-
-    for (const c of chapters) {
-      if (c.exercise && c.exercise.questions && Array.isArray(c.exercise.questions)) {
-        for (const q of c.exercise.questions) {
-          totalObtainableXp += q.xp || 20;
-        }
-      }
-    }
-
-    const courseObj = course.toObject();
+    // Compute lesson count and obtainable XP across all topics in this course
+    const courseTopics = await Topic.find({ course: req.params.id, isPublished: true }).select('xp exercise contents');
+    const lessonCount = courseTopics.reduce((acc, t) => acc + (t.contents?.length || 0), 0);
+    const totalObtainableXp = courseTopics.reduce((acc, t) => {
+      const topicXp = t.xp || 50;
+      const exerciseXp = (t.exercise?.questions || []).reduce((qAcc, q) => qAcc + (q.xp || 10), 0);
+      return acc + topicXp + exerciseXp;
+    }, 0);
 
     res.status(200).json({
       success: true,
       data: {
-        ...courseObj,
+        ...course.toObject(),
         registeredUsersCount,
         lessonCount,
         totalObtainableXp,
@@ -115,9 +105,40 @@ export const getCourseById = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const getCourseById = getCourse;
+
+
+const parseJsonOrArray = <T>(val: unknown): T[] | undefined => {
+  if (val === undefined || val === null) return undefined;
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      return val.split('\n').map((s) => s.trim()).filter(Boolean) as unknown as T[];
+    }
+  }
+  return undefined;
+};
+
 export const createCourse = async (req: MulterRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, longDescription, category, difficulty, isPublished, banner } = req.body;
+    const {
+      title,
+      description,
+      longDescription,
+      category,
+      difficulty,
+      isPublished,
+      banner,
+      isFree,
+      price,
+      authors,
+      whatYouWillLearn,
+      prerequisites,
+      order,
+    } = req.body;
 
     let bannerUrl = typeof banner === 'string' ? banner : '';
     if (req.file) {
@@ -125,15 +146,27 @@ export const createCourse = async (req: MulterRequest, res: Response, next: Next
       bannerUrl = await uploadToR2(req.file.buffer, fileKey, req.file.mimetype);
     }
 
-    const course = await Course.create({
+    const parsedAuthors = parseJsonOrArray<ICourseAuthor>(authors);
+    const parsedLearn = parseJsonOrArray<string>(whatYouWillLearn);
+    const parsedPrereqs = parseJsonOrArray<string>(prerequisites);
+
+    const newCourseData = {
       title,
       description,
-      longDescription,
+      longDescription: longDescription || '',
       category,
-      difficulty,
+      difficulty: difficulty || 'beginner',
       isPublished: isPublished === 'true' || isPublished === true,
       banner: bannerUrl,
-    });
+      isFree: isFree === undefined ? true : (isFree === 'true' || isFree === true),
+      price: price !== undefined ? Math.max(0, Number(price)) : 0,
+      authors: (parsedAuthors || []) as ICourseAuthor[],
+      whatYouWillLearn: parsedLearn || [],
+      prerequisites: parsedPrereqs || [],
+      order: order !== undefined ? Number(order) : 0,
+    };
+
+    const course: ICourse = await Course.create(newCourseData);
 
     if (course.isPublished) {
       void broadcastCoursePublished(course);
@@ -147,7 +180,21 @@ export const createCourse = async (req: MulterRequest, res: Response, next: Next
 
 export const updateCourse = async (req: MulterRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { title, description, longDescription, category, difficulty, isPublished, banner } = req.body;
+    const {
+      title,
+      description,
+      longDescription,
+      category,
+      difficulty,
+      isPublished,
+      banner,
+      isFree,
+      price,
+      authors,
+      whatYouWillLearn,
+      prerequisites,
+      order,
+    } = req.body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) updates.title = title;
@@ -157,6 +204,22 @@ export const updateCourse = async (req: MulterRequest, res: Response, next: Next
     if (difficulty !== undefined) updates.difficulty = difficulty;
     if (isPublished !== undefined) updates.isPublished = isPublished === 'true' || isPublished === true;
     if (typeof banner === 'string') updates.banner = banner;
+    if (isFree !== undefined) updates.isFree = isFree === 'true' || isFree === true;
+    if (price !== undefined) updates.price = Math.max(0, Number(price));
+    if (order !== undefined) updates.order = Number(order);
+
+    if (authors !== undefined) {
+      const parsedAuthors = parseJsonOrArray(authors);
+      if (parsedAuthors !== undefined) updates.authors = parsedAuthors;
+    }
+    if (whatYouWillLearn !== undefined) {
+      const parsedLearn = parseJsonOrArray<string>(whatYouWillLearn);
+      if (parsedLearn !== undefined) updates.whatYouWillLearn = parsedLearn;
+    }
+    if (prerequisites !== undefined) {
+      const parsedPrereqs = parseJsonOrArray<string>(prerequisites);
+      if (parsedPrereqs !== undefined) updates.prerequisites = parsedPrereqs;
+    }
 
     if (req.file) {
       const fileKey = `courses/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
@@ -205,6 +268,7 @@ export const deleteCourse = async (req: Request, res: Response, next: NextFuncti
       await UserProgress.deleteMany({ topic: { $in: topicIds } });
     }
     await Topic.deleteMany({ course: req.params.id });
+    await Chapter.deleteMany({ course: req.params.id });
     await UserProgress.deleteMany({ course: req.params.id });
 
     res.status(200).json({ success: true, message: 'Course deleted successfully.' });

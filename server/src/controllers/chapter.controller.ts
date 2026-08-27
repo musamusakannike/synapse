@@ -134,6 +134,24 @@ export const updateChapter = async (req: Request, res: Response, next: NextFunct
   }
 };
 
+export const reorderChapters = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const chapterIds = req.body.chapterIds || req.body.order;
+    if (!Array.isArray(chapterIds) || chapterIds.length === 0) {
+      res.status(400).json({ success: false, message: 'chapterIds or order array is required.' });
+      return;
+    }
+    await Promise.all(
+      chapterIds.map((id: string, index: number) =>
+        Chapter.findByIdAndUpdate(id, { order: index })
+      )
+    );
+    res.status(200).json({ success: true, message: 'Chapters reordered successfully.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteChapter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const chapter = await Chapter.findByIdAndDelete(req.params.id);

@@ -66,7 +66,8 @@ export const topicApi = {
   create: (data: Partial<import('./types').Topic>) => api.post('/topics', data),
   update: (id: string, data: Partial<import('./types').Topic>) => api.put(`/topics/${id}`, data),
   remove: (id: string) => api.delete(`/topics/${id}`),
-  reorder: (data: { course: string; order: string[] }) => api.put('/topics/reorder', data),
+  reorder: (data: { course?: string; order?: string[]; topicIds?: string[]; chapterId?: string }) =>
+    api.put('/topics/reorder', data),
 };
 
 export const flashcardApi = {
@@ -90,6 +91,8 @@ export const chapterApi = {
   create: (data: Record<string, unknown>) => api.post('/chapters', data),
   update: (id: string, data: Record<string, unknown>) => api.put(`/chapters/${id}`, data),
   remove: (id: string) => api.delete(`/chapters/${id}`),
+  reorder: (data: { course?: string; order?: string[]; chapterIds?: string[] }) =>
+    api.put('/chapters/reorder', data),
 };
 
 export const leaderboardApi = {

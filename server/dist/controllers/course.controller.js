@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPopularTopics = exports.deleteCourse = exports.updateCourse = exports.createCourse = exports.getCourseById = exports.getCourses = void 0;
+exports.getPopularTopics = exports.deleteCourse = exports.updateCourse = exports.createCourse = exports.getCourseById = exports.getCourse = exports.getCourses = void 0;
 const course_model_1 = __importDefault(require("../models/course.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
+const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
 const mcq_model_1 = __importDefault(require("../models/mcq.model"));
 const userProgress_model_1 = __importDefault(require("../models/userProgress.model"));
@@ -41,9 +42,9 @@ const getCourses = async (req, res, next) => {
             success: true,
             data: courses,
             pagination: {
+                total,
                 page,
                 limit,
-                total,
                 pages: Math.ceil(total / limit),
             },
         });
@@ -53,42 +54,37 @@ const getCourses = async (req, res, next) => {
     }
 };
 exports.getCourses = getCourses;
-const chapter_model_1 = __importDefault(require("../models/chapter.model"));
-const getCourseById = async (req, res, next) => {
+const getCourse = async (req, res, next) => {
     try {
-        const course = await course_model_1.default.findById(req.params.id);
+        const course = await course_model_1.default.findById(req.params.id)
+            .populate({
+            path: 'chapters',
+            options: { sort: { order: 1 } },
+            populate: {
+                path: 'topics',
+                options: { sort: { order: 1 } },
+                select: 'title description isPublished order defaultFlow',
+            },
+        });
         if (!course) {
-            res.status(404).json({ success: false, message: 'Course not found.' });
+            res.status(404).json({ success: false, message: 'Course not found' });
             return;
         }
-        const registeredUsersCount = await userProgress_model_1.default.countDocuments({ course: req.params.id });
-        const topics = await topic_model_1.default.find({ course: req.params.id });
-        const chapters = await chapter_model_1.default.find({ course: req.params.id });
-        let lessonCount = 0;
-        let totalObtainableXp = 0;
-        for (const t of topics) {
-            if (t.contents && Array.isArray(t.contents)) {
-                lessonCount += t.contents.length;
-            }
-            totalObtainableXp += t.xp || 50;
-            if (t.exercise && t.exercise.questions && Array.isArray(t.exercise.questions)) {
-                for (const q of t.exercise.questions) {
-                    totalObtainableXp += q.xp || 20;
-                }
-            }
-        }
-        for (const c of chapters) {
-            if (c.exercise && c.exercise.questions && Array.isArray(c.exercise.questions)) {
-                for (const q of c.exercise.questions) {
-                    totalObtainableXp += q.xp || 20;
-                }
-            }
-        }
-        const courseObj = course.toObject();
+        const registeredUsersCount = await userProgress_model_1.default.distinct('user', {
+            course: req.params.id,
+        }).then((users) => users.length);
+        // Compute lesson count and obtainable XP across all topics in this course
+        const courseTopics = await topic_model_1.default.find({ course: req.params.id, isPublished: true }).select('xp exercise contents');
+        const lessonCount = courseTopics.reduce((acc, t) => acc + (t.contents?.length || 0), 0);
+        const totalObtainableXp = courseTopics.reduce((acc, t) => {
+            const topicXp = t.xp || 50;
+            const exerciseXp = (t.exercise?.questions || []).reduce((qAcc, q) => qAcc + (q.xp || 10), 0);
+            return acc + topicXp + exerciseXp;
+        }, 0);
         res.status(200).json({
             success: true,
             data: {
-                ...courseObj,
+                ...course.toObject(),
                 registeredUsersCount,
                 lessonCount,
                 totalObtainableXp,
@@ -99,24 +95,52 @@ const getCourseById = async (req, res, next) => {
         next(error);
     }
 };
-exports.getCourseById = getCourseById;
+exports.getCourse = getCourse;
+exports.getCourseById = exports.getCourse;
+const parseJsonOrArray = (val) => {
+    if (val === undefined || val === null)
+        return undefined;
+    if (Array.isArray(val))
+        return val;
+    if (typeof val === 'string') {
+        try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed))
+                return parsed;
+        }
+        catch {
+            return val.split('\n').map((s) => s.trim()).filter(Boolean);
+        }
+    }
+    return undefined;
+};
 const createCourse = async (req, res, next) => {
     try {
-        const { title, description, longDescription, category, difficulty, isPublished, banner } = req.body;
+        const { title, description, longDescription, category, difficulty, isPublished, banner, isFree, price, authors, whatYouWillLearn, prerequisites, order, } = req.body;
         let bannerUrl = typeof banner === 'string' ? banner : '';
         if (req.file) {
             const fileKey = `courses/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
             bannerUrl = await (0, r2_util_1.uploadToR2)(req.file.buffer, fileKey, req.file.mimetype);
         }
-        const course = await course_model_1.default.create({
+        const parsedAuthors = parseJsonOrArray(authors);
+        const parsedLearn = parseJsonOrArray(whatYouWillLearn);
+        const parsedPrereqs = parseJsonOrArray(prerequisites);
+        const newCourseData = {
             title,
             description,
-            longDescription,
+            longDescription: longDescription || '',
             category,
-            difficulty,
+            difficulty: difficulty || 'beginner',
             isPublished: isPublished === 'true' || isPublished === true,
             banner: bannerUrl,
-        });
+            isFree: isFree === undefined ? true : (isFree === 'true' || isFree === true),
+            price: price !== undefined ? Math.max(0, Number(price)) : 0,
+            authors: (parsedAuthors || []),
+            whatYouWillLearn: parsedLearn || [],
+            prerequisites: parsedPrereqs || [],
+            order: order !== undefined ? Number(order) : 0,
+        };
+        const course = await course_model_1.default.create(newCourseData);
         if (course.isPublished) {
             void (0, notification_service_1.broadcastCoursePublished)(course);
         }
@@ -129,7 +153,7 @@ const createCourse = async (req, res, next) => {
 exports.createCourse = createCourse;
 const updateCourse = async (req, res, next) => {
     try {
-        const { title, description, longDescription, category, difficulty, isPublished, banner } = req.body;
+        const { title, description, longDescription, category, difficulty, isPublished, banner, isFree, price, authors, whatYouWillLearn, prerequisites, order, } = req.body;
         const updates = {};
         if (title !== undefined)
             updates.title = title;
@@ -145,6 +169,27 @@ const updateCourse = async (req, res, next) => {
             updates.isPublished = isPublished === 'true' || isPublished === true;
         if (typeof banner === 'string')
             updates.banner = banner;
+        if (isFree !== undefined)
+            updates.isFree = isFree === 'true' || isFree === true;
+        if (price !== undefined)
+            updates.price = Math.max(0, Number(price));
+        if (order !== undefined)
+            updates.order = Number(order);
+        if (authors !== undefined) {
+            const parsedAuthors = parseJsonOrArray(authors);
+            if (parsedAuthors !== undefined)
+                updates.authors = parsedAuthors;
+        }
+        if (whatYouWillLearn !== undefined) {
+            const parsedLearn = parseJsonOrArray(whatYouWillLearn);
+            if (parsedLearn !== undefined)
+                updates.whatYouWillLearn = parsedLearn;
+        }
+        if (prerequisites !== undefined) {
+            const parsedPrereqs = parseJsonOrArray(prerequisites);
+            if (parsedPrereqs !== undefined)
+                updates.prerequisites = parsedPrereqs;
+        }
         if (req.file) {
             const fileKey = `courses/${Date.now()}-${req.file.originalname.replace(/\s+/g, '-')}`;
             updates.banner = await (0, r2_util_1.uploadToR2)(req.file.buffer, fileKey, req.file.mimetype);
@@ -185,6 +230,7 @@ const deleteCourse = async (req, res, next) => {
             await userProgress_model_1.default.deleteMany({ topic: { $in: topicIds } });
         }
         await topic_model_1.default.deleteMany({ course: req.params.id });
+        await chapter_model_1.default.deleteMany({ course: req.params.id });
         await userProgress_model_1.default.deleteMany({ course: req.params.id });
         res.status(200).json({ success: true, message: 'Course deleted successfully.' });
     }

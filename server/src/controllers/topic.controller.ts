@@ -6,15 +6,20 @@ import UserProgress from '../models/userProgress.model';
 
 export const reorderTopics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { topicIds } = req.body;
+    const topicIds = req.body.topicIds || req.body.order;
+    const { chapterId } = req.body;
     if (!Array.isArray(topicIds) || topicIds.length === 0) {
-      res.status(400).json({ success: false, message: 'topicIds array is required.' });
+      res.status(400).json({ success: false, message: 'topicIds or order array is required.' });
       return;
     }
     await Promise.all(
-      topicIds.map((id: string, index: number) =>
-        Topic.findByIdAndUpdate(id, { order: index })
-      )
+      topicIds.map((id: string, index: number) => {
+        const updateData: Record<string, unknown> = { order: index };
+        if (chapterId !== undefined) {
+          updateData.chapter = chapterId || null;
+        }
+        return Topic.findByIdAndUpdate(id, updateData);
+      })
     );
     res.status(200).json({ success: true, message: 'Topics reordered successfully.' });
   } catch (error) {

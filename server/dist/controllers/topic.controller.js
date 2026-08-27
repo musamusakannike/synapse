@@ -10,12 +10,19 @@ const mcq_model_1 = __importDefault(require("../models/mcq.model"));
 const userProgress_model_1 = __importDefault(require("../models/userProgress.model"));
 const reorderTopics = async (req, res, next) => {
     try {
-        const { topicIds } = req.body;
+        const topicIds = req.body.topicIds || req.body.order;
+        const { chapterId } = req.body;
         if (!Array.isArray(topicIds) || topicIds.length === 0) {
-            res.status(400).json({ success: false, message: 'topicIds array is required.' });
+            res.status(400).json({ success: false, message: 'topicIds or order array is required.' });
             return;
         }
-        await Promise.all(topicIds.map((id, index) => topic_model_1.default.findByIdAndUpdate(id, { order: index })));
+        await Promise.all(topicIds.map((id, index) => {
+            const updateData = { order: index };
+            if (chapterId !== undefined) {
+                updateData.chapter = chapterId || null;
+            }
+            return topic_model_1.default.findByIdAndUpdate(id, updateData);
+        }));
         res.status(200).json({ success: true, message: 'Topics reordered successfully.' });
     }
     catch (error) {

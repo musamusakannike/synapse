@@ -18,6 +18,8 @@ interface ProgressState {
   saveContentPosition: (data: { course: string; topic: string; contentIndex: number }) => Promise<void>;
   fetchCourseProgress: (courseId: string) => Promise<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>;
   fetchTopicProgress: (topicId: string) => Promise<{ lastContentIndex: number; isCompleted: boolean } | null>;
+  completeTopic: (data: { courseId: string; topicId: string }) => Promise<boolean>;
+  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: unknown[] }) => Promise<{ success: boolean; scorePercent?: number; isPassed?: boolean; earnedXp?: number } | null>;
 }
 
 export const useProgressStore = create<ProgressState>((set) => ({
@@ -116,6 +118,32 @@ export const useProgressStore = create<ProgressState>((set) => ({
     try {
       const res = await api.get(`/progress/topic/${topicId}`);
       return res.data.data;
+    } catch {
+      return null;
+    }
+  },
+
+  completeTopic: async (data) => {
+    try {
+      const res = await api.post('/progress/topic-complete', data);
+      return !!res.data?.success;
+    } catch {
+      return false;
+    }
+  },
+
+  submitExercise: async (data) => {
+    try {
+      const res = await api.post('/progress/exercise-submit', data);
+      if (res.data?.success) {
+        return {
+          success: true,
+          scorePercent: res.data.scorePercent,
+          isPassed: res.data.isPassed,
+          earnedXp: res.data.earnedXp,
+        };
+      }
+      return null;
     } catch {
       return null;
     }

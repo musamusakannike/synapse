@@ -132,7 +132,9 @@ export default function DashboardHome() {
               {continueStudying.slice(0, 4).map((progress) => {
                 const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
                 const topic = typeof progress.topic === 'object' ? (progress.topic as Topic) : null;
-                const flashcardProgress = progress.flashcardsTotal > 0 ? (progress.flashcardsStudied / progress.flashcardsTotal) * 100 : 0;
+                const flashcardTotal = progress.flashcardsTotal ?? 0;
+                const flashcardStudied = progress.flashcardsStudied ?? 0;
+                const flashcardProgress = flashcardTotal > 0 ? (flashcardStudied / flashcardTotal) * 100 : 0;
                 return (
                   <Card
                     key={progress._id}

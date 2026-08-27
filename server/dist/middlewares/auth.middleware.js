@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorize = exports.protectFirebase = exports.protect = void 0;
+exports.optionalAuth = exports.adminOnly = exports.authorize = exports.protectFirebase = exports.protect = void 0;
 const auth_1 = require("firebase-admin/auth");
 const token_util_1 = require("../utils/token.util");
 const user_model_1 = __importDefault(require("../models/user.model"));
@@ -93,3 +93,32 @@ const authorize = (...roles) => {
     };
 };
 exports.authorize = authorize;
+exports.adminOnly = (0, exports.authorize)('admin');
+/**
+ * Middleware to optionally attach user to request if JWT token is provided.
+ */
+const optionalAuth = async (req, res, next) => {
+    try {
+        let token;
+        if (req.headers.authorization?.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+        }
+        if (token) {
+            try {
+                const decoded = (0, token_util_1.verifyToken)(token);
+                const user = await user_model_1.default.findById(decoded.id);
+                if (user) {
+                    req.user = user;
+                }
+            }
+            catch (err) {
+                // ignore invalid token for optional auth
+            }
+        }
+        next();
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.optionalAuth = optionalAuth;

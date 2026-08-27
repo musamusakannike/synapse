@@ -98,8 +98,9 @@ function AdminBlogContent() {
       setEditPost(null);
       resetForm();
       fetchPosts();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || e.response?.data?.errors?.[0] || 'Failed to save post');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string; errors?: string[] } } };
+      toast.error(err.response?.data?.message || err.response?.data?.errors?.[0] || 'Failed to save post');
     } finally {
       setSaving(false);
     }
@@ -111,8 +112,9 @@ function AdminBlogContent() {
       await blogApi.remove(deleteTarget._id);
       toast.success('Post deleted');
       fetchPosts();
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to delete post');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to delete post');
     }
   };
 
@@ -133,39 +135,39 @@ function AdminBlogContent() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6">
       <AdminPageHeader
         title="Manage blog"
         description="Write, publish, and manage articles for the public blog"
-        action={<Button onClick={() => { resetForm(); setEditPost(null); setShowModal(true); }}><Plus className="w-4 h-4" /> New post</Button>}
+        action={<Button onClick={() => { resetForm(); setEditPost(null); setShowModal(true); }}><Plus className="size-4" /> New post</Button>}
       />
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-300)]" />
-        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search posts…" className="w-full max-w-md pl-10 pr-4 py-2.5 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none" />
+        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--ink-300)]" />
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search posts…" className="w-full max-w-md rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] py-2.5 pr-4 pl-10 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]" />
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>
       ) : posts.length === 0 ? (
-        <EmptyState icon={<Newspaper className="w-12 h-12" />} title="No blog posts yet" description="Create your first article to get the blog going." />
+        <EmptyState icon={<Newspaper className="size-12" />} title="No blog posts yet" description="Create your first article to get the blog going." />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
-            <Card key={post._id} className="p-5 flex flex-col">
-              <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--brand-gold-100)] flex items-center justify-center text-[var(--brand-gold-600)]"><Newspaper className="w-5 h-5" /></div>
+            <Card key={post._id} className="flex flex-col p-5">
+              <div className="mb-3 flex items-start justify-between">
+                <div className="flex size-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]"><Newspaper className="size-5" /></div>
                 <Badge tone={post.isPublished ? 'success' : 'warning'}>{post.isPublished ? 'Published' : 'Draft'}</Badge>
               </div>
-              <h3 className="font-semibold text-[var(--ink-900)] mb-1 line-clamp-2">{post.title}</h3>
-              <p className="text-sm text-[var(--text-muted)] line-clamp-2 mb-3">{post.excerpt}</p>
-              <div className="flex items-center gap-2 mb-4">
+              <h3 className="mb-1 line-clamp-2 font-semibold text-[var(--ink-900)]">{post.title}</h3>
+              <p className="mb-3 line-clamp-2 text-sm text-[var(--text-muted)]">{post.excerpt}</p>
+              <div className="mb-4 flex items-center gap-2">
                 <Badge tone="gold">{post.category}</Badge>
-                <span className="text-xs text-[var(--ink-300)] inline-flex items-center gap-1"><Eye className="w-3 h-3" />{post.views}</span>
+                <span className="inline-flex items-center gap-1 text-xs text-[var(--ink-300)]"><Eye className="size-3" />{post.views}</span>
               </div>
-              <div className="flex items-center gap-2 mt-auto pt-4 border-t border-[var(--line)]">
-                <Button variant="secondary" size="sm" fullWidth onClick={() => openEdit(post)}><Pencil className="w-3.5 h-3.5" /> Edit</Button>
-                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(post)}><Trash2 className="w-3.5 h-3.5 text-[var(--danger)]" /></Button>
+              <div className="mt-auto flex items-center gap-2 border-t border-[var(--line)] pt-4">
+                <Button variant="secondary" size="sm" fullWidth onClick={() => openEdit(post)}><Pencil className="size-3.5" /> Edit</Button>
+                <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(post)}><Trash2 className="size-3.5 text-[var(--danger)]" /></Button>
               </div>
             </Card>
           ))}
@@ -175,7 +177,7 @@ function AdminBlogContent() {
       {pages > 1 && (
         <div className="flex items-center justify-center gap-2">
           {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
-            <button key={p} onClick={() => setPage(p)} className={`w-9 h-9 rounded-[var(--radius-md)] text-sm font-semibold border ${p === page ? 'bg-[var(--ink-900)] text-white border-[var(--ink-900)]' : 'bg-[var(--surface-card)] border-[var(--line)] text-[var(--ink-700)]'}`}>{p}</button>
+            <button key={p} onClick={() => setPage(p)} className={`size-9 rounded-[var(--radius-md)] border text-sm font-semibold ${p === page ? 'border-[var(--ink-900)] bg-[var(--ink-900)] text-white' : 'border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)]'}`}>{p}</button>
           ))}
         </div>
       )}
@@ -203,7 +205,7 @@ function AdminBlogContent() {
               </button>
             </div>
             {showPreview ? (
-              <div className="blog-prose min-h-[260px] px-3.5 py-3 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)]">
+              <div className="blog-prose min-h-[260px] rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-3">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content || '*Nothing to preview yet.*'}</ReactMarkdown>
               </div>
             ) : (
@@ -212,25 +214,25 @@ function AdminBlogContent() {
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                 rows={14}
                 placeholder="Write in Markdown — headings, **bold**, lists, ```code```, images, links…"
-                className="w-full px-3.5 py-3 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-y font-[var(--font-mono)]"
+                className="w-full resize-y rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-3 text-sm font-[var(--font-mono)] text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
               />
             )}
           </div>
 
           <details className="rounded-[var(--radius-md)] border border-[var(--line)] p-4">
-            <summary className="text-sm font-semibold text-[var(--ink-900)] cursor-pointer">SEO settings (optional)</summary>
-            <div className="space-y-3 mt-3">
+            <summary className="cursor-pointer text-sm font-semibold text-[var(--ink-900)]">SEO settings (optional)</summary>
+            <div className="mt-3 space-y-3">
               <Input label="SEO title" value={form.seoTitle} onChange={(e) => setForm({ ...form, seoTitle: e.target.value })} placeholder="Overrides the page <title> — defaults to the post title" />
               <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-semibold text-[var(--ink-900)]">SEO description</span>
-                <textarea value={form.seoDescription} onChange={(e) => setForm({ ...form, seoDescription: e.target.value })} rows={2} placeholder="Overrides the meta description — defaults to the excerpt" className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+                <textarea value={form.seoDescription} onChange={(e) => setForm({ ...form, seoDescription: e.target.value })} rows={2} placeholder="Overrides the meta description — defaults to the excerpt" className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]" />
               </div>
             </div>
           </details>
 
           <Checkbox checked={form.isPublished} onChange={(v) => setForm({ ...form, isPublished: v })} label="Publish post (visible on the public blog)" />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
             <Button variant="ghost" onClick={() => { setShowModal(false); setEditPost(null); resetForm(); }}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving…' : editPost ? 'Save changes' : 'Create post'}</Button>
           </div>

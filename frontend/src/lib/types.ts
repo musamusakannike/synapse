@@ -8,6 +8,7 @@ export interface IUserSettings {
 
 export interface User {
   id: string;
+  _id?: string;
   email: string;
   name: string;
   firstName: string;
@@ -17,6 +18,8 @@ export interface User {
   avatar?: string;
   level: 'beginner' | 'intermediate' | 'advanced';
   role: 'user' | 'admin';
+  totalXp?: number;
+  currentStreak?: number;
   firebaseUid?: string;
   settings?: IUserSettings;
 }
@@ -42,6 +45,25 @@ export interface TopicExercise {
   solution?: string;
 }
 
+export interface Question {
+  _id?: string;
+  type: 'mcq' | 'fill_in_blank' | 'code_execution';
+  question: string;
+  options?: string[];
+  correctAnswer: string;
+  explanation?: string;
+  starterCode?: string;
+  expectedOutput?: string;
+  language?: string;
+  xp: number;
+}
+
+export interface Exercise {
+  title?: string;
+  instructions?: string;
+  questions: Question[];
+}
+
 export interface TopicContent {
   type: TopicContentType;
   content: string;
@@ -57,16 +79,43 @@ export type TopicFlow = 'flat' | 'guided';
 export interface Topic {
   _id: string;
   course: string;
+  chapter?: string;
   title: string;
   description: string;
   contents: TopicContent[];
+  exercise?: Exercise;
+  xp?: number;
   order: number;
   isPublished: boolean;
-  defaultFlow: TopicFlow;
+  defaultFlow?: TopicFlow;
   flashcardCount?: number;
   mcqCount?: number;
+  isUnlocked?: boolean;
+  isCompleted?: boolean;
+  inProgress?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Chapter {
+  _id: string;
+  course: string;
+  title: string;
+  description: string;
+  order: number;
+  exercise?: Exercise;
+  status?: 'completed' | 'inprogress' | 'locked';
+  progressPercent?: number;
+  topics?: Topic[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CourseAuthor {
+  name: string;
+  avatar: string;
+  role?: string;
+  bio?: string;
 }
 
 export interface Course {
@@ -77,13 +126,17 @@ export interface Course {
   banner: string;
   category: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
+  authors?: CourseAuthor[];
   whatYouWillLearn: string[];
+  prerequisites?: string[];
   isPublished: boolean;
   order: number;
   isFree: boolean;
-  /** Price in kobo (NGN smallest unit). Ignored when isFree is true. */
   price: number;
   topicCount?: number;
+  registeredUsersCount?: number;
+  lessonCount?: number;
+  totalObtainableXp?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -130,25 +183,21 @@ export interface UserProgress {
   _id: string;
   user: string;
   course: Course | string;
-  topic: Topic | string;
-  flashcardsStudied: number;
-  flashcardsTotal: number;
-  mcqsAttempted: number;
-  mcqsCorrect: number;
-  lastStudiedAt: string;
+  topic?: Topic | string;
+  lastChapter?: Chapter | string;
+  lastTopic?: Topic | string;
+  lastContentIndex?: number;
+  completedTopics?: string[];
+  completedChapters?: string[];
+  passedExercises?: string[];
+  percentCompleted?: number;
   isCompleted: boolean;
+  flashcardsStudied?: number;
+  flashcardsTotal?: number;
+  mcqsAttempted?: number;
+  mcqsCorrect?: number;
   accuracy?: number;
-}
-
-export interface Notification {
-  _id: string;
-  user: string | null;
-  type: 'info' | 'success' | 'warning' | 'announcement';
-  title: string;
-  message: string;
-  isRead: boolean;
-  actionUrl?: string;
-  createdAt: string;
+  lastStudiedAt: string;
 }
 
 export interface DashboardData {
@@ -173,6 +222,34 @@ export interface ProgressStats {
     progress: number;
     met: boolean;
   };
+}
+
+export interface ResumptionData {
+  resumptionCards: UserProgress[];
+  totalUnfinished: number;
+}
+
+export interface LeaderboardUser {
+  _id: string;
+  periodXp: number;
+  totalXp: number;
+  name: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  level?: string;
+  currentStreak?: number;
+}
+
+export interface Notification {
+  _id: string;
+  user: string | null;
+  type: 'info' | 'success' | 'warning' | 'announcement';
+  title: string;
+  message: string;
+  isRead: boolean;
+  actionUrl?: string;
+  createdAt: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -255,8 +332,8 @@ export interface AiHistoryItem {
   type: 'summarize' | 'quiz' | 'flashcards' | 'qa' | 'course_quiz' | 'topic_quiz';
   title: string;
   prompt: string;
-  metadata?: Record<string, any>;
-  result: AiQuizQuestion[] | string | any;
+  metadata?: Record<string, unknown>;
+  result: AiQuizQuestion[] | string | unknown;
   createdAt: string;
   updatedAt: string;
 }

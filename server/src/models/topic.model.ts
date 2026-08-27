@@ -1,77 +1,31 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { IExercise, ExerciseSchema } from './chapter.model';
 
 export type TopicContentType = 'text' | 'latex' | 'youtube' | 'image' | 'video' | 'audio' | 'code' | 'quiz' | 'exercise' | 'group';
-
-export interface ITopicQuizOption {
-  text: string;
-  isCorrect: boolean;
-}
-
-export interface ITopicQuiz {
-  question: string;
-  options: ITopicQuizOption[];
-  explanation?: string;
-}
-
-export interface ITopicExercise {
-  instructions: string;
-  starterCode: string;
-  language: string;
-  expectedOutput?: string;
-  solution?: string;
-}
 
 export interface ITopicContent {
   type: TopicContentType;
   content: string;
   language?: string;
   title?: string;
-  quiz?: ITopicQuiz;
-  exercise?: ITopicExercise;
-  blocks?: ITopicContent[];
+  quiz?: any;
+  exercise?: any;
+  blocks?: any[];
 }
-
-export type TopicFlow = 'flat' | 'guided';
 
 export interface ITopic extends Document {
   course: mongoose.Types.ObjectId;
+  chapter?: mongoose.Types.ObjectId;
   title: string;
   description: string;
   contents: ITopicContent[];
+  exercise?: IExercise;
+  xp: number;
   order: number;
   isPublished: boolean;
-  defaultFlow: TopicFlow;
   createdAt: Date;
   updatedAt: Date;
 }
-
-const TopicQuizOptionSchema = new Schema<ITopicQuizOption>(
-  {
-    text: { type: String, required: true, trim: true },
-    isCorrect: { type: Boolean, default: false },
-  },
-  { _id: false }
-);
-
-const TopicQuizSchema = new Schema<ITopicQuiz>(
-  {
-    question: { type: String, required: true, trim: true },
-    options: { type: [TopicQuizOptionSchema], default: undefined },
-    explanation: { type: String, default: '', trim: true },
-  },
-  { _id: false }
-);
-
-const TopicExerciseSchema = new Schema<ITopicExercise>(
-  {
-    instructions: { type: String, required: true, trim: true },
-    starterCode: { type: String, default: '' },
-    language: { type: String, default: 'python' },
-    expectedOutput: { type: String, default: '' },
-    solution: { type: String, default: '' },
-  },
-  { _id: false }
-);
 
 const TopicContentSchema = new Schema<ITopicContent>(
   {
@@ -93,11 +47,11 @@ const TopicContentSchema = new Schema<ITopicContent>(
       default: undefined,
     },
     quiz: {
-      type: TopicQuizSchema,
+      type: Schema.Types.Mixed,
       default: undefined,
     },
     exercise: {
-      type: TopicExerciseSchema,
+      type: Schema.Types.Mixed,
       default: undefined,
     },
     blocks: {
@@ -116,6 +70,12 @@ const TopicSchema: Schema = new Schema<ITopic>(
       required: true,
       index: true,
     },
+    chapter: {
+      type: Schema.Types.ObjectId,
+      ref: 'Chapter',
+      required: false,
+      index: true,
+    },
     title: {
       type: String,
       required: true,
@@ -127,38 +87,28 @@ const TopicSchema: Schema = new Schema<ITopic>(
       trim: true,
     },
     contents: [TopicContentSchema],
+    exercise: {
+      type: ExerciseSchema,
+      default: undefined,
+    },
+    xp: {
+      type: Number,
+      default: 50,
+      min: 0,
+    },
     order: {
       type: Number,
       default: 0,
     },
     isPublished: {
       type: Boolean,
-      default: false,
-    },
-    defaultFlow: {
-      type: String,
-      enum: ['flat', 'guided'],
-      default: 'flat',
+      default: true,
     },
   },
   {
     timestamps: true,
   }
 );
-
-TopicSchema.virtual('flashcardCount', {
-  ref: 'Flashcard',
-  localField: '_id',
-  foreignField: 'topic',
-  count: true,
-});
-
-TopicSchema.virtual('mcqCount', {
-  ref: 'MCQ',
-  localField: '_id',
-  foreignField: 'topic',
-  count: true,
-});
 
 TopicSchema.set('toJSON', { virtuals: true });
 TopicSchema.set('toObject', { virtuals: true });

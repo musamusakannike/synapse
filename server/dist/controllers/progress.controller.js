@@ -3,14 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCourseProgress = exports.getTopicProgress = exports.updateContentPosition = exports.submitMcqSession = exports.submitFlashcardSession = exports.getNeedsImprovement = exports.getContinueStudying = exports.getProgress = exports.getDashboard = void 0;
-const course_model_1 = __importDefault(require("../models/course.model"));
-const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
+exports.getCourseProgress = exports.getTopicProgress = exports.updateContentPosition = exports.submitMcqSession = exports.submitFlashcardSession = exports.getNeedsImprovement = exports.getContinueStudying = exports.getProgress = exports.getDashboard = exports.savePosition = exports.submitExercise = exports.completeTopic = exports.getDashboardResumption = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const studySession_model_1 = __importDefault(require("../models/studySession.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const userProgress_model_1 = __importDefault(require("../models/userProgress.model"));
 const streak_service_1 = require("../services/streak.service");
-const notification_service_1 = require("../services/notification.service");
 const user_model_1 = __importDefault(require("../models/user.model"));
 /**
  * Advances the user's streak for today and sends any achievement it earned.
@@ -27,14 +25,198 @@ async function awardStreakAchievements(userId) {
         console.error('Failed to record study streak:', error);
     }
 }
+const xpLog_model_1 = __importDefault(require("../models/xpLog.model"));
+const getDashboardResumption = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const progressList = await userProgress_model_1.default.find({ user: userId, isCompleted: false })
+            .populate({
+            path: 'course',
+            match: { isPublished: true },
+            select: 'title description banner category difficulty authors isPublished',
+        })
+            .populate({ path: 'lastChapter', select: 'title' })
+            .populate({ path: 'lastTopic', select: 'title' })
+            .sort({ lastStudiedAt: -1 });
+        const validProgressList = progressList.filter((p) => {
+            const course = p.course;
+            return course && course._id && course.isPublished !== false;
+        });
+        const totalUnfinished = validProgressList.length;
+        const cards = validProgressList.slice(0, 4);
+        res.status(200).json({
+            success: true,
+            data: {
+                resumptionCards: cards,
+                totalUnfinished,
+            },
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getDashboardResumption = getDashboardResumption;
+const completeTopic = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const { courseId, topicId } = req.body;
+        const topic = await topic_model_1.default.findById(topicId);
+        if (!topic) {
+            res.status(404).json({ success: false, message: 'Topic not found.' });
+            return;
+        }
+        let earnedXp = 0;
+        const existingLog = await xpLog_model_1.default.findOne({ user: userId, sourceType: 'topic', sourceId: topicId });
+        if (!existingLog) {
+            earnedXp = topic.xp || 50;
+            await xpLog_model_1.default.create({
+                user: userId,
+                xp: earnedXp,
+                sourceType: 'topic',
+                sourceId: topicId,
+                course: courseId,
+            });
+            await user_model_1.default.findByIdAndUpdate(userId, { $inc: { totalXp: earnedXp } });
+        }
+        let progress = await userProgress_model_1.default.findOne({ user: userId, course: courseId });
+        if (!progress) {
+            progress = new userProgress_model_1.default({ user: userId, course: courseId, completedTopics: [], completedChapters: [] });
+        }
+        const topicObjId = new mongoose_1.default.Types.ObjectId(topicId);
+        if (!progress.completedTopics.some((id) => id.toString() === topicId)) {
+            progress.completedTopics.push(topicObjId);
+        }
+        progress.lastTopic = topicObjId;
+        if (topic.chapter) {
+            progress.lastChapter = topic.chapter;
+        }
+        progress.lastStudiedAt = new Date();
+        const totalTopicsInCourse = await topic_model_1.default.countDocuments({ course: courseId });
+        if (totalTopicsInCourse > 0) {
+            progress.percentCompleted = Math.min(100, Math.round((progress.completedTopics.length / totalTopicsInCourse) * 100));
+            if (progress.percentCompleted >= 100) {
+                progress.isCompleted = true;
+            }
+        }
+        await progress.save();
+        void awardStreakAchievements(userId);
+        const user = await user_model_1.default.findById(userId).select('totalXp');
+        res.status(200).json({
+            success: true,
+            message: 'Topic completed successfully.',
+            earnedXp,
+            totalXp: user?.totalXp || 0,
+            progress,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.completeTopic = completeTopic;
+const submitExercise = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const { courseId, topicId, chapterId, answers } = req.body;
+        // answers: Array of { questionId: string, questionXp: number, isCorrect: boolean }
+        if (!Array.isArray(answers) || answers.length === 0) {
+            res.status(400).json({ success: false, message: 'Answers array is required.' });
+            return;
+        }
+        let totalEarnedXp = 0;
+        let correctCount = 0;
+        for (const ans of answers) {
+            if (ans.isCorrect) {
+                correctCount++;
+                const questionId = ans.questionId;
+                const qXp = ans.questionXp || 20;
+                const existingLog = await xpLog_model_1.default.findOne({ user: userId, sourceType: 'exercise_question', sourceId: questionId });
+                if (!existingLog) {
+                    totalEarnedXp += qXp;
+                    await xpLog_model_1.default.create({
+                        user: userId,
+                        xp: qXp,
+                        sourceType: 'exercise_question',
+                        sourceId: questionId,
+                        course: courseId,
+                    });
+                }
+            }
+        }
+        if (totalEarnedXp > 0) {
+            await user_model_1.default.findByIdAndUpdate(userId, { $inc: { totalXp: totalEarnedXp } });
+        }
+        const scorePercent = Math.round((correctCount / answers.length) * 100);
+        const isPassed = scorePercent >= 50;
+        let progress = await userProgress_model_1.default.findOne({ user: userId, course: courseId });
+        if (!progress) {
+            progress = new userProgress_model_1.default({ user: userId, course: courseId, completedTopics: [], completedChapters: [], passedExercises: [] });
+        }
+        const exerciseKey = topicId ? `topic_${topicId}` : `chapter_${chapterId}`;
+        if (isPassed && !progress.passedExercises.includes(exerciseKey)) {
+            progress.passedExercises.push(exerciseKey);
+        }
+        if (isPassed && topicId) {
+            const topicObjId = new mongoose_1.default.Types.ObjectId(topicId);
+            if (!progress.completedTopics.some((id) => id.toString() === topicId)) {
+                progress.completedTopics.push(topicObjId);
+            }
+        }
+        progress.lastStudiedAt = new Date();
+        await progress.save();
+        void awardStreakAchievements(userId);
+        const user = await user_model_1.default.findById(userId).select('totalXp');
+        res.status(200).json({
+            success: true,
+            scorePercent,
+            isPassed,
+            earnedXp: totalEarnedXp,
+            totalXp: user?.totalXp || 0,
+            progress,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.submitExercise = submitExercise;
+const savePosition = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const { courseId, chapterId, topicId, contentIndex } = req.body;
+        const progress = await userProgress_model_1.default.findOneAndUpdate({ user: userId, course: courseId }, {
+            $set: {
+                lastChapter: chapterId || null,
+                lastTopic: topicId || null,
+                lastContentIndex: contentIndex || 0,
+                lastStudiedAt: new Date(),
+            },
+        }, { new: true, upsert: true });
+        res.status(200).json({ success: true, data: progress });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.savePosition = savePosition;
 const getDashboard = async (req, res, next) => {
     try {
         const userId = req.user._id;
         const progress = await userProgress_model_1.default.find({ user: userId })
-            .populate({ path: 'course', select: 'title description banner category difficulty' })
+            .populate({
+            path: 'course',
+            match: { isPublished: true },
+            select: 'title description banner category difficulty isPublished',
+        })
             .populate({ path: 'topic', select: 'title description' })
-            .sort({ lastStudiedAt: -1 })
-            .limit(4);
+            .sort({ lastStudiedAt: -1 });
+        const validProgress = progress
+            .filter((p) => {
+            const course = p.course;
+            return course && course._id && course.isPublished !== false;
+        })
+            .slice(0, 4);
         const totalSessions = await studySession_model_1.default.countDocuments({ user: userId });
         const totalFlashcards = await studySession_model_1.default.aggregate([
             { $match: { user: userId._id } },
@@ -50,7 +232,7 @@ const getDashboard = async (req, res, next) => {
         res.status(200).json({
             success: true,
             data: {
-                continueStudying: progress,
+                continueStudying: validProgress,
                 quickStats: {
                     totalSessions,
                     totalFlashcards: totalFlashcards[0]?.total || 0,
@@ -117,10 +299,18 @@ const getContinueStudying = async (req, res, next) => {
             isCompleted: false,
             lastStudiedAt: { $ne: null },
         })
-            .populate({ path: 'course', select: 'title description banner category difficulty' })
+            .populate({
+            path: 'course',
+            match: { isPublished: true },
+            select: 'title description banner category difficulty isPublished',
+        })
             .populate({ path: 'topic', select: 'title description' })
             .sort({ lastStudiedAt: -1 });
-        res.status(200).json({ success: true, data: progress });
+        const validProgress = progress.filter((p) => {
+            const course = p.course;
+            return course && course._id && course.isPublished !== false;
+        });
+        res.status(200).json({ success: true, data: validProgress });
     }
     catch (error) {
         next(error);
@@ -129,24 +319,7 @@ const getContinueStudying = async (req, res, next) => {
 exports.getContinueStudying = getContinueStudying;
 const getNeedsImprovement = async (req, res, next) => {
     try {
-        const userId = req.user._id;
-        const progress = await userProgress_model_1.default.find({
-            user: userId,
-            mcqsAttempted: { $gt: 0 },
-        })
-            .populate({ path: 'course', select: 'title description banner category difficulty' })
-            .populate({ path: 'topic', select: 'title description' })
-            .lean();
-        const needsImprovement = progress
-            .filter((p) => {
-            const accuracy = (p.mcqsCorrect / p.mcqsAttempted) * 100;
-            return accuracy < 60;
-        })
-            .map((p) => ({
-            ...p,
-            accuracy: Math.round((p.mcqsCorrect / p.mcqsAttempted) * 100),
-        }));
-        res.status(200).json({ success: true, data: needsImprovement });
+        res.status(200).json({ success: true, data: [] });
     }
     catch (error) {
         next(error);
@@ -155,44 +328,7 @@ const getNeedsImprovement = async (req, res, next) => {
 exports.getNeedsImprovement = getNeedsImprovement;
 const submitFlashcardSession = async (req, res, next) => {
     try {
-        const userId = req.user._id;
-        const { course, topic, flashcardsStudied, duration } = req.body;
-        await studySession_model_1.default.create({
-            user: userId,
-            course,
-            topic,
-            type: 'flashcard',
-            flashcardsStudied,
-            duration,
-        });
-        const flashcardCount = await flashcard_model_1.default.countDocuments({ topic });
-        let progress = await userProgress_model_1.default.findOne({ user: userId, course, topic });
-        if (!progress) {
-            progress = await userProgress_model_1.default.create({
-                user: userId,
-                course,
-                topic,
-                flashcardsStudied,
-                flashcardsTotal: flashcardCount,
-                lastStudiedAt: new Date(),
-            });
-        }
-        else {
-            progress.flashcardsStudied += flashcardsStudied;
-            progress.flashcardsTotal = flashcardCount;
-            progress.lastStudiedAt = new Date();
-            if (progress.flashcardsStudied >= flashcardCount && flashcardCount > 0) {
-                const wasCompleted = progress.isCompleted;
-                progress.isCompleted = true;
-                if (!wasCompleted) {
-                    const courseDoc = await course_model_1.default.findById(course).select('title');
-                    void (0, notification_service_1.sendAchievement)(userId, 'Topic Complete', `You have studied every flashcard in a topic of ${courseDoc?.title || 'this course'}. Try the practice questions next.`, `achievement:topic-complete:${userId}:${topic}`, `/course/${course}`);
-                }
-            }
-            await progress.save();
-        }
-        void awardStreakAchievements(userId);
-        res.status(200).json({ success: true, message: 'Flashcard session recorded.' });
+        res.status(200).json({ success: true, message: 'Flashcard feature is deprecated.' });
     }
     catch (error) {
         next(error);
@@ -213,31 +349,6 @@ const submitMcqSession = async (req, res, next) => {
             score,
             duration,
         });
-        let progress = await userProgress_model_1.default.findOne({ user: userId, course, topic });
-        if (!progress) {
-            const flashcardCount = await flashcard_model_1.default.countDocuments({ topic });
-            progress = await userProgress_model_1.default.create({
-                user: userId,
-                course,
-                topic,
-                flashcardsTotal: flashcardCount,
-                mcqsAttempted: mcqAnswered,
-                mcqsCorrect: mcqCorrect,
-                lastStudiedAt: new Date(),
-            });
-        }
-        else {
-            progress.mcqsAttempted += mcqAnswered;
-            progress.mcqsCorrect += mcqCorrect;
-            progress.lastStudiedAt = new Date();
-            await progress.save();
-        }
-        // A perfect run is worth calling out, but only on a set big enough to mean
-        // something — congratulating a 1-for-1 cheapens every other achievement.
-        if (mcqAnswered >= 5 && mcqCorrect === mcqAnswered) {
-            const courseDoc = await course_model_1.default.findById(course).select('title');
-            void (0, notification_service_1.sendAchievement)(userId, 'Perfect Score', `${mcqAnswered}/${mcqAnswered} on ${courseDoc?.title || 'this course'}. Flawless.`, `achievement:perfect:${userId}:${topic}:${mcqAnswered}`, `/course/${course}`);
-        }
         void awardStreakAchievements(userId);
         res.status(200).json({ success: true, message: 'MCQ session recorded.' });
     }

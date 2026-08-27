@@ -25,18 +25,18 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-[var(--radius-sm)] bg-[var(--surface-sunken)] hover:bg-[var(--line)] text-[var(--ink-700)] transition-colors cursor-pointer"
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--radius-sm)] bg-[var(--surface-sunken)] px-2.5 py-1 text-xs font-semibold text-[var(--ink-700)] transition-colors hover:bg-[var(--line)]"
       title="Copy code to clipboard"
       type="button"
     >
       {copied ? (
         <>
-          <Check className="w-3.5 h-3.5 text-[var(--success)]" />
+          <Check className="size-3.5 text-[var(--success)]" />
           <span className="text-[var(--success)]">Copied</span>
         </>
       ) : (
         <>
-          <Copy className="w-3.5 h-3.5" />
+          <Copy className="size-3.5" />
           <span>Copy</span>
         </>
       )}
@@ -48,18 +48,18 @@ export default function InfoStepBlock({ content, index, topicTitle }: { content:
   return (
     <div className="space-y-3">
       {content.type === 'text' && (
-        <div className="whitespace-pre-wrap leading-[var(--leading-relaxed)] text-[var(--ink-900)]">{content.content}</div>
+        <div className="leading-[var(--leading-relaxed)] whitespace-pre-wrap text-[var(--ink-900)]">{content.content}</div>
       )}
 
       {content.type === 'latex' && (
-        <div className="bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-4 text-center font-mono text-lg overflow-x-auto text-[var(--ink-900)]">
+        <div className="overflow-x-auto rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4 text-center font-mono text-lg text-[var(--ink-900)]">
           {content.content}
         </div>
       )}
 
       {content.type === 'code' && (
-        <div className="rounded-[var(--radius-md)] overflow-hidden border border-[var(--line)]">
-          <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--surface-sunken)] border-b border-[var(--line)] text-xs font-mono text-[var(--ink-500)]">
+        <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--line)]">
+          <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-1.5 font-mono text-xs text-[var(--ink-500)]">
             <span>{content.language || 'code'}</span>
             <CopyButton text={content.content} />
           </div>
@@ -70,9 +70,9 @@ export default function InfoStepBlock({ content, index, topicTitle }: { content:
       )}
 
       {content.type === 'group' && (
-        <div className="space-y-4 p-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+        <div className="space-y-4 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] p-4 shadow-xs">
           {content.content && (
-            <h3 className="text-base font-bold text-[var(--ink-900)] border-b border-[var(--line)] pb-2">{content.content}</h3>
+            <h3 className="border-b border-[var(--line)] pb-2 text-base font-bold text-[var(--ink-900)]">{content.content}</h3>
           )}
           <div className="space-y-4">
             {(content.blocks || []).map((subBlock, bIdx) => (
@@ -84,17 +84,17 @@ export default function InfoStepBlock({ content, index, topicTitle }: { content:
 
       {content.type === 'youtube' &&
         (getYouTubeId(content.content) ? (
-          <div className="relative w-full aspect-video rounded-[var(--radius-md)] overflow-hidden">
+          <div className="relative aspect-video w-full overflow-hidden rounded-[var(--radius-md)]">
             <iframe
               src={`https://www.youtube.com/embed/${getYouTubeId(content.content)}`}
               title={`Video content ${index + 1}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="w-full h-full"
+              className="size-full"
             />
           </div>
         ) : (
-          <a href={content.content} target="_blank" rel="noopener noreferrer" className="text-[var(--brand-gold-600)] hover:opacity-80 text-sm break-all">
+          <a href={content.content} target="_blank" rel="noopener noreferrer" className="text-sm break-all text-[var(--brand-gold-600)] hover:opacity-80">
             {content.content}
           </a>
         ))}
@@ -102,7 +102,7 @@ export default function InfoStepBlock({ content, index, topicTitle }: { content:
       {content.type === 'image' && (
         <a href={content.content} target="_blank" rel="noopener noreferrer" className="block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={content.content} alt={`${topicTitle} illustration ${index + 1}`} loading="lazy" className="w-full max-h-[32rem] object-contain rounded-[var(--radius-md)] bg-[var(--surface-sunken)]" />
+          <img src={content.content} alt={`${topicTitle} illustration ${index + 1}`} loading="lazy" className="max-h-[32rem] w-full rounded-[var(--radius-md)] bg-[var(--surface-sunken)] object-contain" />
         </a>
       )}
 

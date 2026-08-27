@@ -32,24 +32,24 @@ function SortableTopicRow({ topic, index, onEdit, onDelete }: { topic: Topic; in
     <div ref={setNodeRef} style={style}>
       <Card className="p-4">
         <div className="flex items-center gap-3">
-          <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-[var(--ink-300)] hover:text-[var(--ink-900)] touch-none">
-            <GripVertical className="w-5 h-5" />
+          <button {...attributes} {...listeners} className="cursor-grab touch-none text-[var(--ink-300)] hover:text-[var(--ink-900)] active:cursor-grabbing">
+            <GripVertical className="size-5" />
           </button>
-          <span className="w-8 h-8 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-sm font-semibold flex items-center justify-center shrink-0">{index + 1}</span>
-          <Link href={`/dashboard/admin/courses/${topic.course}/topics/${topic._id}`} className="flex-1 min-w-0 group">
-            <h3 className="text-sm font-medium text-[var(--ink-900)] group-hover:text-[var(--brand-gold-600)] transition-colors">{topic.title}</h3>
-            {topic.description && <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-1">{topic.description}</p>}
-            <div className="flex items-center gap-3 mt-2 text-xs text-[var(--ink-300)] flex-wrap">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--brand-gold-100)] text-sm font-semibold text-[var(--brand-gold-600)]">{index + 1}</span>
+          <Link href={`/dashboard/admin/courses/${topic.course}/topics/${topic._id}`} className="group min-w-0 flex-1">
+            <h3 className="text-sm font-medium text-[var(--ink-900)] transition-colors group-hover:text-[var(--brand-gold-600)]">{topic.title}</h3>
+            {topic.description && <p className="mt-1 line-clamp-1 text-xs text-[var(--text-muted)]">{topic.description}</p>}
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[var(--ink-300)]">
               {topic.contents?.length > 0 && <span>{topic.contents.length} content blocks</span>}
-              {!!topic.flashcardCount && <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> {topic.flashcardCount}</span>}
-              {!!topic.mcqCount && <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" /> {topic.mcqCount}</span>}
+              {!!topic.flashcardCount && <span className="flex items-center gap-1"><CreditCard className="size-3" /> {topic.flashcardCount}</span>}
+              {!!topic.mcqCount && <span className="flex items-center gap-1"><HelpCircle className="size-3" /> {topic.mcqCount}</span>}
               <Badge tone={topic.isPublished ? 'success' : 'warning'}>{topic.isPublished ? 'Published' : 'Draft'}</Badge>
             </div>
           </Link>
-          <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="sm" onClick={onEdit}><Pencil className="w-3.5 h-3.5" /></Button>
-            <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="w-3.5 h-3.5 text-[var(--danger)]" /></Button>
-            <ChevronRight className="w-5 h-5 text-[var(--ink-300)]" />
+          <div className="flex shrink-0 items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={onEdit}><Pencil className="size-3.5" /></Button>
+            <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="size-3.5 text-[var(--danger)]" /></Button>
+            <ChevronRight className="size-5 text-[var(--ink-300)]" />
           </div>
         </div>
       </Card>
@@ -112,7 +112,7 @@ function AdminCourseDetailContent() {
         await topicApi.update(editingTopic._id, topicForm);
         toast.success('Topic updated');
       } else {
-        await topicApi.create({ ...topicForm, course: id } as any);
+        await topicApi.create({ ...topicForm, course: id } as Partial<Topic>);
         toast.success('Topic created');
       }
       setShowTopicModal(false);
@@ -120,8 +120,9 @@ function AdminCourseDetailContent() {
       setTopicForm({ title: '', description: '', isPublished: false });
       const topicsRes = await topicApi.byCourse(id);
       setTopics(topicsRes.data.data || []);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to save topic');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to save topic');
     } finally {
       setSaving(false);
     }
@@ -134,8 +135,9 @@ function AdminCourseDetailContent() {
       toast.success('Topic deleted');
       const topicsRes = await topicApi.byCourse(id);
       setTopics(topicsRes.data.data || []);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to delete topic');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to delete topic');
     }
   };
 
@@ -148,8 +150,9 @@ function AdminCourseDetailContent() {
       const res = await courseApi.update(id, fd);
       setCourse(res.data.data);
       toast.success(url ? 'Banner updated' : 'Banner removed');
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to update banner');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to update banner');
     } finally {
       setSavingBanner(false);
     }
@@ -158,9 +161,9 @@ function AdminCourseDetailContent() {
   if (isLoading) return <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>;
   if (!course) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <p className="text-[var(--text-muted)]">Course not found.</p>
-        <Link href="/dashboard/admin/courses" className="text-[var(--brand-gold-600)] hover:opacity-80 mt-2 inline-block">Back to courses</Link>
+        <Link href="/dashboard/admin/courses" className="mt-2 inline-block text-[var(--brand-gold-600)] hover:opacity-80">Back to courses</Link>
       </div>
     );
   }
@@ -169,45 +172,45 @@ function AdminCourseDetailContent() {
   const totalMcqs = topics.reduce((s, t) => s + (t.mcqCount || 0), 0);
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl space-y-6">
       <Link href="/dashboard/admin/courses" className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]">
-        <ArrowLeft className="w-4 h-4" /> Back to courses
+        <ArrowLeft className="size-4" /> Back to courses
       </Link>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-[var(--text-muted)]">Course banner</span>
-          {savingBanner && <span className="flex items-center gap-1.5 text-xs text-[var(--ink-300)]"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</span>}
+          {savingBanner && <span className="flex items-center gap-1.5 text-xs text-[var(--ink-300)]"><Loader2 className="size-3.5 animate-spin" /> Saving…</span>}
         </div>
         <MediaUploader kind="image" value={banner} onChange={handleBannerChange} />
       </div>
 
       <div>
-        <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
           <Badge tone="neutral">{course.category}</Badge>
           <Badge tone="gold">{course.difficulty}</Badge>
           <Badge tone={course.isPublished ? 'success' : 'warning'}>{course.isPublished ? 'Published' : 'Draft'}</Badge>
         </div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-3">{course.title}</h1>
+        <h1 className="mb-3 text-2xl font-bold text-[var(--ink-900)]">{course.title}</h1>
         <p className="text-[var(--text-muted)]">{course.longDescription || course.description}</p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-6 py-4 border-y border-[var(--line)]">
-        <div className="flex items-center gap-2 text-[var(--ink-900)]"><BookOpen className="w-5 h-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{course.topicCount || topics.length} topics</span></div>
-        <div className="flex items-center gap-2 text-[var(--ink-900)]"><CreditCard className="w-5 h-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{totalFlashcards} flashcards</span></div>
-        <div className="flex items-center gap-2 text-[var(--ink-900)]"><HelpCircle className="w-5 h-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{totalMcqs} MCQs</span></div>
+      <div className="flex flex-wrap items-center gap-6 border-y border-[var(--line)] py-4">
+        <div className="flex items-center gap-2 text-[var(--ink-900)]"><BookOpen className="size-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{course.topicCount || topics.length} topics</span></div>
+        <div className="flex items-center gap-2 text-[var(--ink-900)]"><CreditCard className="size-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{totalFlashcards} flashcards</span></div>
+        <div className="flex items-center gap-2 text-[var(--ink-900)]"><HelpCircle className="size-5 text-[var(--brand-gold-600)]" /><span className="text-sm">{totalMcqs} MCQs</span></div>
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[var(--ink-900)]">Topics</h2>
           <Button size="sm" onClick={() => { setEditingTopic(null); setTopicForm({ title: '', description: '', isPublished: false }); setShowTopicModal(true); }}>
-            <Plus className="w-4 h-4" /> Add topic
+            <Plus className="size-4" /> Add topic
           </Button>
         </div>
 
         {topics.length === 0 ? (
-          <EmptyState icon={<BookOpen className="w-12 h-12" />} title="No topics yet" description="Add your first topic to start building course content." />
+          <EmptyState icon={<BookOpen className="size-12" />} title="No topics yet" description="Add your first topic to start building course content." />
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={topics.map((t) => t._id)} strategy={verticalListSortingStrategy}>
@@ -232,10 +235,10 @@ function AdminCourseDetailContent() {
           <Input label="Title" value={topicForm.title} onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })} placeholder="e.g. Introduction to variables" />
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Description</span>
-            <textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} rows={3} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]" />
           </div>
           <Checkbox checked={topicForm.isPublished} onChange={(v) => setTopicForm({ ...topicForm, isPublished: v })} label="Publish topic" />
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
             <Button variant="ghost" onClick={() => { setShowTopicModal(false); setEditingTopic(null); }}>Cancel</Button>
             <Button onClick={handleSaveTopic} disabled={saving}>{saving ? 'Saving…' : editingTopic ? 'Save changes' : 'Add topic'}</Button>
           </div>

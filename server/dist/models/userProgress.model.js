@@ -39,6 +39,7 @@ const UserProgressSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
+        index: true,
     },
     course: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -46,42 +47,49 @@ const UserProgressSchema = new mongoose_1.Schema({
         required: true,
         index: true,
     },
-    topic: {
+    lastChapter: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Topic',
-        required: true,
-        index: true,
-    },
-    flashcardsStudied: {
-        type: Number,
-        default: 0,
-    },
-    flashcardsTotal: {
-        type: Number,
-        default: 0,
-    },
-    mcqsAttempted: {
-        type: Number,
-        default: 0,
-    },
-    mcqsCorrect: {
-        type: Number,
-        default: 0,
-    },
-    lastStudiedAt: {
-        type: Date,
+        ref: 'Chapter',
         default: null,
     },
-    isCompleted: {
-        type: Boolean,
-        default: false,
+    lastTopic: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Topic',
+        default: null,
     },
     lastContentIndex: {
         type: Number,
         default: 0,
     },
+    completedTopics: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Topic',
+        },
+    ],
+    completedChapters: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'Chapter',
+        },
+    ],
+    passedExercises: [{ type: String }],
+    percentCompleted: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 100,
+    },
+    isCompleted: {
+        type: Boolean,
+        default: false,
+    },
+    lastStudiedAt: {
+        type: Date,
+        default: Date.now,
+    },
 }, {
     timestamps: true,
 });
-UserProgressSchema.index({ user: 1, course: 1, topic: 1 }, { unique: true });
+UserProgressSchema.index({ user: 1, course: 1 }, { unique: true });
 exports.default = mongoose_1.default.model('UserProgress', UserProgressSchema);

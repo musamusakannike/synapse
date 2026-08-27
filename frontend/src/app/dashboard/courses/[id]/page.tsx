@@ -2,74 +2,168 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { Check, BookOpen, ArrowLeft, CreditCard, HelpCircle, ChevronRight, Lock, Sparkles } from 'lucide-react';
-import { courseApi, topicApi, paymentApi } from '@/lib/api';
-import { Course, Topic, PaymentStatus } from '@/lib/types';
-import { formatKobo } from '@/lib/money';
-import { useProgressStore } from '@/store/progress.store';
-import Card from '@/components/ui/Card';
+import { useParams } from 'next/navigation';
+import {
+  BookOpen,
+  ArrowLeft,
+  Share2,
+  Users,
+  Zap,
+  CheckCircle2,
+  Lock,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  Check,
+  ArrowRight,
+} from 'lucide-react';
+import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
+import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import EmptyState from '@/components/ui/EmptyState';
+import ExerciseModal from '@/components/courses/ExerciseModal';
 
 export default function CourseDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
+
   const [course, setCourse] = useState<Course | null>(null);
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [courseProgress, setCourseProgress] = useState<{ totalTopics: number; completedTopics: number; percentComplete: number } | null>(null);
-  const { fetchCourseProgress } = useProgressStore();
+  const [copiedToast, setCopiedToast] = useState(false);
+
+  // Accordion toggle states
+  const [accordionState, setAccordionState] = useState({
+    learn: false,
+    prerequisites: false,
+    description: false,
+  });
+
+  // Collapsed chapter dropdown states
+  const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
+  const [expandedAuthors, setExpandedAuthors] = useState(false);
+
+  // Topic Reader Modal State
+  const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
+  const [readingModalOpen, setReadingModalOpen] = useState(false);
+
+  // Exercise Modal State
+  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    if (!id) return;
+
     (async () => {
       try {
-        const [courseRes, topicsRes, paymentRes] = await Promise.all([
+        const [courseRes, chaptersRes, paymentRes] = await Promise.all([
           courseApi.get(id),
-          topicApi.byCourse(id),
-          paymentApi.me(),
+          chapterApi.byCourse(id),
+          paymentApi.me().catch(() => ({ data: { data: null } })),
         ]);
+
+        if (!active) return;
         setCourse(courseRes.data.data);
-        setTopics(topicsRes.data.data || []);
+        const fetchedChapters: Chapter[] = chaptersRes.data.data || [];
+        setChapters(fetchedChapters);
         setPaymentStatus(paymentRes.data.data);
-        fetchCourseProgress(id).then(setCourseProgress);
+
+        // Default expand chapter 1
+        if (fetchedChapters.length > 0) {
+          setOpenChapters((prev) => ({ ...prev, [fetchedChapters[0]._id]: true }));
+        }
       } catch (e) {
-        console.error(e);
+        console.error('Failed to load course details:', e);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     })();
-  }, [id, fetchCourseProgress]);
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const fetchCourseData = async () => {
+    try {
+      const [courseRes, chaptersRes, paymentRes] = await Promise.all([
+        courseApi.get(id),
+        chapterApi.byCourse(id),
+        paymentApi.me().catch(() => ({ data: { data: null } })),
+      ]);
+
+      setCourse(courseRes.data.data);
+      const fetchedChapters: Chapter[] = chaptersRes.data.data || [];
+      setChapters(fetchedChapters);
+      setPaymentStatus(paymentRes.data.data);
+    } catch (e) {
+      console.error('Failed to reload course details:', e);
+    }
+  };
 
   const hasAccess =
     !course ||
     course.isFree ||
-    paymentStatus?.subscription.status === 'active' ||
-    !!paymentStatus?.purchasedCourseIds.includes(course._id);
+    paymentStatus?.subscription?.status === 'active' ||
+    !!paymentStatus?.purchasedCourseIds?.includes(course._id);
 
-  const handleBuyCourse = async () => {
-    if (!course) return;
-    setIsPurchasing(true);
-    try {
-      const res = await paymentApi.initializeCoursePurchase(course._id);
-      window.location.href = res.data.data.authorizationUrl;
-    } catch (e) {
-      console.error(e);
-      setIsPurchasing(false);
+  const toggleAccordion = (key: keyof typeof accordionState) => {
+    setAccordionState((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleChapterDropdown = (chapterId: string) => {
+    setOpenChapters((prev) => ({ ...prev, [chapterId]: !prev[chapterId] }));
+  };
+
+  const handleShare = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 3000);
     }
   };
 
-  const handleTopicClick = (e: React.MouseEvent) => {
-    if (hasAccess) return;
-    // Locked topics don't navigate — the purchase/subscribe card above is the call to action.
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleOpenTopic = (chapter: Chapter, topic: Topic) => {
+    if (!hasAccess || !topic.isUnlocked) return;
+    setActiveTopic(topic);
+    setReadingModalOpen(true);
+
+    // Save position
+    progressApi.savePosition({
+      courseId: id,
+      chapterId: chapter._id,
+      topicId: topic._id,
+      contentIndex: 0,
+    });
+  };
+
+  const handleCompleteTopicNoExercise = async () => {
+    if (!activeTopic || !course) return;
+    try {
+      await progressApi.completeTopic({
+        courseId: course._id,
+        topicId: activeTopic._id,
+      });
+      setReadingModalOpen(false);
+      await fetchCourseData();
+    } catch (err) {
+      console.error('Failed to complete topic:', err);
+    }
+  };
+
+  const handleLaunchTopicExercise = () => {
+    if (!activeTopic || !activeTopic.exercise) return;
+    setActiveExercise(activeTopic.exercise);
+    setReadingModalOpen(false);
+    setExerciseModalOpen(true);
+  };
+
+  const handleExercisePassed = async () => {
+    setExerciseModalOpen(false);
+    await fetchCourseData();
   };
 
   if (isLoading) {
@@ -82,147 +176,451 @@ export default function CourseDetailsPage() {
 
   if (!course) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <p className="text-[var(--text-muted)]">Course not found.</p>
-        <Link href="/dashboard/courses" className="text-[var(--brand-gold-600)] hover:opacity-80 mt-2 inline-block">
+        <Link href="/dashboard/courses" className="mt-2 inline-block font-semibold text-[var(--brand-gold-600)] hover:underline">
           Back to courses
         </Link>
       </div>
     );
   }
 
+  const authors = course.authors || [];
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Link href="/dashboard/courses" className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]">
-        <ArrowLeft className="w-4 h-4" /> Back to courses
+    <div className="mx-auto max-w-4xl space-y-8">
+      {/* Toast feedback for copied link */}
+      {copiedToast && (
+        <div className="animate-in fade-in fixed top-6 right-6 z-50 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-xs font-semibold text-white shadow-xl duration-200">
+          <CheckCircle2 className="size-4 text-emerald-400" />
+          <span>Course link copied to clipboard!</span>
+        </div>
+      )}
+
+      {/* Back button */}
+      <Link href="/dashboard/courses" className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--ink-900)]">
+        <ArrowLeft className="size-4" /> Back to courses
       </Link>
 
-      {course.banner ? (
-        <div className="relative w-full aspect-[16/9] bg-[var(--surface-sunken)] rounded-[var(--radius-xl)] overflow-hidden flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={course.banner} alt={course.title} className="w-full h-full object-contain" />
-        </div>
-      ) : (
-        <div className="w-full aspect-[16/9] bg-[var(--brand-gold-100)] rounded-[var(--radius-xl)] flex items-center justify-center">
-          <BookOpen className="w-16 h-16 text-[var(--brand-gold-600)]/50" />
-        </div>
-      )}
-
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <Badge tone="neutral">{course.category}</Badge>
-          <Badge tone="gold">{course.difficulty}</Badge>
-          {!course.isFree && <Badge tone={hasAccess ? 'success' : 'dark'}>{hasAccess ? 'Unlocked' : formatKobo(course.price)}</Badge>}
-        </div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-3">{course.title}</h1>
-        <p className="text-[var(--text-muted)] leading-[var(--leading-relaxed)]">{course.longDescription || course.description}</p>
-      </div>
-
-      {hasAccess && courseProgress && courseProgress.totalTopics > 0 && (
-        <ProgressBar
-          value={courseProgress.percentComplete}
-          tone="success"
-          label={`${courseProgress.completedTopics} of ${courseProgress.totalTopics} topics complete`}
-        />
-      )}
-
-      {!hasAccess && (
-        <Card className="p-5 border border-[var(--brand-gold-100)] bg-[var(--brand-gold-50,var(--surface-sunken))]">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[var(--brand-gold-100)] flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5 text-[var(--brand-gold-600)]" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-[var(--ink-900)]">This is a premium course</p>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                  Buy it once for {formatKobo(course.price)}, or get it (and everything else) with a monthly subscription.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 shrink-0">
-              <Button variant="secondary" size="sm" onClick={() => router.push('/dashboard/subscribe')}>
-                <Sparkles className="w-4 h-4" /> Go all-access
-              </Button>
-              <Button size="sm" onClick={handleBuyCourse} loading={isPurchasing}>
-                Buy for {formatKobo(course.price)}
-              </Button>
-            </div>
+      {/* Hero Section */}
+      <div className="relative space-y-6 overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-xs md:p-8">
+        {/* Banner image if available */}
+        {course.banner && (
+          <div className="mb-4 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={course.banner} alt={course.title} className="size-full object-cover" />
           </div>
-        </Card>
-      )}
+        )}
 
-      <div className="flex flex-wrap items-center gap-6 py-4 border-y border-[var(--line)]">
-        <div className="flex items-center gap-2 text-[var(--ink-900)]">
-          <BookOpen className="w-5 h-5 text-[var(--brand-gold-600)]" />
-          <span className="text-sm">{course.topicCount || topics.length} topics</span>
-        </div>
-        <div className="flex items-center gap-2 text-[var(--ink-900)]">
-          <CreditCard className="w-5 h-5 text-[var(--brand-gold-600)]" />
-          <span className="text-sm">{topics.reduce((s, t) => s + (t.flashcardCount || 0), 0)} flashcards</span>
-        </div>
-        <div className="flex items-center gap-2 text-[var(--ink-900)]">
-          <HelpCircle className="w-5 h-5 text-[var(--brand-gold-600)]" />
-          <span className="text-sm">{topics.reduce((s, t) => s + (t.mcqCount || 0), 0)} MCQs</span>
-        </div>
-      </div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Badge tone="neutral">{course.category}</Badge>
+            <Badge tone="gold">{course.difficulty}</Badge>
+            {!course.isFree && <Badge tone={hasAccess ? 'success' : 'dark'}>{hasAccess ? 'Unlocked' : 'Premium'}</Badge>}
+          </div>
 
-      {course.whatYouWillLearn?.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">What you&apos;ll learn</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {course.whatYouWillLearn.map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 text-[var(--success)]" />
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
+          >
+            <Share2 className="size-4 text-[var(--brand-gold-600)]" />
+            <span>Share Course</span>
+          </button>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-2xl font-[var(--font-display)] font-extrabold text-[var(--ink-900)] md:text-3xl">
+          {course.title}
+        </h1>
+
+        {/* Author(s) Profile */}
+        {authors.length > 0 && (
+          <div className="flex items-center gap-3 border-t border-[var(--line)] pt-4">
+            <div className="flex shrink-0 -space-x-2 overflow-hidden">
+              {authors.slice(0, expandedAuthors ? authors.length : 3).map((author, aIdx) => (
+                <div
+                  key={aIdx}
+                  className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[var(--brand-gold-100)] text-sm font-bold text-[var(--brand-gold-600)]"
+                  title={author.name}
+                >
+                  {author.avatar ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={author.avatar} alt={author.name} className="size-full object-cover" />
+                  ) : (
+                    author.name.charAt(0).toUpperCase()
+                  )}
                 </div>
-                <p className="text-sm text-[var(--text-muted)]">{item}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">Author(s)</p>
+              <p className="truncate text-sm font-bold text-[var(--ink-900)]">
+                {expandedAuthors ? (
+                  authors.map((a) => a.name).join(', ')
+                ) : (
+                  <>
+                    {authors[0].name}
+                    {authors.length > 1 && (
+                      <button
+                        onClick={() => setExpandedAuthors(!expandedAuthors)}
+                        className="ml-2 text-xs font-semibold text-[var(--brand-gold-600)] hover:underline"
+                      >
+                        +{authors.length - 1} more
+                      </button>
+                    )}
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Hero Metadata Stats Row */}
+        <div className="grid grid-cols-3 gap-3 border-t border-[var(--line)] pt-4 text-center">
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <BookOpen className="size-4 text-[var(--brand-gold-600)]" />
+              <span>Lessons</span>
+            </div>
+            <p className="text-lg font-extrabold text-[var(--ink-900)]">{course.lessonCount || 0}</p>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <Users className="size-4 text-[var(--brand-gold-600)]" />
+              <span>Registered</span>
+            </div>
+            <p className="text-lg font-extrabold text-[var(--ink-900)]">{course.registeredUsersCount || 0}</p>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
+            <div className="mb-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-[var(--text-muted)]">
+              <Zap className="size-4 fill-amber-500 text-amber-500" />
+              <span>Total XP</span>
+            </div>
+            <p className="text-lg font-extrabold text-amber-600">+{course.totalObtainableXp || 0}</p>
           </div>
         </div>
-      )}
+      </div>
 
-      <div>
-        <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Course content</h2>
-        {topics.length === 0 ? (
-          <EmptyState icon={<BookOpen className="w-12 h-12" />} title="No topics yet" description="Topics for this course will appear here once published." />
-        ) : (
-          <div className="gap-y-2 flex flex-col">
-            {topics.map((topic, i) => (
-              <Link
-                key={topic._id}
-                href={`/dashboard/courses/${course._id}/topics/${topic._id}`}
-                onClick={handleTopicClick}
-              >
-                <Card className="p-4 hover:shadow-[var(--shadow-sm)] transition-shadow cursor-pointer">
-                  <div className="flex items-center gap-4">
-                    <span className="w-8 h-8 rounded-full bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-sm font-semibold flex items-center justify-center shrink-0">
-                      {i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-[var(--ink-900)]">{topic.title}</h3>
-                      {topic.description && <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-1">{topic.description}</p>}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-[var(--ink-300)]">
-                        {topic.contents?.length > 0 && <span>{topic.contents.length} content blocks</span>}
-                        {!!topic.flashcardCount && (
-                          <span className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> {topic.flashcardCount}</span>
-                        )}
-                        {!!topic.mcqCount && <span className="flex items-center gap-1"><HelpCircle className="w-3 h-3" /> {topic.mcqCount}</span>}
-                      </div>
+      {/* 3 Collapsed Dropdowns (Accordion) */}
+      <div className="space-y-3">
+        {/* What You'll Learn Accordion */}
+        {course.whatYouWillLearn && course.whatYouWillLearn.length > 0 && (
+          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+            <button
+              onClick={() => toggleAccordion('learn')}
+              className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
+            >
+              <span>What you&apos;ll learn</span>
+              {accordionState.learn ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
+            </button>
+            {accordionState.learn && (
+              <div className="grid grid-cols-1 gap-3 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6 md:grid-cols-2">
+                {course.whatYouWillLearn.map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-gold-100)] text-xs font-bold text-[var(--brand-gold-600)]">
+                      ✓
                     </div>
-                    {hasAccess ? (
-                      <ChevronRight className="w-5 h-5 text-[var(--ink-300)] shrink-0" />
-                    ) : (
-                      <Lock className="w-4 h-4 text-[var(--ink-300)] shrink-0" />
-                    )}
+                    <p className="text-sm text-[var(--ink-800)]">{item}</p>
                   </div>
-                </Card>
-              </Link>
-            ))}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Prerequisites Accordion */}
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+          <button
+            onClick={() => toggleAccordion('prerequisites')}
+            className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
+          >
+            <span>Prerequisites</span>
+            {accordionState.prerequisites ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
+          </button>
+          {accordionState.prerequisites && (
+            <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
+              {course.prerequisites && course.prerequisites.length > 0 ? (
+                course.prerequisites.map((prereq, idx) => (
+                  <p key={idx} className="flex items-center gap-2 text-sm text-[var(--ink-800)]">
+                    <span className="size-1.5 rounded-full bg-[var(--brand-gold)]" />
+                    <span>{prereq}</span>
+                  </p>
+                ))
+              ) : (
+                <p className="text-sm text-[var(--text-muted)]">No prior prerequisites required. Perfect for beginners!</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Description Accordion */}
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+          <button
+            onClick={() => toggleAccordion('description')}
+            className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
+          >
+            <span>Description</span>
+            {accordionState.description ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
+          </button>
+          {accordionState.description && (
+            <div className="border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
+              <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">
+                {course.longDescription || course.description}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chapters & Topics List */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
+          Course Structure
+        </h2>
+
+        {chapters.length === 0 ? (
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
+            <BookOpen className="mx-auto mb-2 size-10 text-[var(--ink-300)]" />
+            <p className="text-sm text-[var(--text-muted)]">No chapters published yet for this course.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {chapters.map((chapter, cIdx) => {
+              const isOpen = !!openChapters[chapter._id];
+              const isLocked = chapter.status === 'locked';
+              const isCompleted = chapter.status === 'completed';
+              const isInProgress = chapter.status === 'inprogress';
+
+              return (
+                <div
+                  key={chapter._id}
+                  className={`overflow-hidden rounded-2xl border bg-[var(--surface-card)] shadow-xs transition-all ${
+                    isLocked ? 'border-[var(--line)] opacity-70' : 'border-[var(--line)] hover:border-[var(--brand-gold-300)]'
+                  }`}
+                >
+                  {/* Chapter Header Card */}
+                  <div className="flex flex-col justify-between gap-4 p-5 md:flex-row md:items-center">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
+                          Chapter {cIdx + 1}
+                        </span>
+                        <Badge tone={isCompleted ? 'success' : isLocked ? 'dark' : 'gold'}>
+                          {isCompleted ? 'Completed' : isLocked ? 'Locked' : 'In Progress'}
+                        </Badge>
+                      </div>
+
+                      <h3 className="truncate text-lg font-bold text-[var(--ink-900)]">
+                        {chapter.title}
+                      </h3>
+
+                      {chapter.description && (
+                        <p className="line-clamp-1 text-xs text-[var(--text-muted)]">
+                          {chapter.description}
+                        </p>
+                      )}
+
+                      {/* Progress Bar for In-Progress chapter */}
+                      {isInProgress && (
+                        <div className="max-w-md pt-2">
+                          <ProgressBar value={chapter.progressPercent || 0} label={`${chapter.progressPercent || 0}% Completed`} />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Button & Toggle Dropdown */}
+                    <div className="flex shrink-0 items-center gap-3">
+                      {isLocked ? (
+                        <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-400">
+                          <Lock className="size-3.5" />
+                          <span>Locked</span>
+                        </button>
+                      ) : isCompleted ? (
+                        <button
+                          onClick={() => {
+                            if (chapter.topics && chapter.topics.length > 0) {
+                              handleOpenTopic(chapter, chapter.topics[0]);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
+                        >
+                          <Play className="size-3.5 text-[var(--brand-gold-600)]" />
+                          <span>Retake Chapter</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const firstUnlocked = (chapter.topics || []).find((t) => t.isUnlocked);
+                            if (firstUnlocked) {
+                              handleOpenTopic(chapter, firstUnlocked);
+                            }
+                          }}
+                          className="flex items-center gap-1.5 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
+                        >
+                          <Play className="size-3.5 fill-black" />
+                          <span>Continue Chapter</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => toggleChapterDropdown(chapter._id)}
+                        className="rounded-xl p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]"
+                      >
+                        {isOpen ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Topics List Collapsed Dropdown */}
+                  {isOpen && chapter.topics && chapter.topics.length > 0 && (
+                    <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-sunken)]/40 p-4">
+                      {chapter.topics.map((topic, tIdx) => {
+                        const tUnlocked = !!topic.isUnlocked;
+                        const tCompleted = !!topic.isCompleted;
+
+                        return (
+                          <div
+                            key={topic._id}
+                            onClick={() => tUnlocked && handleOpenTopic(chapter, topic)}
+                            className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
+                              !tUnlocked
+                                ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/50 opacity-60'
+                                : 'cursor-pointer border-[var(--line)] bg-[var(--surface-card)] shadow-xs hover:border-[var(--brand-gold-400)]'
+                            }`}
+                          >
+                            <div className="flex min-w-0 items-center gap-3">
+                              <span
+                                className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                                  tCompleted
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : tUnlocked
+                                    ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]'
+                                    : 'bg-slate-200 text-slate-500'
+                                }`}
+                              >
+                                {tCompleted ? '✓' : tIdx + 1}
+                              </span>
+
+                              <div className="min-w-0">
+                                <h4 className="truncate text-sm font-semibold text-[var(--ink-900)]">
+                                  {topic.title}
+                                </h4>
+                                {topic.description && (
+                                  <p className="truncate text-xs text-[var(--text-muted)]">
+                                    {topic.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-3">
+                              {/* XP Badge */}
+                              <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
+                                <Zap className="size-3.5 fill-amber-500 text-amber-500" />
+                                +{topic.xp || 50} XP
+                              </span>
+
+                              {!tUnlocked ? (
+                                <Lock className="size-4 text-slate-400" />
+                              ) : tCompleted ? (
+                                <CheckCircle2 className="size-4 text-emerald-500" />
+                              ) : (
+                                <span className="text-xs font-bold text-[var(--brand-gold-600)]">Start →</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Topic Reader Modal */}
+      {readingModalOpen && activeTopic && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunken)]/50 p-6">
+              <div>
+                <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
+                  Lesson Content
+                </span>
+                <h3 className="text-lg font-bold text-[var(--ink-900)]">{activeTopic.title}</h3>
+              </div>
+              <button onClick={() => setReadingModalOpen(false)} className="p-2 text-[var(--text-muted)] hover:text-[var(--ink-900)]">
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-6 overflow-y-auto p-6">
+              {activeTopic.contents && activeTopic.contents.length > 0 ? (
+                activeTopic.contents.map((content, cIdx) => (
+                  <div key={cIdx} className="space-y-2 rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]/30 p-4">
+                    {content.title && <h4 className="text-sm font-bold text-[var(--ink-900)]">{content.title}</h4>}
+                    {content.type === 'text' && <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">{content.content}</p>}
+                    {content.type === 'code' && (
+                      <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-slate-100">
+                        <code>{content.content}</code>
+                      </pre>
+                    )}
+                    {content.type === 'youtube' && (
+                      <div className="aspect-video w-full overflow-hidden rounded-xl border border-[var(--line)]">
+                        <iframe className="size-full" src={content.content} title="Video lesson" allowFullScreen />
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-[var(--text-muted)]">Reading content for this topic.</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 p-4">
+              <span className="text-xs font-semibold text-[var(--text-muted)]">
+                Earn +{activeTopic.xp || 50} XP on completion
+              </span>
+
+              {activeTopic.exercise ? (
+                <button
+                  onClick={handleLaunchTopicExercise}
+                  className="flex items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-6 py-2.5 text-xs font-bold text-slate-950 transition-all hover:brightness-105"
+                >
+                  <span>Take Exercise</span>
+                  <ArrowRight className="size-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleCompleteTopicNoExercise}
+                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700"
+                >
+                  <Check className="size-4" />
+                  <span>Complete Topic</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Exercise Runner Modal */}
+      {exerciseModalOpen && activeExercise && (
+        <ExerciseModal
+          open={exerciseModalOpen}
+          onClose={() => setExerciseModalOpen(false)}
+          exercise={activeExercise}
+          courseId={id}
+          topicId={activeTopic?._id}
+          onSuccessPassed={handleExercisePassed}
+        />
+      )}
     </div>
   );
 }

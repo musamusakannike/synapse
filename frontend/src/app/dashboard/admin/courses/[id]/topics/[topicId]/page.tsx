@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CreditCard, HelpCircle, Plus, Pencil, Trash2, Save, FileText, Layers } from 'lucide-react';
+import { ArrowLeft, CreditCard, HelpCircle, Plus, Pencil, Trash2, Save, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { topicApi, flashcardApi, mcqApi } from '@/lib/api';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -82,8 +82,9 @@ function AdminTopicDetailContent() {
       await topicApi.update(topicId, { contents });
       setOriginalContents(contents);
       toast.success('Content saved');
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to save content');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to save content');
     } finally {
       setSavingContent(false);
     }
@@ -105,8 +106,9 @@ function AdminTopicDetailContent() {
       setFlashcardForm({ question: '', answer: '' });
       const res = await flashcardApi.byTopic(topicId);
       setFlashcards(res.data.data || []);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to save flashcard');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to save flashcard');
     } finally {
       setSavingFlashcard(false);
     }
@@ -118,8 +120,9 @@ function AdminTopicDetailContent() {
       await flashcardApi.remove(deletingFlashcard._id);
       toast.success('Flashcard deleted');
       setFlashcards(flashcards.filter((f) => f._id !== deletingFlashcard._id));
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to delete flashcard');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to delete flashcard');
     }
   };
 
@@ -143,8 +146,9 @@ function AdminTopicDetailContent() {
       setMcqForm({ question: '', options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }], explanation: '' });
       const res = await mcqApi.byTopic(topicId);
       setMcqs(res.data.data || []);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to save MCQ');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to save MCQ');
     } finally {
       setSavingMcq(false);
     }
@@ -156,8 +160,9 @@ function AdminTopicDetailContent() {
       await mcqApi.remove(deletingMcq._id);
       toast.success('MCQ deleted');
       setMcqs(mcqs.filter((m) => m._id !== deletingMcq._id));
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to delete MCQ');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to delete MCQ');
     }
   };
 
@@ -175,17 +180,18 @@ function AdminTopicDetailContent() {
       setShowEditTopicModal(false);
       const res = await topicApi.get(topicId);
       setTopic(res.data.data);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Failed to update topic');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to update topic');
     }
   };
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>;
   if (!topic) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <p className="text-[var(--text-muted)]">Topic not found.</p>
-        <Link href={`/dashboard/admin/courses/${courseId}`} className="text-[var(--brand-gold-600)] hover:opacity-80 mt-2 inline-block">Back to course</Link>
+        <Link href={`/dashboard/admin/courses/${courseId}`} className="mt-2 inline-block text-[var(--brand-gold-600)] hover:opacity-80">Back to course</Link>
       </div>
     );
   }
@@ -197,30 +203,30 @@ function AdminTopicDetailContent() {
   ];
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl space-y-6">
       <Link href={`/dashboard/admin/courses/${courseId}`} className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]">
-        <ArrowLeft className="w-4 h-4" /> Back to course
+        <ArrowLeft className="size-4" /> Back to course
       </Link>
 
       <div>
-        <div className="flex items-center gap-3 mb-2">
+        <div className="mb-2 flex items-center gap-3">
           <Badge tone={topic.isPublished ? 'success' : 'warning'}>{topic.isPublished ? 'Published' : 'Draft'}</Badge>
           <Button variant="ghost" size="sm" onClick={() => { setTopicForm({ title: topic.title, description: topic.description || '', isPublished: topic.isPublished, defaultFlow: topic.defaultFlow || 'flat' }); setShowEditTopicModal(true); }}>
-            <Pencil className="w-3.5 h-3.5" /> Edit
+            <Pencil className="size-3.5" /> Edit
           </Button>
         </div>
         <h1 className="text-2xl font-bold text-[var(--ink-900)]">{topic.title}</h1>
-        {topic.description && <p className="text-[var(--text-muted)] mt-2">{topic.description}</p>}
+        {topic.description && <p className="mt-2 text-[var(--text-muted)]">{topic.description}</p>}
       </div>
 
-      <Tabs tabs={tabs} active={activeTab} onChange={(v) => setActiveTab(v as any)} />
+      <Tabs tabs={tabs} active={activeTab} onChange={(v) => setActiveTab(v as 'content' | 'flashcards' | 'mcqs')} />
 
       {activeTab === 'content' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-[var(--text-muted)]">Add and reorder content blocks for this topic.</p>
             <Button size="sm" onClick={handleSaveContent} disabled={!hasContentChanges || savingContent}>
-              <Save className="w-4 h-4" /> {savingContent ? 'Saving…' : 'Save changes'}
+              <Save className="size-4" /> {savingContent ? 'Saving…' : 'Save changes'}
             </Button>
           </div>
           {hasContentChanges && <p className="text-xs text-[var(--warning)]">You have unsaved changes</p>}
@@ -231,23 +237,23 @@ function AdminTopicDetailContent() {
       {activeTab === 'flashcards' && (
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setShowFlashcardBulk(true)}><Layers className="w-4 h-4" /> Bulk import</Button>
-            <Button size="sm" onClick={() => { setEditingFlashcard(null); setFlashcardForm({ question: '', answer: '' }); setShowFlashcardModal(true); }}><Plus className="w-4 h-4" /> Add flashcard</Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowFlashcardBulk(true)}><Layers className="size-4" /> Bulk import</Button>
+            <Button size="sm" onClick={() => { setEditingFlashcard(null); setFlashcardForm({ question: '', answer: '' }); setShowFlashcardModal(true); }}><Plus className="size-4" /> Add flashcard</Button>
           </div>
           {flashcards.length === 0 ? (
-            <EmptyState icon={<CreditCard className="w-12 h-12" />} title="No flashcards" description="Add flashcards individually or bulk import via JSON." />
+            <EmptyState icon={<CreditCard className="size-12" />} title="No flashcards" description="Add flashcards individually or bulk import via JSON." />
           ) : (
             <div className="space-y-2">
               {flashcards.map((fc) => (
                 <Card key={fc._id} className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[var(--ink-900)] mb-1">{fc.question}</p>
+                      <p className="mb-1 text-sm font-medium text-[var(--ink-900)]">{fc.question}</p>
                       <p className="text-sm text-[var(--text-muted)]">{fc.answer}</p>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingFlashcard(fc); setFlashcardForm({ question: fc.question, answer: fc.answer }); setShowFlashcardModal(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeletingFlashcard(fc)}><Trash2 className="w-3.5 h-3.5 text-[var(--danger)]" /></Button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingFlashcard(fc); setFlashcardForm({ question: fc.question, answer: fc.answer }); setShowFlashcardModal(true); }}><Pencil className="size-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingFlashcard(fc)}><Trash2 className="size-3.5 text-[var(--danger)]" /></Button>
                     </div>
                   </div>
                 </Card>
@@ -260,31 +266,31 @@ function AdminTopicDetailContent() {
       {activeTab === 'mcqs' && (
         <div className="space-y-4">
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setShowMcqBulk(true)}><Layers className="w-4 h-4" /> Bulk import</Button>
-            <Button size="sm" onClick={() => { setEditingMcq(null); setMcqForm({ question: '', options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }], explanation: '' }); setShowMcqModal(true); }}><Plus className="w-4 h-4" /> Add MCQ</Button>
+            <Button variant="secondary" size="sm" onClick={() => setShowMcqBulk(true)}><Layers className="size-4" /> Bulk import</Button>
+            <Button size="sm" onClick={() => { setEditingMcq(null); setMcqForm({ question: '', options: [{ text: '', isCorrect: false }, { text: '', isCorrect: false }], explanation: '' }); setShowMcqModal(true); }}><Plus className="size-4" /> Add MCQ</Button>
           </div>
           {mcqs.length === 0 ? (
-            <EmptyState icon={<HelpCircle className="w-12 h-12" />} title="No MCQs" description="Add MCQs individually or bulk import via JSON." />
+            <EmptyState icon={<HelpCircle className="size-12" />} title="No MCQs" description="Add MCQs individually or bulk import via JSON." />
           ) : (
             <div className="space-y-2">
               {mcqs.map((mcq) => (
                 <Card key={mcq._id} className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[var(--ink-900)] mb-2">{mcq.question}</p>
+                      <p className="mb-2 text-sm font-medium text-[var(--ink-900)]">{mcq.question}</p>
                       <div className="space-y-1">
                         {mcq.options.map((option, i) => (
-                          <div key={i} className={`text-xs flex items-center gap-2 ${option.isCorrect ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'}`}>
-                            <span className={`w-4 h-4 rounded-full border ${option.isCorrect ? 'border-[var(--success)] bg-[var(--success)]' : 'border-[var(--line)]'}`} />
+                          <div key={i} className={`flex items-center gap-2 text-xs ${option.isCorrect ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'}`}>
+                            <span className={`size-4 rounded-full border ${option.isCorrect ? 'border-[var(--success)] bg-[var(--success)]' : 'border-[var(--line)]'}`} />
                             {option.text}
                           </div>
                         ))}
                       </div>
-                      {mcq.explanation && <p className="text-xs text-[var(--ink-300)] mt-2 italic">{mcq.explanation}</p>}
+                      {mcq.explanation && <p className="mt-2 text-xs text-[var(--ink-300)] italic">{mcq.explanation}</p>}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button variant="ghost" size="sm" onClick={() => { setEditingMcq(mcq); setMcqForm({ question: mcq.question, options: mcq.options.map((o) => ({ ...o })), explanation: mcq.explanation || '' }); setShowMcqModal(true); }}><Pencil className="w-3.5 h-3.5" /></Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeletingMcq(mcq)}><Trash2 className="w-3.5 h-3.5 text-[var(--danger)]" /></Button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => { setEditingMcq(mcq); setMcqForm({ question: mcq.question, options: mcq.options.map((o) => ({ ...o })), explanation: mcq.explanation || '' }); setShowMcqModal(true); }}><Pencil className="size-3.5" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => setDeletingMcq(mcq)}><Trash2 className="size-3.5 text-[var(--danger)]" /></Button>
                     </div>
                   </div>
                 </Card>
@@ -298,13 +304,13 @@ function AdminTopicDetailContent() {
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Question</span>
-            <textarea value={flashcardForm.question} onChange={(e) => setFlashcardForm({ ...flashcardForm, question: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={flashcardForm.question} onChange={(e) => setFlashcardForm({ ...flashcardForm, question: e.target.value })} rows={3} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none" />
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Answer</span>
-            <textarea value={flashcardForm.answer} onChange={(e) => setFlashcardForm({ ...flashcardForm, answer: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={flashcardForm.answer} onChange={(e) => setFlashcardForm({ ...flashcardForm, answer: e.target.value })} rows={3} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
             <Button variant="ghost" onClick={() => { setShowFlashcardModal(false); setEditingFlashcard(null); }}>Cancel</Button>
             <Button onClick={handleSaveFlashcard} disabled={savingFlashcard}>{savingFlashcard ? 'Saving…' : editingFlashcard ? 'Save changes' : 'Add flashcard'}</Button>
           </div>
@@ -315,28 +321,28 @@ function AdminTopicDetailContent() {
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Question</span>
-            <textarea value={mcqForm.question} onChange={(e) => setMcqForm({ ...mcqForm, question: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={mcqForm.question} onChange={(e) => setMcqForm({ ...mcqForm, question: e.target.value })} rows={3} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none" />
           </div>
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-semibold text-[var(--ink-900)]">Options</span>
-              {mcqForm.options.length < 6 && <button onClick={addOption} className="text-xs text-[var(--brand-gold-600)] hover:opacity-80 cursor-pointer">+ Add option</button>}
+              {mcqForm.options.length < 6 && <button onClick={addOption} className="cursor-pointer text-xs text-[var(--brand-gold-600)] hover:opacity-80">+ Add option</button>}
             </div>
             <div className="space-y-2">
               {mcqForm.options.map((option, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <button onClick={() => updateOption(i, 'isCorrect', true)} className={`w-5 h-5 rounded-full border-2 shrink-0 cursor-pointer ${option.isCorrect ? 'border-[var(--success)] bg-[var(--success)]' : 'border-[var(--line)]'}`} />
-                  <input value={option.text} onChange={(e) => updateOption(i, 'text', e.target.value)} placeholder={`Option ${i + 1}`} className="flex-1 px-3 py-2 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none" />
-                  {mcqForm.options.length > 2 && <button onClick={() => removeOption(i)} className="text-[var(--ink-300)] hover:text-[var(--danger)] cursor-pointer shrink-0">✕</button>}
+                  <button onClick={() => updateOption(i, 'isCorrect', true)} className={`size-5 shrink-0 cursor-pointer rounded-full border-2 ${option.isCorrect ? 'border-[var(--success)] bg-[var(--success)]' : 'border-[var(--line)]'}`} />
+                  <input value={option.text} onChange={(e) => updateOption(i, 'text', e.target.value)} placeholder={`Option ${i + 1}`} className="flex-1 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3 py-2 text-sm text-[var(--ink-900)] outline-none" />
+                  {mcqForm.options.length > 2 && <button onClick={() => removeOption(i)} className="shrink-0 cursor-pointer text-[var(--ink-300)] hover:text-[var(--danger)]">✕</button>}
                 </div>
               ))}
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Explanation (optional)</span>
-            <textarea value={mcqForm.explanation} onChange={(e) => setMcqForm({ ...mcqForm, explanation: e.target.value })} rows={2} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={mcqForm.explanation} onChange={(e) => setMcqForm({ ...mcqForm, explanation: e.target.value })} rows={2} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none" />
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
             <Button variant="ghost" onClick={() => { setShowMcqModal(false); setEditingMcq(null); }}>Cancel</Button>
             <Button onClick={handleSaveMcq} disabled={savingMcq}>{savingMcq ? 'Saving…' : editingMcq ? 'Save changes' : 'Add MCQ'}</Button>
           </div>
@@ -348,7 +354,7 @@ function AdminTopicDetailContent() {
           <Input label="Title" value={topicForm.title} onChange={(e) => setTopicForm({ ...topicForm, title: e.target.value })} />
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Description</span>
-            <textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} rows={3} className="w-full px-3.5 py-2.5 bg-[var(--surface-page)] border border-[var(--line)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none" />
+            <textarea value={topicForm.description} onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })} rows={3} className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none" />
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Default view for learners</span>
@@ -356,7 +362,7 @@ function AdminTopicDetailContent() {
               <button
                 type="button"
                 onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'flat' })}
-                className={`text-left px-3.5 py-2.5 rounded-[var(--radius-md)] border text-sm transition-colors cursor-pointer ${
+                className={`cursor-pointer rounded-[var(--radius-md)] border px-3.5 py-2.5 text-left text-sm transition-colors ${
                   topicForm.defaultFlow === 'flat' ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]' : 'border-[var(--line)] bg-[var(--surface-card)]'
                 }`}
               >
@@ -366,7 +372,7 @@ function AdminTopicDetailContent() {
               <button
                 type="button"
                 onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'guided' })}
-                className={`text-left px-3.5 py-2.5 rounded-[var(--radius-md)] border text-sm transition-colors cursor-pointer ${
+                className={`cursor-pointer rounded-[var(--radius-md)] border px-3.5 py-2.5 text-left text-sm transition-colors ${
                   topicForm.defaultFlow === 'guided' ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]' : 'border-[var(--line)] bg-[var(--surface-card)]'
                 }`}
               >
@@ -376,7 +382,7 @@ function AdminTopicDetailContent() {
             </div>
           </div>
           <Checkbox checked={topicForm.isPublished} onChange={(v) => setTopicForm({ ...topicForm, isPublished: v })} label="Publish topic" />
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
             <Button variant="ghost" onClick={() => setShowEditTopicModal(false)}>Cancel</Button>
             <Button onClick={handleSaveTopicMeta}>Save changes</Button>
           </div>

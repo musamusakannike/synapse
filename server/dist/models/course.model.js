@@ -34,6 +34,12 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const CourseAuthorSchema = new mongoose_1.Schema({
+    name: { type: String, required: true, trim: true },
+    avatar: { type: String, default: '' },
+    role: { type: String, default: 'Instructor' },
+    bio: { type: String, default: '' },
+}, { _id: false });
 const CourseSchema = new mongoose_1.Schema({
     title: {
         type: String,
@@ -63,7 +69,12 @@ const CourseSchema = new mongoose_1.Schema({
         enum: ['beginner', 'intermediate', 'advanced'],
         default: 'beginner',
     },
+    authors: {
+        type: [CourseAuthorSchema],
+        default: [],
+    },
     whatYouWillLearn: [{ type: String }],
+    prerequisites: [{ type: String }],
     isPublished: {
         type: Boolean,
         default: false,
@@ -83,6 +94,11 @@ const CourseSchema = new mongoose_1.Schema({
     },
 }, {
     timestamps: true,
+});
+CourseSchema.virtual('chapters', {
+    ref: 'Chapter',
+    localField: '_id',
+    foreignField: 'course',
 });
 CourseSchema.virtual('topicCount', {
     ref: 'Topic',

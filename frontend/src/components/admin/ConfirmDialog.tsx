@@ -29,10 +29,10 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, messa
       }
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--danger-100)] flex items-center justify-center shrink-0">
-          <AlertTriangle className="w-5 h-5 text-[var(--danger)]" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--danger-100)]">
+          <AlertTriangle className="size-5 text-[var(--danger)]" />
         </div>
-        <p className="text-sm text-[var(--text-muted)] pt-1">{message}</p>
+        <p className="pt-1 text-sm text-[var(--text-muted)]">{message}</p>
       </div>
     </Dialog>
   );

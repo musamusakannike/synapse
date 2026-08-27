@@ -97,37 +97,37 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
+    <div className="flex min-h-screen flex-col bg-[var(--surface-page)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Navbar links={navLinks} active="Blog" />
 
-      <article className="px-6 sm:px-8 py-14">
-        <div className="max-w-3xl mx-auto">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-[var(--ink-500)] mb-8">
-            <Link href="/" className="hover:text-[var(--ink-900)] font-semibold">Home</Link>
+      <article className="px-6 py-14 sm:px-8">
+        <div className="mx-auto max-w-3xl">
+          <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-1.5 text-sm text-[var(--ink-500)]">
+            <Link href="/" className="font-semibold hover:text-[var(--ink-900)]">Home</Link>
             <span aria-hidden="true">/</span>
-            <Link href="/blog" className="hover:text-[var(--ink-900)] font-semibold">Blog</Link>
+            <Link href="/blog" className="font-semibold hover:text-[var(--ink-900)]">Blog</Link>
             <span aria-hidden="true">/</span>
-            <span className="text-[var(--ink-300)] truncate max-w-[240px]">{post.title}</span>
+            <span className="max-w-[240px] truncate text-[var(--ink-300)]">{post.title}</span>
           </nav>
 
-          <Link href="/blog" className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-500)] hover:text-[var(--ink-900)] mb-8">
-            <ArrowLeft className="w-4 h-4" /> Back to blog
+          <Link href="/blog" className="mb-8 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ink-500)] hover:text-[var(--ink-900)]">
+            <ArrowLeft className="size-4" /> Back to blog
           </Link>
 
           <Badge tone="gold">{post.category}</Badge>
-          <h1 className="font-[var(--font-display)] text-3xl sm:text-4xl font-bold tracking-[var(--tracking-tight)] text-[var(--ink-900)] leading-[var(--leading-tight)] mt-4 mb-4">
+          <h1 className="my-4 text-3xl leading-[var(--leading-tight)] font-[var(--font-display)] font-bold tracking-[var(--tracking-tight)] text-[var(--ink-900)] sm:text-4xl">
             {post.title}
           </h1>
-          <div className="flex items-center gap-3 text-sm text-[var(--text-muted)] mb-8">
+          <div className="mb-8 flex items-center gap-3 text-sm text-[var(--text-muted)]">
             {author?.name && <span className="font-semibold text-[var(--ink-700)]">{author.name}</span>}
             <span>{formatDate(post.publishedAt)}</span>
-            <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{post.readingTimeMinutes} min read</span>
+            <span className="inline-flex items-center gap-1"><Clock className="size-3.5" />{post.readingTimeMinutes} min read</span>
           </div>
 
           {post.coverImage && (
-            <div className="relative w-full h-[280px] sm:h-[440px] rounded-[var(--radius-2xl)] overflow-hidden mb-10 shadow-[var(--shadow-md)]">
+            <div className="relative mb-10 h-[280px] w-full overflow-hidden rounded-[var(--radius-2xl)] shadow-[var(--shadow-md)] sm:h-[440px]">
               <Image src={post.coverImage} alt={post.title} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
             </div>
           )}
@@ -148,7 +148,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
 
           {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-10 pt-8 border-t border-[var(--line)]">
+            <div className="mt-10 flex flex-wrap gap-2 border-t border-[var(--line)] pt-8">
               {post.tags.map((tag) => (
                 <Badge key={tag} tone="neutral">{tag}</Badge>
               ))}
@@ -158,10 +158,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </article>
 
       {related.length > 0 && (
-        <section className="px-6 sm:px-8 py-16 bg-[var(--surface-card)] border-t border-[var(--line)]">
-          <div className="max-w-[var(--container-max)] mx-auto">
-            <h2 className="font-[var(--font-display)] text-2xl font-bold text-[var(--ink-900)] mb-8">More like this</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="border-t border-[var(--line)] bg-[var(--surface-card)] px-6 py-16 sm:px-8">
+          <div className="mx-auto max-w-[var(--container-max)]">
+            <h2 className="mb-8 text-2xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">More like this</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {related.map((p) => (
                 <BlogPostCard key={p._id} post={p} />
               ))}

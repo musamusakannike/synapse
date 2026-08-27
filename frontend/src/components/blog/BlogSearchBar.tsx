@@ -24,12 +24,12 @@ export default function BlogSearchBar({ initialValue }: { initialValue: string }
 
   return (
     <div className="relative flex-1">
-      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-300)]" />
+      <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-[var(--ink-300)]" />
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search articles…"
-        className="w-full pl-10 pr-4 py-3 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none"
+        className="w-full rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] py-3 pr-4 pl-10 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
       />
     </div>
   );

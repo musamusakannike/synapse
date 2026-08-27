@@ -15,9 +15,9 @@ export default function BlogPostCard({ post, featured = false }: { post: BlogPos
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group flex flex-col rounded-[var(--radius-2xl)] bg-[var(--surface-card)] overflow-hidden shadow-[var(--shadow-sm)] transition-shadow duration-[var(--duration-normal)] hover:shadow-[var(--shadow-md)] ${featured ? 'lg:flex-row' : ''}`}
+      className={`group flex flex-col overflow-hidden rounded-[var(--radius-2xl)] bg-[var(--surface-card)] shadow-[var(--shadow-sm)] transition-shadow duration-[var(--duration-normal)] hover:shadow-[var(--shadow-md)] ${featured ? 'lg:flex-row' : ''}`}
     >
-      <div className={`relative bg-[var(--surface-sunken)] overflow-hidden ${featured ? 'lg:w-1/2 aspect-[16/9] lg:aspect-auto' : 'aspect-[16/9]'}`}>
+      <div className={`relative overflow-hidden bg-[var(--surface-sunken)] ${featured ? 'aspect-[16/9] lg:aspect-auto lg:w-1/2' : 'aspect-[16/9]'}`}>
         {post.coverImage ? (
           <Image
             src={post.coverImage}
@@ -27,7 +27,7 @@ export default function BlogPostCard({ post, featured = false }: { post: BlogPos
             className="object-cover transition-transform duration-[var(--duration-normal)] group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[var(--ink-300)] font-[var(--font-display)] text-3xl font-bold">
+          <div className="flex size-full items-center justify-center text-3xl font-[var(--font-display)] font-bold text-[var(--ink-300)]">
             {post.title.charAt(0)}
           </div>
         )}
@@ -35,15 +35,15 @@ export default function BlogPostCard({ post, featured = false }: { post: BlogPos
           <Badge tone="gold">{post.category}</Badge>
         </span>
       </div>
-      <div className={`p-5 flex flex-col gap-3 ${featured ? 'lg:w-1/2 lg:p-8 lg:justify-center' : ''}`}>
-        <h3 className={`font-[var(--font-display)] font-bold text-[var(--ink-900)] leading-[var(--leading-snug)] line-clamp-2 ${featured ? 'text-2xl' : 'text-lg'}`}>
+      <div className={`flex flex-col gap-3 p-5 ${featured ? 'lg:w-1/2 lg:justify-center lg:p-8' : ''}`}>
+        <h3 className={`line-clamp-2 leading-[var(--leading-snug)] font-[var(--font-display)] font-bold text-[var(--ink-900)] ${featured ? 'text-2xl' : 'text-lg'}`}>
           {post.title}
         </h3>
-        <p className="text-sm text-[var(--text-muted)] leading-[var(--leading-relaxed)] line-clamp-2">{post.excerpt}</p>
-        <div className="flex items-center gap-3 text-xs text-[var(--ink-300)] mt-1">
-          {author?.name && <span className="text-[var(--ink-500)] font-medium">{author.name}</span>}
+        <p className="line-clamp-2 text-sm leading-[var(--leading-relaxed)] text-[var(--text-muted)]">{post.excerpt}</p>
+        <div className="mt-1 flex items-center gap-3 text-xs text-[var(--ink-300)]">
+          {author?.name && <span className="font-medium text-[var(--ink-500)]">{author.name}</span>}
           <span>{formatDate(post.publishedAt)}</span>
-          <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{post.readingTimeMinutes} min read</span>
+          <span className="inline-flex items-center gap-1"><Clock className="size-3" />{post.readingTimeMinutes} min read</span>
         </div>
       </div>
     </Link>

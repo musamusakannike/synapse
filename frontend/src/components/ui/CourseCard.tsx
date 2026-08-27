@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import Badge from './Badge';
 import { formatKobo } from '@/lib/money';
 
 interface CourseCardProps {
@@ -20,23 +19,23 @@ export default function CourseCard({ id, image, level = 'Beginner', title, categ
   return (
     <Link
       href={`/dashboard/courses/${id}`}
-      className="flex flex-col rounded-[var(--radius-2xl)] bg-[var(--surface-card)] overflow-hidden shadow-[var(--shadow-sm)] font-[var(--font-body)] transition-shadow duration-[var(--duration-normal)] hover:shadow-[var(--shadow-md)]"
+      className="flex flex-col overflow-hidden rounded-[var(--radius-2xl)] bg-[var(--surface-card)] font-[var(--font-body)] shadow-[var(--shadow-sm)] transition-shadow duration-[var(--duration-normal)] hover:shadow-[var(--shadow-md)]"
     >
-      <div className="relative w-full aspect-[16/9] bg-[var(--surface-sunken)] overflow-hidden flex items-center justify-center">
+      <div className="relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden bg-[var(--surface-sunken)]">
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt={title} className="w-full h-full object-contain" />
+          <img src={image} alt={title} className="size-full object-contain" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[var(--ink-300)] font-[var(--font-display)] text-2xl font-bold">
+          <div className="flex size-full items-center justify-center text-2xl font-[var(--font-display)] font-bold text-[var(--ink-300)]">
             {title.charAt(0)}
           </div>
         )}
-        <span className="absolute top-3 left-3 px-3 py-1 rounded-[var(--radius-full)] text-xs font-semibold bg-white/90 text-[var(--ink-900)] capitalize">
+        <span className="absolute top-3 left-3 rounded-[var(--radius-full)] bg-white/90 px-3 py-1 text-xs font-semibold text-[var(--ink-900)] capitalize">
           {level}
         </span>
       </div>
-      <div className="p-4.5 flex flex-col gap-2">
-        <h4 className="m-0 font-[var(--font-display)] text-[length:var(--text-md)] font-bold text-[var(--ink-900)] line-clamp-1">{title}</h4>
+      <div className="flex flex-col gap-2 p-4.5">
+        <h4 className="m-0 line-clamp-1 text-[length:var(--text-md)] font-[var(--font-display)] font-bold text-[var(--ink-900)]">{title}</h4>
         {category && <span className="text-xs text-[var(--text-muted)]">{category}</span>}
         {typeof progress === 'number' ? (
           <div className="mt-1.5">
@@ -46,7 +45,7 @@ export default function CourseCard({ id, image, level = 'Beginner', title, categ
             <span className="text-xs text-[var(--text-muted)]">{progress}% complete</span>
           </div>
         ) : (
-          <div className="flex justify-between items-center mt-2">
+          <div className="mt-2 flex items-center justify-between">
             <span className="font-[var(--font-display)] font-bold text-[var(--ink-900)]">
               {free ? 'Free' : formatKobo(price ?? 0)}
             </span>

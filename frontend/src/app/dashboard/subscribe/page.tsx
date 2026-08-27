@@ -69,17 +69,17 @@ export default function SubscribePage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto space-y-6">
+    <div className="mx-auto max-w-lg space-y-6">
       <div className="text-center">
-        <div className="w-12 h-12 rounded-full bg-[var(--brand-gold-100)] flex items-center justify-center mx-auto mb-4">
-          <Sparkles className="w-6 h-6 text-[var(--brand-gold-600)]" />
+        <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-[var(--brand-gold-100)]">
+          <Sparkles className="size-6 text-[var(--brand-gold-600)]" />
         </div>
         <h1 className="text-2xl font-bold text-[var(--ink-900)]">All-access subscription</h1>
-        <p className="text-[var(--text-muted)] mt-2">Unlock every premium course on SabiLearn for one monthly price.</p>
+        <p className="mt-2 text-[var(--text-muted)]">Unlock every premium course on SabiLearn for one monthly price.</p>
       </div>
 
       {isActive && (
-        <Card className="p-6 text-center space-y-3">
+        <Card className="space-y-3 p-6 text-center">
           <Badge tone="success">Active</Badge>
           <p className="text-sm text-[var(--text-muted)]">
             You have all-access.
@@ -101,34 +101,34 @@ export default function SubscribePage() {
 
       {(!isActive || isManual) && (
         <Card className="p-6">
-          <div className="flex items-end gap-1 justify-center mb-1">
+          <div className="mb-1 flex items-end justify-center gap-1">
             <span className="text-3xl font-bold text-[var(--ink-900)]">{formatKobo(DISPLAY_PRICE_KOBO)}</span>
-            <span className="text-sm text-[var(--text-muted)] mb-1">/month</span>
+            <span className="mb-1 text-sm text-[var(--text-muted)]">/month</span>
           </div>
           {sub?.status === 'expired' && (
-            <p className="text-center text-xs text-[var(--danger)] mb-3">Your subscription expired — pay again to restore access.</p>
+            <p className="mb-3 text-center text-xs text-[var(--danger)]">Your subscription expired — pay again to restore access.</p>
           )}
           {sub?.status === 'past_due' && (
-            <p className="text-center text-xs text-[var(--danger)] mb-3">Your last card payment failed — resubscribe to restore access.</p>
+            <p className="mb-3 text-center text-xs text-[var(--danger)]">Your last card payment failed — resubscribe to restore access.</p>
           )}
-          <div className="space-y-3 my-5">
+          <div className="my-5 space-y-3">
             {PERKS.map((perk) => (
               <div key={perk} className="flex items-start gap-3">
-                <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
-                  <Check className="w-3 h-3 text-[var(--success)]" />
+                <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--success-100)]">
+                  <Check className="size-3 text-[var(--success)]" />
                 </div>
                 <p className="text-sm text-[var(--text-muted)]">{perk}</p>
               </div>
             ))}
             <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-[var(--success-100)] flex items-center justify-center shrink-0 mt-0.5">
-                <InfinityIcon className="w-3 h-3 text-[var(--success)]" />
+              <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--success-100)]">
+                <InfinityIcon className="size-3 text-[var(--success)]" />
               </div>
               <p className="text-sm text-[var(--text-muted)]">Prefer to pay once instead? Every course also has a one-off price on its own page.</p>
             </div>
           </div>
 
-          {error && <p className="text-sm text-[var(--danger)] text-center mb-3">{error}</p>}
+          {error && <p className="mb-3 text-center text-sm text-[var(--danger)]">{error}</p>}
 
           <div className="space-y-3">
             <Button
@@ -137,7 +137,7 @@ export default function SubscribePage() {
               loading={checkoutInFlight === 'manual'}
               disabled={checkoutInFlight === 'recurring'}
             >
-              <Landmark className="w-4 h-4" /> {isManual ? 'Renew now' : 'Subscribe'} with bank transfer / USSD
+              <Landmark className="size-4" /> {isManual ? 'Renew now' : 'Subscribe'} with bank transfer / USSD
             </Button>
             <p className="text-center text-xs text-[var(--text-muted)]">No card needed — pays instantly, renew manually each month.</p>
 
@@ -154,7 +154,7 @@ export default function SubscribePage() {
               loading={checkoutInFlight === 'recurring'}
               disabled={checkoutInFlight === 'manual'}
             >
-              <CreditCard className="w-4 h-4" /> Subscribe with card (auto-renews)
+              <CreditCard className="size-4" /> Subscribe with card (auto-renews)
             </Button>
           </div>
         </Card>

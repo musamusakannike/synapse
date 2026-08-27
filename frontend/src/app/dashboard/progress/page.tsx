@@ -46,22 +46,22 @@ export default function ProgressPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1">Your progress</h1>
+        <h1 className="mb-1 text-2xl font-bold text-[var(--ink-900)]">Your progress</h1>
         <p className="text-sm text-[var(--text-muted)]">Track your study performance and achievements</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.label} className="p-5">
-              <div className="w-10 h-10 rounded-[var(--radius-md)] flex items-center justify-center mb-3" style={{ background: stat.bg }}>
-                <Icon className="w-5 h-5" style={{ color: stat.tone }} />
+              <div className="mb-3 flex size-10 items-center justify-center rounded-[var(--radius-md)]" style={{ background: stat.bg }}>
+                <Icon className="size-5" style={{ color: stat.tone }} />
               </div>
               <p className="text-2xl font-bold text-[var(--ink-900)]">{stat.value}</p>
-              <p className="text-xs text-[var(--ink-300)] mt-1">{stat.label}</p>
+              <p className="mt-1 text-xs text-[var(--ink-300)]">{stat.label}</p>
             </Card>
           );
         })}
@@ -69,33 +69,36 @@ export default function ProgressPage() {
 
       {stats?.dailyGoal && (
         <Card className="p-5">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <h3 className="font-semibold text-[var(--ink-900)]">Today&apos;s goal</h3>
             <span className="text-sm text-[var(--text-muted)]">{stats.dailyGoal.studiedMinutes}/{stats.dailyGoal.minutes} min</span>
           </div>
           <ProgressBar value={stats.dailyGoal.progress} tone={stats.dailyGoal.met ? 'success' : 'gold'} />
           {stats.dailyGoal.met && (
-            <p className="text-xs font-medium mt-2" style={{ color: 'var(--success)' }}>Goal reached today. Nice work!</p>
+            <p className="mt-2 text-xs font-medium" style={{ color: 'var(--success)' }}>Goal reached today. Nice work!</p>
           )}
         </Card>
       )}
 
       {continueStudying.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4">Continue studying</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h2 className="mb-4 text-lg font-semibold text-[var(--ink-900)]">Continue studying</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {continueStudying.map((progress) => {
               const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
+              if (!course || !course._id || course.isPublished === false) return null;
               const topic = typeof progress.topic === 'object' ? (progress.topic as Topic) : null;
-              const pct = progress.flashcardsTotal > 0 ? (progress.flashcardsStudied / progress.flashcardsTotal) * 100 : 0;
+              const totalFc = progress.flashcardsTotal || 0;
+              const studiedFc = progress.flashcardsStudied || 0;
+              const pct = totalFc > 0 ? (studiedFc / totalFc) * 100 : progress.percentCompleted || 0;
               return (
                 <Card key={progress._id} className="p-5">
-                  {topic && <p className="text-xs text-[var(--brand-gold-600)] font-semibold uppercase tracking-wide mb-1">{course?.title}</p>}
-                  <h3 className="font-semibold text-[var(--ink-900)] mb-1">{topic?.title || course?.title}</h3>
-                  <p className="text-xs text-[var(--ink-300)] mb-4">{course?.category}</p>
-                  <ProgressBar value={pct} label={`Flashcards ${progress.flashcardsStudied}/${progress.flashcardsTotal}`} />
+                  {topic && <p className="mb-1 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">{course?.title}</p>}
+                  <h3 className="mb-1 font-semibold text-[var(--ink-900)]">{topic?.title || course?.title}</h3>
+                  <p className="mb-4 text-xs text-[var(--ink-300)]">{course?.category}</p>
+                  <ProgressBar value={pct} label={totalFc > 0 ? `Flashcards ${studiedFc}/${totalFc}` : `${progress.percentCompleted || 0}% complete`} />
                   {topic && course && (
-                    <Link href={`/dashboard/courses/${course._id}/topics/${topic._id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-gold-600)] hover:opacity-80 mt-3">
+                    <Link href={`/dashboard/courses/${course._id}/topics/${topic._id}`} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-gold-600)] hover:opacity-80">
                       Continue
                     </Link>
                   )}
@@ -107,11 +110,11 @@ export default function ProgressPage() {
       )}
 
       <div>
-        <h2 className="text-lg font-semibold text-[var(--ink-900)] mb-4 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-[var(--warning)]" /> Needs improvement
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-[var(--ink-900)]">
+          <TrendingDown className="size-5 text-[var(--warning)]" /> Needs improvement
         </h2>
         {needsImprovement.length === 0 ? (
-          <EmptyState icon={<Target className="w-12 h-12" />} title="No weak areas detected" description="Keep studying and your performance will be tracked here." />
+          <EmptyState icon={<Target className="size-12" />} title="No weak areas detected" description="Keep studying and your performance will be tracked here." />
         ) : (
           <div className="space-y-3">
             {needsImprovement.map((progress) => {
@@ -121,9 +124,9 @@ export default function ProgressPage() {
                 <Card key={progress._id} className="p-4">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      {topic && <p className="text-xs text-[var(--brand-gold-600)] font-semibold uppercase tracking-wide mb-0.5">{course?.title}</p>}
+                      {topic && <p className="mb-0.5 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">{course?.title}</p>}
                       <h3 className="text-sm font-medium text-[var(--ink-900)]">{topic?.title || course?.title}</h3>
-                      <p className="text-xs text-[var(--ink-300)] mt-0.5">{progress.mcqsCorrect} / {progress.mcqsAttempted} correct</p>
+                      <p className="mt-0.5 text-xs text-[var(--ink-300)]">{progress.mcqsCorrect} / {progress.mcqsAttempted} correct</p>
                     </div>
                     <Badge tone="warning">{progress.accuracy}% accuracy</Badge>
                   </div>

@@ -13,7 +13,9 @@ export default function ContinueToDashboardPrompt() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) setOpen(true);
+    if (isAuthenticated) {
+      queueMicrotask(() => setOpen(true));
+    }
   }, [isAuthenticated]);
 
   return (
@@ -29,10 +31,10 @@ export default function ContinueToDashboardPrompt() {
       }
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--brand-gold-100)] flex items-center justify-center shrink-0">
-          <LayoutDashboard className="w-5 h-5 text-[var(--brand-gold-600)]" />
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-gold-100)]">
+          <LayoutDashboard className="size-5 text-[var(--brand-gold-600)]" />
         </div>
-        <p className="text-sm text-[var(--text-muted)] pt-1">
+        <p className="pt-1 text-sm text-[var(--text-muted)]">
           {user?.firstName ? `Hi ${user.firstName}, you're` : "You're"} already signed in. Continue to your dashboard to pick up where you left off.
         </p>
       </div>

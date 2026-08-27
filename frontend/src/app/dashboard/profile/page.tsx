@@ -62,19 +62,19 @@ export default function ProfilePage() {
   if (!user) return <div className="flex items-center justify-center py-20"><LoadingSpinner size="lg" /></div>;
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--ink-900)] mb-1">Profile</h1>
+        <h1 className="mb-1 text-2xl font-bold text-[var(--ink-900)]">Profile</h1>
         <p className="text-sm text-[var(--text-muted)]">Manage your account information</p>
       </div>
 
       <Card className="p-6">
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="flex flex-col items-center gap-6 sm:flex-row">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-[var(--brand-gold-100)] flex items-center justify-center text-[var(--brand-gold-600)] font-bold text-2xl overflow-hidden">
+            <div className="flex size-24 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-gold-100)] text-2xl font-bold text-[var(--brand-gold-600)]">
               {user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                <img src={user.avatar} alt={user.name} className="size-full object-cover" />
               ) : (
                 user.firstName?.charAt(0).toUpperCase()
               )}
@@ -82,17 +82,17 @@ export default function ProfilePage() {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--brand-gold)] rounded-full flex items-center justify-center text-[var(--ink-900)] cursor-pointer hover:opacity-80 disabled:opacity-50"
+              className="absolute right-0 bottom-0 flex size-8 cursor-pointer items-center justify-center rounded-full bg-[var(--brand-gold)] text-[var(--ink-900)] hover:opacity-80 disabled:opacity-50"
             >
-              {isUploading ? <LoadingSpinner size="sm" /> : <Camera className="w-4 h-4" />}
+              {isUploading ? <LoadingSpinner size="sm" /> : <Camera className="size-4" />}
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
           </div>
 
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-xl font-semibold text-[var(--ink-900)]">{user.name}</h2>
-            <p className="text-sm text-[var(--text-muted)] mt-1">{user.email}</p>
-            <div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{user.email}</p>
+            <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
               <Badge tone="gold">{user.level}</Badge>
               {user.role === 'admin' && <Badge tone="success">Admin</Badge>}
             </div>
@@ -101,7 +101,7 @@ export default function ProfilePage() {
       </Card>
 
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-[var(--ink-900)]">Personal information</h2>
           {!isEditing ? (
             <Button variant="ghost" onClick={() => setIsEditing(true)}>Edit</Button>
@@ -121,7 +121,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input label="First name" disabled={!isEditing} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
           <Input label="Last name" disabled={!isEditing} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
           <Input label="Email" type="email" disabled={!isEditing} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
@@ -135,7 +135,7 @@ export default function ProfilePage() {
               options={[{ value: 'beginner', label: 'Beginner' }, { value: 'intermediate', label: 'Intermediate' }, { value: 'advanced', label: 'Advanced' }]}
             />
           </div>
-          <div className="md:col-span-2 flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 md:col-span-2">
             <span className="text-sm font-semibold text-[var(--ink-900)]">Bio</span>
             <textarea
               disabled={!isEditing}
@@ -143,7 +143,7 @@ export default function ProfilePage() {
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
               placeholder="Tell us about yourself…"
               rows={3}
-              className="w-full px-3.5 py-2.5 bg-[var(--surface-card)] border border-[var(--line)] focus:border-[var(--ink-900)] rounded-[var(--radius-md)] text-sm text-[var(--ink-900)] outline-none resize-none disabled:bg-[var(--surface-sunken)]"
+              className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)] disabled:bg-[var(--surface-sunken)]"
             />
           </div>
         </div>

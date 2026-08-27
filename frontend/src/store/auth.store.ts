@@ -34,8 +34,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('sabilearn_user', JSON.stringify(user));
       set({ user, token, isAuthenticated: true });
       return { success: true };
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed. Please try again.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || 'Login failed. Please try again.';
       return { success: false, error: message };
     }
   },
@@ -48,8 +49,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('sabilearn_user', JSON.stringify(user));
       set({ user, token, isAuthenticated: true });
       return { success: true };
-    } catch (error: any) {
-      const message = error.response?.data?.message || error.response?.data?.errors?.join(' ') || 'Registration failed. Please try again.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; errors?: string[] } } };
+      const message = err.response?.data?.message || err.response?.data?.errors?.join(' ') || 'Registration failed. Please try again.';
       return { success: false, error: message };
     }
   },
@@ -64,11 +66,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('sabilearn_user', JSON.stringify(user));
       set({ user, token, isAuthenticated: true });
       return { success: true };
-    } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
+    } catch (error: unknown) {
+      const err = error as { code?: string; response?: { data?: { message?: string } } };
+      if (err.code === 'auth/popup-closed-by-user') {
         return { success: false, error: 'Sign-in popup was closed before completing.' };
       }
-      const message = error.response?.data?.message || 'Google sign-in failed. Please try again.';
+      const message = err.response?.data?.message || 'Google sign-in failed. Please try again.';
       return { success: false, error: message };
     }
   },
@@ -105,8 +108,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('sabilearn_user', JSON.stringify(user));
       set({ user });
       return { success: true };
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Profile update failed.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || 'Profile update failed.';
       return { success: false, error: message };
     }
   },
@@ -122,8 +126,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ user: updatedUser });
       }
       return { success: true };
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Settings update failed.';
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || 'Settings update failed.';
       return { success: false, error: message };
     }
   },

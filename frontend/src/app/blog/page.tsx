@@ -63,32 +63,32 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
+    <div className="flex min-h-screen flex-col bg-[var(--surface-page)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar links={navLinks} active="Blog" />
 
-      <section className="px-6 sm:px-8 py-16 sm:py-20 border-b border-[var(--line)] bg-[var(--surface-card)]">
-        <div className="max-w-[var(--container-max)] mx-auto text-center">
-          <span className="inline-block px-3 py-1 rounded-[var(--radius-full)] bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)] text-xs font-semibold uppercase tracking-wide mb-5">
+      <section className="border-b border-[var(--line)] bg-[var(--surface-card)] px-6 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-[var(--container-max)] text-center">
+          <span className="mb-5 inline-block rounded-[var(--radius-full)] bg-[var(--brand-gold-100)] px-3 py-1 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">
             The SabiLearn blog
           </span>
-          <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl font-bold tracking-[var(--tracking-tight)] text-[var(--ink-900)] leading-[var(--leading-tight)] mb-5">
+          <h1 className="mb-5 text-4xl leading-[var(--leading-tight)] font-[var(--font-display)] font-bold tracking-[var(--tracking-tight)] text-[var(--ink-900)] sm:text-5xl">
             Study smarter, learn faster
           </h1>
-          <p className="text-lg text-[var(--text-muted)] leading-[var(--leading-relaxed)] max-w-xl mx-auto">
+          <p className="mx-auto max-w-xl text-lg leading-[var(--leading-relaxed)] text-[var(--text-muted)]">
             Practical guides on learning science, study techniques, and building real skills — written for Nigerian learners.
           </p>
         </div>
       </section>
 
-      <section className="px-6 sm:px-8 py-10">
-        <div className="max-w-[var(--container-max)] mx-auto">
-          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+      <section className="px-6 py-10 sm:px-8">
+        <div className="mx-auto max-w-[var(--container-max)]">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row">
             <BlogSearchBar initialValue={search} />
             <div className="flex flex-wrap gap-2">
               <Link
                 href={buildHref(1, 'all')}
-                className={`px-4 py-2 rounded-[var(--radius-full)] text-sm font-semibold border transition-colors ${category === 'all' ? 'bg-[var(--ink-900)] text-white border-[var(--ink-900)]' : 'bg-[var(--surface-card)] text-[var(--ink-700)] border-[var(--line)] hover:border-[var(--ink-900)]'}`}
+                className={`rounded-[var(--radius-full)] border px-4 py-2 text-sm font-semibold transition-colors ${category === 'all' ? 'border-[var(--ink-900)] bg-[var(--ink-900)] text-white' : 'border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)] hover:border-[var(--ink-900)]'}`}
               >
                 All
               </Link>
@@ -96,7 +96,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
                 <Link
                   key={c}
                   href={buildHref(1, c)}
-                  className={`px-4 py-2 rounded-[var(--radius-full)] text-sm font-semibold border capitalize transition-colors ${category === c ? 'bg-[var(--ink-900)] text-white border-[var(--ink-900)]' : 'bg-[var(--surface-card)] text-[var(--ink-700)] border-[var(--line)] hover:border-[var(--ink-900)]'}`}
+                  className={`rounded-[var(--radius-full)] border px-4 py-2 text-sm font-semibold capitalize transition-colors ${category === c ? 'border-[var(--ink-900)] bg-[var(--ink-900)] text-white' : 'border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)] hover:border-[var(--ink-900)]'}`}
                 >
                   {c}
                 </Link>
@@ -105,11 +105,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           </div>
 
           {posts.length === 0 ? (
-            <EmptyState icon={<Newspaper className="w-12 h-12" />} title="No articles found" description="Try a different search or check back soon for new posts." />
+            <EmptyState icon={<Newspaper className="size-12" />} title="No articles found" description="Try a different search or check back soon for new posts." />
           ) : (
             <div className="flex flex-col gap-8">
               {featured && page === 1 && !search && category === 'all' && <BlogPostCard post={featured} featured />}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {(page === 1 && !search && category === 'all' ? rest : posts).map((post) => (
                   <BlogPostCard key={post._id} post={post} />
                 ))}
@@ -118,12 +118,12 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           )}
 
           {pagination.pages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-12">
+            <div className="mt-12 flex items-center justify-center gap-2">
               {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((p) => (
                 <Link
                   key={p}
                   href={buildHref(p)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-[var(--radius-md)] text-sm font-semibold border transition-colors ${p === page ? 'bg-[var(--brand-gold)] border-[var(--brand-gold)] text-[var(--ink-900)]' : 'bg-[var(--surface-card)] border-[var(--line)] text-[var(--ink-700)] hover:border-[var(--ink-900)]'}`}
+                  className={`flex size-10 items-center justify-center rounded-[var(--radius-md)] border text-sm font-semibold transition-colors ${p === page ? 'border-[var(--brand-gold)] bg-[var(--brand-gold)] text-[var(--ink-900)]' : 'border-[var(--line)] bg-[var(--surface-card)] text-[var(--ink-700)] hover:border-[var(--ink-900)]'}`}
                 >
                   {p}
                 </Link>

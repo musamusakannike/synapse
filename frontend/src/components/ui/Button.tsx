@@ -38,7 +38,7 @@ export default function Button({
   return (
     <button
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center gap-2 font-[var(--font-display)] font-semibold cursor-pointer transition-all duration-[var(--duration-fast)] ease-[var(--ease-standard)] hover:-translate-y-px disabled:opacity-45 disabled:cursor-not-allowed disabled:translate-y-0 ${sizeClasses[size]} ${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 font-[var(--font-display)] font-semibold transition-all duration-[var(--duration-fast)] ease-[var(--ease-standard)] hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 ${sizeClasses[size]} ${variantClasses[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
       {loading ? 'Please wait…' : children}

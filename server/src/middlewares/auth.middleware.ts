@@ -108,3 +108,37 @@ export const authorize = (...roles: ('user' | 'admin')[]) => {
     next();
   };
 };
+
+export const adminOnly = authorize('admin');
+
+/**
+ * Middleware to optionally attach user to request if JWT token is provided.
+ */
+export const optionalAuth = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    let token: string | undefined;
+
+    if (req.headers.authorization?.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (token) {
+      try {
+        const decoded = verifyToken(token);
+        const user = await User.findById(decoded.id);
+        if (user) {
+          req.user = user;
+        }
+      } catch (err) {
+        // ignore invalid token for optional auth
+      }
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+};

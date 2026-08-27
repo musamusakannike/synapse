@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-[var(--surface-page)]">
+    <div className="flex min-h-screen flex-col bg-[var(--surface-page)]">
       <Navbar />
-      <main className="flex-1 max-w-3xl mx-auto px-6 py-16">
-        <h1 className="font-[var(--font-display)] text-3xl font-bold text-[var(--ink-900)] mb-6">Terms of service</h1>
-        <div className="space-y-5 text-[var(--text-muted)] leading-[var(--leading-relaxed)]">
+      <main className="mx-auto max-w-3xl flex-1 px-6 py-16">
+        <h1 className="mb-6 text-3xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">Terms of service</h1>
+        <div className="space-y-5 leading-[var(--leading-relaxed)] text-[var(--text-muted)]">
           <p>By using SabiLearn you agree to use the platform for personal learning purposes only, and not to redistribute course content without permission.</p>
           <p>Course prices are shown in ₦ and are final at the point of enrollment unless stated otherwise.</p>
           <p>AI study tools (Summarizer, Quiz generator, Flashcards generator, Q&amp;A AI) are study aids — always verify important information against your course material.</p>

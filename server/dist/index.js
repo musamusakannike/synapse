@@ -26,6 +26,8 @@ const media_route_1 = __importDefault(require("./routes/media.route"));
 const payment_route_1 = __importDefault(require("./routes/payment.route"));
 const blog_route_1 = __importDefault(require("./routes/blog.route"));
 const ai_route_1 = __importDefault(require("./routes/ai.route"));
+const chapter_route_1 = __importDefault(require("./routes/chapter.route"));
+const leaderboard_route_1 = __importDefault(require("./routes/leaderboard.route"));
 const error_middleware_1 = require("./middlewares/error.middleware");
 const scheduler_1 = require("./jobs/scheduler");
 const app = (0, express_1.default)();
@@ -58,7 +60,9 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/v1/auth', auth_route_1.default);
 app.use('/api/v1/courses', course_route_1.default);
+app.use('/api/v1/chapters', chapter_route_1.default);
 app.use('/api/v1/topics', topic_route_1.default);
+app.use('/api/v1/leaderboard', leaderboard_route_1.default);
 app.use('/api/v1/flashcards', flashcard_route_1.default);
 app.use('/api/v1/mcqs', mcq_route_1.default);
 app.use('/api/v1/progress', progress_route_1.default);

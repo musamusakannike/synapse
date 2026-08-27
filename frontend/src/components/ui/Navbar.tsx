@@ -10,11 +10,11 @@ interface NavLink {
 
 export default function Navbar({ links = [], active }: { links?: NavLink[]; active?: string }) {
   return (
-    <header className="flex items-center justify-between px-6 sm:px-8 py-4 bg-[var(--surface-card)] border-b border-[var(--line)] font-[var(--font-body)] sticky top-0 z-40">
-      <Link href="/" className="font-[var(--font-display)] font-bold text-lg text-[var(--ink-900)]">
+    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-card)] px-6 py-4 font-[var(--font-body)] sm:px-8">
+      <Link href="/" className="text-lg font-[var(--font-display)] font-bold text-[var(--ink-900)]">
         Sabi<span className="text-[var(--brand-gold)]">Learn</span>
       </Link>
-      <nav className="hidden md:flex gap-7">
+      <nav className="hidden gap-7 md:flex">
         {links.map((l) => (
           <Link
             key={l.label}
@@ -26,12 +26,12 @@ export default function Navbar({ links = [], active }: { links?: NavLink[]; acti
         ))}
       </nav>
       <div className="flex items-center gap-4">
-        <Link href="/auth/login" className="hidden sm:inline text-sm font-semibold text-[var(--ink-700)] hover:text-[var(--ink-900)]">
+        <Link href="/auth/login" className="hidden text-sm font-semibold text-[var(--ink-700)] hover:text-[var(--ink-900)] sm:inline">
           Log in
         </Link>
         <Link
           href="/auth/register"
-          className="font-[var(--font-display)] font-semibold text-sm bg-[var(--ink-900)] text-white px-5 py-2.5 rounded-[var(--radius-md)] hover:opacity-90 transition-opacity"
+          className="rounded-[var(--radius-md)] bg-[var(--ink-900)] px-5 py-2.5 text-sm font-[var(--font-display)] font-semibold text-white transition-opacity hover:opacity-90"
         >
           Get started
         </Link>

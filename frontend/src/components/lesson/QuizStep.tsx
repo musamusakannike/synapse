@@ -26,7 +26,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
               key={i}
               onClick={() => !checked && setSelected(i)}
               disabled={checked}
-              className={`w-full flex items-center justify-between gap-3 text-left px-4 py-3 rounded-[var(--radius-md)] border transition-colors ${
+              className={`flex w-full items-center justify-between gap-3 rounded-[var(--radius-md)] border px-4 py-3 text-left transition-colors ${
                 showState && opt.isCorrect
                   ? 'border-[var(--success)] bg-[var(--success-100)]'
                   : showState && isSelected && !opt.isCorrect
@@ -37,8 +37,8 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
               }`}
             >
               <span className="text-sm text-[var(--ink-900)]">{opt.text}</span>
-              {showState && opt.isCorrect && <CheckCircle2 className="w-4 h-4 text-[var(--success)] flex-shrink-0" />}
-              {showState && isSelected && !opt.isCorrect && <XCircle className="w-4 h-4 text-[var(--danger)] flex-shrink-0" />}
+              {showState && opt.isCorrect && <CheckCircle2 className="size-4 flex-shrink-0 text-[var(--success)]" />}
+              {showState && isSelected && !opt.isCorrect && <XCircle className="size-4 flex-shrink-0 text-[var(--danger)]" />}
             </button>
           );
         })}
@@ -48,13 +48,13 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
         <button
           onClick={handleCheck}
           disabled={selected === null}
-          className="px-4 py-2 bg-[var(--brand-gold)] hover:bg-[var(--brand-gold-600)] disabled:opacity-50 text-[var(--ink-900)] font-semibold text-sm rounded-[var(--radius-sm)] transition-colors cursor-pointer"
+          className="cursor-pointer rounded-[var(--radius-sm)] bg-[var(--brand-gold)] px-4 py-2 text-sm font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--brand-gold-600)] disabled:opacity-50"
         >
           Check
         </button>
       ) : (
         quiz.explanation && (
-          <p className="text-sm text-[var(--text-muted)] bg-[var(--surface-sunken)] rounded-[var(--radius-md)] p-3">{quiz.explanation}</p>
+          <p className="rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-3 text-sm text-[var(--text-muted)]">{quiz.explanation}</p>
         )
       )}
     </div>

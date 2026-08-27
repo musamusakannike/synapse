@@ -1,6 +1,15 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { getCourses, getCourseById, createCourse, updateCourse, deleteCourse, getPopularTopics } from '../controllers/course.controller';
+import {
+  getCourses,
+  getCourseById,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getPopularTopics,
+  getCourseCategories,
+  createCourseCategory,
+} from '../controllers/course.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validateCreateCourse, validateUpdateCourse } from '../validations/course.validation';
 import { validatePagination } from '../validations/pagination.validation';
@@ -21,6 +30,8 @@ const upload = multer({
 
 router.get('/', validatePagination, getCourses);
 router.get('/popular', getPopularTopics);
+router.get('/categories', getCourseCategories);
+router.post('/categories', protect, authorize('admin'), createCourseCategory);
 router.get('/:id', getCourseById);
 router.post('/', protect, authorize('admin'), upload.single('banner'), validateCreateCourse, createCourse);
 router.put('/:id', protect, authorize('admin'), upload.single('banner'), validateUpdateCourse, updateCourse);

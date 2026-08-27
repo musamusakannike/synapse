@@ -9,7 +9,7 @@ import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 
-const CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
+const DEFAULT_CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
 
 export default function CoursesPage() {
   return (
@@ -21,12 +21,28 @@ export default function CoursesPage() {
 
 function CoursesContent() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await courseApi.categories();
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setCategories(res.data.data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch course categories', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const fetchCourses = useCallback(async () => {
     setIsLoading(true);
@@ -96,7 +112,7 @@ function CoursesContent() {
           />
         </div>
         <div className="w-full sm:w-52">
-          <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} options={['all', ...CATEGORIES]} placeholder="Category" />
+          <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1); }} options={['all', ...categories]} placeholder="Category" />
         </div>
         <div className="w-full sm:w-44">
           <Select value={difficulty} onChange={(e) => { setDifficulty(e.target.value); setPage(1); }} options={['all', 'beginner', 'intermediate', 'advanced']} placeholder="Level" />

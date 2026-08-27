@@ -24,6 +24,8 @@ const upload = (0, multer_1.default)({
 });
 router.get('/', pagination_validation_1.validatePagination, course_controller_1.getCourses);
 router.get('/popular', course_controller_1.getPopularTopics);
+router.get('/categories', course_controller_1.getCourseCategories);
+router.post('/categories', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), course_controller_1.createCourseCategory);
 router.get('/:id', course_controller_1.getCourseById);
 router.post('/', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), upload.single('banner'), course_validation_1.validateCreateCourse, course_controller_1.createCourse);
 router.put('/:id', auth_middleware_1.protect, (0, auth_middleware_1.authorize)('admin'), upload.single('banner'), course_validation_1.validateUpdateCourse, course_controller_1.updateCourse);

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Plus, Pencil, Trash2, Search, User, CheckCircle2, DollarSign } from 'lucide-react';
+import { BookOpen, Plus, Pencil, Trash2, Search, User, CheckCircle2, DollarSign, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { courseApi } from '@/lib/api';
 import AdminGuard from '@/components/auth/AdminGuard';
@@ -22,7 +22,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Course, CourseAuthor, PaginatedResponse } from '@/lib/types';
 import { formatNairaFromKobo } from '@/lib/money';
 
-const CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
+const DEFAULT_CATEGORIES = ['Web development', 'Data science', 'Design', 'Business', 'Mobile development', 'Marketing'];
 
 interface CourseFormState {
   title: string;
@@ -45,7 +45,7 @@ const initialFormState: CourseFormState = {
   description: '',
   longDescription: '',
   banner: '',
-  category: CATEGORIES[0],
+  category: DEFAULT_CATEGORIES[0],
   difficulty: 'beginner',
   isPublished: false,
   isFree: true,
@@ -58,6 +58,7 @@ const initialFormState: CourseFormState = {
 
 function AdminCoursesContent() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
@@ -71,6 +72,31 @@ function AdminCoursesContent() {
   const [deleteTarget, setDeleteTarget] = useState<Course | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<CourseFormState>(initialFormState);
+
+  // Category creation modals/states
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryDesc, setNewCategoryDesc] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  const [showInlineAddCategory, setShowInlineAddCategory] = useState(false);
+  const [inlineCategoryName, setInlineCategoryName] = useState('');
+  const [inlineCategorySaving, setInlineCategorySaving] = useState(false);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await courseApi.categories();
+      if (res.data?.data && Array.isArray(res.data.data)) {
+        setCategories(res.data.data);
+      }
+    } catch (e) {
+      console.error('Failed to load categories', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const fetchCourses = useCallback(async () => {
     setIsLoading(true);
@@ -96,8 +122,73 @@ function AdminCoursesContent() {
   }, [fetchCourses]);
 
   const resetForm = () => {
-    setForm(initialFormState);
+    setForm({
+      ...initialFormState,
+      category: categories[0] || DEFAULT_CATEGORIES[0],
+    });
     setModalTab('basic');
+    setShowInlineAddCategory(false);
+    setInlineCategoryName('');
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) {
+      return toast.error('Category name is required');
+    }
+    if (name.length < 2) {
+      return toast.error('Category name must be at least 2 characters');
+    }
+    setCreatingCategory(true);
+    try {
+      const res = await courseApi.createCategory({
+        name,
+        description: newCategoryDesc.trim() || undefined,
+      });
+      const createdName = res.data?.data?.name || name;
+      toast.success(`Category "${createdName}" created successfully`);
+      setNewCategoryName('');
+      setNewCategoryDesc('');
+      setShowCategoryModal(false);
+      await fetchCategories();
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Failed to create category');
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
+
+  const handleCreateInlineCategory = async () => {
+    const name = inlineCategoryName.trim();
+    if (!name) {
+      return toast.error('Category name is required');
+    }
+    if (name.length < 2) {
+      return toast.error('Category name must be at least 2 characters');
+    }
+    setInlineCategorySaving(true);
+    try {
+      const res = await courseApi.createCategory({ name });
+      const createdName = res.data?.data?.name || name;
+      toast.success(`Category "${createdName}" created and selected`);
+      setInlineCategoryName('');
+      setShowInlineAddCategory(false);
+      await fetchCategories();
+      setForm((prev) => ({ ...prev, category: createdName }));
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      if (err.response?.data?.message?.includes('already exists')) {
+        setForm((prev) => ({ ...prev, category: name }));
+        setShowInlineAddCategory(false);
+        setInlineCategoryName('');
+        toast.info(`Selected existing category "${name}"`);
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to create category');
+      }
+    } finally {
+      setInlineCategorySaving(false);
+    }
   };
 
   const buildFormData = () => {
@@ -189,15 +280,27 @@ function AdminCoursesContent() {
         title="Manage courses"
         description="Create, edit, and manage courses, curriculum, and pricing"
         action={
-          <Button
-            onClick={() => {
-              resetForm();
-              setEditCourse(null);
-              setShowModal(true);
-            }}
-          >
-            <Plus className="size-4" /> Create course
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setNewCategoryName('');
+                setNewCategoryDesc('');
+                setShowCategoryModal(true);
+              }}
+            >
+              <Tag className="size-4" /> Add category
+            </Button>
+            <Button
+              onClick={() => {
+                resetForm();
+                setEditCourse(null);
+                setShowModal(true);
+              }}
+            >
+              <Plus className="size-4" /> Create course
+            </Button>
+          </div>
         }
       />
 
@@ -221,7 +324,7 @@ function AdminCoursesContent() {
               setCategory(e.target.value);
               setPage(1);
             }}
-            options={['all', ...CATEGORIES]}
+            options={['all', ...categories]}
             placeholder="Category"
           />
         </div>
@@ -357,12 +460,81 @@ function AdminCoursesContent() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Select
-                  label="Category"
-                  value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  options={CATEGORIES}
-                />
+                <div className="flex flex-col gap-1.5 font-[var(--font-body)]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[var(--ink-900)]">Category</span>
+                    {!showInlineAddCategory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInlineCategoryName('');
+                          setShowInlineAddCategory(true);
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand-gold-600)] hover:underline"
+                      >
+                        <Plus className="size-3" /> New category
+                      </button>
+                    )}
+                  </div>
+
+                  {showInlineAddCategory ? (
+                    <div className="space-y-2 rounded-xl border border-[var(--brand-gold-300)] bg-[var(--surface-sunken)] p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[var(--ink-900)]">Create new category</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowInlineAddCategory(false);
+                            setInlineCategoryName('');
+                          }}
+                          className="text-xs text-[var(--text-muted)] hover:text-[var(--ink-900)]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={inlineCategoryName}
+                          onChange={(e) => setInlineCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleCreateInlineCategory();
+                            }
+                          }}
+                          placeholder="e.g. Artificial Intelligence"
+                          className="flex-1 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-card)] px-3 py-2 text-xs text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleCreateInlineCategory}
+                          disabled={inlineCategorySaving || !inlineCategoryName.trim()}
+                        >
+                          {inlineCategorySaving ? 'Adding…' : 'Add'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Select
+                      value={form.category}
+                      onChange={(e) => {
+                        if (e.target.value === '__add_new__') {
+                          setShowInlineAddCategory(true);
+                        } else {
+                          setForm({ ...form, category: e.target.value });
+                        }
+                      }}
+                      options={[
+                        ...categories.map((c) => ({ value: c, label: c })),
+                        { value: '__add_new__', label: '+ Add new category…' },
+                      ]}
+                    />
+                  )}
+                </div>
+
                 <Select
                   label="Difficulty Level"
                   value={form.difficulty}
@@ -647,6 +819,75 @@ function AdminCoursesContent() {
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? 'Saving…' : editCourse ? 'Save changes' : 'Create course'}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Create Category Modal */}
+      <Dialog
+        open={showCategoryModal}
+        onClose={() => {
+          setShowCategoryModal(false);
+          setNewCategoryName('');
+          setNewCategoryDesc('');
+        }}
+        title="Create Course Category"
+        maxWidth="520px"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-[var(--text-muted)]">
+            Add a new category to organize courses in the catalog and admin dashboard.
+          </p>
+
+          <Input
+            label="Category Name"
+            placeholder="e.g. Cybersecurity, Machine Learning, Cloud Computing…"
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            autoFocus
+          />
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold text-[var(--ink-900)]">Description (Optional)</span>
+            <textarea
+              value={newCategoryDesc}
+              onChange={(e) => setNewCategoryDesc(e.target.value)}
+              rows={2}
+              placeholder="Brief description of courses in this category…"
+              className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-page)] px-3.5 py-2.5 text-sm text-[var(--ink-900)] outline-none focus:border-[var(--ink-900)]"
+            />
+          </div>
+
+          <div className="space-y-2 rounded-xl bg-[var(--surface-sunken)] p-3.5">
+            <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
+              Existing Categories ({categories.length})
+            </span>
+            <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pt-1">
+              {categories.map((cat) => (
+                <Badge key={cat} tone="neutral">
+                  {cat}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-[var(--line)] pt-4">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowCategoryModal(false);
+                setNewCategoryName('');
+                setNewCategoryDesc('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateCategory}
+              disabled={creatingCategory || !newCategoryName.trim()}
+            >
+              {creatingCategory ? 'Creating…' : 'Create category'}
             </Button>
           </div>
         </div>

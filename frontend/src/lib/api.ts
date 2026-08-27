@@ -53,6 +53,8 @@ export const authApi = {
 
 export const courseApi = {
   list: (params?: Record<string, unknown>) => api.get('/courses', { params }),
+  categories: () => api.get('/courses/categories'),
+  createCategory: (data: { name: string; description?: string }) => api.post('/courses/categories', data),
   popular: () => api.get('/courses/popular'),
   get: (id: string) => api.get(`/courses/${id}`),
   create: (data: FormData) => api.post('/courses', data, { headers: { 'Content-Type': 'multipart/form-data' } }),

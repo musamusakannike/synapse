@@ -3,8 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPopularTopics = exports.deleteCourse = exports.updateCourse = exports.createCourse = exports.getCourseById = exports.getCourse = exports.getCourses = void 0;
+exports.createCourseCategory = exports.getCourseCategories = exports.getPopularTopics = exports.deleteCourse = exports.updateCourse = exports.createCourse = exports.getCourseById = exports.getCourse = exports.getCourses = void 0;
 const course_model_1 = __importDefault(require("../models/course.model"));
+const category_model_1 = __importDefault(require("../models/category.model"));
 const topic_model_1 = __importDefault(require("../models/topic.model"));
 const chapter_model_1 = __importDefault(require("../models/chapter.model"));
 const flashcard_model_1 = __importDefault(require("../models/flashcard.model"));
@@ -252,3 +253,80 @@ const getPopularTopics = async (req, res, next) => {
     }
 };
 exports.getPopularTopics = getPopularTopics;
+const DEFAULT_CATEGORIES = [
+    'Web development',
+    'Data science',
+    'Design',
+    'Business',
+    'Mobile development',
+    'Marketing',
+];
+const getCourseCategories = async (_req, res, next) => {
+    try {
+        const [savedCategories, courseCategories] = await Promise.all([
+            category_model_1.default.find().select('name').lean(),
+            course_model_1.default.distinct('category'),
+        ]);
+        const set = new Map();
+        DEFAULT_CATEGORIES.forEach((cat) => {
+            if (cat && cat.trim())
+                set.set(cat.trim().toLowerCase(), cat.trim());
+        });
+        savedCategories.forEach((cat) => {
+            if (cat?.name && cat.name.trim())
+                set.set(cat.name.trim().toLowerCase(), cat.name.trim());
+        });
+        courseCategories.forEach((cat) => {
+            if (typeof cat === 'string' && cat.trim())
+                set.set(cat.trim().toLowerCase(), cat.trim());
+        });
+        const sortedCategories = Array.from(set.values()).sort((a, b) => a.localeCompare(b));
+        res.status(200).json({
+            success: true,
+            data: sortedCategories,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getCourseCategories = getCourseCategories;
+const createCourseCategory = async (req, res, next) => {
+    try {
+        const { name, description } = req.body;
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
+            res.status(400).json({ success: false, message: 'Category name must be at least 2 characters long.' });
+            return;
+        }
+        const trimmedName = name.trim();
+        // Check if category already exists in Category collection (case-insensitive)
+        const existing = await category_model_1.default.findOne({
+            name: { $regex: `^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+        });
+        if (existing) {
+            res.status(400).json({ success: false, message: 'Category already exists.' });
+            return;
+        }
+        const category = await category_model_1.default.create({
+            name: trimmedName,
+            description: typeof description === 'string' ? description.trim() : '',
+        });
+        res.status(201).json({
+            success: true,
+            data: {
+                _id: category._id,
+                name: category.name,
+                description: category.description,
+            },
+        });
+    }
+    catch (error) {
+        const err = error;
+        if (err.code === 11000) {
+            res.status(400).json({ success: false, message: 'Category already exists.' });
+            return;
+        }
+        next(error);
+    }
+};
+exports.createCourseCategory = createCourseCategory;

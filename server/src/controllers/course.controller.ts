@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import Course, { ICourse, ICourseAuthor } from '../models/course.model';
+import Category from '../models/category.model';
 import Topic from '../models/topic.model';
 import Chapter from '../models/chapter.model';
 import Flashcard from '../models/flashcard.model';
@@ -289,3 +290,89 @@ export const getPopularTopics = async (req: Request, res: Response, next: NextFu
     next(error);
   }
 };
+
+const DEFAULT_CATEGORIES = [
+  'Web development',
+  'Data science',
+  'Design',
+  'Business',
+  'Mobile development',
+  'Marketing',
+];
+
+export const getCourseCategories = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const [savedCategories, courseCategories] = await Promise.all([
+      Category.find().select('name').lean(),
+      Course.distinct('category'),
+    ]);
+
+    const set = new Map<string, string>();
+
+    DEFAULT_CATEGORIES.forEach((cat) => {
+      if (cat && cat.trim()) set.set(cat.trim().toLowerCase(), cat.trim());
+    });
+
+    savedCategories.forEach((cat) => {
+      if (cat?.name && cat.name.trim()) set.set(cat.name.trim().toLowerCase(), cat.name.trim());
+    });
+
+    courseCategories.forEach((cat) => {
+      if (typeof cat === 'string' && cat.trim()) set.set(cat.trim().toLowerCase(), cat.trim());
+    });
+
+    const sortedCategories = Array.from(set.values()).sort((a, b) => a.localeCompare(b));
+
+    res.status(200).json({
+      success: true,
+      data: sortedCategories,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createCourseCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { name, description } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length < 2) {
+      res.status(400).json({ success: false, message: 'Category name must be at least 2 characters long.' });
+      return;
+    }
+
+    const trimmedName = name.trim();
+
+    // Check if category already exists in Category collection (case-insensitive)
+    const existing = await Category.findOne({
+      name: { $regex: `^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' },
+    });
+
+    if (existing) {
+      res.status(400).json({ success: false, message: 'Category already exists.' });
+      return;
+    }
+
+    const category = await Category.create({
+      name: trimmedName,
+      description: typeof description === 'string' ? description.trim() : '',
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        _id: category._id,
+        name: category.name,
+        description: category.description,
+      },
+    });
+  } catch (error: unknown) {
+    const err = error as { code?: number };
+    if (err.code === 11000) {
+      res.status(400).json({ success: false, message: 'Category already exists.' });
+      return;
+    }
+    next(error);
+  }
+};
+

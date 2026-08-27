@@ -23,6 +23,8 @@ export interface ITopic extends Document {
   xp: number;
   order: number;
   isPublished: boolean;
+  flashcardCount?: number;
+  mcqCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,6 +111,20 @@ const TopicSchema: Schema = new Schema<ITopic>(
     timestamps: true,
   }
 );
+
+TopicSchema.virtual('flashcardCount', {
+  ref: 'Flashcard',
+  localField: '_id',
+  foreignField: 'topic',
+  count: true,
+});
+
+TopicSchema.virtual('mcqCount', {
+  ref: 'MCQ',
+  localField: '_id',
+  foreignField: 'topic',
+  count: true,
+});
 
 TopicSchema.set('toJSON', { virtuals: true });
 TopicSchema.set('toObject', { virtuals: true });

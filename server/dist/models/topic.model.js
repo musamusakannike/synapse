@@ -110,6 +110,18 @@ const TopicSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
+TopicSchema.virtual('flashcardCount', {
+    ref: 'Flashcard',
+    localField: '_id',
+    foreignField: 'topic',
+    count: true,
+});
+TopicSchema.virtual('mcqCount', {
+    ref: 'MCQ',
+    localField: '_id',
+    foreignField: 'topic',
+    count: true,
+});
 TopicSchema.set('toJSON', { virtuals: true });
 TopicSchema.set('toObject', { virtuals: true });
 exports.default = mongoose_1.default.model('Topic', TopicSchema);

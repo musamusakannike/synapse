@@ -168,7 +168,7 @@ export default function CourseDetailsPage() {
       </Link>
 
       {/* Hero Section */}
-      <div className="relative space-y-6 overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] p-6 shadow-xs md:p-8">
+      <div className="relative space-y-6 overflow-hidden">
         {/* Banner image if available */}
         {course.banner && (
           <div className="mb-4 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]">
@@ -274,7 +274,7 @@ export default function CourseDetailsPage() {
       <div className="space-y-3">
         {/* What You'll Learn Accordion */}
         {course.whatYouWillLearn && course.whatYouWillLearn.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+          <div className="overflow-hidden rounded-2xl border border-[var(--line)] shadow-xs">
             <button
               onClick={() => toggleAccordion('learn')}
               className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
@@ -283,7 +283,7 @@ export default function CourseDetailsPage() {
               {accordionState.learn ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
             </button>
             {accordionState.learn && (
-              <div className="grid grid-cols-1 gap-3 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-3 border-t border-[var(--line)] px-6 pt-2 pb-6 md:grid-cols-2">
                 {course.whatYouWillLearn.map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-gold-100)] text-xs font-bold text-[var(--brand-gold-600)]">
@@ -298,7 +298,7 @@ export default function CourseDetailsPage() {
         )}
 
         {/* Prerequisites Accordion */}
-        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] shadow-xs">
           <button
             onClick={() => toggleAccordion('prerequisites')}
             className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
@@ -307,7 +307,7 @@ export default function CourseDetailsPage() {
             {accordionState.prerequisites ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
           </button>
           {accordionState.prerequisites && (
-            <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
+            <div className="space-y-2 border-t border-[var(--line)] px-6 pt-2 pb-6">
               {course.prerequisites && course.prerequisites.length > 0 ? (
                 course.prerequisites.map((prereq, idx) => (
                   <p key={idx} className="flex items-center gap-2 text-sm text-[var(--ink-800)]">
@@ -323,7 +323,7 @@ export default function CourseDetailsPage() {
         </div>
 
         {/* Description Accordion */}
-        <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-[var(--line)] shadow-xs">
           <button
             onClick={() => toggleAccordion('description')}
             className="flex w-full items-center justify-between px-6 py-4 text-left text-base font-bold text-[var(--ink-900)] transition-colors hover:bg-[var(--surface-sunken)]"
@@ -332,7 +332,7 @@ export default function CourseDetailsPage() {
             {accordionState.description ? <ChevronUp className="size-5 text-[var(--text-muted)]" /> : <ChevronDown className="size-5 text-[var(--text-muted)]" />}
           </button>
           {accordionState.description && (
-            <div className="border-t border-[var(--line)] bg-[var(--surface-card)] px-6 pt-2 pb-6">
+            <div className="border-t border-[var(--line)] px-6 pt-2 pb-6">
               <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">
                 {course.longDescription || course.description}
               </p>
@@ -363,7 +363,7 @@ export default function CourseDetailsPage() {
               return (
                 <div
                   key={chapter._id}
-                  className={`overflow-hidden rounded-2xl border bg-[var(--surface-card)] shadow-xs transition-all ${
+                  className={`overflow-hidden rounded-2xl border shadow-xs transition-all ${
                     isLocked ? 'border-[var(--line)] opacity-70' : 'border-[var(--line)] hover:border-[var(--brand-gold-300)]'
                   }`}
                 >
@@ -442,7 +442,7 @@ export default function CourseDetailsPage() {
 
                   {/* Topics List Collapsed Dropdown */}
                   {isOpen && chapter.topics && chapter.topics.length > 0 && (
-                    <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-sunken)]/40 p-4">
+                    <div className="space-y-2 border-t border-[var(--line)] bg-[var(--surface-sunken)]/20 p-4">
                       {chapter.topics.map((topic, tIdx) => {
                         const tUnlocked = !!topic.isUnlocked;
                         const tCompleted = !!topic.isCompleted;
@@ -453,8 +453,8 @@ export default function CourseDetailsPage() {
                             onClick={() => tUnlocked && handleOpenTopic(chapter, topic)}
                             className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
                               !tUnlocked
-                                ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/50 opacity-60'
-                                : 'cursor-pointer border-[var(--line)] bg-[var(--surface-card)] shadow-xs hover:border-[var(--brand-gold-400)]'
+                                ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/30 opacity-60'
+                                : 'cursor-pointer border-[var(--line)] shadow-xs hover:border-[var(--brand-gold-400)]'
                             }`}
                           >
                             <div className="flex min-w-0 items-center gap-3">

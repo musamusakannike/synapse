@@ -1,13 +1,22 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useRef } from 'react';
-import { X, MoreHorizontal, PartyPopper, ChevronLeft, Flag, Check } from 'lucide-react';
-import { Topic } from '@/lib/types';
-import { useProgressStore } from '@/store/progress.store';
-import { progressApi } from '@/lib/api';
-import InfoStepBlock from './InfoStepBlock';
-import QuizStep from './QuizStep';
-import ExerciseRunner from './ExerciseRunner';
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import confetti from "canvas-confetti";
+import {
+  X,
+  MoreHorizontal,
+  PartyPopper,
+  ChevronLeft,
+  Flag,
+  Check,
+  ChevronDown,
+} from "lucide-react";
+import { Topic } from "@/lib/types";
+import { useProgressStore } from "@/store/progress.store";
+import { progressApi } from "@/lib/api";
+import InfoStepBlock from "./InfoStepBlock";
+import QuizStep from "./QuizStep";
+import ExerciseRunner from "./ExerciseRunner";
 
 export default function StepPlayer({
   topic,
@@ -36,16 +45,21 @@ export default function StepPlayer({
       }
     }
     if (menuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
   // Resume where the learner last left off
   useEffect(() => {
     let cancelled = false;
     fetchTopicProgress(topic._id).then((progress) => {
-      if (!cancelled && progress && progress.lastContentIndex > 0 && progress.lastContentIndex < total) {
+      if (
+        !cancelled &&
+        progress &&
+        progress.lastContentIndex > 0 &&
+        progress.lastContentIndex < total
+      ) {
         setIndex(progress.lastContentIndex);
       }
     });
@@ -58,13 +72,89 @@ export default function StepPlayer({
   // Persist the learner's position
   useEffect(() => {
     if (finished) return;
-    saveContentPosition({ course: topic.course, topic: topic._id, contentIndex: index });
+    saveContentPosition({
+      course: topic.course,
+      topic: topic._id,
+      contentIndex: index,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, topic._id, finished]);
 
+  const triggerConfettiFall = useCallback(() => {
+    // Initial center burst
+    confetti({
+      particleCount: 80,
+      spread: 90,
+      origin: { y: 0.6 },
+      colors: [
+        "#FF8A00",
+        "#22C55E",
+        "#3B82F6",
+        "#EC4899",
+        "#EAB308",
+        "#8B5CF6",
+      ],
+    });
+
+    const duration = 2.5 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = {
+      startVelocity: 30,
+      spread: 360,
+      ticks: 80,
+      zIndex: 1000,
+      colors: [
+        "#FF8A00",
+        "#22C55E",
+        "#3B82F6",
+        "#EC4899",
+        "#EAB308",
+        "#8B5CF6",
+      ],
+    };
+
+    const interval: NodeJS.Timeout = setInterval(() => {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      const particleCount = 35 * (timeLeft / duration);
+
+      // Cascading shower from top-left and top-right
+      confetti({
+        ...defaults,
+        particleCount,
+        angle: 60,
+        spread: 65,
+        origin: { x: 0.05, y: 0.65 },
+      });
+      confetti({
+        ...defaults,
+        particleCount,
+        angle: 120,
+        spread: 65,
+        origin: { x: 0.95, y: 0.65 },
+      });
+    }, 220);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Trigger confetti celebration on lesson completion
+  useEffect(() => {
+    if (!finished) return;
+    const cleanup = triggerConfettiFall();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [finished, triggerConfettiFall]);
+
   const step = steps[index];
   const isLastStep = index === total - 1;
-  const isQuizStep = step?.type === 'quiz';
+  const isQuizStep = step?.type === "quiz";
   const canAdvance = !isQuizStep || quizAnswered;
 
   const markTopicComplete = async () => {
@@ -77,7 +167,7 @@ export default function StepPlayer({
       });
       setHasCompleted(true);
     } catch (e) {
-      console.error('Failed to complete topic on server:', e);
+      console.error("Failed to complete topic on server:", e);
     } finally {
       setIsSubmittingCompletion(false);
     }
@@ -103,7 +193,9 @@ export default function StepPlayer({
   if (total === 0) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)] p-6">
-        <p className="text-[var(--text-muted)] text-base font-medium">This topic has no lesson steps yet.</p>
+        <p className="text-[var(--text-muted)] text-base font-medium">
+          This topic has no lesson steps yet.
+        </p>
         <button
           onClick={onClose}
           className="cursor-pointer rounded-2xl bg-[#FF8A00] px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-[#F07D00] transition-colors"
@@ -128,17 +220,26 @@ export default function StepPlayer({
             <X className="size-6" />
           </button>
           <div className="flex items-center gap-1.5 font-bold">
-            <svg className="size-6 fill-rose-500 text-rose-500" viewBox="0 0 24 24">
+            <svg
+              className="size-6 fill-rose-500 text-rose-500"
+              viewBox="0 0 24 24"
+            >
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
-            <span className="text-base font-extrabold text-[var(--ink-900)]">5</span>
+            <span className="text-base font-extrabold text-[var(--ink-900)]">
+              5
+            </span>
           </div>
         </div>
 
         {/* Celebration Body */}
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center max-w-md mx-auto">
-          <div className="relative">
-            <div className="flex size-24 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 shadow-lg">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center max-w-md mx-auto animate-in fade-in zoom-in-95 duration-300">
+          <div
+            className="relative cursor-pointer transition-transform hover:scale-105 active:scale-95"
+            onClick={triggerConfettiFall}
+            title="Click for more confetti!"
+          >
+            <div className="flex size-24 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 shadow-lg ring-8 ring-emerald-50/50 dark:ring-emerald-900/20">
               <PartyPopper className="size-12 text-emerald-600 dark:text-emerald-400" />
             </div>
             <span className="absolute -bottom-2 -right-2 flex items-center gap-1 rounded-full bg-amber-500 px-3 py-1 text-xs font-black text-white shadow-md">
@@ -147,9 +248,15 @@ export default function StepPlayer({
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-3xl font-black text-[var(--ink-900)] tracking-tight">Lesson Complete!</h1>
+            <h1 className="text-3xl font-black text-[var(--ink-900)] tracking-tight">
+              Lesson Complete!
+            </h1>
             <p className="text-base text-[var(--text-muted)] leading-relaxed">
-              You&apos;ve successfully finished <span className="font-semibold text-[var(--ink-900)]">&ldquo;{topic.title}&rdquo;</span>.
+              You&apos;ve successfully finished{" "}
+              <span className="font-semibold text-[var(--ink-900)]">
+                &ldquo;{topic.title}&rdquo;
+              </span>
+              .
             </p>
           </div>
 
@@ -173,8 +280,11 @@ export default function StepPlayer({
   }
 
   const isTakeaway =
-    step?.title?.trim().toLowerCase() === 'takeaway' ||
-    (step?.type === 'text' && step.content.length < 120 && isLastStep && !step.title);
+    step?.title?.trim().toLowerCase() === "takeaway" ||
+    (step?.type === "text" &&
+      step.content.length < 120 &&
+      isLastStep &&
+      !step.title);
 
   const displayTitle = step?.title || topic.title;
 
@@ -202,10 +312,10 @@ export default function StepPlayer({
                   key={i}
                   className={`h-2.5 rounded-full transition-all duration-300 ${
                     isActive
-                      ? 'flex-[2.5] bg-[#22C55E]'
+                      ? "flex-[2.5] bg-[#22C55E]"
                       : isCompleted
-                      ? 'flex-1 bg-[#22C55E]'
-                      : 'flex-1 bg-slate-200 dark:bg-slate-700'
+                        ? "flex-1 bg-[#22C55E]"
+                        : "flex-1 bg-slate-200 dark:bg-slate-700"
                   }`}
                 />
               );
@@ -214,10 +324,7 @@ export default function StepPlayer({
 
           {/* Hearts / Lives Counter */}
           <div className="flex items-center gap-1.5 font-bold select-none pl-1">
-            <svg className="size-5 sm:size-6 fill-rose-500 text-rose-500" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-            <span className="text-sm sm:text-base font-extrabold text-[var(--ink-900)]">5</span>
+            <ChevronDown className="text-[var(--ink-900)]" size={32} />
           </div>
         </div>
       </header>
@@ -245,7 +352,7 @@ export default function StepPlayer({
                 <button
                   onClick={() => {
                     setMenuOpen(false);
-                    alert('Feedback submitted. Thank you!');
+                    alert("Feedback submitted. Thank you!");
                   }}
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-[var(--ink-900)] hover:bg-[var(--surface-sunken)] transition-colors text-left"
                 >
@@ -266,12 +373,19 @@ export default function StepPlayer({
           </div>
         ) : (
           <div className="flex-1 space-y-6">
-            {step.type === 'quiz' && step.quiz ? (
-              <QuizStep quiz={step.quiz} onAnswered={() => setQuizAnswered(true)} />
-            ) : step.type === 'exercise' && step.exercise ? (
+            {step.type === "quiz" && step.quiz ? (
+              <QuizStep
+                quiz={step.quiz}
+                onAnswered={() => setQuizAnswered(true)}
+              />
+            ) : step.type === "exercise" && step.exercise ? (
               <ExerciseRunner exercise={step.exercise} />
             ) : (
-              <InfoStepBlock content={step} index={index} topicTitle={topic.title} />
+              <InfoStepBlock
+                content={step}
+                index={index}
+                topicTitle={topic.title}
+              />
             )}
           </div>
         )}
@@ -295,7 +409,7 @@ export default function StepPlayer({
             disabled={!canAdvance || isSubmittingCompletion}
             className="flex-1 flex items-center justify-center py-4 px-8 rounded-2xl bg-[#FF8A00] hover:bg-[#F07D00] active:scale-[0.98] text-white text-lg font-bold tracking-wide shadow-lg shadow-orange-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <span>{isLastStep ? 'Finish' : 'Continue'}</span>
+            <span>{isLastStep ? "Finish" : "Continue"}</span>
           </button>
         </div>
       </footer>

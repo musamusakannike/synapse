@@ -115,10 +115,7 @@ export default function InfoStepBlock({ content, index = 0, topicTitle = '' }: {
       )}
 
       {content.type === 'group' && (
-        <div className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] p-5 shadow-xs">
-          {content.content && (
-            <h3 className="border-b border-[var(--line)] pb-2 text-base font-bold text-[var(--ink-900)]">{content.content}</h3>
-          )}
+        <div className="space-y-4">
           <div className="space-y-4">
             {(content.blocks || []).map((subBlock, bIdx) => (
               <InfoStepBlock key={bIdx} content={subBlock} index={bIdx} topicTitle={topicTitle} />

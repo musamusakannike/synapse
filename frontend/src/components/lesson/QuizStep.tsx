@@ -1,12 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { TopicQuiz } from '@/lib/types';
 
 export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnswered: (correct: boolean) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setSelected(null);
+    setChecked(false);
+  }, [quiz]);
 
   const handleCheck = () => {
     if (selected === null) return;

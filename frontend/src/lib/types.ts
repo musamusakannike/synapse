@@ -65,6 +65,7 @@ export interface Exercise {
 }
 
 export interface TopicContent {
+  _id?: string;
   type: TopicContentType;
   content: string;
   language?: string;

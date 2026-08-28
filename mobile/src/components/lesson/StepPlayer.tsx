@@ -230,11 +230,21 @@ export default function StepPlayer({
         ) : (
           <View style={{ gap: spacing.lg }}>
             {step.type === 'quiz' && step.quiz ? (
-              <QuizStep quiz={step.quiz} onAnswered={() => setQuizAnswered(true)} />
+              <QuizStep
+                key={step._id || `step-${index}`}
+                quiz={step.quiz}
+                onAnswered={() => setQuizAnswered(true)}
+              />
             ) : step.type === 'exercise' && step.exercise ? (
-              <ExerciseRunner exercise={step.exercise} />
+              <ExerciseRunner
+                key={step._id || `step-${index}`}
+                exercise={step.exercise}
+              />
             ) : (
-              <InfoStepBlock content={step} />
+              <InfoStepBlock
+                key={step._id || `step-${index}`}
+                content={step}
+              />
             )}
           </View>
         )}

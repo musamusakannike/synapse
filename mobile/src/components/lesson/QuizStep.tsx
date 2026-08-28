@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
@@ -9,6 +9,11 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
   const { colors } = useTheme();
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setSelected(null);
+    setChecked(false);
+  }, [quiz]);
 
   const handleCheck = () => {
     if (selected === null) return;

@@ -25,13 +25,11 @@ import {
   IconCircleCheck,
 } from '@tabler/icons-react-native';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
-import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
+import { Course, Chapter, Topic, PaymentStatus } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
-import TopicReaderSheet from '@/components/courses/TopicReaderSheet';
-import ExerciseSheet from '@/components/courses/ExerciseSheet';
 import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
@@ -55,15 +53,6 @@ export default function CourseDetailScreen() {
   // Collapsed chapter dropdown states
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const [expandedAuthors, setExpandedAuthors] = useState(false);
-
-  // Reader Sheet state
-  const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
-  const [readingModalOpen, setReadingModalOpen] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
-
-  // Exercise Sheet state
-  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
-  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -132,8 +121,6 @@ export default function CourseDetailScreen() {
   const handleOpenTopic = (chapter: Chapter, topic: Topic) => {
     if (!hasAccess || !topic.isUnlocked) return;
     haptics.light();
-    setActiveTopic(topic);
-    setReadingModalOpen(true);
 
     // Save position asynchronously
     progressApi.savePosition({
@@ -141,38 +128,13 @@ export default function CourseDetailScreen() {
       chapterId: chapter._id,
       topicId: topic._id,
       contentIndex: 0,
-    });
-  };
+    }).catch(() => {});
 
-  const handleCompleteTopicNoExercise = async () => {
-    if (!activeTopic || !course) return;
-    try {
-      setIsCompleting(true);
-      await progressApi.completeTopic({
-        courseId: course._id,
-        topicId: activeTopic._id,
-      });
-      haptics.success();
-      setReadingModalOpen(false);
-      await loadData();
-    } catch (err) {
-      console.error('Failed to complete topic:', err);
-    } finally {
-      setIsCompleting(false);
-    }
-  };
-
-  const handleLaunchTopicExercise = () => {
-    if (!activeTopic || !activeTopic.exercise) return;
-    haptics.light();
-    setActiveExercise(activeTopic.exercise);
-    setReadingModalOpen(false);
-    setExerciseModalOpen(true);
-  };
-
-  const handleExercisePassed = async () => {
-    setExerciseModalOpen(false);
-    await loadData();
+    // Navigate directly to dedicated learn screen
+    router.push({
+      pathname: '/course/[id]/topic/[topicId]/learn',
+      params: { id, topicId: topic._id },
+    } as any);
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -572,30 +534,6 @@ export default function CourseDetailScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* Topic Reader Modal */}
-      {readingModalOpen && activeTopic && (
-        <TopicReaderSheet
-          open={readingModalOpen}
-          onClose={() => setReadingModalOpen(false)}
-          topic={activeTopic}
-          onCompleteTopic={handleCompleteTopicNoExercise}
-          onTakeExercise={handleLaunchTopicExercise}
-          isCompleting={isCompleting}
-        />
-      )}
-
-      {/* Exercise Modal */}
-      {exerciseModalOpen && activeExercise && (
-        <ExerciseSheet
-          open={exerciseModalOpen}
-          onClose={() => setExerciseModalOpen(false)}
-          exercise={activeExercise}
-          courseId={id}
-          topicId={activeTopic?._id}
-          onSuccessPassed={handleExercisePassed}
-        />
-      )}
     </SafeAreaView>
   );
 }

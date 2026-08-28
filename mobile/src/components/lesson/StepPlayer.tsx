@@ -1,38 +1,37 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { IconX, IconConfetti } from '@tabler/icons-react-native';
+import Svg, { Path } from 'react-native-svg';
+import { IconX, IconDots, IconConfetti, IconChevronLeft, IconCheck } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import { Topic } from '@/lib/types';
 import { useProgressStore } from '@/store/progress.store';
+import { progressApi } from '@/lib/api';
+import * as haptics from '@/lib/haptics';
 import InfoStepBlock from './InfoStepBlock';
 import QuizStep from './QuizStep';
 import ExerciseRunner from './ExerciseRunner';
 
-const STEP_LABELS: Record<string, string> = {
-  text: 'Reading',
-  latex: 'Formula',
-  code: 'Code',
-  youtube: 'Video',
-  image: 'Image',
-  video: 'Video',
-  audio: 'Audio',
-  quiz: 'Quiz',
-  exercise: 'Exercise',
-};
-
-export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Topic; onClose: () => void; altViewHref?: string }) {
+export default function StepPlayer({
+  topic,
+  onClose,
+}: {
+  topic: Topic;
+  onClose: () => void;
+}) {
   const { colors } = useTheme();
   const steps = topic.contents || [];
   const [index, setIndex] = useState(0);
   const [quizAnswered, setQuizAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
-  const { saveContentPosition, fetchTopicProgress } = useProgressStore();
+  const [hasCompleted, setHasCompleted] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
+  const { saveContentPosition, fetchTopicProgress } = useProgressStore();
   const total = steps.length;
 
-  // Resume where the learner last left off, instead of always restarting at step 1.
+  // Resume where the learner last left off
   useEffect(() => {
     let cancelled = false;
     fetchTopicProgress(topic._id).then((progress) => {
@@ -46,20 +45,40 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topic._id]);
 
-  // Save the learner's position as they move through the lesson, so this pickup point persists across sessions.
+  // Save learner's position
   useEffect(() => {
     if (finished) return;
     saveContentPosition({ course: topic.course, topic: topic._id, contentIndex: index });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, topic._id, finished]);
+
   const step = steps[index];
   const isLastStep = index === total - 1;
   const isQuizStep = step?.type === 'quiz';
   const canAdvance = !isQuizStep || quizAnswered;
 
-  const handleNext = () => {
+  const markTopicComplete = async () => {
+    if (hasCompleted) return;
+    try {
+      setIsCompleting(true);
+      await progressApi.completeTopic({
+        courseId: topic.course,
+        topicId: topic._id,
+      });
+      setHasCompleted(true);
+      haptics.success();
+    } catch (e) {
+      console.error('Failed to complete topic on server:', e);
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const handleNext = async () => {
+    haptics.light();
     if (isLastStep) {
       setFinished(true);
+      await markTopicComplete();
       return;
     }
     setQuizAnswered(false);
@@ -68,97 +87,179 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
 
   const handlePrev = () => {
     if (index > 0) {
+      haptics.light();
       setQuizAnswered(true);
       setIndex((i) => i - 1);
     }
+  };
+
+  const handleMenuPress = () => {
+    haptics.light();
+    const options = [
+      { text: 'Report an issue', onPress: () => Alert.alert('Thank you', 'Your feedback has been recorded.') },
+      { text: 'Cancel', style: 'cancel' as const },
+    ];
+    Alert.alert(topic.title, 'Lesson options', options);
   };
 
   if (total === 0) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]}>
         <View style={styles.emptyState}>
-          <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans }}>This topic has no lesson steps yet.</Text>
-          <Pressable onPress={onClose} style={[styles.doneBtn, { backgroundColor: colors.brandPrimary }]}>
-            <Text style={[styles.doneBtnText, { color: colors.brandOnPrimary }]}>Close</Text>
+          <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans, fontSize: fontSizes.base }}>
+            This topic has no lesson steps yet.
+          </Text>
+          <Pressable onPress={onClose} style={styles.orangeContinueBtn}>
+            <Text style={styles.orangeContinueText}>Go back to course</Text>
           </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
+  // Celebration Finished Screen
   if (finished) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]}>
         <View style={styles.headerRow}>
-          <Pressable onPress={onClose} hitSlop={10}>
-            <IconX size={22} color={colors.textPrimary} />
+          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+            <IconX size={26} color={colors.textPrimary} />
           </Pressable>
-        </View>
-        <View style={styles.congratsWrap}>
-          <View style={[styles.congratsIcon, { backgroundColor: colors.brandAiSoft }]}>
-            <IconConfetti size={40} color={colors.brandAi} />
+          <View style={styles.heartRow}>
+            <Svg width={22} height={22} viewBox="0 0 24 24">
+              <Path
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                fill="#EF4444"
+              />
+            </Svg>
+            <Text style={[styles.heartCount, { color: colors.textPrimary }]}>5</Text>
           </View>
-          <Text style={[styles.congratsTitle, { color: colors.textPrimary }]}>Congratulations!</Text>
-          <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans, textAlign: 'center' }}>
-            You&apos;ve finished &ldquo;{topic.title}&rdquo;.
+        </View>
+
+        <View style={styles.congratsWrap}>
+          <View style={[styles.congratsIcon, { backgroundColor: 'rgba(34, 197, 94, 0.12)' }]}>
+            <IconConfetti size={48} color="#16A34A" />
+          </View>
+
+          <View style={styles.xpBadge}>
+            <Text style={styles.xpBadgeText}>+{topic.xp || 50} XP</Text>
+          </View>
+
+          <Text style={[styles.congratsTitle, { color: colors.textPrimary }]}>Lesson Complete!</Text>
+          <Text style={[styles.congratsSub, { color: colors.textSecondary }]}>
+            You&apos;ve successfully finished &ldquo;{topic.title}&rdquo;.
           </Text>
-          <Pressable onPress={onClose} style={[styles.doneBtn, { backgroundColor: colors.brandPrimary }]}>
-            <Text style={[styles.doneBtnText, { color: colors.brandOnPrimary }]}>Done</Text>
+
+          <View style={[styles.completedPill, { backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.2)' }]}>
+            <IconCheck size={16} color="#16A34A" />
+            <Text style={styles.completedPillText}>Progress saved</Text>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Pressable onPress={onClose} style={styles.orangeContinueBtn}>
+            <Text style={styles.orangeContinueText}>Continue</Text>
           </Pressable>
         </View>
       </SafeAreaView>
     );
   }
 
+  const isTakeaway =
+    step?.title?.trim().toLowerCase() === 'takeaway' ||
+    (step?.type === 'text' && step.content.length < 120 && isLastStep && !step.title);
+
+  const displayTitle = step?.title || topic.title;
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top', 'bottom']}>
+      {/* Top Header Bar */}
       <View style={styles.headerRow}>
-        <Pressable onPress={onClose} hitSlop={10}>
-          <IconX size={22} color={colors.textPrimary} />
+        <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+          <IconX size={26} color={colors.textPrimary} />
         </Pressable>
-        <View style={styles.headerRight}>
-          {!!altViewHref && (
-            <Pressable onPress={() => router.push(altViewHref as any)}>
-              <Text style={[styles.altViewLink, { color: colors.textLink }]}>View as reading list</Text>
-            </Pressable>
-          )}
-          <Text style={[styles.progressLabel, { color: colors.textTertiary }]}>{index + 1}/{total}</Text>
+
+        {/* Segmented Pill Progress Bar */}
+        <View style={styles.segmentedProgressRow}>
+          {steps.map((_, i) => {
+            const isActive = i === index;
+            const isCompleted = i < index;
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.pillSegment,
+                  isActive
+                    ? styles.pillSegmentActive
+                    : isCompleted
+                    ? styles.pillSegmentCompleted
+                    : [styles.pillSegmentInactive, { backgroundColor: colors.surfaceSunken || '#E2E8F0' }],
+                ]}
+              />
+            );
+          })}
+        </View>
+
+        {/* Hearts / Lives Counter */}
+        <View style={styles.heartRow}>
+          <Svg width={22} height={22} viewBox="0 0 24 24">
+            <Path
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              fill="#EF4444"
+            />
+          </Svg>
+          <Text style={[styles.heartCount, { color: colors.textPrimary }]}>5</Text>
         </View>
       </View>
-      <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSunken }]}>
-        <View style={[styles.progressFill, { backgroundColor: colors.success, width: `${((index + 1) / total) * 100}%` }]} />
-      </View>
 
-      <ScrollView contentContainerStyle={styles.body}>
-        <Text style={[styles.stepLabel, { color: colors.textTertiary }]}>{STEP_LABELS[step.type] || step.type}</Text>
-        {!!step.title && step.type !== 'quiz' && (
-          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{step.title}</Text>
-        )}
+      {/* Main Content Scroll Area */}
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+        {/* Step Title Row with '...' button */}
+        <View style={styles.titleRow}>
+          <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{displayTitle}</Text>
+          <Pressable onPress={handleMenuPress} hitSlop={12} style={styles.dotsBtn}>
+            <IconDots size={24} color={colors.textPrimary} />
+          </Pressable>
+        </View>
 
-        {step.type === 'quiz' && step.quiz ? (
-          <QuizStep quiz={step.quiz} onAnswered={() => setQuizAnswered(true)} />
-        ) : step.type === 'exercise' && step.exercise ? (
-          <ExerciseRunner exercise={step.exercise} />
+        {/* Content Body */}
+        {isTakeaway ? (
+          <View style={styles.takeawayWrap}>
+            <Text style={[styles.takeawayText, { color: colors.textPrimary }]}>{step.content}</Text>
+          </View>
         ) : (
-          <InfoStepBlock content={step} />
+          <View style={{ gap: spacing.lg }}>
+            {step.type === 'quiz' && step.quiz ? (
+              <QuizStep quiz={step.quiz} onAnswered={() => setQuizAnswered(true)} />
+            ) : step.type === 'exercise' && step.exercise ? (
+              <ExerciseRunner exercise={step.exercise} />
+            ) : (
+              <InfoStepBlock content={step} />
+            )}
+          </View>
         )}
       </ScrollView>
 
-      <View style={[styles.footer, { borderTopColor: colors.borderSubtle, flexDirection: 'row', gap: spacing.md }]}>
+      {/* Sticky Bottom Action Bar */}
+      <View style={[styles.footer, { borderTopColor: colors.borderSubtle }]}>
         {index > 0 && (
           <Pressable
             onPress={handlePrev}
-            style={[styles.prevBtn, { backgroundColor: colors.surfaceSunken }]}
+            style={[styles.backBtn, { borderColor: colors.borderSubtle, backgroundColor: colors.surfaceCard }]}
           >
-            <Text style={[styles.prevBtnText, { color: colors.textPrimary }]}>Previous</Text>
+            <IconChevronLeft size={24} color={colors.textPrimary} />
           </Pressable>
         )}
+
         <Pressable
           onPress={handleNext}
-          disabled={!canAdvance}
-          style={[styles.nextBtn, { backgroundColor: colors.danger, opacity: canAdvance ? 1 : 0.5, flex: 1 }]}
+          disabled={!canAdvance || isCompleting}
+          style={[
+            styles.orangeContinueBtn,
+            { opacity: !canAdvance || isCompleting ? 0.4 : 1 },
+          ]}
         >
-          <Text style={styles.nextBtnText}>{isLastStep ? 'Finish' : 'Next'}</Text>
+          <Text style={styles.orangeContinueText}>{isLastStep ? 'Finish' : 'Continue'}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -166,25 +267,182 @@ export default function StepPlayer({ topic, onClose, altViewHref }: { topic: Top
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  altViewLink: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium },
-  progressLabel: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium },
-  progressTrack: { height: 6, borderRadius: radii.full, marginHorizontal: spacing.xl, marginTop: spacing.sm, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: radii.full },
-  body: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing['2xl'], gap: spacing.base },
-  stepLabel: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium, textTransform: 'uppercase', letterSpacing: 0.6 },
-  stepTitle: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold },
-  footer: { paddingHorizontal: spacing.xl, paddingVertical: spacing.base, borderTopWidth: 1 },
-  nextBtn: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  nextBtnText: { color: '#FFFFFF', fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
-  prevBtn: { flex: 1, paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  prevBtnText: { fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.base, paddingHorizontal: spacing.xl },
-  congratsWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.base, paddingHorizontal: spacing.xl },
-  congratsIcon: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
-  congratsTitle: { fontSize: fontSizes['2xl'], fontFamily: fontFamilies.displaySemiBold },
-  doneBtn: { marginTop: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing['2xl'], borderRadius: radii.md },
-  doneBtnText: { fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
+  container: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  segmentedProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 6,
+    marginHorizontal: spacing.sm,
+  },
+  pillSegment: {
+    height: 10,
+    borderRadius: radii.full,
+  },
+  pillSegmentActive: {
+    flex: 2.5,
+    backgroundColor: '#22C55E',
+  },
+  pillSegmentCompleted: {
+    flex: 1,
+    backgroundColor: '#22C55E',
+  },
+  pillSegmentInactive: {
+    flex: 1,
+  },
+  heartRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingLeft: 4,
+  },
+  heartCount: {
+    fontSize: fontSizes.md,
+    fontFamily: fontFamilies.sansBold || fontFamilies.sansSemiBold,
+    fontWeight: '800',
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing['3xl'],
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+    gap: spacing.md,
+  },
+  stepTitle: {
+    fontSize: 26,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontWeight: '800',
+    flex: 1,
+    lineHeight: 32,
+  },
+  dotsBtn: {
+    padding: 4,
+  },
+  takeawayWrap: {
+    minHeight: 280,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing['2xl'],
+    paddingHorizontal: spacing.md,
+  },
+  takeawayText: {
+    fontSize: fontSizes.xl,
+    fontFamily: fontFamilies.sansSemiBold,
+    textAlign: 'center',
+    lineHeight: fontSizes.xl * 1.5,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    gap: spacing.md,
+    borderTopWidth: 1,
+  },
+  backBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orangeContinueBtn: {
+    flex: 1,
+    backgroundColor: '#FF8A00',
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF8A00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  orangeContinueText: {
+    color: '#FFFFFF',
+    fontFamily: fontFamilies.sansBold || fontFamilies.sansSemiBold,
+    fontSize: fontSizes.md,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: spacing.xl,
+  },
+  congratsWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.base,
+    paddingHorizontal: spacing.xl,
+  },
+  congratsIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  xpBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: spacing.base,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+  },
+  xpBadgeText: {
+    color: '#FFFFFF',
+    fontSize: fontSizes.sm,
+    fontFamily: fontFamilies.sansBold || fontFamilies.sansSemiBold,
+    fontWeight: '800',
+  },
+  congratsTitle: {
+    fontSize: fontSizes['2xl'],
+    fontFamily: fontFamilies.displaySemiBold,
+    fontWeight: '800',
+  },
+  congratsSub: {
+    fontFamily: fontFamilies.sans,
+    fontSize: fontSizes.base,
+    textAlign: 'center',
+    lineHeight: fontSizes.base * 1.5,
+  },
+  completedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.xs,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    marginTop: spacing.xs,
+  },
+  completedPillText: {
+    color: '#16A34A',
+    fontSize: fontSizes.xs,
+    fontFamily: fontFamilies.sansSemiBold,
+  },
 });

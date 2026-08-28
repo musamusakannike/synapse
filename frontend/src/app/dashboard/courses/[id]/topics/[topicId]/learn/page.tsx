@@ -53,7 +53,6 @@ export default function LearnPage() {
     <StepPlayer
       topic={topic}
       onClose={handleClose}
-      altViewHref={`/dashboard/courses/${courseId}/topics/${topicId}?view=flat`}
     />
   );
 }

@@ -38,7 +38,6 @@ export default function TopicLearnScreen() {
     <StepPlayer
       topic={topic}
       onClose={handleClose}
-      altViewHref={`/course/${id}/topic/${topicId}?flat=1`}
     />
   );
 }

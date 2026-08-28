@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { IconCircleCheck, IconCircleX } from '@tabler/icons-react-native';
+import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import { TopicQuiz } from '@/lib/types';
 import * as haptics from '@/lib/haptics';
@@ -13,35 +13,61 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
   const handleCheck = () => {
     if (selected === null) return;
     setChecked(true);
-    haptics.light();
+    haptics.medium();
     onAnswered(!!quiz.options[selected]?.isCorrect);
   };
 
   return (
-    <View style={{ gap: spacing.base }}>
-      <Text style={[styles.question, { color: colors.textPrimary }]}>{quiz.question}</Text>
-      <View style={{ gap: spacing.sm }}>
+    <View style={{ gap: spacing.lg }}>
+      <View style={{ gap: spacing.xs }}>
+        <View style={styles.badgeRow}>
+          <IconHelpCircle size={14} color="#D97706" />
+          <Text style={styles.badgeText}>Quick Quiz</Text>
+        </View>
+        <Text style={[styles.question, { color: colors.textPrimary }]}>{quiz.question}</Text>
+      </View>
+
+      <View style={{ gap: spacing.md }}>
         {quiz.options.map((opt, i) => {
           const isSelected = selected === i;
           const showState = checked && (isSelected || opt.isCorrect);
-          const borderColor = showState && opt.isCorrect
-            ? colors.success
-            : showState && isSelected && !opt.isCorrect
-              ? colors.danger
-              : isSelected
-                ? colors.brandPrimary
-                : colors.borderSubtle;
+
+          let borderColor = colors.borderSubtle;
+          let bgColor = colors.surfaceCard || colors.surface;
+
+          if (isSelected && !checked) {
+            borderColor = '#0084FE';
+            bgColor = colors.brandPrimarySoft || colors.surface;
+          } else if (showState && opt.isCorrect) {
+            borderColor = colors.success;
+            bgColor = 'rgba(34, 197, 94, 0.1)';
+          } else if (showState && isSelected && !opt.isCorrect) {
+            borderColor = colors.danger;
+            bgColor = 'rgba(239, 68, 68, 0.1)';
+          }
 
           return (
             <Pressable
               key={i}
-              onPress={() => !checked && setSelected(i)}
+              onPress={() => {
+                if (!checked) {
+                  haptics.selection();
+                  setSelected(i);
+                }
+              }}
               disabled={checked}
-              style={[styles.option, { borderColor, backgroundColor: colors.surface }]}
+              style={[
+                styles.option,
+                {
+                  borderColor,
+                  backgroundColor: bgColor,
+                  borderWidth: isSelected || showState ? 2 : 1.5,
+                },
+              ]}
             >
               <Text style={[styles.optionText, { color: colors.textPrimary }]}>{opt.text}</Text>
-              {showState && opt.isCorrect && <IconCircleCheck size={18} color={colors.success} />}
-              {showState && isSelected && !opt.isCorrect && <IconCircleX size={18} color={colors.danger} />}
+              {showState && opt.isCorrect && <IconCircleCheck size={20} color={colors.success} />}
+              {showState && isSelected && !opt.isCorrect && <IconCircleX size={20} color={colors.danger} />}
             </Pressable>
           );
         })}
@@ -51,14 +77,21 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
         <Pressable
           onPress={handleCheck}
           disabled={selected === null}
-          style={[styles.checkBtn, { backgroundColor: colors.brandPrimary, opacity: selected === null ? 0.5 : 1 }]}
+          style={[
+            styles.checkBtn,
+            {
+              backgroundColor: '#FF8A00',
+              opacity: selected === null ? 0.4 : 1,
+            },
+          ]}
         >
-          <Text style={[styles.checkBtnText, { color: colors.brandOnPrimary }]}>Check</Text>
+          <Text style={styles.checkBtnText}>Check Answer</Text>
         </Pressable>
       ) : (
         !!quiz.explanation && (
-          <View style={[styles.explanation, { backgroundColor: colors.surfaceSunken }]}>
-            <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans, fontSize: fontSizes.sm, lineHeight: fontSizes.sm * 1.5 }}>
+          <View style={[styles.explanation, { backgroundColor: colors.surfaceSunken, borderColor: colors.borderSubtle }]}>
+            <Text style={[styles.explanationTitle, { color: colors.textTertiary }]}>EXPLANATION</Text>
+            <Text style={{ color: colors.textPrimary, fontFamily: fontFamilies.sans, fontSize: fontSizes.sm, lineHeight: fontSizes.sm * 1.5 }}>
               {quiz.explanation}
             </Text>
           </View>
@@ -69,18 +102,65 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
 }
 
 const styles = StyleSheet.create({
-  question: { fontSize: fontSizes.lg, fontFamily: fontFamilies.displaySemiBold },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+  },
+  badgeText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: '#B45309',
+  },
+  question: {
+    fontSize: fontSizes.xl,
+    fontFamily: fontFamilies.displaySemiBold,
+    lineHeight: fontSizes.xl * 1.3,
+  },
   option: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.base,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
   },
-  optionText: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, flex: 1 },
-  checkBtn: { paddingVertical: spacing.md, borderRadius: radii.md, alignItems: 'center' },
-  checkBtnText: { fontFamily: fontFamilies.sansMedium, fontSize: fontSizes.base },
-  explanation: { padding: spacing.base, borderRadius: radii.md },
+  optionText: {
+    fontSize: fontSizes.base,
+    fontFamily: fontFamilies.sansMedium,
+    flex: 1,
+  },
+  checkBtn: {
+    paddingVertical: spacing.base,
+    borderRadius: radii.xl,
+    alignItems: 'center',
+    shadowColor: '#FF8A00',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  checkBtnText: {
+    fontFamily: fontFamilies.sansBold || fontFamilies.sansSemiBold,
+    fontSize: fontSizes.base,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  explanation: {
+    padding: spacing.base,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    gap: 4,
+  },
+  explanationTitle: {
+    fontSize: 10,
+    fontFamily: fontFamilies.sansBold || fontFamilies.sansSemiBold,
+    letterSpacing: 0.8,
+  },
 });

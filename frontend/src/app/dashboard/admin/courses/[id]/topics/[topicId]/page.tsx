@@ -72,14 +72,14 @@ function AdminTopicDetailContent() {
     chapter: string;
     xp: number;
     isPublished: boolean;
-    defaultFlow: 'flat' | 'guided';
+    defaultFlow: 'guided';
   }>({
     title: '',
     description: '',
     chapter: '',
     xp: 50,
     isPublished: true,
-    defaultFlow: 'flat',
+    defaultFlow: 'guided',
   });
 
   const loadData = async () => {
@@ -333,7 +333,6 @@ function AdminTopicDetailContent() {
             <Badge tone={assignedChapter ? 'gold' : 'neutral'}>
               {assignedChapter ? `Chapter: ${assignedChapter.title}` : 'Standalone Topic'}
             </Badge>
-            <Badge tone="neutral">View: {topic.defaultFlow === 'guided' ? 'Guided Steps' : 'Flat Page'}</Badge>
             <Badge tone={topic.isPublished ? 'success' : 'warning'}>
               {topic.isPublished ? 'Published' : 'Draft'}
             </Badge>
@@ -352,7 +351,7 @@ function AdminTopicDetailContent() {
                 chapter: topic.chapter || '',
                 xp: topic.xp || 50,
                 isPublished: topic.isPublished,
-                defaultFlow: topic.defaultFlow || 'flat',
+                defaultFlow: 'guided',
               });
               setShowEditTopicModal(true);
             }}
@@ -788,36 +787,6 @@ function AdminTopicDetailContent() {
               value={String(topicForm.xp)}
               onChange={(e) => setTopicForm({ ...topicForm, xp: parseInt(e.target.value, 10) || 50 })}
             />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-semibold text-[var(--ink-900)]">Default View for Learners</span>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'flat' })}
-                className={`cursor-pointer rounded-[var(--radius-md)] border px-3.5 py-2.5 text-left text-sm transition-colors ${
-                  topicForm.defaultFlow === 'flat'
-                    ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]'
-                    : 'border-[var(--line)] bg-[var(--surface-card)]'
-                }`}
-              >
-                <span className="block font-semibold text-[var(--ink-900)]">Flat</span>
-                <span className="block text-xs text-[var(--text-muted)]">All content on one scrollable page</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setTopicForm({ ...topicForm, defaultFlow: 'guided' })}
-                className={`cursor-pointer rounded-[var(--radius-md)] border px-3.5 py-2.5 text-left text-sm transition-colors ${
-                  topicForm.defaultFlow === 'guided'
-                    ? 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)]'
-                    : 'border-[var(--line)] bg-[var(--surface-card)]'
-                }`}
-              >
-                <span className="block font-semibold text-[var(--ink-900)]">Guided</span>
-                <span className="block text-xs text-[var(--text-muted)]">Step-by-step lesson flow</span>
-              </button>
-            </div>
           </div>
 
           <Checkbox

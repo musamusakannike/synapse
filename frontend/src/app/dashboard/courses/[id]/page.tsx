@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   BookOpen,
   ArrowLeft,
@@ -14,18 +14,16 @@ import {
   ChevronDown,
   ChevronUp,
   Play,
-  Check,
-  ArrowRight,
 } from 'lucide-react';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
-import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
+import { Course, Chapter, Topic, PaymentStatus } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ExerciseModal from '@/components/courses/ExerciseModal';
 
 export default function CourseDetailsPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -44,14 +42,6 @@ export default function CourseDetailsPage() {
   // Collapsed chapter dropdown states
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const [expandedAuthors, setExpandedAuthors] = useState(false);
-
-  // Topic Reader Modal State
-  const [activeTopic, setActiveTopic] = useState<Topic | null>(null);
-  const [readingModalOpen, setReadingModalOpen] = useState(false);
-
-  // Exercise Modal State
-  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
-  const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -128,42 +118,17 @@ export default function CourseDetailsPage() {
 
   const handleOpenTopic = (chapter: Chapter, topic: Topic) => {
     if (!hasAccess || !topic.isUnlocked) return;
-    setActiveTopic(topic);
-    setReadingModalOpen(true);
 
-    // Save position
+    // Save position asynchronously
     progressApi.savePosition({
       courseId: id,
       chapterId: chapter._id,
       topicId: topic._id,
       contentIndex: 0,
-    });
-  };
+    }).catch(() => {});
 
-  const handleCompleteTopicNoExercise = async () => {
-    if (!activeTopic || !course) return;
-    try {
-      await progressApi.completeTopic({
-        courseId: course._id,
-        topicId: activeTopic._id,
-      });
-      setReadingModalOpen(false);
-      await fetchCourseData();
-    } catch (err) {
-      console.error('Failed to complete topic:', err);
-    }
-  };
-
-  const handleLaunchTopicExercise = () => {
-    if (!activeTopic || !activeTopic.exercise) return;
-    setActiveExercise(activeTopic.exercise);
-    setReadingModalOpen(false);
-    setExerciseModalOpen(true);
-  };
-
-  const handleExercisePassed = async () => {
-    setExerciseModalOpen(false);
-    await fetchCourseData();
+    // Navigate directly to dedicated lesson page
+    router.push(`/dashboard/courses/${id}/topics/${topic._id}/learn`);
   };
 
   if (isLoading) {
@@ -543,84 +508,6 @@ export default function CourseDetailsPage() {
           </div>
         )}
       </div>
-
-      {/* Topic Reader Modal */}
-      {readingModalOpen && activeTopic && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunken)]/50 p-6">
-              <div>
-                <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
-                  Lesson Content
-                </span>
-                <h3 className="text-lg font-bold text-[var(--ink-900)]">{activeTopic.title}</h3>
-              </div>
-              <button onClick={() => setReadingModalOpen(false)} className="p-2 text-[var(--text-muted)] hover:text-[var(--ink-900)]">
-                ✕
-              </button>
-            </div>
-
-            <div className="flex-1 space-y-6 overflow-y-auto p-6">
-              {activeTopic.contents && activeTopic.contents.length > 0 ? (
-                activeTopic.contents.map((content, cIdx) => (
-                  <div key={cIdx} className="space-y-2 rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)]/30 p-4">
-                    {content.title && <h4 className="text-sm font-bold text-[var(--ink-900)]">{content.title}</h4>}
-                    {content.type === 'text' && <p className="text-sm leading-relaxed whitespace-pre-line text-[var(--ink-800)]">{content.content}</p>}
-                    {content.type === 'code' && (
-                      <pre className="overflow-x-auto rounded-xl bg-slate-900 p-4 font-mono text-xs text-slate-100">
-                        <code>{content.content}</code>
-                      </pre>
-                    )}
-                    {content.type === 'youtube' && (
-                      <div className="aspect-video w-full overflow-hidden rounded-xl border border-[var(--line)]">
-                        <iframe className="size-full" src={content.content} title="Video lesson" allowFullScreen />
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-[var(--text-muted)]">Reading content for this topic.</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between border-t border-[var(--line)] bg-[var(--surface-sunken)]/50 p-4">
-              <span className="text-xs font-semibold text-[var(--text-muted)]">
-                Earn +{activeTopic.xp || 50} XP on completion
-              </span>
-
-              {activeTopic.exercise ? (
-                <button
-                  onClick={handleLaunchTopicExercise}
-                  className="flex items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-6 py-2.5 text-xs font-bold text-slate-950 transition-all hover:brightness-105"
-                >
-                  <span>Take Exercise</span>
-                  <ArrowRight className="size-4" />
-                </button>
-              ) : (
-                <button
-                  onClick={handleCompleteTopicNoExercise}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700"
-                >
-                  <Check className="size-4" />
-                  <span>Complete Topic</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Interactive Exercise Runner Modal */}
-      {exerciseModalOpen && activeExercise && (
-        <ExerciseModal
-          open={exerciseModalOpen}
-          onClose={() => setExerciseModalOpen(false)}
-          exercise={activeExercise}
-          courseId={id}
-          topicId={activeTopic?._id}
-          onSuccessPassed={handleExercisePassed}
-        />
-      )}
     </div>
   );
 }

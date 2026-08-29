@@ -7,6 +7,8 @@ import {
   Modal,
   ScrollView,
   TouchableOpacity,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { IconChevronDown, IconX } from '@tabler/icons-react-native';
 import { fontFamilies, spacing } from '@/theme';
@@ -16,15 +18,23 @@ import { ReminderTime } from '@/store/onboarding.store';
 interface OnboardingTimePickerModalProps {
   value: ReminderTime;
   onChange: (time: ReminderTime) => void;
+  label?: string;
+  modalTitle?: string;
+  style?: StyleProp<ViewStyle>;
+  compact?: boolean;
 }
 
 const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const MINUTES = [0, 15, 30, 45];
+const MINUTES = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 const PERIODS: ('AM' | 'PM')[] = ['AM', 'PM'];
 
 export default function OnboardingTimePickerModal({
   value,
   onChange,
+  label = 'Remind me at :',
+  modalTitle = 'Set Daily Reminder',
+  style,
+  compact = false,
 }: OnboardingTimePickerModalProps) {
   const [modalVisible, setModalVisible] = useState(false);
   const [tempHour, setTempHour] = useState(value.hour);
@@ -53,18 +63,22 @@ export default function OnboardingTimePickerModal({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.pickerRow}>
-        <Text style={styles.label}>Remind me at :</Text>
+    <View style={[styles.container, compact && styles.compactContainer, style]}>
+      <View style={[styles.pickerRow, compact && styles.compactPickerRow]}>
+        {!!label && <Text style={styles.label}>{label}</Text>}
 
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Change reminder time, currently ${displayString}`}
           onPress={handleOpen}
-          style={({ pressed }) => [styles.triggerBox, pressed && styles.triggerBoxPressed]}
+          style={({ pressed }) => [
+            styles.triggerBox,
+            compact && styles.compactTriggerBox,
+            pressed && styles.triggerBoxPressed,
+          ]}
         >
-          <Text style={styles.triggerText}>{displayString}</Text>
-          <IconChevronDown size={20} color="#0E0E1A" strokeWidth={2.4} />
+          <Text style={[styles.triggerText, compact && styles.compactTriggerText]}>{displayString}</Text>
+          <IconChevronDown size={compact ? 16 : 20} color="#0E0E1A" strokeWidth={2.4} />
         </Pressable>
       </View>
 
@@ -216,10 +230,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: spacing.xl,
   },
+  compactContainer: {
+    width: 'auto',
+    marginVertical: 0,
+    alignItems: 'flex-end',
+  },
   pickerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.base,
+  },
+  compactPickerRow: {
+    gap: spacing.xs,
   },
   label: {
     fontSize: 18,
@@ -243,6 +265,15 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
+  compactTriggerBox: {
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.sm + 2,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(14, 14, 26, 0.1)',
+    backgroundColor: '#F7F7F9',
+  },
   triggerBoxPressed: {
     backgroundColor: '#F8F8FA',
     transform: [{ scale: 0.98 }],
@@ -250,6 +281,11 @@ const styles = StyleSheet.create({
   triggerText: {
     fontSize: 18,
     fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+  },
+  compactTriggerText: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansSemiBold,
     color: '#0E0E1A',
   },
   modalOverlay: {

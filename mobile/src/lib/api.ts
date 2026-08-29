@@ -26,11 +26,31 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let onUnauthorizedCallback: (() => Promise<void> | void) | null = null;
+
+export const setOnUnauthorizedCallback = (cb: () => Promise<void> | void) => {
+  onUnauthorizedCallback = cb;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      const requestUrl = error.config?.url || '';
+      const isAuthAttempt =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/register') ||
+        requestUrl.includes('/auth/forgot-password');
+
       await deleteToken();
+
+      if (!isAuthAttempt && onUnauthorizedCallback) {
+        try {
+          await onUnauthorizedCallback();
+        } catch {
+          // Ignore errors during unauthorized callback cleanup
+        }
+      }
     }
     return Promise.reject(error);
   }
@@ -105,7 +125,11 @@ export const userApi = {
   updateProfile: (data: Record<string, unknown>) => api.put('/users/me', data),
   updateSettings: (data: Record<string, unknown>) => api.put('/users/me/settings', data),
   deleteAccount: () => api.delete('/users/me'),
-  uploadAvatar: (data: FormData) => api.post('/users/me/avatar', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  uploadAvatar: (data: FormData) =>
+    api.post('/users/me/avatar', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      transformRequest: (data) => data,
+    }),
   registerPushToken: (data: { token: string; timezoneOffset: number }) => api.post('/users/me/push-token', data),
   removePushToken: (token: string) => api.delete('/users/me/push-token', { data: { token } }),
 };

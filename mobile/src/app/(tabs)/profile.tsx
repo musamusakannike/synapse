@@ -1,6 +1,8 @@
-import { View, Text, Image, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, ScrollView, Alert, RefreshControl } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { IconUser, IconSettings, IconLogout, IconChevronRight } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
 import { fontFamilies, spacing } from '@/theme';
@@ -14,7 +16,24 @@ import type { ReactNode } from 'react';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuthStore();
+  const { user, logout, fetchMe } = useAuthStore();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    haptics.light();
+    setRefreshing(true);
+    try {
+      await fetchMe();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchMe]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMe().catch(() => {});
+    }, [fetchMe])
+  );
 
   const handleLogout = () => {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -34,23 +53,35 @@ export default function ProfileScreen() {
   return (
     <View collapsable={false} style={styles.container}>
       <ScreenBackdrop />
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />}
+        showsVerticalScrollIndicator={false}
+      >
         <ScreenHeader title="Profile" subtitle="Your account and preferences." />
 
-        <GlassSurface style={styles.profileCard} tintColor={TINT_ORANGE}>
-          {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
-          ) : (
-            <View style={styles.avatarFallback}>
-              <IconUser size={28} color={ACCENT} />
+        <Pressable onPress={() => router.push('/settings')} style={({ pressed }) => [pressed && styles.pressed]}>
+          <GlassSurface style={styles.profileCard} tintColor={TINT_ORANGE}>
+            {user?.avatar ? (
+              <Image
+                source={{ uri: user.avatar }}
+                style={styles.avatar}
+                contentFit="cover"
+                transition={200}
+              />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <IconUser size={28} color={ACCENT} />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{user?.name || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`}</Text>
+              <Text style={styles.email}>{user?.email}</Text>
+              {user?.level && <Badge variant={user.level}>{user.level}</Badge>}
             </View>
-          )}
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{user?.name || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`}</Text>
-            <Text style={styles.email}>{user?.email}</Text>
-            {user?.level && <Badge variant={user.level}>{user.level}</Badge>}
-          </View>
-        </GlassSurface>
+            <IconChevronRight size={18} color={MUTED} />
+          </GlassSurface>
+        </Pressable>
 
         <View style={styles.menu}>
           <MenuRow icon={<IconSettings size={20} color={INK} />} label="Settings" onPress={() => router.push('/settings')} />

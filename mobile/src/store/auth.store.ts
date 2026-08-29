@@ -4,9 +4,11 @@ import { getAuth, signInWithCredential, signOut, GoogleAuthProvider, AppleAuthPr
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
-import api from '@/lib/api';
+import api, { setOnUnauthorizedCallback, userApi } from '@/lib/api';
 import { getToken, saveToken, deleteToken } from '@/lib/secureStorage';
 import { User, IUserSettings } from '@/lib/types';
+import { useOnboardingStore } from './onboarding.store';
+import { scheduleLocalDailyReminder, registerForPushNotifications } from '@/lib/notifications';
 
 interface AuthState {
   user: User | null;
@@ -20,6 +22,7 @@ interface AuthState {
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
   fetchMe: () => Promise<void>;
+  uploadAvatar: (formData: FormData) => Promise<{ success: boolean; avatar?: string; error?: string }>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; error?: string }>;
   updateSettings: (data: Partial<IUserSettings>) => Promise<{ success: boolean; error?: string }>;
   initialize: () => Promise<void>;
@@ -36,6 +39,31 @@ export const DEFAULT_SETTINGS: IUserSettings = {
   reminderMinute: 0,
   timezoneOffset: 0,
 };
+
+async function syncOnboardingPreferences(updateSettingsFn: (settings: Partial<IUserSettings>) => Promise<any>) {
+  try {
+    const onboarding = useOnboardingStore.getState();
+    if (!onboarding.hasOnboarded) return;
+
+    const { reminderTime, dailyGoalMinutes } = onboarding;
+    if (reminderTime) {
+      let hour24 = reminderTime.hour % 12;
+      if (reminderTime.period === 'PM') {
+        hour24 += 12;
+      }
+      await updateSettingsFn({
+        reminderHour: hour24,
+        reminderMinute: reminderTime.minute,
+        dailyGoalMinutes: dailyGoalMinutes || 10,
+        studyReminders: true,
+        pushNotifications: true,
+      });
+      await scheduleLocalDailyReminder(hour24, reminderTime.minute);
+    }
+  } catch (e) {
+    console.warn('Failed to sync onboarding preferences:', e);
+  }
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -67,6 +95,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           await get().fetchMe();
         }
+        await syncOnboardingPreferences(get().updateSettings);
+        void registerForPushNotifications();
         set({ isLoading: false });
         return { success: true };
       }
@@ -89,6 +119,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           await get().fetchMe();
         }
+        await syncOnboardingPreferences(get().updateSettings);
+        void registerForPushNotifications();
         set({ isLoading: false });
         return { success: true };
       }
@@ -126,6 +158,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           await get().fetchMe();
         }
+        await syncOnboardingPreferences(get().updateSettings);
+        void registerForPushNotifications();
         set({ isLoading: false });
         return { success: true };
       }
@@ -170,6 +204,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } else {
           await get().fetchMe();
         }
+        await syncOnboardingPreferences(get().updateSettings);
+        void registerForPushNotifications();
         set({ isLoading: false });
         return { success: true };
       }
@@ -189,14 +225,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await deleteToken();
       if (Platform.OS !== 'web') {
         try {
-          await signOut(getAuth());
-          await GoogleSignin.revokeAccess();
+          const authInstance = getAuth();
+          if (authInstance.currentUser) {
+            await signOut(authInstance);
+          }
         } catch {
           // Firebase sign-out may fail if not signed in via Firebase
         }
+        try {
+          await GoogleSignin.signOut();
+          try {
+            await GoogleSignin.revokeAccess();
+          } catch {
+            // Ignore revoke failure
+          }
+        } catch {
+          // Google sign-out may fail if not initialized/signed in
+        }
       }
     } finally {
-      set({ user: null, isAuthenticated: false });
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
@@ -208,8 +256,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await deleteToken();
         if (Platform.OS !== 'web') {
           try {
-            await signOut(getAuth());
-            await GoogleSignin.revokeAccess();
+            const authInstance = getAuth();
+            if (authInstance.currentUser) {
+              await signOut(authInstance);
+            }
+          } catch {}
+          try {
+            await GoogleSignin.signOut();
+            try {
+              await GoogleSignin.revokeAccess();
+            } catch {}
           } catch {}
         }
         set({ user: null, isAuthenticated: false, isLoading: false });
@@ -220,6 +276,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err: any) {
       set({ isLoading: false });
       return { success: false, error: err.response?.data?.message || err.message || 'Failed to delete account.' };
+    }
+  },
+
+  uploadAvatar: async (formData: FormData) => {
+    try {
+      const res = await userApi.uploadAvatar(formData);
+      if (res.data.success) {
+        const newAvatar = res.data.data?.avatar || res.data.data?.user?.avatar;
+        const currentUser = get().user;
+        const updatedUser = currentUser
+          ? {
+              ...currentUser,
+              ...(res.data.data?.user || {}),
+              avatar: newAvatar || currentUser.avatar,
+            }
+          : res.data.data?.user || null;
+
+        set({ user: updatedUser });
+        return { success: true, avatar: newAvatar };
+      }
+      return { success: false, error: res.data.message || 'Failed to upload photo.' };
+    } catch (err: any) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.message || 'Failed to upload photo. Please try again.',
+      };
     }
   },
 
@@ -276,3 +358,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
+
+setOnUnauthorizedCallback(async () => {
+  await useAuthStore.getState().logout();
+});

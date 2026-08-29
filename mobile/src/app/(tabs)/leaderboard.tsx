@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconTrophy, IconFlame, IconBolt } from '@tabler/icons-react-native';
 import { leaderboardApi } from '@/lib/api';

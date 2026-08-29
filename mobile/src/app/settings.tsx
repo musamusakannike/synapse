@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, Pressable, Switch, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Switch, TextInput, Alert, Platform, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight, IconSparkles, IconDeviceMobile } from '@tabler/icons-react-native';
 import { useAuthStore, DEFAULT_SETTINGS } from '@/store/auth.store';
+import { ReminderTime } from '@/store/onboarding.store';
+import OnboardingTimePickerModal from '@/components/auth/OnboardingTimePickerModal';
+import { scheduleLocalDailyReminder } from '@/lib/notifications';
 import { useAppReview } from '@/hooks/useAppReview';
 import { InReview, ReviewGuard } from '@/components/common/ReviewGuard';
-import { userApi } from '@/lib/api';
 import { fontFamilies, spacing } from '@/theme';
 import { ACCENT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
 import GlassSurface from '@/components/ui/GlassSurface';
@@ -17,43 +20,104 @@ import * as haptics from '@/lib/haptics';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { user, updateProfile, updateSettings, deleteAccount } = useAuthStore();
+  const { user, uploadAvatar, updateProfile, updateSettings, deleteAccount } = useAuthStore();
   const { inReview, os, refresh } = useAppReview();
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
 
   const settings = { ...DEFAULT_SETTINGS, ...user?.settings };
 
-  const pickAvatar = async () => {
-    if (Platform.OS === 'ios') {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets?.[0]) return;
-
+  const processAndUploadAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    setIsUploadingAvatar(true);
     try {
-      const asset = result.assets[0];
+      const uri = asset.uri;
+      const uriParts = uri.split('.');
+      const rawExt = uriParts.length > 1 ? uriParts[uriParts.length - 1].toLowerCase().split('?')[0] : 'jpg';
+      const ext = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(rawExt) ? (rawExt === 'jpeg' ? 'jpg' : rawExt) : 'jpg';
+      const mimeType = asset.mimeType || (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+      const name = asset.fileName || `avatar_${Date.now()}.${ext}`;
+
       const formData = new FormData();
       formData.append('avatar', {
-        uri: asset.uri,
-        name: 'avatar.jpg',
-        type: 'image/jpeg',
+        uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+        name,
+        type: mimeType,
       } as any);
-      await userApi.uploadAvatar(formData);
-      haptics.success();
+
+      const result = await uploadAvatar(formData);
+      if (result.success) {
+        haptics.success();
+      } else {
+        haptics.error();
+        Alert.alert('Upload failed', result.error || 'Could not upload your photo. Try again.');
+      }
     } catch {
       haptics.error();
       Alert.alert('Upload failed', 'Could not upload your photo. Try again.');
+    } finally {
+      setIsUploadingAvatar(false);
     }
+  };
+
+  const handleTakeCameraPhoto = async () => {
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission needed', 'Camera access is required to take a profile photo.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        await processAndUploadAsset(result.assets[0]);
+      }
+    } catch {
+      Alert.alert('Camera error', 'Could not open camera.');
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    try {
+      if (Platform.OS === 'ios') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert('Permission needed', 'Photo library access is required to choose a profile photo.');
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets?.[0]) {
+        await processAndUploadAsset(result.assets[0]);
+      }
+    } catch {
+      Alert.alert('Gallery error', 'Could not access photo library.');
+    }
+  };
+
+  const pickAvatar = () => {
+    if (isUploadingAvatar) return;
+    haptics.selection();
+    Alert.alert('Profile Photo', 'Choose how you want to update your photo.', [
+      { text: 'Take Photo', onPress: handleTakeCameraPhoto },
+      { text: 'Choose from Library', onPress: handleChooseFromLibrary },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
   };
 
   const saveProfile = async () => {
@@ -67,6 +131,28 @@ export default function SettingsScreen() {
   const toggleSetting = (key: keyof typeof settings) => (value: boolean) => {
     haptics.selection();
     updateSettings({ [key]: value } as any);
+  };
+
+  const reminderHour24 = settings.reminderHour ?? 19;
+  const reminderMinute = settings.reminderMinute ?? 0;
+  const reminderPeriod: 'AM' | 'PM' = reminderHour24 >= 12 ? 'PM' : 'AM';
+  const reminderHour12 = reminderHour24 % 12 === 0 ? 12 : reminderHour24 % 12;
+  const reminderTime: ReminderTime = {
+    hour: reminderHour12,
+    minute: reminderMinute,
+    period: reminderPeriod,
+  };
+
+  const handleReminderTimeChange = (newTime: ReminderTime) => {
+    let h24 = newTime.hour % 12;
+    if (newTime.period === 'PM') h24 += 12;
+    updateSettings({
+      reminderHour: h24,
+      reminderMinute: newTime.minute,
+    });
+    if (settings.pushNotifications !== false && settings.studyReminders !== false) {
+      scheduleLocalDailyReminder(h24, newTime.minute);
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -121,17 +207,28 @@ export default function SettingsScreen() {
           </GlassSurface>
         </InReview>
 
-        <Pressable onPress={pickAvatar} style={styles.avatarWrap}>
+        <Pressable onPress={pickAvatar} disabled={isUploadingAvatar} style={styles.avatarWrap}>
           {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+            <Image
+              source={{ uri: user.avatar }}
+              style={styles.avatar}
+              contentFit="cover"
+              transition={200}
+            />
           ) : (
             <View style={styles.avatarFallback}>
               <IconUser size={28} color={ACCENT} />
             </View>
           )}
-          <View style={styles.cameraBadge}>
-            <IconCamera size={14} color={INK} />
-          </View>
+          {isUploadingAvatar ? (
+            <View style={styles.avatarLoadingOverlay}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            </View>
+          ) : (
+            <View style={styles.cameraBadge}>
+              <IconCamera size={14} color={INK} />
+            </View>
+          )}
         </Pressable>
 
         <Text style={styles.sectionTitle}>Profile</Text>
@@ -169,6 +266,18 @@ export default function SettingsScreen() {
         <GlassSurface style={styles.sectionCard} tintColor={TINT_GLASS}>
           <SettingRow label="Push notifications" value={!!settings.pushNotifications} onChange={toggleSetting('pushNotifications')} />
           <SettingRow label="Study reminders" value={!!settings.studyReminders} onChange={toggleSetting('studyReminders')} />
+          {!!settings.studyReminders && (
+            <View style={[styles.settingRow, styles.settingRowBorder, { paddingVertical: spacing.xs }]}>
+              <Text style={styles.settingLabel}>Daily reminder time</Text>
+              <OnboardingTimePickerModal
+                value={reminderTime}
+                onChange={handleReminderTimeChange}
+                label=""
+                modalTitle="Set Daily Reminder Time"
+                compact
+              />
+            </View>
+          )}
           <SettingRow label="Streak alerts" value={!!settings.streakAlerts} onChange={toggleSetting('streakAlerts')} />
           <SettingRow label="Email notifications" value={!!settings.emailNotifications} onChange={toggleSetting('emailNotifications')} />
           <SettingRow label="Weekly progress email" value={!!settings.weeklyProgress} onChange={toggleSetting('weeklyProgress')} last />
@@ -284,6 +393,17 @@ const styles = StyleSheet.create({
     backgroundColor: ACCENT,
     borderWidth: 2,
     borderColor: '#FFFFFF',
+  },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 20,

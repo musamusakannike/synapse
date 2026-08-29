@@ -22,6 +22,7 @@ router.get('/me', protect, getProfile);
 router.delete('/me', protect, deleteMyAccount);
 router.put('/me', protect, validateUpdateProfile, updateProfile);
 router.put('/me/settings', protect, validateUpdateSettings, updateSettings);
+router.patch('/me/settings', protect, validateUpdateSettings, updateSettings);
 router.post('/me/push-token', protect, savePushToken);
 router.delete('/me/push-token', protect, removePushToken);
 router.post('/me/avatar', protect, upload.single('avatar'), uploadAvatar);

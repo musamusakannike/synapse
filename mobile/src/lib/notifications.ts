@@ -60,6 +60,28 @@ export async function hasNotificationPermission(): Promise<boolean> {
 }
 
 /**
+ * Explicitly requests notification permissions from the OS and ensures
+ * notification channels are initialized on Android.
+ *
+ * @returns true if permission is granted.
+ */
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+
+  await ensureAndroidChannels();
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  return finalStatus === 'granted';
+}
+
+/**
  * Registers for push and syncs the token to the server.
  *
  * Call this *after* the user has seen value in the app rather than on first

@@ -96,15 +96,24 @@ function AppContent() {
     return cleanup;
   }, [isAuthenticated, router]);
 
-  // Local daily-reminder backstop, tied to the user's notification settings.
+  // Local daily-reminder backstop, tied to the user's notification settings or onboarding prefs.
   useEffect(() => {
-    if (!isAuthenticated || !user) return;
+    if (!onboardingInitialized) return;
 
-    const settings = user.settings;
-    if (settings?.pushNotifications !== false && settings?.studyReminders !== false) {
-      scheduleLocalDailyReminder(settings?.reminderHour ?? 19, settings?.reminderMinute ?? 0);
-    } else {
-      cancelLocalDailyReminder();
+    if (isAuthenticated && user) {
+      const settings = user.settings;
+      if (settings?.pushNotifications !== false && settings?.studyReminders !== false) {
+        scheduleLocalDailyReminder(settings?.reminderHour ?? 19, settings?.reminderMinute ?? 0);
+      } else {
+        cancelLocalDailyReminder();
+      }
+    } else if (!isAuthenticated && hasOnboarded) {
+      const reminderTime = useOnboardingStore.getState().reminderTime;
+      if (reminderTime) {
+        let hour24 = reminderTime.hour % 12;
+        if (reminderTime.period === 'PM') hour24 += 12;
+        scheduleLocalDailyReminder(hour24, reminderTime.minute);
+      }
     }
   }, [
     isAuthenticated,
@@ -112,6 +121,8 @@ function AppContent() {
     user?.settings?.reminderMinute,
     user?.settings?.studyReminders,
     user?.settings?.pushNotifications,
+    hasOnboarded,
+    onboardingInitialized,
   ]);
 
   useEffect(() => {

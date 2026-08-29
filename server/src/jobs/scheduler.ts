@@ -158,11 +158,7 @@ const JOBS: Job[] = [
     expression: '*/15 * * * *', // every 15 minutes, filtered per user timezone
     run: () => runStudyReminders(),
   },
-  {
-    name: 'streak-risk',
-    expression: '0 * * * *', // hourly on the hour
-    run: () => runStreakRiskReminders(),
-  },
+  // Note: evening streak-risk reminder ('streak-risk') removed for now.
   {
     name: 'streak-cleanup',
     expression: '30 0 * * *', // 00:30 UTC daily

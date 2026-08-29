@@ -55,7 +55,7 @@ export default function OnboardingTimePickerModal({
   return (
     <View style={styles.container}>
       <View style={styles.pickerRow}>
-        <Text style={styles.label}>Remind at :</Text>
+        <Text style={styles.label}>Remind me at :</Text>
 
         <Pressable
           accessibilityRole="button"

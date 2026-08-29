@@ -37,42 +37,42 @@ import {
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // -------------------------------------------------------------
-// Data Definitions
+// Data Definitions (Refined & Paraphrased)
 // -------------------------------------------------------------
 
 const INTERESTS = [
-  { id: 'games', title: 'Games', subtitle: 'Stories you can play', icon: <GamesIcon size={46} /> },
-  { id: 'ai', title: 'AI Projects', subtitle: 'Models and agents', icon: <AIProjectsIcon size={46} /> },
-  { id: 'websites', title: 'Websites', subtitle: 'Pages that live online', icon: <WebsitesIcon size={46} /> },
-  { id: 'mobile', title: 'Mobile App', subtitle: 'Such as banking app', icon: <MobileAppIcon size={46} /> },
+  { id: 'games', title: 'Games', subtitle: 'Interactive stories & playable worlds', icon: <GamesIcon size={46} /> },
+  { id: 'ai', title: 'AI Projects', subtitle: 'Smart bots, models & neural agents', icon: <AIProjectsIcon size={46} /> },
+  { id: 'websites', title: 'Websites', subtitle: 'Sleek web apps & digital platforms', icon: <WebsitesIcon size={46} /> },
+  { id: 'mobile', title: 'Mobile App', subtitle: 'Fintech & everyday mobile tools', icon: <MobileAppIcon size={46} /> },
 ];
 
 const COURSES = [
-  { id: 'python', title: 'Python', subtitle: 'Free', icon: <PythonIcon size={40} /> },
-  { id: 'robotics', title: 'Robotics', subtitle: 'Free', icon: <RoboticsIcon size={40} /> },
-  { id: 'django', title: 'Django', subtitle: 'Free', icon: <DjangoIcon size={40} /> },
-  { id: 'web_dev', title: 'Web Development', subtitle: 'Free', icon: <WebDevIcon size={40} /> },
-  { id: 'blockchain', title: 'Blockchain', subtitle: 'Free', icon: <BlockchainIcon size={40} /> },
-  { id: 'prompt_engineering', title: 'Prompt Engineering', subtitle: 'Free', icon: <PromptEngineeringIcon size={40} /> },
+  { id: 'python', title: 'Python', subtitle: 'Free Track', icon: <PythonIcon size={40} /> },
+  { id: 'robotics', title: 'Robotics', subtitle: 'Free Track', icon: <RoboticsIcon size={40} /> },
+  { id: 'django', title: 'Django', subtitle: 'Free Track', icon: <DjangoIcon size={40} /> },
+  { id: 'web_dev', title: 'Web Development', subtitle: 'Free Track', icon: <WebDevIcon size={40} /> },
+  { id: 'blockchain', title: 'Blockchain', subtitle: 'Free Track', icon: <BlockchainIcon size={40} /> },
+  { id: 'prompt_engineering', title: 'Prompt Engineering', subtitle: 'Free Track', icon: <PromptEngineeringIcon size={40} /> },
 ];
 
 const GOALS = [
   {
     minutes: 5,
-    title: 'Casual • 5 minutes',
-    subtitle: 'A quick daily warm-up to keep your coding streak alive.',
+    title: 'Light • 5 min / day',
+    subtitle: 'A swift daily warm-up to keep your learning streak active.',
     isRecommended: false,
   },
   {
     minutes: 10,
-    title: 'Regular • 10 minutes',
-    subtitle: 'Level up your skills with a solid daily brain workout.',
+    title: 'Steady • 10 min / day',
+    subtitle: 'Build real skills with a focused daily brain workout.',
     isRecommended: true,
   },
   {
     minutes: 20,
-    title: 'Serious • 20 minutes',
-    subtitle: 'Dive deep, stay focused, and fast-track your coding journey.',
+    title: 'Intensive • 20 min / day',
+    subtitle: 'Dive deep and fast-track your path to tech mastery.',
     isRecommended: false,
   },
 ];
@@ -162,18 +162,18 @@ export default function OnboardingScreen() {
             {/* Headline */}
             <View style={styles.heroHeadlineWrapper}>
               <Text style={styles.heroHeadline}>
-                1 Million young minds already coding.
+                Over 1 Million young minds mastering code today.
               </Text>
             </View>
           </View>
         )}
 
         {/* ========================================================= */}
-        {/* STEP 1: What do you want to build? (2x2 Grid)             */}
+        {/* STEP 1: What are you excited to build? (2x2 Grid)         */}
         {/* ========================================================= */}
         {currentStep === 1 && (
           <View style={styles.stepContainer}>
-            <OnboardingSpeechBubble text="What do you want to build?" />
+            <OnboardingSpeechBubble text="What are you excited to build?" />
 
             <View style={styles.gridContainer}>
               <View style={styles.gridRow}>
@@ -214,11 +214,11 @@ export default function OnboardingScreen() {
         )}
 
         {/* ========================================================= */}
-        {/* STEP 2: Pick your starter course (Vertical List)          */}
+        {/* STEP 2: Select your first learning path (Vertical List)   */}
         {/* ========================================================= */}
         {currentStep === 2 && (
           <View style={styles.stepContainer}>
-            <OnboardingSpeechBubble text="Pick your starter course." />
+            <OnboardingSpeechBubble text="Select your first learning path." />
 
             <View style={styles.coursesList}>
               {COURSES.map((course) => (
@@ -240,7 +240,7 @@ export default function OnboardingScreen() {
         {/* ========================================================= */}
         {currentStep === 3 && (
           <View style={styles.stepContainer}>
-            <OnboardingSpeechBubble text="How much time can you give today?" />
+            <OnboardingSpeechBubble text="How much time can you practice daily?" />
 
             <View style={styles.goalsList}>
               {GOALS.map((goal) => (
@@ -262,7 +262,7 @@ export default function OnboardingScreen() {
         {/* ========================================================= */}
         {currentStep === 4 && (
           <View style={styles.stepContainer}>
-            <OnboardingSpeechBubble text="Start a coding habit, set a daily reminder" />
+            <OnboardingSpeechBubble text="Lock in your habit with a daily study reminder" />
 
             <View style={styles.reminderCenterArea}>
               <OnboardingTimePickerModal
@@ -292,7 +292,7 @@ export default function OnboardingScreen() {
               onPress={handleGoToLogin}
               style={({ pressed }) => [styles.linkButton, pressed && styles.linkButtonPressed]}
             >
-              <Text style={styles.linkButtonText}>Already a user? Log in</Text>
+              <Text style={styles.linkButtonText}>Already have an account? Sign in</Text>
             </Pressable>
           </View>
         ) : (

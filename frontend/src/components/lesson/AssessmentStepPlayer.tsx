@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import confetti from 'canvas-confetti';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import confetti from "canvas-confetti";
 import {
   X,
   Award,
@@ -10,12 +10,9 @@ import {
   XCircle,
   ArrowRight,
   RotateCcw,
-  Check,
-  ChevronLeft,
-  Sparkles,
-} from 'lucide-react';
-import { Exercise, Question } from '@/lib/types';
-import { progressApi } from '@/lib/api';
+} from "lucide-react";
+import { Exercise, Question } from "@/lib/types";
+import { progressApi } from "@/lib/api";
 
 interface AssessmentStepPlayerProps {
   exercise: Exercise;
@@ -62,7 +59,7 @@ export default function AssessmentStepPlayer({
   const initQuestions = useCallback(() => {
     if (!exercise?.questions) return;
     const randomized = exercise.questions.map((q) => {
-      if (q.type === 'mcq' && q.options && q.options.length > 0) {
+      if (q.type === "mcq" && q.options && q.options.length > 0) {
         return {
           ...q,
           shuffledOptions: shuffleArray(q.options),
@@ -87,17 +84,25 @@ export default function AssessmentStepPlayer({
       particleCount: 100,
       spread: 80,
       origin: { y: 0.6 },
-      colors: ['#FF8A00', '#22C55E', '#3B82F6', '#EC4899', '#EAB308', '#8B5CF6'],
+      colors: [
+        "#FF8A00",
+        "#22C55E",
+        "#3B82F6",
+        "#EC4899",
+        "#EAB308",
+        "#8B5CF6",
+      ],
     });
   }, []);
 
   const total = questions.length;
   const currentQ = questions[currentIndex];
   const isCurrentChecked = !!checkedSteps[currentIndex];
-  const currentUserAns = userAnswers[currentIndex] || '';
+  const currentUserAns = userAnswers[currentIndex] || "";
 
   const isCurrentCorrect = currentQ
-    ? currentUserAns.trim().toLowerCase() === currentQ.correctAnswer.trim().toLowerCase()
+    ? currentUserAns.trim().toLowerCase() ===
+      currentQ.correctAnswer.trim().toLowerCase()
     : false;
 
   const handleSelectOption = (option: string) => {
@@ -128,7 +133,7 @@ export default function AssessmentStepPlayer({
     try {
       setIsSubmitting(true);
       const answersPayload = questions.map((q, idx) => {
-        const uVal = (userAnswers[idx] || '').trim().toLowerCase();
+        const uVal = (userAnswers[idx] || "").trim().toLowerCase();
         const isCorrect = uVal === q.correctAnswer.trim().toLowerCase();
         return {
           questionId: q._id || `q_${idx}`,
@@ -159,7 +164,7 @@ export default function AssessmentStepPlayer({
         }
       }
     } catch (e) {
-      console.error('Failed to submit assessment:', e);
+      console.error("Failed to submit assessment:", e);
     } finally {
       setIsSubmitting(false);
     }
@@ -168,7 +173,9 @@ export default function AssessmentStepPlayer({
   if (!exercise || total === 0) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)] p-6">
-        <p className="text-[var(--text-muted)]">No assessment questions found for this chapter.</p>
+        <p className="text-[var(--text-muted)]">
+          No assessment questions found for this chapter.
+        </p>
         <button
           onClick={onClose}
           className="cursor-pointer rounded-xl bg-[var(--brand-gold)] px-5 py-2.5 text-sm font-bold text-slate-950"
@@ -183,9 +190,14 @@ export default function AssessmentStepPlayer({
   // RESULTS / SCORE SUMMARY SCREEN
   // ==========================================
   if (finished) {
-    const totalXpObtainable = questions.reduce((sum, q) => sum + (q.xp || 20), 0);
+    const totalXpObtainable = questions.reduce(
+      (sum, q) => sum + (q.xp || 20),
+      0,
+    );
     const correctCount = questions.filter(
-      (q, idx) => (userAnswers[idx] || '').trim().toLowerCase() === q.correctAnswer.trim().toLowerCase()
+      (q, idx) =>
+        (userAnswers[idx] || "").trim().toLowerCase() ===
+        q.correctAnswer.trim().toLowerCase(),
     ).length;
 
     return (
@@ -197,8 +209,12 @@ export default function AssessmentStepPlayer({
               <Award className="size-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[var(--ink-900)]">Assessment Results</h2>
-              <p className="text-xs text-[var(--text-muted)]">{chapterTitle || exercise.title}</p>
+              <h2 className="text-sm font-bold text-[var(--ink-900)]">
+                Assessment Results
+              </h2>
+              <p className="text-xs text-[var(--text-muted)]">
+                {chapterTitle || exercise.title}
+              </p>
             </div>
           </div>
           <button
@@ -215,18 +231,22 @@ export default function AssessmentStepPlayer({
           <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center shadow-lg">
             <div
               className={`mx-auto mb-4 flex size-20 items-center justify-center rounded-3xl ${
-                isPassed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
+                isPassed
+                  ? "bg-emerald-100 text-emerald-600"
+                  : "bg-amber-100 text-amber-600"
               }`}
             >
-              {isPassed ? <Sparkles className="size-10" /> : <Award className="size-10" />}
+              <Award className="size-10" />
             </div>
 
             <span
               className={`inline-block rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-wider ${
-                isPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
+                isPassed
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-amber-100 text-amber-800"
               }`}
             >
-              {isPassed ? 'Assessment Passed! 🏆' : 'Keep Practicing'}
+              {isPassed ? "Assessment Passed! 🏆" : "Keep Practicing"}
             </span>
 
             <h1 className="mt-3 text-3xl font-extrabold text-[var(--ink-900)]">
@@ -234,8 +254,13 @@ export default function AssessmentStepPlayer({
             </h1>
 
             <p className="mt-1 text-sm text-[var(--text-muted)]">
-              You answered <span className="font-bold text-[var(--ink-900)]">{correctCount}</span> of{' '}
-              <span className="font-bold text-[var(--ink-900)]">{total}</span> questions correctly.
+              You answered{" "}
+              <span className="font-bold text-[var(--ink-900)]">
+                {correctCount}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-[var(--ink-900)]">{total}</span>{" "}
+              questions correctly.
             </p>
 
             {/* XP Status Callout */}
@@ -243,7 +268,10 @@ export default function AssessmentStepPlayer({
               {alreadyRewarded ? (
                 <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
                   <Zap className="size-4 text-amber-500" />
-                  <span>Rewards already claimed previously for this assessment. (Practice Mode)</span>
+                  <span>
+                    Rewards already claimed previously for this assessment.
+                    (Practice Mode)
+                  </span>
                 </div>
               ) : earnedXp > 0 ? (
                 <div className="flex items-center justify-center gap-2 text-sm font-bold text-amber-600">
@@ -253,7 +281,9 @@ export default function AssessmentStepPlayer({
               ) : (
                 <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[var(--text-muted)]">
                   <Award className="size-4 text-amber-500" />
-                  <span>Score at least 50% to earn up to +{totalXpObtainable} XP.</span>
+                  <span>
+                    Score at least 50% to earn up to +{totalXpObtainable} XP.
+                  </span>
                 </div>
               )}
             </div>
@@ -278,26 +308,34 @@ export default function AssessmentStepPlayer({
 
           {/* Question-by-Question Review Breakdown */}
           <div className="mt-10 space-y-4">
-            <h3 className="text-lg font-bold text-[var(--ink-900)]">Review Your Answers</h3>
+            <h3 className="text-lg font-bold text-[var(--ink-900)]">
+              Review Your Answers
+            </h3>
             {questions.map((q, idx) => {
-              const uAns = userAnswers[idx] || '';
-              const isCorrect = uAns.trim().toLowerCase() === q.correctAnswer.trim().toLowerCase();
+              const uAns = userAnswers[idx] || "";
+              const isCorrect =
+                uAns.trim().toLowerCase() ===
+                q.correctAnswer.trim().toLowerCase();
 
               return (
                 <div
                   key={idx}
                   className={`rounded-2xl border p-5 transition-all ${
-                    isCorrect ? 'border-emerald-200 bg-emerald-50/40' : 'border-red-200 bg-red-50/40'
+                    isCorrect
+                      ? "border-emerald-200 bg-emerald-50/40"
+                      : "border-red-200 bg-red-50/40"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                          isCorrect ? 'bg-emerald-600 text-white' : 'bg-red-500 text-white'
+                          isCorrect
+                            ? "bg-emerald-600 text-white"
+                            : "bg-red-500 text-white"
                         }`}
                       >
-                        {isCorrect ? '✓' : '✗'}
+                        {isCorrect ? "✓" : "✗"}
                       </span>
                       <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">
                         Question {idx + 1}
@@ -305,30 +343,44 @@ export default function AssessmentStepPlayer({
                     </div>
 
                     <span className="text-xs font-semibold text-[var(--text-muted)]">
-                      {q.type === 'fill_in_blank' ? 'Fill-in-the-Blank' : 'Multiple Choice'}
+                      {q.type === "fill_in_blank"
+                        ? "Fill-in-the-Blank"
+                        : "Multiple Choice"}
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm font-bold text-[var(--ink-900)]">{q.question}</p>
+                  <p className="mt-2 text-sm font-bold text-[var(--ink-900)]">
+                    {q.question}
+                  </p>
 
                   <div className="mt-3 space-y-1 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--text-muted)]">Your Answer:</span>
-                      <span className={`font-bold ${isCorrect ? 'text-emerald-700' : 'text-red-600'}`}>
-                        {uAns || '(No Answer)'}
+                      <span className="font-semibold text-[var(--text-muted)]">
+                        Your Answer:
+                      </span>
+                      <span
+                        className={`font-bold ${isCorrect ? "text-emerald-700" : "text-red-600"}`}
+                      >
+                        {uAns || "(No Answer)"}
                       </span>
                     </div>
                     {!isCorrect && (
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[var(--text-muted)]">Correct Answer:</span>
-                        <span className="font-bold text-emerald-700">{q.correctAnswer}</span>
+                        <span className="font-semibold text-[var(--text-muted)]">
+                          Correct Answer:
+                        </span>
+                        <span className="font-bold text-emerald-700">
+                          {q.correctAnswer}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   {q.explanation && (
                     <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--surface-card)] p-3 text-xs text-[var(--text-muted)]">
-                      <span className="font-bold text-[var(--ink-900)]">Explanation: </span>
+                      <span className="font-bold text-[var(--ink-900)]">
+                        Explanation:{" "}
+                      </span>
                       {q.explanation}
                     </div>
                   )}
@@ -361,7 +413,7 @@ export default function AssessmentStepPlayer({
             </button>
             <div>
               <h2 className="line-clamp-1 text-sm font-bold text-[var(--ink-900)]">
-                {exercise.title || 'Chapter Capstone Assessment'}
+                {exercise.title || "Chapter Capstone Assessment"}
               </h2>
               <p className="text-xs text-[var(--text-muted)]">
                 Question {currentIndex + 1} of {total}
@@ -391,7 +443,9 @@ export default function AssessmentStepPlayer({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800">
-                {currentQ.type === 'fill_in_blank' ? 'Fill in the Blank' : 'Multiple Choice'}
+                {currentQ.type === "fill_in_blank"
+                  ? "Fill in the Blank"
+                  : "Multiple Choice"}
               </span>
               <span className="text-xs text-[var(--text-muted)]">
                 Step {currentIndex + 1} of {total}
@@ -404,25 +458,28 @@ export default function AssessmentStepPlayer({
           </div>
 
           {/* Interactive Answer Input */}
-          {currentQ.type === 'mcq' ? (
+          {currentQ.type === "mcq" ? (
             <div className="space-y-2.5">
               {optionsToRender.map((option, oIdx) => {
                 const isSelected = currentUserAns === option;
                 const letter = String.fromCharCode(65 + oIdx);
 
                 let optionStyle =
-                  'border-[var(--line)] bg-[var(--surface-card)] hover:border-[var(--brand-gold-400)] hover:bg-[var(--surface-sunken)]';
+                  "border-[var(--line)] bg-[var(--surface-card)] hover:border-[var(--brand-gold-400)] hover:bg-[var(--surface-sunken)]";
 
                 if (isSelected && !isCurrentChecked) {
                   optionStyle =
-                    'border-[var(--brand-gold)] bg-amber-50/60 shadow-xs ring-2 ring-[var(--brand-gold)]/30';
+                    "border-[var(--brand-gold)] bg-amber-50/60 shadow-xs ring-2 ring-[var(--brand-gold)]/30";
                 } else if (isCurrentChecked) {
                   if (option === currentQ.correctAnswer) {
-                    optionStyle = 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-300';
+                    optionStyle =
+                      "border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-300";
                   } else if (isSelected && !isCurrentCorrect) {
-                    optionStyle = 'border-red-500 bg-red-50 text-red-900 ring-2 ring-red-300';
+                    optionStyle =
+                      "border-red-500 bg-red-50 text-red-900 ring-2 ring-red-300";
                   } else {
-                    optionStyle = 'border-[var(--line)] bg-[var(--surface-card)]/40 opacity-50';
+                    optionStyle =
+                      "border-[var(--line)] bg-[var(--surface-card)]/40 opacity-50";
                   }
                 }
 
@@ -437,13 +494,15 @@ export default function AssessmentStepPlayer({
                       <span
                         className={`flex size-8 shrink-0 items-center justify-center rounded-xl text-xs font-extrabold ${
                           isSelected
-                            ? 'bg-[var(--brand-gold)] text-slate-950'
-                            : 'bg-[var(--surface-sunken)] text-[var(--text-muted)]'
+                            ? "bg-[var(--brand-gold)] text-slate-950"
+                            : "bg-[var(--surface-sunken)] text-[var(--text-muted)]"
                         }`}
                       >
                         {letter}
                       </span>
-                      <span className="text-sm font-semibold text-[var(--ink-900)]">{option}</span>
+                      <span className="text-sm font-semibold text-[var(--ink-900)]">
+                        {option}
+                      </span>
                     </div>
 
                     {isCurrentChecked && option === currentQ.correctAnswer && (
@@ -467,7 +526,11 @@ export default function AssessmentStepPlayer({
                 value={currentUserAns}
                 onChange={(e) => handleTextChange(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !isCurrentChecked && currentUserAns.trim()) {
+                  if (
+                    e.key === "Enter" &&
+                    !isCurrentChecked &&
+                    currentUserAns.trim()
+                  ) {
                     handleCheckAnswer();
                   }
                 }}
@@ -476,9 +539,9 @@ export default function AssessmentStepPlayer({
                 className={`w-full rounded-2xl border p-4 text-base font-semibold text-[var(--ink-900)] outline-none transition-all ${
                   isCurrentChecked
                     ? isCurrentCorrect
-                      ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-300'
-                      : 'border-red-500 bg-red-50 ring-2 ring-red-300'
-                    : 'border-[var(--line)] bg-[var(--surface-card)] focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/20'
+                      ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-300"
+                      : "border-red-500 bg-red-50 ring-2 ring-red-300"
+                    : "border-[var(--line)] bg-[var(--surface-card)] focus:border-[var(--brand-gold)] focus:ring-4 focus:ring-[var(--brand-gold)]/20"
                 }`}
               />
             </div>
@@ -489,8 +552,8 @@ export default function AssessmentStepPlayer({
             <div
               className={`animate-in fade-in slide-in-from-bottom-2 duration-200 rounded-2xl border p-4 ${
                 isCurrentCorrect
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-950'
-                  : 'border-red-200 bg-red-50 text-red-950'
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+                  : "border-red-200 bg-red-50 text-red-950"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -505,8 +568,10 @@ export default function AssessmentStepPlayer({
                   <>
                     <XCircle className="size-5 text-red-600" />
                     <span className="text-sm font-extrabold text-red-800">
-                      Not quite. Correct answer:{' '}
-                      <span className="underline">{currentQ.correctAnswer}</span>
+                      Not quite. Correct answer:{" "}
+                      <span className="underline">
+                        {currentQ.correctAnswer}
+                      </span>
                     </span>
                   </>
                 )}
@@ -530,8 +595,8 @@ export default function AssessmentStepPlayer({
               onClick={handleCheckAnswer}
               className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-md transition-all ${
                 currentUserAns.trim()
-                  ? 'bg-[var(--brand-gold)] text-slate-950 hover:brightness-105'
-                  : 'cursor-not-allowed bg-slate-200 text-slate-400 opacity-70'
+                  ? "bg-[var(--brand-gold)] text-slate-950 hover:brightness-105"
+                  : "cursor-not-allowed bg-slate-200 text-slate-400 opacity-70"
               }`}
             >
               <span>Check Answer</span>
@@ -544,10 +609,10 @@ export default function AssessmentStepPlayer({
             >
               <span>
                 {isSubmitting
-                  ? 'Submitting Assessment...'
+                  ? "Submitting Assessment..."
                   : currentIndex < total - 1
-                  ? 'Continue to Next Question →'
-                  : 'Complete Assessment →'}
+                    ? "Continue to Next Question →"
+                    : "Complete Assessment →"}
               </span>
               {!isSubmitting && <ArrowRight className="size-4" />}
             </button>

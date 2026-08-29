@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   Pressable,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { fontFamilies, spacing } from '@/theme';
@@ -77,8 +77,20 @@ const GOALS = [
   },
 ];
 
+const ONBOARDING_ASSETS = [
+  require('@/assets/images/onboarding/mascot_hero_classroom.webp'),
+  require('@/assets/images/onboarding/tutor-mascot.webp'),
+];
+
 export default function OnboardingScreen() {
   const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    // Eagerly preheat onboarding image assets into memory
+    ONBOARDING_ASSETS.forEach((asset) => {
+      Image.loadAsync(asset).catch(() => {});
+    });
+  }, []);
 
   const {
     interest,
@@ -153,9 +165,13 @@ export default function OnboardingScreen() {
             {/* Hero Classroom Illustration */}
             <View style={styles.heroImageWrapper}>
               <Image
-                source={require('@/assets/images/onboarding/mascot_hero_classroom.png')}
+                source={require('@/assets/images/onboarding/mascot_hero_classroom.webp')}
                 style={styles.heroImage}
-                resizeMode="contain"
+                contentFit="contain"
+                priority="high"
+                cachePolicy="memory-disk"
+                transition={150}
+                recyclingKey="onboarding-mascot-hero"
               />
             </View>
 

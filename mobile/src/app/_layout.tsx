@@ -22,8 +22,14 @@ import {
   cancelLocalDailyReminder,
 } from '@/lib/notifications';
 import { syncQueuedSessions } from '@/lib/offlineSync';
+import { Image as ExpoImage } from 'expo-image';
 
 SplashScreen.preventAutoHideAsync();
+
+const ONBOARDING_PRELOAD_ASSETS = [
+  require('@/assets/images/onboarding/mascot_hero_classroom.webp'),
+  require('@/assets/images/onboarding/tutor-mascot.webp'),
+];
 
 function AppContent() {
   const { colors } = useTheme();
@@ -43,6 +49,14 @@ function AppContent() {
     initialize();
     initOnboarding();
   }, [initialize, initOnboarding]);
+
+  useEffect(() => {
+    if (!hasOnboarded) {
+      ONBOARDING_PRELOAD_ASSETS.forEach((asset) => {
+        ExpoImage.loadAsync(asset).catch(() => {});
+      });
+    }
+  }, [hasOnboarded]);
 
   useEffect(() => {
     if (fontsLoaded) {

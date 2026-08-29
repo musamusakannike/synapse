@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import Svg, { Polygon } from 'react-native-svg';
 import { fontFamilies, spacing } from '@/theme';
 
@@ -10,7 +11,7 @@ interface OnboardingSpeechBubbleProps {
 
 export default function OnboardingSpeechBubble({
   text,
-  avatarSource = require('@/assets/images/onboarding/tutor-mascot.png'),
+  avatarSource = require('@/assets/images/onboarding/tutor-mascot.webp'),
 }: OnboardingSpeechBubbleProps) {
   return (
     <View style={styles.container}>
@@ -18,7 +19,10 @@ export default function OnboardingSpeechBubble({
         <Image
           source={avatarSource}
           style={styles.avatar}
-          resizeMode="contain"
+          contentFit="contain"
+          priority="high"
+          cachePolicy="memory-disk"
+          recyclingKey="onboarding-tutor-mascot"
         />
       </View>
 

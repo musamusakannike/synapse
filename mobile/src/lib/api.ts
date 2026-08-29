@@ -135,11 +135,17 @@ export const paymentApi = {
   me: () => api.get('/payments/me'),
 };
 
+const AI_TIMEOUT_MS = 120000;
+
 export const aiApi = {
-  summarize: (text: string, stream: boolean = false) => api.post('/ai/summarize', { text, stream }),
-  generateQuiz: (topic: string, count: number = 5, stream: boolean = false) => api.post('/ai/generate-quiz', { topic, count, stream }),
-  generateFlashcards: (topic: string, count: number = 5, stream: boolean = false) => api.post('/ai/generate-flashcards', { topic, count, stream }),
-  qa: (question: string, context?: string, stream: boolean = false) => api.post('/ai/qa', { question, context, stream }),
+  summarize: (text: string, stream: boolean = false) =>
+    api.post('/ai/summarize', { text, stream }, { timeout: AI_TIMEOUT_MS }),
+  generateQuiz: (topic: string, count: number = 5, stream: boolean = false) =>
+    api.post('/ai/generate-quiz', { topic, count, stream }, { timeout: AI_TIMEOUT_MS }),
+  generateFlashcards: (topic: string, count: number = 5, stream: boolean = false) =>
+    api.post('/ai/generate-flashcards', { topic, count, stream }, { timeout: AI_TIMEOUT_MS }),
+  qa: (question: string, context?: string, stream: boolean = false) =>
+    api.post('/ai/qa', { question, context, stream }, { timeout: AI_TIMEOUT_MS }),
   history: (params?: { type?: string; page?: number; limit?: number }) => api.get('/ai/history', { params }),
   getHistoryById: (id: string) => api.get(`/ai/history/${id}`),
   deleteHistory: (id: string) => api.delete(`/ai/history/${id}`),

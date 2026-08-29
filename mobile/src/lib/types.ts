@@ -313,6 +313,11 @@ export interface AiQuizQuestion {
   explanation: string;
 }
 
+export interface AiFlashcard {
+  front: string;
+  back: string;
+}
+
 export interface AiHistoryItem {
   _id: string;
   user: string;

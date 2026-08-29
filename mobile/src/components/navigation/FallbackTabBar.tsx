@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconHome, IconBook, IconTrophy, IconTrendingUp, IconUser } from '@tabler/icons-react-native';
+import { IconHome, IconBook, IconTrophy, IconUser } from '@tabler/icons-react-native';
 import { fontFamilies, fontSizes } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
@@ -17,7 +17,6 @@ const TAB_ICONS = {
   index: IconHome,
   courses: IconBook,
   leaderboard: IconTrophy,
-  progress: IconTrendingUp,
   profile: IconUser,
 } as const;
 

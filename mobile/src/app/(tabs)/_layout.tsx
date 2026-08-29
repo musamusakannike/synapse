@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { IconHome, IconBook, IconTrophy, IconTrendingUp, IconUser } from '@tabler/icons-react-native';
+import { IconHome, IconBook, IconTrophy, IconUser } from '@tabler/icons-react-native';
 import { fontFamilies } from '@/theme';
 import { isLiquidGlassSupported } from '@/hooks/useLiquidGlass';
 import FallbackTabBar, { type FallbackTabBarProps } from '@/components/navigation/FallbackTabBar';
@@ -39,13 +39,6 @@ function IosLiquidGlassTabs() {
         <NativeTabs.Trigger.Label>Leaderboard</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'trophy', selected: 'trophy.fill' }} md="emoji_events" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="progress" contentStyle={{ backgroundColor: PAGE }}>
-        <NativeTabs.Trigger.Label>Progress</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'chart.line.uptrend.xyaxis', selected: 'chart.line.uptrend.xyaxis' }}
-          md="trending_up"
-        />
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile" contentStyle={{ backgroundColor: PAGE }}>
         <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} md="person" />
@@ -70,7 +63,6 @@ function FallbackTabs() {
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <IconHome size={22} color={color} /> }} />
       <Tabs.Screen name="courses" options={{ title: 'Courses', tabBarIcon: ({ color }) => <IconBook size={22} color={color} /> }} />
       <Tabs.Screen name="leaderboard" options={{ title: 'Leaderboard', tabBarIcon: ({ color }) => <IconTrophy size={22} color={color} /> }} />
-      <Tabs.Screen name="progress" options={{ title: 'Progress', tabBarIcon: ({ color }) => <IconTrendingUp size={22} color={color} /> }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <IconUser size={22} color={color} /> }} />
     </Tabs>
   );

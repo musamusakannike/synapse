@@ -127,7 +127,7 @@ export function mapActionUrlToMobileRoute(url?: string | null): string {
   if (courseMatch) return `/course/${courseMatch[1]}`;
 
   if (url.startsWith('/dashboard/courses')) return '/(tabs)/courses';
-  if (url.startsWith('/dashboard/progress')) return '/(tabs)/progress';
+  if (url.startsWith('/dashboard/progress')) return '/(tabs)';
   if (url.startsWith('/dashboard/notifications')) return '/notifications';
   if (url.startsWith('/dashboard/profile') || url.startsWith('/dashboard/settings')) return '/settings';
   if (url.startsWith('/dashboard')) return '/(tabs)';

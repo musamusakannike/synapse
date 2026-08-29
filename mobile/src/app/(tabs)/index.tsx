@@ -14,6 +14,7 @@ import {
   IconTrash,
   IconFlame,
   IconBolt,
+  IconTarget,
 } from '@tabler/icons-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
@@ -128,6 +129,7 @@ export default function DashboardHome() {
   const hour = new Date().getHours();
   const streak = dashboard?.streak ?? user?.currentStreak ?? 0;
   const xp = dashboard?.totalXp ?? user?.totalXp ?? 0;
+  const accuracy = dashboard?.quickStats?.avgAccuracy ?? 0;
 
   let speech = 'What do you want to learn today?';
   if (streak > 1) speech = `A ${streak}-day streak! Ready to keep it going?`;
@@ -214,26 +216,42 @@ export default function DashboardHome() {
           <OnboardingSpeechBubble text={speech} />
         </View>
 
-        <GlassCluster spacing={12} style={styles.statsRow}>
-          <GlassSurface style={styles.statChip} tintColor="rgba(255,138,30,0.18)" glassEffectStyle="clear">
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(255,138,30,0.16)' }]}>
-              <IconFlame size={18} color={ACCENT} />
-            </View>
-            <View>
-              <Text style={styles.statValue}>{streak}</Text>
-              <Text style={styles.statLabel}>day streak</Text>
-            </View>
-          </GlassSurface>
-          <GlassSurface style={styles.statChip} tintColor="rgba(91,79,232,0.12)" glassEffectStyle="clear">
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(91,79,232,0.12)' }]}>
-              <IconBolt size={18} color="#5B4FE8" />
-            </View>
-            <View>
-              <Text style={styles.statValue}>{xp}</Text>
-              <Text style={styles.statLabel}>XP earned</Text>
-            </View>
-          </GlassSurface>
-        </GlassCluster>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.statsScrollView}
+          contentContainerStyle={styles.statsScrollContent}
+        >
+          <GlassCluster spacing={12} style={styles.statsRow}>
+            <GlassSurface style={styles.statChip} tintColor="rgba(255,138,30,0.18)" glassEffectStyle="clear">
+              <View style={[styles.statIcon, { backgroundColor: 'rgba(255,138,30,0.16)' }]}>
+                <IconFlame size={18} color={ACCENT} />
+              </View>
+              <View>
+                <Text style={styles.statValue}>{streak}</Text>
+                <Text style={styles.statLabel}>day streak</Text>
+              </View>
+            </GlassSurface>
+            <GlassSurface style={styles.statChip} tintColor="rgba(91,79,232,0.12)" glassEffectStyle="clear">
+              <View style={[styles.statIcon, { backgroundColor: 'rgba(91,79,232,0.12)' }]}>
+                <IconBolt size={18} color="#5B4FE8" />
+              </View>
+              <View>
+                <Text style={styles.statValue}>{xp}</Text>
+                <Text style={styles.statLabel}>XP earned</Text>
+              </View>
+            </GlassSurface>
+            <GlassSurface style={styles.statChip} tintColor="rgba(16,185,129,0.14)" glassEffectStyle="clear">
+              <View style={[styles.statIcon, { backgroundColor: 'rgba(16,185,129,0.14)' }]}>
+                <IconTarget size={18} color="#10B981" />
+              </View>
+              <View>
+                <Text style={styles.statValue}>{Math.round(accuracy)}%</Text>
+                <Text style={styles.statLabel}>avg accuracy</Text>
+              </View>
+            </GlassSurface>
+          </GlassCluster>
+        </ScrollView>
 
         <Pressable
           onPress={() => {
@@ -392,7 +410,8 @@ export default function DashboardHome() {
           )}
         </View>
 
-        <Pressable
+        {/* Clear AsyncStorage & SecureStore (Dev button commented out) */}
+        {/* <Pressable
           onPress={() => {
             haptics.light();
             handleClearAllStorage();
@@ -406,7 +425,7 @@ export default function DashboardHome() {
         >
           <IconTrash size={18} color="#E5484D" />
           <Text style={styles.clearStorageText}>Clear AsyncStorage & SecureStore (Dev)</Text>
-        </Pressable>
+        </Pressable> */}
       </ScrollView>
       <AIToolDialog kind={aiTool} onClose={() => setAiTool(null)} />
     </View>
@@ -460,14 +479,21 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#E5484D',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
+  statsScrollView: {
+    marginHorizontal: -spacing.lg,
     marginTop: spacing.sm,
     marginBottom: spacing.base,
   },
+  statsScrollContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   statChip: {
-    flex: 1,
+    minWidth: 140,
     borderRadius: 20,
     paddingVertical: 14,
     paddingHorizontal: 14,

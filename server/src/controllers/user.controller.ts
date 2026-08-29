@@ -22,6 +22,10 @@ export const getProfile = async (req: AuthenticatedRequest, res: Response, next:
         avatar: req.user!.avatar,
         level: req.user!.level,
         role: req.user!.role,
+        currentStreak: req.user!.currentStreak ?? 0,
+        longestStreak: req.user!.longestStreak ?? 0,
+        totalXp: req.user!.totalXp ?? 0,
+        totalStudyDays: req.user!.totalStudyDays ?? 0,
         settings: req.user!.settings || {
           emailNotifications: true,
           pushNotifications: false,

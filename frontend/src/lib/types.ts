@@ -203,7 +203,10 @@ export interface UserProgress {
 
 export interface DashboardData {
   continueStudying: UserProgress[];
-  quickStats: {
+  streak?: number;
+  longestStreak?: number;
+  totalXp?: number;
+  quickStats?: {
     totalSessions: number;
     totalFlashcards: number;
     avgAccuracy: number;
@@ -213,6 +216,7 @@ export interface DashboardData {
 export interface ProgressStats {
   streak: number;
   longestStreak: number;
+  totalXp?: number;
   todayStudyTime: number;
   totalSessions: number;
   totalFlashcards: number;

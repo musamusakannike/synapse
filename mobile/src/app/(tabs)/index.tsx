@@ -14,7 +14,6 @@ import {
   IconTrash,
   IconFlame,
   IconBolt,
-  IconTarget,
 } from '@tabler/icons-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
@@ -47,7 +46,7 @@ function greetingForHour(hour: number): string {
 
 export default function DashboardHome() {
   const insets = useSafeAreaInsets();
-  const { user } = useAuthStore();
+  const { user, fetchMe } = useAuthStore();
   const { dashboard, isLoading, fetchDashboard } = useProgressStore();
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -76,17 +75,18 @@ export default function DashboardHome() {
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- initial dashboard fetch */
     fetchDashboard();
+    void fetchMe();
     void fetchPopularCourses();
     void fetchUnreadStatus();
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, [fetchDashboard, fetchPopularCourses, fetchUnreadStatus]);
+  }, [fetchDashboard, fetchMe, fetchPopularCourses, fetchUnreadStatus]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     haptics.light();
-    await Promise.all([fetchDashboard(), fetchPopularCourses(), fetchUnreadStatus()]);
+    await Promise.all([fetchDashboard(), fetchMe(), fetchPopularCourses(), fetchUnreadStatus()]);
     setRefreshing(false);
-  }, [fetchDashboard, fetchPopularCourses, fetchUnreadStatus]);
+  }, [fetchDashboard, fetchMe, fetchPopularCourses, fetchUnreadStatus]);
 
   const handleClearAllStorage = () => {
     Alert.alert(
@@ -126,9 +126,8 @@ export default function DashboardHome() {
   const continueStudying = dashboard?.continueStudying || [];
   const firstName = user?.firstName?.trim();
   const hour = new Date().getHours();
-  const streak = user?.currentStreak ?? 0;
-  const xp = user?.totalXp ?? 0;
-  const sessions = dashboard?.quickStats?.totalSessions ?? 0;
+  const streak = dashboard?.streak ?? user?.currentStreak ?? 0;
+  const xp = dashboard?.totalXp ?? user?.totalXp ?? 0;
 
   let speech = 'What do you want to learn today?';
   if (streak > 1) speech = `A ${streak}-day streak! Ready to keep it going?`;
@@ -154,25 +153,25 @@ export default function DashboardHome() {
       kind: 'quiz',
       title: 'Quiz generator',
       description: 'Generate a quick multiple-choice quiz',
-      icon: <IconBrain size={22} color={ACCENT} />,
-      well: 'rgba(255,138,30,0.16)',
-      tint: 'rgba(255,138,30,0.16)',
+      icon: <IconBrain size={22} color="#5B4FE8" />,
+      well: 'rgba(91,79,232,0.12)',
+      tint: 'rgba(91,79,232,0.14)',
     },
     {
       kind: 'flashcards',
       title: 'Flashcards',
       description: 'Build flashcards from any topic',
-      icon: <IconCards size={22} color="#D89400" />,
-      well: 'rgba(242,169,0,0.16)',
-      tint: 'rgba(242,169,0,0.14)',
+      icon: <IconCards size={22} color="#5B4FE8" />,
+      well: 'rgba(91,79,232,0.12)',
+      tint: 'rgba(91,79,232,0.14)',
     },
     {
       kind: 'qa',
       title: 'Q&A AI',
       description: 'Ask a question, get a direct answer',
-      icon: <IconMessageCircle size={22} color={INK} />,
-      well: 'rgba(14,14,26,0.08)',
-      tint: 'rgba(255,255,255,0.35)',
+      icon: <IconMessageCircle size={22} color="#5B4FE8" />,
+      well: 'rgba(91,79,232,0.12)',
+      tint: 'rgba(91,79,232,0.14)',
     },
   ];
 
@@ -215,10 +214,10 @@ export default function DashboardHome() {
           <OnboardingSpeechBubble text={speech} />
         </View>
 
-        <GlassCluster spacing={10} style={styles.statsRow}>
+        <GlassCluster spacing={12} style={styles.statsRow}>
           <GlassSurface style={styles.statChip} tintColor="rgba(255,138,30,0.18)" glassEffectStyle="clear">
             <View style={[styles.statIcon, { backgroundColor: 'rgba(255,138,30,0.16)' }]}>
-              <IconFlame size={16} color={ACCENT} />
+              <IconFlame size={18} color={ACCENT} />
             </View>
             <View>
               <Text style={styles.statValue}>{streak}</Text>
@@ -227,20 +226,11 @@ export default function DashboardHome() {
           </GlassSurface>
           <GlassSurface style={styles.statChip} tintColor="rgba(91,79,232,0.12)" glassEffectStyle="clear">
             <View style={[styles.statIcon, { backgroundColor: 'rgba(91,79,232,0.12)' }]}>
-              <IconBolt size={16} color="#5B4FE8" />
+              <IconBolt size={18} color="#5B4FE8" />
             </View>
             <View>
               <Text style={styles.statValue}>{xp}</Text>
               <Text style={styles.statLabel}>XP earned</Text>
-            </View>
-          </GlassSurface>
-          <GlassSurface style={styles.statChip} tintColor="rgba(255,255,255,0.4)" glassEffectStyle="clear">
-            <View style={[styles.statIcon, { backgroundColor: 'rgba(14,14,26,0.06)' }]}>
-              <IconTarget size={16} color={INK} />
-            </View>
-            <View>
-              <Text style={styles.statValue}>{sessions}</Text>
-              <Text style={styles.statLabel}>sessions</Text>
             </View>
           </GlassSurface>
         </GlassCluster>
@@ -472,36 +462,36 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     marginTop: spacing.sm,
     marginBottom: spacing.base,
   },
   statChip: {
     flex: 1,
-    borderRadius: 18,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     overflow: 'hidden',
   },
   statIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fontFamilies.sansBold,
     color: INK,
     letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: 11,
-    fontFamily: fontFamilies.sans,
+    fontSize: 12,
+    fontFamily: fontFamilies.sansMedium,
     color: MUTED,
   },
   playgroundCard: {

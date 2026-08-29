@@ -267,10 +267,15 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response, nex
       ? Math.round((mcqStats[0].totalCorrect / mcqStats[0].totalAnswered) * 100)
       : 0;
 
+    const user = await User.findById(userId).select('currentStreak longestStreak totalXp');
+
     res.status(200).json({
       success: true,
       data: {
         continueStudying: validProgress,
+        streak: user?.currentStreak ?? 0,
+        longestStreak: user?.longestStreak ?? 0,
+        totalXp: user?.totalXp ?? 0,
         quickStats: {
           totalSessions,
           totalFlashcards: totalFlashcards[0]?.total || 0,
@@ -297,9 +302,10 @@ export const getProgress = async (req: AuthenticatedRequest, res: Response, next
     // Read the stored streak rather than recomputing it here: the scheduler and
     // the achievement notifications work off the same field, and two
     // independent calculations would eventually disagree.
-    const user = await User.findById(userId).select('currentStreak longestStreak lastStudyDate settings.dailyGoalMinutes');
+    const user = await User.findById(userId).select('currentStreak longestStreak lastStudyDate settings.dailyGoalMinutes totalXp');
     const streak = user?.currentStreak ?? 0;
     const longestStreak = user?.longestStreak ?? 0;
+    const totalXp = user?.totalXp ?? 0;
     const dailyGoalMinutes = user?.settings?.dailyGoalMinutes ?? 15;
 
     const totalFlashcards = sessions.reduce((sum, s) => sum + s.flashcardsStudied, 0);
@@ -316,6 +322,7 @@ export const getProgress = async (req: AuthenticatedRequest, res: Response, next
       data: {
         streak,
         longestStreak,
+        totalXp,
         todayStudyTime,
         totalSessions: sessions.length,
         totalFlashcards,

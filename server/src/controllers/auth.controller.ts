@@ -61,6 +61,9 @@ export const register = async (
         lastName: newUser.lastName,
         level: newUser.level,
         role: newUser.role,
+        currentStreak: newUser.currentStreak ?? 0,
+        longestStreak: newUser.longestStreak ?? 0,
+        totalXp: newUser.totalXp ?? 0,
         settings: newUser.settings,
       },
     });
@@ -105,6 +108,11 @@ export const login = async (
         lastName: user.lastName,
         level: user.level,
         role: user.role,
+        avatar: user.avatar,
+        currentStreak: user.currentStreak ?? 0,
+        longestStreak: user.longestStreak ?? 0,
+        totalXp: user.totalXp ?? 0,
+        settings: user.settings,
       },
     });
   } catch (error) {
@@ -139,6 +147,9 @@ export const getMe = async (
         avatar: req.user.avatar,
         level: req.user.level,
         role: req.user.role,
+        currentStreak: req.user.currentStreak ?? 0,
+        longestStreak: req.user.longestStreak ?? 0,
+        totalXp: req.user.totalXp ?? 0,
         firebaseUid: req.user.firebaseUid,
         settings: req.user.settings || {
           emailNotifications: true,
@@ -221,6 +232,9 @@ export const googleAuth = async (
         level: user.level,
         role: user.role,
         avatar: user.avatar,
+        currentStreak: user.currentStreak ?? 0,
+        longestStreak: user.longestStreak ?? 0,
+        totalXp: user.totalXp ?? 0,
         firebaseUid: user.firebaseUid,
       },
     });
@@ -297,6 +311,9 @@ export const appleAuth = async (
         level: user.level,
         role: user.role,
         avatar: user.avatar,
+        currentStreak: user.currentStreak ?? 0,
+        longestStreak: user.longestStreak ?? 0,
+        totalXp: user.totalXp ?? 0,
         firebaseUid: user.firebaseUid,
       },
     });

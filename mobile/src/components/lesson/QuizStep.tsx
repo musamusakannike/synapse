@@ -1,29 +1,25 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import { TopicQuiz } from '@/lib/types';
 import * as haptics from '@/lib/haptics';
 
+function shuffleOptions<T>(options: T[]): T[] {
+  if (!options || options.length === 0) return [];
+  const array = [...options];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnswered: (correct: boolean) => void }) {
   const { colors } = useTheme();
+  const [shuffledOptions] = useState(() => shuffleOptions(quiz.options));
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-
-  const shuffledOptions = useMemo(() => {
-    if (!quiz?.options || quiz.options.length === 0) return [];
-    const array = [...quiz.options];
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }, [quiz]);
-
-  useEffect(() => {
-    setSelected(null);
-    setChecked(false);
-  }, [quiz]);
 
   const handleCheck = () => {
     if (selected === null) return;

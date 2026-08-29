@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
 import { TopicQuiz } from '@/lib/types';
 
 export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnswered: (correct: boolean) => void }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+
+  const shuffledOptions = useMemo(() => {
+    if (!quiz?.options || quiz.options.length === 0) return [];
+    const array = [...quiz.options];
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }, [quiz]);
 
   useEffect(() => {
     setSelected(null);
@@ -16,7 +26,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
   const handleCheck = () => {
     if (selected === null) return;
     setChecked(true);
-    onAnswered(!!quiz.options[selected]?.isCorrect);
+    onAnswered(!!shuffledOptions[selected]?.isCorrect);
   };
 
   return (
@@ -32,7 +42,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
       </div>
 
       <div className="space-y-3">
-        {quiz.options.map((opt, i) => {
+        {shuffledOptions.map((opt, i) => {
           const isSelected = selected === i;
           const showState = checked && (isSelected || opt.isCorrect);
 

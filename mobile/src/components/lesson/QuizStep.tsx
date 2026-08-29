@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { IconCircleCheck, IconCircleX, IconHelpCircle } from '@tabler/icons-react-native';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
@@ -10,6 +10,16 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
 
+  const shuffledOptions = useMemo(() => {
+    if (!quiz?.options || quiz.options.length === 0) return [];
+    const array = [...quiz.options];
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }, [quiz]);
+
   useEffect(() => {
     setSelected(null);
     setChecked(false);
@@ -19,7 +29,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
     if (selected === null) return;
     setChecked(true);
     haptics.medium();
-    onAnswered(!!quiz.options[selected]?.isCorrect);
+    onAnswered(!!shuffledOptions[selected]?.isCorrect);
   };
 
   return (
@@ -29,7 +39,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
       </View>
 
       <View style={{ gap: spacing.md }}>
-        {quiz.options.map((opt, i) => {
+        {shuffledOptions.map((opt, i) => {
           const isSelected = selected === i;
           const showState = checked && (isSelected || opt.isCorrect);
 

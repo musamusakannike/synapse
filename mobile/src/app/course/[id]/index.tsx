@@ -23,13 +23,15 @@ import {
   IconChevronUp,
   IconPlayerPlay,
   IconCircleCheck,
+  IconAward,
 } from '@tabler/icons-react-native';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
-import { Course, Chapter, Topic, PaymentStatus } from '@/lib/types';
+import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
+import ExerciseSheet from '@/components/courses/ExerciseSheet';
 import { fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
 import { ACCENT, INK, PAGE, TINT_GLASS } from '@/theme/brand';
 import ScreenBackdrop from '@/components/common/ScreenBackdrop';
@@ -76,6 +78,7 @@ export default function CourseDetailScreen() {
   // Collapsed chapter dropdown states
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const [expandedAuthors, setExpandedAuthors] = useState(false);
+  const [activeExercise, setActiveExercise] = useState<{ exercise: Exercise; chapterId: string } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -552,6 +555,69 @@ export default function CourseDetailScreen() {
                             </Pressable>
                           );
                         })}
+
+                        {/* Chapter Capstone Assessment */}
+                        {chapter.exercise && chapter.exercise.questions && chapter.exercise.questions.length > 0 && (
+                          <Pressable
+                            disabled={isLocked || !hasAccess}
+                            onPress={() => {
+                              haptics.light();
+                              setActiveExercise({ exercise: chapter.exercise!, chapterId: chapter._id });
+                            }}
+                            style={[
+                              s.topicItem,
+                              {
+                                borderColor: '#FDE68A',
+                                backgroundColor: 'rgba(254, 243, 199, 0.45)',
+                              },
+                              (isLocked || !hasAccess) && s.topicItemLocked,
+                            ]}
+                          >
+                            <View style={s.topicLeft}>
+                              <View
+                                style={[
+                                  s.topicNumCircle,
+                                  { backgroundColor: '#FEF3C7' },
+                                ]}
+                              >
+                                <IconAward size={16} color="#D97706" />
+                              </View>
+
+                              <View style={{ flex: 1 }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                  <Text
+                                    style={[
+                                      s.topicItemTitle,
+                                      { fontWeight: '700' },
+                                      (isLocked || !hasAccess) && { color: colors.textTertiary },
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {chapter.exercise.title || 'Chapter Capstone Assessment'}
+                                  </Text>
+                                </View>
+                                <Text style={s.topicItemDesc} numberOfLines={1}>
+                                  {chapter.exercise.questions.length} questions • Test your chapter mastery
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={s.topicRight}>
+                              <View style={s.topicXpBadge}>
+                                <IconBolt size={10} color="#F59E0B" />
+                                <Text style={s.topicXpText}>
+                                  +{chapter.exercise.questions.reduce((sum, q) => sum + (q.xp || 20), 0)} XP
+                                </Text>
+                              </View>
+
+                              {isLocked || !hasAccess ? (
+                                <IconLock size={14} color={colors.textTertiary} />
+                              ) : (
+                                <Text style={[s.startText, { color: '#B45309' }]}>Take Assessment →</Text>
+                              )}
+                            </View>
+                          </Pressable>
+                        )}
                       </View>
                     )}
                   </View>
@@ -561,6 +627,18 @@ export default function CourseDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Chapter Capstone Assessment Sheet */}
+      <ExerciseSheet
+        open={!!activeExercise}
+        onClose={() => setActiveExercise(null)}
+        exercise={activeExercise?.exercise || null}
+        courseId={id}
+        chapterId={activeExercise?.chapterId}
+        onSuccessPassed={() => {
+          loadData();
+        }}
+      />
     </View>
   );
 }

@@ -14,12 +14,14 @@ import {
   ChevronDown,
   ChevronUp,
   Play,
+  Award,
 } from 'lucide-react';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
-import { Course, Chapter, Topic, PaymentStatus } from '@/lib/types';
+import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ExerciseModal from '@/components/courses/ExerciseModal';
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -42,6 +44,7 @@ export default function CourseDetailsPage() {
   // Collapsed chapter dropdown states
   const [openChapters, setOpenChapters] = useState<Record<string, boolean>>({});
   const [expandedAuthors, setExpandedAuthors] = useState(false);
+  const [activeExercise, setActiveExercise] = useState<{ exercise: Exercise; chapterId: string } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -500,6 +503,55 @@ export default function CourseDetailsPage() {
                           </div>
                         );
                       })}
+
+                      {/* Chapter Capstone Assessment */}
+                      {chapter.exercise && chapter.exercise.questions && chapter.exercise.questions.length > 0 && (
+                        <div
+                          onClick={() => {
+                            if (!isLocked && hasAccess) {
+                              setActiveExercise({ exercise: chapter.exercise!, chapterId: chapter._id });
+                            }
+                          }}
+                          className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
+                            isLocked || !hasAccess
+                              ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/30 opacity-60'
+                              : 'cursor-pointer border-amber-300 bg-amber-500/10 shadow-xs hover:border-amber-400 hover:bg-amber-500/15'
+                          }`}
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">
+                              <Award className="size-4 text-amber-600" />
+                            </span>
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="truncate text-sm font-bold text-[var(--ink-900)]">
+                                  {chapter.exercise.title || 'Chapter Capstone Assessment'}
+                                </h4>
+                                <span className="rounded-md bg-amber-200/80 px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-amber-900">
+                                  Capstone
+                                </span>
+                              </div>
+                              <p className="truncate text-xs text-[var(--text-muted)]">
+                                {chapter.exercise.questions.length} questions • Test your chapter mastery
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-3">
+                            <span className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
+                              <Zap className="size-3.5 fill-amber-500 text-amber-500" />
+                              +{chapter.exercise.questions.reduce((sum, q) => sum + (q.xp || 20), 0)} XP
+                            </span>
+
+                            {isLocked || !hasAccess ? (
+                              <Lock className="size-4 text-slate-400" />
+                            ) : (
+                              <span className="text-xs font-bold text-amber-700">Take Assessment →</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -508,6 +560,20 @@ export default function CourseDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Chapter Exercise Modal */}
+      {activeExercise && (
+        <ExerciseModal
+          open={!!activeExercise}
+          onClose={() => setActiveExercise(null)}
+          exercise={activeExercise.exercise}
+          courseId={id}
+          chapterId={activeExercise.chapterId}
+          onSuccessPassed={() => {
+            fetchCourseData();
+          }}
+        />
+      )}
     </div>
   );
 }

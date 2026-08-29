@@ -66,7 +66,7 @@ export default function LandingPage() {
           </div>
           <div className="relative h-full min-h-[350px] overflow-hidden rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)]">
             <Image
-              src="/images/students-stairs.jpg"
+              src="/images/hero.webp"
               alt="Nigerian students studying together on SabiLearn"
               fill
               priority

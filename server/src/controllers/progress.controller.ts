@@ -141,6 +141,14 @@ export const submitExercise = async (req: AuthenticatedRequest, res: Response, n
       return;
     }
 
+    let progress = await UserProgress.findOne({ user: userId, course: courseId });
+    if (!progress) {
+      progress = new UserProgress({ user: userId, course: courseId, completedTopics: [], completedChapters: [], passedExercises: [] });
+    }
+
+    const exerciseKey = topicId ? `topic_${topicId}` : `chapter_${chapterId}`;
+    const alreadyRewarded = progress.passedExercises.includes(exerciseKey);
+
     let totalEarnedXp = 0;
     let correctCount = 0;
 
@@ -150,33 +158,30 @@ export const submitExercise = async (req: AuthenticatedRequest, res: Response, n
         const questionId = ans.questionId;
         const qXp = ans.questionXp || 20;
 
-        const existingLog = await XpLog.findOne({ user: userId, sourceType: 'exercise_question', sourceId: questionId });
-        if (!existingLog) {
-          totalEarnedXp += qXp;
-          await XpLog.create({
-            user: userId,
-            xp: qXp,
-            sourceType: 'exercise_question',
-            sourceId: questionId,
-            course: courseId,
-          });
+        // Only award XP if the assessment has not been previously completed/rewarded
+        if (!alreadyRewarded) {
+          const existingLog = await XpLog.findOne({ user: userId, sourceType: 'exercise_question', sourceId: questionId });
+          if (!existingLog) {
+            totalEarnedXp += qXp;
+            await XpLog.create({
+              user: userId,
+              xp: qXp,
+              sourceType: 'exercise_question',
+              sourceId: questionId,
+              course: courseId,
+            });
+          }
         }
       }
     }
 
-    if (totalEarnedXp > 0) {
+    if (totalEarnedXp > 0 && !alreadyRewarded) {
       await User.findByIdAndUpdate(userId, { $inc: { totalXp: totalEarnedXp } });
     }
 
     const scorePercent = Math.round((correctCount / answers.length) * 100);
     const isPassed = scorePercent >= 50;
 
-    let progress = await UserProgress.findOne({ user: userId, course: courseId });
-    if (!progress) {
-      progress = new UserProgress({ user: userId, course: courseId, completedTopics: [], completedChapters: [], passedExercises: [] });
-    }
-
-    const exerciseKey = topicId ? `topic_${topicId}` : `chapter_${chapterId}`;
     if (isPassed && !progress.passedExercises.includes(exerciseKey)) {
       progress.passedExercises.push(exerciseKey);
     }
@@ -215,6 +220,7 @@ export const submitExercise = async (req: AuthenticatedRequest, res: Response, n
       success: true,
       scorePercent,
       isPassed,
+      alreadyRewarded,
       earnedXp: totalEarnedXp,
       totalXp: user?.totalXp || 0,
       progress,

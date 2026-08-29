@@ -509,7 +509,7 @@ export default function CourseDetailsPage() {
                         <div
                           onClick={() => {
                             if (!isLocked && hasAccess) {
-                              setActiveExercise({ exercise: chapter.exercise!, chapterId: chapter._id });
+                              router.push(`/dashboard/courses/${id}/chapters/${chapter._id}/assessment`);
                             }
                           }}
                           className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
@@ -560,20 +560,6 @@ export default function CourseDetailsPage() {
           </div>
         )}
       </div>
-
-      {/* Chapter Exercise Modal */}
-      {activeExercise && (
-        <ExerciseModal
-          open={!!activeExercise}
-          onClose={() => setActiveExercise(null)}
-          exercise={activeExercise.exercise}
-          courseId={id}
-          chapterId={activeExercise.chapterId}
-          onSuccessPassed={() => {
-            fetchCourseData();
-          }}
-        />
-      )}
     </div>
   );
 }

@@ -562,7 +562,10 @@ export default function CourseDetailScreen() {
                             disabled={isLocked || !hasAccess}
                             onPress={() => {
                               haptics.light();
-                              setActiveExercise({ exercise: chapter.exercise!, chapterId: chapter._id });
+                              router.push({
+                                pathname: '/course/[id]/chapter/[chapterId]/assessment',
+                                params: { id, chapterId: chapter._id },
+                              } as any);
                             }}
                             style={[
                               s.topicItem,
@@ -627,18 +630,6 @@ export default function CourseDetailScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* Chapter Capstone Assessment Sheet */}
-      <ExerciseSheet
-        open={!!activeExercise}
-        onClose={() => setActiveExercise(null)}
-        exercise={activeExercise?.exercise || null}
-        courseId={id}
-        chapterId={activeExercise?.chapterId}
-        onSuccessPassed={() => {
-          loadData();
-        }}
-      />
     </View>
   );
 }

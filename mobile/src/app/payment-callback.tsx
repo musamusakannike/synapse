@@ -49,7 +49,7 @@ export default function PaymentCallbackScreen() {
   return (
     <View style={styles.container}>
       <ScreenBackdrop />
-      <View style={[styles.inner, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.inner, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + spacing.lg }]}>
         <ScreenHeader title="Checkout" subtitle="Payment confirmation." showBack onBack={() => router.replace('/(tabs)/courses')} />
         <GlassSurface style={styles.card} tintColor={TINT_GLASS}>
           {isLoading ? (

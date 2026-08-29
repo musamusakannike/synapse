@@ -94,7 +94,7 @@ export default function SubscribeScreen() {
       <View style={styles.container}>
         <ScreenBackdrop />
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+          contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + spacing['4xl'] }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} />}
           showsVerticalScrollIndicator={false}
         >

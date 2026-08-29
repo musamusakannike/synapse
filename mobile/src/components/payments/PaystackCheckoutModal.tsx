@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Modal, View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconX } from '@tabler/icons-react-native';
 import { fontFamilies, spacing } from '@/theme';
 import { INK, MUTED, PAGE } from '@/theme/brand';
@@ -23,7 +23,6 @@ export default function PaystackCheckoutModal({
   onClose,
   onSettled,
 }: PaystackCheckoutModalProps) {
-  const insets = useSafeAreaInsets();
   const settled = useRef(false);
 
   const finish = (url: string) => {
@@ -51,58 +50,65 @@ export default function PaystackCheckoutModal({
         settled.current = false;
       }}
     >
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.title}>Pay with Paystack</Text>
-        <Pressable
-          onPress={() => {
-            haptics.light();
-            onClose();
-          }}
-          hitSlop={12}
-          accessibilityLabel="Close checkout"
-        >
-          <IconX size={22} color={INK} />
-        </Pressable>
-      </View>
-      {authorizationUrl ? (
-        <WebView
-          source={{ uri: authorizationUrl }}
-          originWhitelist={['*']}
-          javaScriptEnabled
-          domStorageEnabled
-          startInLoadingState
-          userAgent="SabiLearn-Mobile;Webview"
-          renderLoading={() => (
-            <View style={styles.loading}>
-              <ActivityIndicator size="large" color={INK} />
-              <Text style={styles.loadingText}>Opening Paystack…</Text>
-            </View>
-          )}
-          onNavigationStateChange={handleNav}
-          onShouldStartLoadWithRequest={(request) => {
-            if (isPaystackCallbackUrl(request.url)) {
-              finish(request.url);
-              return false;
-            }
-            return true;
-          }}
-        />
-      ) : (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color={INK} />
+      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Pay with Paystack</Text>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              onClose();
+            }}
+            hitSlop={12}
+            accessibilityLabel="Close checkout"
+          >
+            <IconX size={22} color={INK} />
+          </Pressable>
         </View>
-      )}
+        {authorizationUrl ? (
+          <WebView
+            style={styles.webview}
+            source={{ uri: authorizationUrl }}
+            originWhitelist={['*']}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState
+            userAgent="SabiLearn-Mobile;Webview"
+            renderLoading={() => (
+              <View style={styles.loading}>
+                <ActivityIndicator size="large" color={INK} />
+                <Text style={styles.loadingText}>Opening Paystack…</Text>
+              </View>
+            )}
+            onNavigationStateChange={handleNav}
+            onShouldStartLoadWithRequest={(request) => {
+              if (isPaystackCallbackUrl(request.url)) {
+                finish(request.url);
+                return false;
+              }
+              return true;
+            }}
+          />
+        ) : (
+          <View style={styles.loading}>
+            <ActivityIndicator size="large" color={INK} />
+          </View>
+        )}
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: PAGE,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingVertical: spacing.md,
     backgroundColor: PAGE,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#E8E8EE',
@@ -111,6 +117,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontFamily: fontFamilies.sansBold,
     color: INK,
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: PAGE,
   },
   loading: {
     flex: 1,

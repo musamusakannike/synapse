@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, type ReactNode } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -11,13 +11,10 @@ import {
   IconMessageCircle,
   IconCode,
   IconBell,
-  IconTrash,
   IconFlame,
   IconBolt,
   IconTarget,
 } from '@tabler/icons-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
 import { useProgressStore } from '@/store/progress.store';
 import { useAuthStore } from '@/store/auth.store';
 import { courseApi, notificationApi } from '@/lib/api';
@@ -31,7 +28,7 @@ import OfflineBanner from '@/components/common/OfflineBanner';
 import OnboardingSpeechBubble from '@/components/auth/OnboardingSpeechBubble';
 import GlassSurface, { GlassCluster } from '@/components/ui/GlassSurface';
 import HomeBackdrop from '@/components/home/HomeBackdrop';
-import { fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import { fontFamilies, fontSizes, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
 const ACCENT = '#FF8A1E';
@@ -88,37 +85,6 @@ export default function DashboardHome() {
     await Promise.all([fetchDashboard(), fetchMe(), fetchPopularCourses(), fetchUnreadStatus()]);
     setRefreshing(false);
   }, [fetchDashboard, fetchMe, fetchPopularCourses, fetchUnreadStatus]);
-
-  const handleClearAllStorage = () => {
-    Alert.alert(
-      'Clear All Storage Data',
-      'Are you sure you want to clear all data in AsyncStorage and Expo SecureStore? This will remove all cached sessions, courses, onboarded flags, and auth tokens.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All Data',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.clear();
-              if (Platform.OS === 'web') {
-                if (typeof window !== 'undefined') {
-                  window.localStorage.clear();
-                }
-              } else {
-                await SecureStore.deleteItemAsync('sabilearn_jwt_token');
-              }
-              haptics.success();
-              Alert.alert('Storage Cleared', 'All AsyncStorage and Expo SecureStore data have been cleared successfully.');
-            } catch (err: any) {
-              haptics.error();
-              Alert.alert('Error', err?.message || 'Failed to clear storage data.');
-            }
-          },
-        },
-      ]
-    );
-  };
 
   if (isLoading && !dashboard) {
     return <LoadingSpinner />;
@@ -409,23 +375,6 @@ export default function DashboardHome() {
             </View>
           )}
         </View>
-
-        {/* Clear AsyncStorage & SecureStore (Dev button commented out) */}
-        {/* <Pressable
-          onPress={() => {
-            haptics.light();
-            handleClearAllStorage();
-          }}
-          style={({ pressed }) => [
-            styles.clearStorageButton,
-            { backgroundColor: pressed ? 'rgba(229,72,77,0.08)' : 'transparent' },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Clear AsyncStorage and SecureStore"
-        >
-          <IconTrash size={18} color="#E5484D" />
-          <Text style={styles.clearStorageText}>Clear AsyncStorage & SecureStore (Dev)</Text>
-        </Pressable> */}
       </ScrollView>
       <AIToolDialog kind={aiTool} onClose={() => setAiTool(null)} />
     </View>
@@ -689,23 +638,5 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
-  },
-  clearStorageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#E5484D',
-    marginTop: spacing.xl,
-  },
-  clearStorageText: {
-    fontSize: fontSizes.sm,
-    fontFamily: fontFamilies.sansMedium,
-    color: '#E5484D',
   },
 });

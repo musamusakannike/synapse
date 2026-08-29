@@ -271,7 +271,7 @@ export default function DashboardHome() {
         {/* DEV ONLY: Commentable button to clear AsyncStorage & Expo SecureStore      */}
         {/* (Comment out this whole block when preparing for production)              */}
         {/* ========================================================================= */}
-        {/* <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
+        <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
           <Pressable
             onPress={() => {
               haptics.light();
@@ -292,7 +292,7 @@ export default function DashboardHome() {
               Clear AsyncStorage & SecureStore (Dev)
             </Text>
           </Pressable>
-        </View> */}
+        </View>
         {/* ========================================================================= */}
       </ScrollView>
       <AIToolDialog kind={aiTool} onClose={() => setAiTool(null)} />

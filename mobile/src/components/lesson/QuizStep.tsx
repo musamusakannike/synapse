@@ -24,11 +24,7 @@ export default function QuizStep({ quiz, onAnswered }: { quiz: TopicQuiz; onAnsw
 
   return (
     <View style={{ gap: spacing.lg }}>
-      <View style={{ gap: spacing.xs }}>
-        <View style={styles.badgeRow}>
-          <IconHelpCircle size={14} color="#D97706" />
-          <Text style={styles.badgeText}>Quick Quiz</Text>
-        </View>
+      <View style={{ gap: spacing.sm }}>
         <Text style={[styles.question, { color: colors.textPrimary }]}>{quiz.question}</Text>
       </View>
 

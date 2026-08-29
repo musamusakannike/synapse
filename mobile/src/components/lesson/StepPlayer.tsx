@@ -199,9 +199,9 @@ export default function StepPlayer({
         {/* Step Title Row with '...' button */}
         <View style={styles.titleRow}>
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{displayTitle}</Text>
-          <Pressable onPress={handleMenuPress} hitSlop={12} style={styles.dotsBtn}>
+          {/* <Pressable onPress={handleMenuPress} hitSlop={12} style={styles.dotsBtn}>
             <IconDots size={24} color={colors.textPrimary} />
-          </Pressable>
+          </Pressable> */}
         </View>
 
         {/* Content Body */}

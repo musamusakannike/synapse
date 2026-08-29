@@ -139,15 +139,15 @@ export default function InfoStepBlock({ content }: { content: TopicContent }) {
     case 'audio':
       return (
         <View style={[styles.audioBlock, { backgroundColor: colors.surfaceSunken, borderColor: colors.borderSubtle }]}>
-          <Text style={[styles.paragraph, { color: colors.textSecondary }]}>Audio: {content.content}</Text>
+          <Text style={[styles.paragraph, { color: colors.textSecondary }]}>{content.content}</Text>
         </View>
       );
     case 'group':
       return (
-        <View style={[styles.groupWrap, { backgroundColor: colors.surfaceCard, borderColor: colors.borderSubtle }]}>
-          {!!content.content && (
+        <View style={[styles.groupWrap]}>
+          {/* {!!content.content && (
             <Text style={[styles.groupTitle, { color: colors.textPrimary }]}>{content.content}</Text>
-          )}
+          )} */}
           {(content.blocks || []).map((subBlock, bIdx) => (
             <InfoStepBlock key={bIdx} content={subBlock} />
           ))}
@@ -267,9 +267,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   groupWrap: {
-    padding: spacing.md,
-    borderRadius: radii.lg,
-    borderWidth: 1,
     gap: spacing.sm,
     marginVertical: spacing.xs,
   },

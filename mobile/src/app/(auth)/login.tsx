@@ -1,37 +1,40 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   Pressable,
+  TouchableOpacity,
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconEye, IconEyeOff, IconAlertTriangle } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import { fontFamilies, spacing } from '@/theme';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
-import AuthBackground from '@/components/common/AuthBackground';
-import Button from '@/components/ui/Button';
+import OnboardingSpeechBubble from '@/components/auth/OnboardingSpeechBubble';
+import AuthHeader from '@/components/auth/AuthHeader';
 import * as haptics from '@/lib/haptics';
 
 export default function LoginScreen() {
-  const { colors } = useTheme();
   const { login, loginWithGoogle, loginWithApple } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
 
   const handleLogin = async () => {
     setError('');
     if (!email.trim() || !password) {
       setError('Enter your email and password.');
+      haptics.error();
       return;
     }
     setIsLoading(true);
@@ -55,7 +58,7 @@ export default function LoginScreen() {
       haptics.success();
       router.replace('/(tabs)');
     } else {
-      setError(result.error || 'Google login failed.');
+      setError(result.error || 'Google sign-in failed.');
       haptics.error();
     }
   };
@@ -69,135 +72,307 @@ export default function LoginScreen() {
       haptics.success();
       router.replace('/(tabs)');
     } else {
-      setError(result.error || 'Apple login failed.');
+      setError(result.error || 'Apple sign-in failed.');
       haptics.error();
     }
   };
 
   return (
-    <AuthBackground>
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <View style={styles.header}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome back</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Sign in to continue learning.</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      {/* Subtle Binary Code Backdrop */}
+      <View style={styles.binaryBackdrop} pointerEvents="none">
+        <Text style={styles.binaryText}>0 0 1 0 0 1 0 1 0 0 0 1 1 0 1 0 0</Text>
+        <Text style={styles.binaryText}>1 0 0 1 0 1 1 0 0 1 1 0 1 0 1 0 0 1</Text>
+      </View>
+
+      <AuthHeader fallbackRoute="/(auth)/onboarding" />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Mascot Speech Bubble */}
+          <OnboardingSpeechBubble text="Welcome back! Ready to continue your streak?" />
+
+          {/* Error Message Box */}
+          {!!error && (
+            <View style={styles.errorBox}>
+              <IconAlertTriangle size={18} color="#DC2626" />
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          )}
 
-            {!!error && (
-              <View style={[styles.errorBox, { backgroundColor: colors.dangerBg }]}>
-                <IconAlertTriangle size={16} color={colors.danger} />
-                <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-              </View>
-            )}
-
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
                 placeholder="you@example.com"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+                placeholderTextColor="#8E8E9F"
+                style={[
+                  styles.input,
+                  focusedField === 'email' && styles.inputFocused,
+                ]}
               />
             </View>
 
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
-              <View style={[styles.passwordWrap, { borderColor: colors.borderDefault }]}>
+              <Text style={styles.label}>Password</Text>
+              <View
+                style={[
+                  styles.passwordWrap,
+                  focusedField === 'password' && styles.inputFocused,
+                ]}
+              >
                 <TextInput
                   value={password}
                   onChangeText={setPassword}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
                   secureTextEntry={!showPassword}
                   placeholder="••••••••"
-                  placeholderTextColor={colors.textTertiary}
-                  style={[styles.passwordInput, { color: colors.textPrimary }]}
+                  placeholderTextColor="#8E8E9F"
+                  style={styles.passwordInput}
                 />
-                <Pressable onPress={() => setShowPassword((s) => !s)} hitSlop={10}>
+                <Pressable
+                  onPress={() => setShowPassword((s) => !s)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={styles.eyeButton}
+                >
                   {showPassword ? (
-                    <IconEyeOff size={18} color={colors.textTertiary} />
+                    <IconEyeOff size={20} color="#6B6B80" />
                   ) : (
-                    <IconEye size={18} color={colors.textTertiary} />
+                    <IconEye size={20} color="#6B6B80" />
                   )}
                 </Pressable>
               </View>
             </View>
 
             <Link href="/(auth)/forgot-password" asChild>
-              <Pressable>
-                <Text style={[styles.link, { color: colors.brandPrimaryHover }]}>Forgot password?</Text>
+              <Pressable
+                onPress={() => haptics.light()}
+                style={({ pressed }) => [styles.forgotLinkWrap, pressed && styles.pressedOpacity]}
+              >
+                <Text style={styles.forgotLink}>Forgot password?</Text>
               </Pressable>
             </Link>
 
-            <Button fullWidth loading={isLoading} onPress={handleLogin} style={{ marginTop: spacing.base }}>
-              Sign in
-            </Button>
+            {/* Primary Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.88}
+              disabled={isLoading}
+              onPress={handleLogin}
+              style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#0E0E1A" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
 
+            {/* Divider */}
             <View style={styles.dividerRow}>
-              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-              <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or</Text>
-              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            <SocialAuthButtons onGoogle={handleGoogle} onApple={handleApple} loading={isLoading} />
+            {/* Social Authentication */}
+            <SocialAuthButtons
+              onGoogle={handleGoogle}
+              onApple={handleApple}
+              loading={isLoading}
+            />
 
+            {/* Footer Navigation */}
             <View style={styles.footerRow}>
-              <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans }}>Don&apos;t have an account?</Text>
+              <Text style={styles.footerText}>Don&apos;t have an account? </Text>
               <Link href="/(auth)/register" asChild>
-                <Pressable>
-                  <Text style={[styles.link, { color: colors.brandPrimaryHover }]}> Sign up</Text>
+                <Pressable
+                  onPress={() => haptics.light()}
+                  style={({ pressed }) => [pressed && styles.pressedOpacity]}
+                >
+                  <Text style={styles.footerLink}>Sign up</Text>
                 </Pressable>
               </Link>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </AuthBackground>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingVertical: spacing.xl, gap: spacing.base },
-  header: { gap: spacing.xs, marginBottom: spacing.sm },
-  title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displayBold },
-  subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans },
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  binaryBackdrop: {
+    position: 'absolute',
+    top: 4,
+    left: 0,
+    right: 0,
+    opacity: 0.14,
+    alignItems: 'center',
+  },
+  binaryText: {
+    fontFamily: fontFamilies.sans,
+    fontSize: 12,
+    color: '#35354A',
+    letterSpacing: 6,
+    lineHeight: 18,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing['2xl'],
+  },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    padding: spacing.sm,
-    borderRadius: radii.sm,
-  },
-  errorText: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium, flexShrink: 1 },
-  field: { gap: spacing.xs },
-  label: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium },
-  input: {
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FECDD3',
     borderWidth: 1,
-    borderRadius: radii.sm,
+    paddingVertical: 12,
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    fontSize: fontSizes.base,
+    borderRadius: 14,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansMedium,
+    color: '#DC2626',
+    flexShrink: 1,
+  },
+  formContainer: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    gap: spacing.base,
+  },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+    letterSpacing: -0.2,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EB',
+    borderRadius: 16,
+    paddingHorizontal: spacing.base,
+    paddingVertical: 14,
+    fontSize: 16,
     fontFamily: fontFamilies.sans,
+    color: '#0E0E1A',
   },
   passwordWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: radii.sm,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EB',
+    borderRadius: 16,
     paddingHorizontal: spacing.base,
   },
   passwordInput: {
     flex: 1,
-    paddingVertical: spacing.md,
-    fontSize: fontSizes.base,
+    paddingVertical: 14,
+    fontSize: 16,
     fontFamily: fontFamilies.sans,
+    color: '#0E0E1A',
   },
-  link: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium, alignSelf: 'flex-end' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.sm },
-  divider: { flex: 1, height: 1 },
-  dividerText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.base },
+  eyeButton: {
+    padding: 6,
+  },
+  inputFocused: {
+    borderColor: '#FF8A1E',
+  },
+  forgotLinkWrap: {
+    alignSelf: 'flex-end',
+    paddingVertical: 2,
+  },
+  forgotLink: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+  },
+  primaryButton: {
+    backgroundColor: '#FF8A1E',
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF8A1E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+    marginTop: spacing.xs,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+    letterSpacing: -0.2,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#EAEAEA',
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansMedium,
+    color: '#8E8E9F',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  footerText: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sans,
+    color: '#6B6B80',
+  },
+  footerLink: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+  },
+  pressedOpacity: {
+    opacity: 0.6,
+  },
 });

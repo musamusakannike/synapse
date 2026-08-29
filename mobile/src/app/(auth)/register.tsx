@@ -1,29 +1,42 @@
-import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconAlertTriangle } from '@tabler/icons-react-native';
+import { IconEye, IconEyeOff, IconAlertTriangle } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import { fontFamilies, spacing } from '@/theme';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
-import AuthBackground from '@/components/common/AuthBackground';
-import Button from '@/components/ui/Button';
+import OnboardingSpeechBubble from '@/components/auth/OnboardingSpeechBubble';
+import AuthHeader from '@/components/auth/AuthHeader';
 import * as haptics from '@/lib/haptics';
 
 export default function RegisterScreen() {
-  const { colors } = useTheme();
   const { register, loginWithGoogle, loginWithApple } = useAuthStore();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   const handleRegister = async () => {
     setError('');
     if (!firstName.trim() || !lastName.trim() || !email.trim() || password.length < 6) {
-      setError('Fill in every field. Password needs at least 6 characters.');
+      setError('Please fill in every field. Password needs at least 6 characters.');
+      haptics.error();
       return;
     }
     setIsLoading(true);
@@ -45,149 +58,389 @@ export default function RegisterScreen() {
   };
 
   const handleGoogle = async () => {
+    setError('');
     setIsLoading(true);
     const result = await loginWithGoogle();
     setIsLoading(false);
-    if (result.success) router.replace('/(tabs)');
-    else setError(result.error || 'Google sign-up failed.');
+    if (result.success) {
+      haptics.success();
+      router.replace('/(tabs)');
+    } else {
+      setError(result.error || 'Google sign-up failed.');
+      haptics.error();
+    }
   };
 
   const handleApple = async () => {
+    setError('');
     setIsLoading(true);
     const result = await loginWithApple();
     setIsLoading(false);
-    if (result.success) router.replace('/(tabs)');
-    else setError(result.error || 'Apple sign-up failed.');
+    if (result.success) {
+      haptics.success();
+      router.replace('/(tabs)');
+    } else {
+      setError(result.error || 'Apple sign-up failed.');
+      haptics.error();
+    }
   };
 
   return (
-    <AuthBackground>
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-            <View style={styles.header}>
-              <Text style={[styles.title, { color: colors.textPrimary }]}>Create your account</Text>
-              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Start learning in a few taps.</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      {/* Subtle Binary Code Backdrop */}
+      <View style={styles.binaryBackdrop} pointerEvents="none">
+        <Text style={styles.binaryText}>0 0 1 0 0 1 0 1 0 0 0 1 1 0 1 0 0</Text>
+        <Text style={styles.binaryText}>1 0 0 1 0 1 1 0 0 1 1 0 1 0 1 0 0 1</Text>
+      </View>
+
+      <AuthHeader fallbackRoute="/(auth)/onboarding" />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Mascot Speech Bubble */}
+          <OnboardingSpeechBubble text="Join over 1 Million learners mastering code today." />
+
+          {/* Error Alert Box */}
+          {!!error && (
+            <View style={styles.errorBox}>
+              <IconAlertTriangle size={18} color="#DC2626" />
+              <Text style={styles.errorText}>{error}</Text>
             </View>
+          )}
 
-            {!!error && (
-              <View style={[styles.errorBox, { backgroundColor: colors.dangerBg }]}>
-                <IconAlertTriangle size={16} color={colors.danger} />
-                <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-              </View>
-            )}
-
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
+            {/* First & Last Name Row */}
             <View style={styles.row}>
               <View style={[styles.field, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>First name</Text>
+                <Text style={styles.label}>First name</Text>
                 <TextInput
                   value={firstName}
                   onChangeText={setFirstName}
+                  onFocus={() => setFocusedField('firstName')}
+                  onBlur={() => setFocusedField(null)}
                   placeholder="Ada"
-                  placeholderTextColor={colors.textTertiary}
-                  style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+                  placeholderTextColor="#8E8E9F"
+                  style={[
+                    styles.input,
+                    focusedField === 'firstName' && styles.inputFocused,
+                  ]}
                 />
               </View>
               <View style={[styles.field, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>Last name</Text>
+                <Text style={styles.label}>Last name</Text>
                 <TextInput
                   value={lastName}
                   onChangeText={setLastName}
+                  onFocus={() => setFocusedField('lastName')}
+                  onBlur={() => setFocusedField(null)}
                   placeholder="Lovelace"
-                  placeholderTextColor={colors.textTertiary}
-                  style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+                  placeholderTextColor="#8E8E9F"
+                  style={[
+                    styles.input,
+                    focusedField === 'lastName' && styles.inputFocused,
+                  ]}
                 />
               </View>
             </View>
 
+            {/* Email */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
+              <Text style={styles.label}>Email</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setFocusedField('email')}
+                onBlur={() => setFocusedField(null)}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                autoComplete="email"
                 placeholder="you@example.com"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+                placeholderTextColor="#8E8E9F"
+                style={[
+                  styles.input,
+                  focusedField === 'email' && styles.inputFocused,
+                ]}
               />
             </View>
 
+            {/* Password */}
             <View style={styles.field}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholder="At least 6 characters"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
-              />
+              <Text style={styles.label}>Password</Text>
+              <View
+                style={[
+                  styles.passwordWrap,
+                  focusedField === 'password' && styles.inputFocused,
+                ]}
+              >
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  secureTextEntry={!showPassword}
+                  placeholder="At least 6 characters"
+                  placeholderTextColor="#8E8E9F"
+                  style={styles.passwordInput}
+                />
+                <Pressable
+                  onPress={() => setShowPassword((s) => !s)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={styles.eyeButton}
+                >
+                  {showPassword ? (
+                    <IconEyeOff size={20} color="#6B6B80" />
+                  ) : (
+                    <IconEye size={20} color="#6B6B80" />
+                  )}
+                </Pressable>
+              </View>
             </View>
 
-            <Button fullWidth loading={isLoading} onPress={handleRegister} style={{ marginTop: spacing.sm }}>
-              Create account
-            </Button>
+            {/* Primary Action Button */}
+            <TouchableOpacity
+              activeOpacity={0.88}
+              disabled={isLoading}
+              onPress={handleRegister}
+              style={[styles.primaryButton, isLoading && styles.primaryButtonDisabled]}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#0E0E1A" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Create Account</Text>
+              )}
+            </TouchableOpacity>
 
-            <Text style={[styles.legalNotice, { color: colors.textSecondary }]}>
+            {/* Legal Notice */}
+            <Text style={styles.legalNotice}>
               By creating an account, you agree to our{' '}
-              <Text style={[styles.legalLink, { color: colors.brandPrimaryHover }]} onPress={() => router.push('/terms')}>
+              <Text
+                style={styles.legalLink}
+                onPress={() => {
+                  haptics.light();
+                  router.push('/terms');
+                }}
+              >
                 Terms of Service
               </Text>{' '}
               and{' '}
-              <Text style={[styles.legalLink, { color: colors.brandPrimaryHover }]} onPress={() => router.push('/privacy')}>
+              <Text
+                style={styles.legalLink}
+                onPress={() => {
+                  haptics.light();
+                  router.push('/privacy');
+                }}
+              >
                 Privacy Policy
               </Text>
               .
             </Text>
 
+            {/* Divider */}
             <View style={styles.dividerRow}>
-              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
-              <Text style={[styles.dividerText, { color: colors.textTertiary }]}>or</Text>
-              <View style={[styles.divider, { backgroundColor: colors.borderSubtle }]} />
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
             </View>
 
-            <SocialAuthButtons onGoogle={handleGoogle} onApple={handleApple} loading={isLoading} />
+            {/* Social Authentication */}
+            <SocialAuthButtons
+              onGoogle={handleGoogle}
+              onApple={handleApple}
+              loading={isLoading}
+            />
 
+            {/* Footer Navigation */}
             <View style={styles.footerRow}>
-              <Text style={{ color: colors.textSecondary, fontFamily: fontFamilies.sans }}>Already have an account?</Text>
+              <Text style={styles.footerText}>Already have an account? </Text>
               <Link href="/(auth)/login" asChild>
-                <Pressable>
-                  <Text style={[styles.link, { color: colors.brandPrimaryHover }]}> Sign in</Text>
+                <Pressable
+                  onPress={() => haptics.light()}
+                  style={({ pressed }) => [pressed && styles.pressedOpacity]}
+                >
+                  <Text style={styles.footerLink}>Sign in</Text>
                 </Pressable>
               </Link>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </AuthBackground>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingVertical: spacing.xl, gap: spacing.base },
-  header: { gap: spacing.xs, marginBottom: spacing.sm },
-  title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displayBold },
-  subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans },
-  errorBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, padding: spacing.sm, borderRadius: radii.sm },
-  errorText: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium, flexShrink: 1 },
-  row: { flexDirection: 'row', gap: spacing.sm },
-  field: { gap: spacing.xs },
-  label: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium },
-  input: {
-    borderWidth: 1,
-    borderRadius: radii.sm,
-    paddingHorizontal: spacing.base,
-    paddingVertical: spacing.md,
-    fontSize: fontSizes.base,
-    fontFamily: fontFamilies.sans,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginVertical: spacing.sm },
-  divider: { flex: 1, height: 1 },
-  dividerText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans },
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.base },
-  link: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium },
-  legalNotice: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, textAlign: 'center', marginVertical: spacing.xs, lineHeight: fontSizes.xs * 1.5 },
-  legalLink: { fontFamily: fontFamilies.sansSemiBold, textDecorationLine: 'underline' },
+  binaryBackdrop: {
+    position: 'absolute',
+    top: 4,
+    left: 0,
+    right: 0,
+    opacity: 0.14,
+    alignItems: 'center',
+  },
+  binaryText: {
+    fontFamily: fontFamilies.sans,
+    fontSize: 12,
+    color: '#35354A',
+    letterSpacing: 6,
+    lineHeight: 18,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing['2xl'],
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#FFF1F2',
+    borderColor: '#FECDD3',
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.base,
+    borderRadius: 14,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xs,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansMedium,
+    color: '#DC2626',
+    flexShrink: 1,
+  },
+  formContainer: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+    gap: spacing.base,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  field: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+    letterSpacing: -0.2,
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EB',
+    borderRadius: 16,
+    paddingHorizontal: spacing.base,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontFamily: fontFamilies.sans,
+    color: '#0E0E1A',
+  },
+  passwordWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EB',
+    borderRadius: 16,
+    paddingHorizontal: spacing.base,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontFamily: fontFamilies.sans,
+    color: '#0E0E1A',
+  },
+  eyeButton: {
+    padding: 6,
+  },
+  inputFocused: {
+    borderColor: '#FF8A1E',
+  },
+  primaryButton: {
+    backgroundColor: '#FF8A1E',
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FF8A1E',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+    marginTop: spacing.xs,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+    letterSpacing: -0.2,
+  },
+  legalNotice: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sans,
+    color: '#6B6B80',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: spacing.xs,
+  },
+  legalLink: {
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+    textDecorationLine: 'underline',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginVertical: spacing.xs,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#EAEAEA',
+  },
+  dividerText: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sansMedium,
+    color: '#8E8E9F',
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  footerText: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sans,
+    color: '#6B6B80',
+  },
+  footerLink: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sansBold,
+    color: '#0E0E1A',
+  },
+  pressedOpacity: {
+    opacity: 0.6,
+  },
 });

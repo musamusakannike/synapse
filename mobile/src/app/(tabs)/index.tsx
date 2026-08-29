@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type ReactNode } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Alert, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
   IconBook,
-  IconTrendingUp,
   IconArrowRight,
   IconSparkles,
   IconBrain,
@@ -13,27 +12,41 @@ import {
   IconCode,
   IconBell,
   IconTrash,
+  IconFlame,
+  IconBolt,
+  IconTarget,
 } from '@tabler/icons-react-native';
-// Dev / Debug storage tools (can be commented out when not needed)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { useProgressStore } from '@/store/progress.store';
 import { useAuthStore } from '@/store/auth.store';
 import { courseApi, notificationApi } from '@/lib/api';
-import { Course, UserProgress, Topic } from '@/lib/types';
-import Card from '@/components/ui/Card';
+import { Course, Topic } from '@/lib/types';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import AIToolCard from '@/components/ui/AIToolCard';
 import AIToolDialog, { AIToolKind } from '@/components/ai/AIToolDialogs';
 import OfflineBanner from '@/components/common/OfflineBanner';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import OnboardingSpeechBubble from '@/components/auth/OnboardingSpeechBubble';
+import GlassSurface, { GlassCluster } from '@/components/ui/GlassSurface';
+import HomeBackdrop from '@/components/home/HomeBackdrop';
+import { fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
+const ACCENT = '#FF8A1E';
+const INK = '#0E0E1A';
+const MUTED = '#6B6B80';
+const FAINT = '#8E8E9F';
+
+function greetingForHour(hour: number): string {
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function DashboardHome() {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { dashboard, isLoading, fetchDashboard } = useProgressStore();
   const [popularCourses, setPopularCourses] = useState<Course[]>([]);
@@ -45,38 +58,36 @@ export default function DashboardHome() {
     try {
       const res = await notificationApi.list();
       const items = res.data?.data || [];
-      setHasUnread(items.some((n: any) => !n.isRead));
+      setHasUnread(items.some((n: { isRead?: boolean }) => !n.isRead));
     } catch {
       // silently fail — offline or unauthenticated
     }
   }, []);
 
-  useEffect(() => {
-    fetchDashboard();
-    fetchPopularCourses();
-    fetchUnreadStatus();
-  }, [fetchDashboard, fetchUnreadStatus]);
-
-  const fetchPopularCourses = async () => {
+  const fetchPopularCourses = useCallback(async () => {
     try {
       const res = await courseApi.popular();
       setPopularCourses(res.data.data);
     } catch {
       // silently fail — offline or server error
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- initial dashboard fetch */
+    fetchDashboard();
+    void fetchPopularCourses();
+    void fetchUnreadStatus();
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [fetchDashboard, fetchPopularCourses, fetchUnreadStatus]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     haptics.light();
     await Promise.all([fetchDashboard(), fetchPopularCourses(), fetchUnreadStatus()]);
     setRefreshing(false);
-  }, [fetchDashboard, fetchUnreadStatus]);
+  }, [fetchDashboard, fetchPopularCourses, fetchUnreadStatus]);
 
-  // =========================================================================
-  // DEV / DEBUG: Clear all data in AsyncStorage and Expo SecureStore
-  // (You can comment out this handler and the button in JSX when not needed)
-  // =========================================================================
   const handleClearAllStorage = () => {
     Alert.alert(
       'Clear All Storage Data',
@@ -88,10 +99,7 @@ export default function DashboardHome() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // 1. Clear all AsyncStorage data
               await AsyncStorage.clear();
-
-              // 2. Clear Expo SecureStore data (and localStorage on Web)
               if (Platform.OS === 'web') {
                 if (typeof window !== 'undefined') {
                   window.localStorage.clear();
@@ -99,7 +107,6 @@ export default function DashboardHome() {
               } else {
                 await SecureStore.deleteItemAsync('sabilearn_jwt_token');
               }
-
               haptics.success();
               Alert.alert('Storage Cleared', 'All AsyncStorage and Expo SecureStore data have been cleared successfully.');
             } catch (err: any) {
@@ -111,68 +118,163 @@ export default function DashboardHome() {
       ]
     );
   };
-  // =========================================================================
 
   if (isLoading && !dashboard) {
     return <LoadingSpinner />;
   }
 
   const continueStudying = dashboard?.continueStudying || [];
-  const s = makeStyles(colors);
+  const firstName = user?.firstName?.trim();
+  const hour = new Date().getHours();
+  const streak = user?.currentStreak ?? 0;
+  const xp = user?.totalXp ?? 0;
+  const sessions = dashboard?.quickStats?.totalSessions ?? 0;
 
-  const aiTools: { kind: AIToolKind; title: string; description: string; icon: React.ReactNode }[] = [
-    { kind: 'summarizer', title: 'Summarizer', description: 'Turn any lecture note into a short summary', icon: <IconSparkles size={20} color="#FFFFFF" /> },
-    { kind: 'quiz', title: 'Quiz generator', description: 'Generate a quick multiple-choice quiz', icon: <IconBrain size={20} color="#FFFFFF" /> },
-    { kind: 'flashcards', title: 'Flashcards generator', description: 'Build flashcards from any topic', icon: <IconCards size={20} color="#FFFFFF" /> },
-    { kind: 'qa', title: 'Q&A AI', description: 'Ask a question, get a direct answer', icon: <IconMessageCircle size={20} color="#FFFFFF" /> },
+  let speech = 'What do you want to learn today?';
+  if (streak > 1) speech = `A ${streak}-day streak! Ready to keep it going?`;
+  else if (continueStudying.length > 0) speech = "Let's pick up where you left off.";
+
+  const aiTools: {
+    kind: AIToolKind;
+    title: string;
+    description: string;
+    icon: ReactNode;
+    well: string;
+    tint: string;
+  }[] = [
+    {
+      kind: 'summarizer',
+      title: 'Summarizer',
+      description: 'Turn any lecture note into a short summary',
+      icon: <IconSparkles size={22} color="#5B4FE8" />,
+      well: 'rgba(91,79,232,0.12)',
+      tint: 'rgba(91,79,232,0.14)',
+    },
+    {
+      kind: 'quiz',
+      title: 'Quiz generator',
+      description: 'Generate a quick multiple-choice quiz',
+      icon: <IconBrain size={22} color={ACCENT} />,
+      well: 'rgba(255,138,30,0.16)',
+      tint: 'rgba(255,138,30,0.16)',
+    },
+    {
+      kind: 'flashcards',
+      title: 'Flashcards',
+      description: 'Build flashcards from any topic',
+      icon: <IconCards size={22} color="#D89400" />,
+      well: 'rgba(242,169,0,0.16)',
+      tint: 'rgba(242,169,0,0.14)',
+    },
+    {
+      kind: 'qa',
+      title: 'Q&A AI',
+      description: 'Ask a question, get a direct answer',
+      icon: <IconMessageCircle size={22} color={INK} />,
+      well: 'rgba(14,14,26,0.08)',
+      tint: 'rgba(255,255,255,0.35)',
+    },
   ];
 
   return (
-    <SafeAreaView style={s.container} edges={['top']}>
-      <OfflineBanner />
+    <View collapsable={false} style={styles.container}>
+      <HomeBackdrop />
       <ScrollView
-        style={s.scroll}
-        contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8, paddingBottom: spacing['4xl'] }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />
+        }
       >
-        <View style={s.header}>
+        <OfflineBanner />
+
+        <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text style={s.title}>Hi{user?.firstName ? `, ${user.firstName}` : ''}</Text>
-            <Text style={s.subtitle}>Continue your learning journey</Text>
+            <Text style={styles.kicker}>{greetingForHour(hour)}</Text>
+            <Text style={styles.title} numberOfLines={1}>
+              {firstName ? firstName : 'there'}
+            </Text>
           </View>
           <Pressable
             onPress={() => {
               haptics.light();
-              router.push('/(tabs)/notifications' as any);
+              router.push('/notifications' as any);
             }}
-            style={s.bellButton}
             accessibilityLabel="Alerts"
             accessibilityRole="button"
           >
-            <IconBell size={22} color={colors.textPrimary} />
-            {hasUnread && <View style={s.unreadBadge} />}
+            <GlassSurface style={styles.bellButton} glassEffectStyle="clear" isInteractive tintColor="rgba(255,255,255,0.45)">
+              <IconBell size={22} color={INK} />
+              {hasUnread && <View style={styles.unreadBadge} />}
+            </GlassSurface>
           </Pressable>
         </View>
 
-        <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
-          <Card onPress={() => { haptics.light(); router.push('/playground' as any); }}>
-            <View style={s.playgroundRow}>
-              <View style={[s.playgroundIcon, { backgroundColor: colors.brandPrimarySoft }]}>
-                <IconCode size={20} color={colors.brandPrimaryHover} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.cardTitle}>Code Playground</Text>
-                <Text style={s.playgroundDescription}>Write and run HTML, CSS, JavaScript and Python</Text>
-              </View>
-              <IconArrowRight size={18} color={colors.brandPrimaryHover} />
-            </View>
-          </Card>
+        <View style={styles.speechWrap}>
+          <OnboardingSpeechBubble text={speech} />
         </View>
 
+        <GlassCluster spacing={10} style={styles.statsRow}>
+          <GlassSurface style={styles.statChip} tintColor="rgba(255,138,30,0.18)" glassEffectStyle="clear">
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(255,138,30,0.16)' }]}>
+              <IconFlame size={16} color={ACCENT} />
+            </View>
+            <View>
+              <Text style={styles.statValue}>{streak}</Text>
+              <Text style={styles.statLabel}>day streak</Text>
+            </View>
+          </GlassSurface>
+          <GlassSurface style={styles.statChip} tintColor="rgba(91,79,232,0.12)" glassEffectStyle="clear">
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(91,79,232,0.12)' }]}>
+              <IconBolt size={16} color="#5B4FE8" />
+            </View>
+            <View>
+              <Text style={styles.statValue}>{xp}</Text>
+              <Text style={styles.statLabel}>XP earned</Text>
+            </View>
+          </GlassSurface>
+          <GlassSurface style={styles.statChip} tintColor="rgba(255,255,255,0.4)" glassEffectStyle="clear">
+            <View style={[styles.statIcon, { backgroundColor: 'rgba(14,14,26,0.06)' }]}>
+              <IconTarget size={16} color={INK} />
+            </View>
+            <View>
+              <Text style={styles.statValue}>{sessions}</Text>
+              <Text style={styles.statLabel}>sessions</Text>
+            </View>
+          </GlassSurface>
+        </GlassCluster>
+
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            router.push('/playground' as any);
+          }}
+          style={({ pressed }) => [pressed && styles.pressed]}
+        >
+          <GlassSurface
+            style={styles.playgroundCard}
+            tintColor="rgba(255,138,30,0.22)"
+            isInteractive
+            fallbackStyle={styles.playgroundFallback}
+          >
+            <View style={styles.playgroundIcon}>
+              <IconCode size={22} color={INK} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Code Playground</Text>
+              <Text style={styles.cardSubtitle}>Write and run HTML, CSS, JavaScript and Python</Text>
+            </View>
+            <View style={styles.openPill}>
+              <Text style={styles.openPillText}>Open</Text>
+            </View>
+          </GlassSurface>
+        </Pressable>
+
         {continueStudying.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitlePadded}>Continue studying</Text>
-            <View style={s.cardList}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Continue studying</Text>
+            <View style={styles.cardList}>
               {continueStudying.slice(0, 4).map((progress) => {
                 const course = typeof progress.course === 'object' ? (progress.course as Course) : null;
                 const topic = typeof progress.topic === 'object' ? (progress.topic as Topic) : null;
@@ -180,195 +282,414 @@ export default function DashboardHome() {
                 const flashcardStudied = progress.flashcardsStudied ?? 0;
                 const flashcardProgress = flashcardTotal > 0 ? (flashcardStudied / flashcardTotal) * 100 : 0;
                 return (
-                  <Card
+                  <Pressable
                     key={progress._id}
                     onPress={() => {
                       haptics.light();
                       if (topic && course) router.push(`/course/${course._id}/topic/${topic._id}` as any);
                       else if (course) router.push(`/course/${course._id}` as any);
                     }}
+                    style={({ pressed }) => [pressed && styles.pressed]}
                   >
-                    <View style={s.cardHeader}>
-                      <View style={{ flex: 1 }}>
-                        {course && <Text style={s.cardOverline} numberOfLines={1}>{course.title}</Text>}
-                        <Text style={s.cardTitle} numberOfLines={1}>{topic?.title || course?.title || 'Course'}</Text>
+                    <GlassSurface style={styles.studyCard} isInteractive tintColor="rgba(255,255,255,0.38)">
+                      <View style={styles.cardHeader}>
+                        <View style={{ flex: 1 }}>
+                          {course && (
+                            <Text style={styles.cardOverline} numberOfLines={1}>
+                              {course.title}
+                            </Text>
+                          )}
+                          <Text style={styles.cardTitle} numberOfLines={1}>
+                            {topic?.title || course?.title || 'Course'}
+                          </Text>
+                        </View>
+                        {course && <Badge variant={course.difficulty}>{course.difficulty}</Badge>}
                       </View>
-                      {course && <Badge variant={course.difficulty}>{course.difficulty}</Badge>}
-                    </View>
-                    <View style={s.progressSection}>
-                      <View style={s.progressHeader}>
-                        <Text style={s.progressLabelText}>Flashcard progress</Text>
-                        <Text style={s.progressLabelText}>{Math.round(flashcardProgress)}%</Text>
+                      <View style={styles.progressSection}>
+                        <View style={styles.progressHeader}>
+                          <Text style={styles.progressLabelText}>Flashcard progress</Text>
+                          <Text style={styles.progressLabelText}>{Math.round(flashcardProgress)}%</Text>
+                        </View>
+                        <ProgressBar value={flashcardProgress} color={ACCENT} trackColor="rgba(14,14,26,0.08)" />
                       </View>
-                      <ProgressBar value={flashcardProgress} />
-                    </View>
-                    <View style={s.continueLink}>
-                      <Text style={s.continueLinkText}>Continue</Text>
-                      <IconArrowRight size={16} color={colors.brandPrimaryHover} />
-                    </View>
-                  </Card>
+                      <View style={styles.continueLink}>
+                        <Text style={styles.continueLinkText}>Continue</Text>
+                        <IconArrowRight size={16} color={ACCENT} />
+                      </View>
+                    </GlassSurface>
+                  </Pressable>
                 );
               })}
             </View>
           </View>
         )}
 
-        <View style={s.section}>
-          <Text style={s.sectionTitlePadded}>AI tools</Text>
-          <View style={s.aiGrid}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI tools</Text>
+          <View style={styles.aiGrid}>
             {aiTools.map((tool) => (
-              <View key={tool.kind} style={s.aiGridItem}>
-                <AIToolCard
-                  icon={tool.icon}
-                  title={tool.title}
-                  description={tool.description}
-                  onPress={() => {
-                    haptics.light();
-                    if (tool.kind === 'quiz') {
-                      router.push('/ai-quiz' as any);
-                    } else {
-                      setAiTool(tool.kind);
-                    }
-                  }}
-                />
-              </View>
+              <Pressable
+                key={tool.kind}
+                onPress={() => {
+                  haptics.light();
+                  if (tool.kind === 'quiz') {
+                    router.push('/ai-quiz' as any);
+                  } else {
+                    setAiTool(tool.kind);
+                  }
+                }}
+                style={({ pressed }) => [styles.aiGridItem, pressed && styles.pressed]}
+              >
+                <GlassSurface style={styles.aiCard} tintColor={tool.tint} isInteractive>
+                  <View style={[styles.aiIconWell, { backgroundColor: tool.well }]}>{tool.icon}</View>
+                  <Text numberOfLines={1} style={styles.aiTitle}>
+                    {tool.title}
+                  </Text>
+                  <Text style={styles.aiDescription} numberOfLines={2}>
+                    {tool.description}
+                  </Text>
+                </GlassSurface>
+              </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={s.section}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Popular courses</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleFlush}>Popular courses</Text>
             <Pressable onPress={() => { haptics.light(); router.push('/(tabs)/courses'); }}>
-              <Text style={s.viewAllLink}>View all</Text>
+              <Text style={styles.viewAllLink}>View all</Text>
             </Pressable>
           </View>
           {popularCourses.length === 0 ? (
-            <EmptyState icon={<IconBook size={44} color={colors.textTertiary} />} title="No courses available yet" description="Check back later for study content." />
+            <EmptyState
+              icon={<IconBook size={44} color={FAINT} />}
+              title="No courses available yet"
+              description="Check back later for study content."
+            />
           ) : (
-            <View style={s.cardList}>
+            <View style={styles.cardList}>
               {popularCourses.map((course) => (
-                <Card key={course._id} onPress={() => { haptics.light(); router.push(`/course/${course._id}` as any); }}>
-                  <View style={s.cardHeader}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.cardTitle} numberOfLines={1}>{course.title}</Text>
-                      <Text style={s.progressLabelText}>{course.category}</Text>
+                <Pressable
+                  key={course._id}
+                  onPress={() => {
+                    haptics.light();
+                    router.push(`/course/${course._id}` as any);
+                  }}
+                  style={({ pressed }) => [pressed && styles.pressed]}
+                >
+                  <GlassSurface style={styles.courseCard} isInteractive tintColor="rgba(255,255,255,0.38)">
+                    <View style={styles.cardHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.cardTitle} numberOfLines={1}>
+                          {course.title}
+                        </Text>
+                        <Text style={styles.progressLabelText}>{course.category}</Text>
+                      </View>
+                      <Badge>{course.topicCount || 0} topics</Badge>
                     </View>
-                    <Badge>{course.topicCount || 0} topics</Badge>
-                  </View>
-                  <Text style={s.topicDesc} numberOfLines={2}>{course.description}</Text>
-                  <View style={s.continueLink}>
-                    <Text style={s.continueLinkText}>View course</Text>
-                    <IconArrowRight size={14} color={colors.brandPrimaryHover} />
-                  </View>
-                </Card>
+                    <Text style={styles.topicDesc} numberOfLines={2}>
+                      {course.description}
+                    </Text>
+                    <View style={styles.continueLink}>
+                      <Text style={styles.continueLinkText}>View course</Text>
+                      <IconArrowRight size={14} color={ACCENT} />
+                    </View>
+                  </GlassSurface>
+                </Pressable>
               ))}
             </View>
           )}
         </View>
 
-        {/* ========================================================================= */}
-        {/* DEV ONLY: Commentable button to clear AsyncStorage & Expo SecureStore      */}
-        {/* (Comment out this whole block when preparing for production)              */}
-        {/* ========================================================================= */}
-        <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              handleClearAllStorage();
-            }}
-            style={({ pressed }) => [
-              s.clearStorageButton,
-              {
-                borderColor: colors.danger,
-                backgroundColor: pressed ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Clear AsyncStorage and SecureStore"
-          >
-            <IconTrash size={18} color={colors.danger} />
-            <Text style={[s.clearStorageText, { color: colors.danger }]}>
-              Clear AsyncStorage & SecureStore (Dev)
-            </Text>
-          </Pressable>
-        </View>
-        {/* ========================================================================= */}
+        <Pressable
+          onPress={() => {
+            haptics.light();
+            handleClearAllStorage();
+          }}
+          style={({ pressed }) => [
+            styles.clearStorageButton,
+            { backgroundColor: pressed ? 'rgba(229,72,77,0.08)' : 'transparent' },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Clear AsyncStorage and SecureStore"
+        >
+          <IconTrash size={18} color="#E5484D" />
+          <Text style={styles.clearStorageText}>Clear AsyncStorage & SecureStore (Dev)</Text>
+        </Pressable>
       </ScrollView>
       <AIToolDialog kind={aiTool} onClose={() => setAiTool(null)} />
-    </SafeAreaView>
+    </View>
   );
 }
 
-function makeStyles(c: any) {
-  return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bgApp },
-    scroll: { flex: 1 },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: spacing.xl,
-      paddingTop: spacing.lg,
-      paddingBottom: spacing.md,
-    },
-    bellButton: {
-      width: 42,
-      height: 42,
-      borderRadius: radii.full,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      marginLeft: spacing.md,
-    },
-    unreadBadge: {
-      position: 'absolute',
-      top: 9,
-      right: 9,
-      width: 9,
-      height: 9,
-      borderRadius: 5,
-      backgroundColor: c.danger,
-    },
-    title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold, color: c.textPrimary, marginBottom: spacing.xs },
-    subtitle: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.textSecondary },
-    section: { marginTop: spacing.xl },
-    sectionTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold, color: c.textPrimary },
-    sectionTitlePadded: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold, color: c.textPrimary, marginBottom: spacing.md, paddingHorizontal: spacing.xl },
-    sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, marginBottom: spacing.md },
-    cardList: { paddingHorizontal: spacing.xl, gap: spacing.md },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing.sm, gap: spacing.sm },
-    cardOverline: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium, color: c.brandPrimaryHover, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.xs },
-    cardTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold, color: c.textPrimary },
-    playgroundRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-    playgroundIcon: { width: 40, height: 40, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center' },
-    playgroundDescription: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, color: c.textSecondary, marginTop: spacing.xs / 2 },
-    progressSection: { gap: spacing.xs, marginBottom: spacing.sm },
-    progressHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-    progressLabelText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, color: c.textSecondary },
-    continueLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    continueLinkText: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium, color: c.brandPrimaryHover },
-    aiGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.xl, gap: spacing.md },
-    aiGridItem: { width: '47%', flexGrow: 1 },
-    viewAllLink: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.brandPrimaryHover },
-    topicDesc: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.textSecondary, marginBottom: spacing.sm, lineHeight: 20 },
-    clearStorageButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: spacing.sm,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.lg,
-      borderRadius: radii.md,
-      borderWidth: 1,
-      borderStyle: 'dashed',
-    },
-    clearStorageText: {
-      fontSize: fontSizes.sm,
-      fontFamily: fontFamilies.sansMedium,
-    },
-  });
-}
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { flex: 1 },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  speechWrap: {
+    marginHorizontal: -spacing.lg,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  kicker: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sansMedium,
+    color: MUTED,
+    marginBottom: 2,
+  },
+  title: {
+    fontSize: 34,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.6,
+    lineHeight: 40,
+  },
+  bellButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.md,
+    overflow: 'hidden',
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 11,
+    right: 11,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#E5484D',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: spacing.sm,
+    marginBottom: spacing.base,
+  },
+  statChip: {
+    flex: 1,
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
+  statIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statValue: {
+    fontSize: 16,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.3,
+  },
+  statLabel: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sans,
+    color: MUTED,
+  },
+  playgroundCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    overflow: 'hidden',
+  },
+  playgroundFallback: {
+    backgroundColor: '#FFF7EE',
+    borderColor: '#FFD4A8',
+  },
+  playgroundIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: ACCENT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  openPill: {
+    backgroundColor: ACCENT,
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  openPillText: {
+    fontSize: 14,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+  },
+  section: {
+    marginTop: spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.3,
+    marginBottom: spacing.md,
+  },
+  sectionTitleFlush: {
+    fontSize: 20,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  cardList: {
+    gap: spacing.md,
+  },
+  studyCard: {
+    borderRadius: 20,
+    padding: spacing.base,
+    overflow: 'hidden',
+  },
+  courseCard: {
+    borderRadius: 20,
+    padding: spacing.base,
+    overflow: 'hidden',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  cardOverline: {
+    fontSize: fontSizes.xs,
+    fontFamily: fontFamilies.sansMedium,
+    color: ACCENT,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.2,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sans,
+    color: MUTED,
+    marginTop: 2,
+  },
+  progressSection: {
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressLabelText: {
+    fontSize: fontSizes.xs,
+    fontFamily: fontFamilies.sans,
+    color: MUTED,
+  },
+  continueLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  continueLinkText: {
+    fontSize: fontSizes.sm,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+  },
+  aiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+  },
+  aiGridItem: {
+    width: '47%',
+    flexGrow: 1,
+  },
+  aiCard: {
+    minHeight: 148,
+    borderRadius: 20,
+    padding: spacing.base,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  aiIconWell: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  aiTitle: {
+    fontSize: 17,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.2,
+    marginBottom: 4,
+  },
+  aiDescription: {
+    fontSize: 13,
+    fontFamily: fontFamilies.sans,
+    color: MUTED,
+    lineHeight: 18,
+  },
+  viewAllLink: {
+    fontSize: 15,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+  },
+  topicDesc: {
+    fontSize: fontSizes.sm,
+    fontFamily: fontFamilies.sans,
+    color: MUTED,
+    marginBottom: spacing.sm,
+    lineHeight: 20,
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+  clearStorageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E5484D',
+    marginTop: spacing.xl,
+  },
+  clearStorageText: {
+    fontSize: fontSizes.sm,
+    fontFamily: fontFamilies.sansMedium,
+    color: '#E5484D',
+  },
+});

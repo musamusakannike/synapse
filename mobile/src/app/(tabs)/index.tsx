@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import {
@@ -12,7 +12,11 @@ import {
   IconMessageCircle,
   IconCode,
   IconBell,
+  IconTrash,
 } from '@tabler/icons-react-native';
+// Dev / Debug storage tools (can be commented out when not needed)
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { useProgressStore } from '@/store/progress.store';
 import { useAuthStore } from '@/store/auth.store';
 import { courseApi, notificationApi } from '@/lib/api';
@@ -68,6 +72,46 @@ export default function DashboardHome() {
     await Promise.all([fetchDashboard(), fetchPopularCourses(), fetchUnreadStatus()]);
     setRefreshing(false);
   }, [fetchDashboard, fetchUnreadStatus]);
+
+  // =========================================================================
+  // DEV / DEBUG: Clear all data in AsyncStorage and Expo SecureStore
+  // (You can comment out this handler and the button in JSX when not needed)
+  // =========================================================================
+  const handleClearAllStorage = () => {
+    Alert.alert(
+      'Clear All Storage Data',
+      'Are you sure you want to clear all data in AsyncStorage and Expo SecureStore? This will remove all cached sessions, courses, onboarded flags, and auth tokens.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All Data',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // 1. Clear all AsyncStorage data
+              await AsyncStorage.clear();
+
+              // 2. Clear Expo SecureStore data (and localStorage on Web)
+              if (Platform.OS === 'web') {
+                if (typeof window !== 'undefined') {
+                  window.localStorage.clear();
+                }
+              } else {
+                await SecureStore.deleteItemAsync('sabilearn_jwt_token');
+              }
+
+              haptics.success();
+              Alert.alert('Storage Cleared', 'All AsyncStorage and Expo SecureStore data have been cleared successfully.');
+            } catch (err: any) {
+              haptics.error();
+              Alert.alert('Error', err?.message || 'Failed to clear storage data.');
+            }
+          },
+        },
+      ]
+    );
+  };
+  // =========================================================================
 
   if (isLoading && !dashboard) {
     return <LoadingSpinner />;
@@ -222,6 +266,34 @@ export default function DashboardHome() {
             </View>
           )}
         </View>
+
+        {/* ========================================================================= */}
+        {/* DEV ONLY: Commentable button to clear AsyncStorage & Expo SecureStore      */}
+        {/* (Comment out this whole block when preparing for production)              */}
+        {/* ========================================================================= */}
+        {/* <View style={[s.section, { paddingHorizontal: spacing.xl }]}>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              handleClearAllStorage();
+            }}
+            style={({ pressed }) => [
+              s.clearStorageButton,
+              {
+                borderColor: colors.danger,
+                backgroundColor: pressed ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Clear AsyncStorage and SecureStore"
+          >
+            <IconTrash size={18} color={colors.danger} />
+            <Text style={[s.clearStorageText, { color: colors.danger }]}>
+              Clear AsyncStorage & SecureStore (Dev)
+            </Text>
+          </Pressable>
+        </View> */}
+        {/* ========================================================================= */}
       </ScrollView>
       <AIToolDialog kind={aiTool} onClose={() => setAiTool(null)} />
     </SafeAreaView>
@@ -283,5 +355,20 @@ function makeStyles(c: any) {
     aiGridItem: { width: '47%', flexGrow: 1 },
     viewAllLink: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.brandPrimaryHover },
     topicDesc: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, color: c.textSecondary, marginBottom: spacing.sm, lineHeight: 20 },
+    clearStorageButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+    },
+    clearStorageText: {
+      fontSize: fontSizes.sm,
+      fontFamily: fontFamilies.sansMedium,
+    },
   });
 }

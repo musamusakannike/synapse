@@ -29,20 +29,22 @@ function CoursesContent() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await courseApi.categories();
-      if (res.data?.data && Array.isArray(res.data.data)) {
-        setCategories(res.data.data);
-      }
-    } catch (e) {
-      console.error('Failed to fetch course categories', e);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    let isMounted = true;
+    courseApi
+      .categories()
+      .then((res) => {
+        if (isMounted && res.data?.data && Array.isArray(res.data.data)) {
+          setCategories(res.data.data);
+        }
+      })
+      .catch((e) => {
+        console.error('Failed to fetch course categories', e);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const fetchCourses = useCallback(async () => {
     setIsLoading(true);
@@ -136,6 +138,7 @@ function CoursesContent() {
                 level={course.difficulty}
                 title={course.title}
                 category={course.category}
+                description={course.description}
                 topicCount={course.topicCount}
                 free={course.isFree}
                 price={course.price}

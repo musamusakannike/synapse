@@ -8,7 +8,7 @@ export function CourseCard({ image, level = "Beginner", title, instructor, price
       overflow: "hidden", boxShadow: "var(--shadow-sm)", fontFamily: "var(--font-body)",
       width: "280px", transition: "box-shadow var(--duration-normal) var(--ease-standard)",
     }}>
-      <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", background: "var(--surface-sunken)", overflow: "hidden" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", background: "var(--surface-sunken)", overflow: "hidden" }}>
         {image && <img src={image} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
         <span style={{
           position: "absolute", top: "12px", left: "12px", padding: "4px 12px",

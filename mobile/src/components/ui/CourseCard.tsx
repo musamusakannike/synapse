@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
 import { IconBook2, IconArrowRight } from '@tabler/icons-react-native';
 import { fontFamilies, fontSizes, spacing } from '@/theme';
@@ -12,26 +13,38 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course, onPress }: CourseCardProps) {
+  const [imgError, setImgError] = useState(false);
+  const showImage = Boolean(course.banner) && !imgError;
+
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
       <GlassSurface style={styles.card} isInteractive tintColor={TINT_GLASS}>
-        {course.banner ? (
-          <Image source={{ uri: course.banner }} style={styles.banner} resizeMode="cover" />
-        ) : (
-          <View style={[styles.banner, styles.bannerFallback]}>
-            <IconBook2 size={28} color={FAINT} />
-          </View>
-        )}
-        <View style={styles.body}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title} numberOfLines={1}>
-              {course.title}
-            </Text>
+        <View style={styles.bannerContainer}>
+          {showImage ? (
+            <Image
+              source={{ uri: course.banner }}
+              style={styles.banner}
+              resizeMode="cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <View style={[styles.banner, styles.bannerFallback]}>
+              <IconBook2 size={36} color={FAINT} />
+            </View>
+          )}
+          <View style={styles.badgeOverlay}>
             <Badge variant={course.difficulty}>{course.difficulty}</Badge>
           </View>
-          <Text style={styles.description} numberOfLines={2}>
-            {course.description}
+        </View>
+        <View style={styles.body}>
+          <Text style={styles.title} numberOfLines={1}>
+            {course.title}
           </Text>
+          {course.description ? (
+            <Text style={styles.description} numberOfLines={2}>
+              {course.description}
+            </Text>
+          ) : null}
           <View style={styles.footerRow}>
             <Text style={styles.category}>{course.category}</Text>
             <View style={styles.continueLink}>
@@ -50,27 +63,32 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 20,
   },
+  bannerContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: 'rgba(14,14,26,0.04)',
+  },
   banner: {
     width: '100%',
-    height: 120,
+    height: '100%',
   },
   bannerFallback: {
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(14,14,26,0.04)',
   },
+  badgeOverlay: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+  },
   body: {
     padding: spacing.base,
     gap: spacing.xs,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
   title: {
-    flex: 1,
     fontSize: 17,
     fontFamily: fontFamilies.sansBold,
     color: INK,
@@ -80,7 +98,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     fontFamily: fontFamilies.sans,
     color: MUTED,
-    lineHeight: fontSizes.sm * 1.5,
+    lineHeight: fontSizes.sm * 1.45,
   },
   footerRow: {
     flexDirection: 'row',

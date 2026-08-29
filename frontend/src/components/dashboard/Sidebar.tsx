@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy } from 'lucide-react';
+import { Home, BookOpen, TrendingUp, User, Bell, Settings, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy, Smartphone } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const navItems = [
@@ -24,6 +24,7 @@ const adminItems = [
   { href: '/dashboard/admin/blog', label: 'Blog', icon: Newspaper },
   { href: '/dashboard/admin/users', label: 'Users', icon: Users },
   { href: '/dashboard/admin/activity', label: 'Activity', icon: Activity },
+  { href: '/dashboard/admin/app-review', label: 'App Review', icon: Smartphone },
 ];
 
 export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {

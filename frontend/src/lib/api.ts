@@ -174,6 +174,14 @@ export const adminApi = {
   recentActivity: () => api.get('/admin/recent-activity'),
 };
 
+export const appReviewApi = {
+  getStatus: (os?: string, version?: string) => api.get('/app-review/status', { params: { os, version } }),
+  getAll: () => api.get('/app-review'),
+  update: (os: string, data: Partial<import('./types').AppReviewConfig>) => api.put(`/app-review/${os}`, data),
+  bulkUpdate: (data: { ios?: Partial<import('./types').AppReviewConfig>; android?: Partial<import('./types').AppReviewConfig> }) =>
+    api.put('/app-review', data),
+};
+
 export const aiApi = {
   summarize: (text: string, stream: boolean = false) => api.post('/ai/summarize', { text, stream }),
   generateQuiz: (topic: string, count: number = 5, stream: boolean = false) => api.post('/ai/generate-quiz', { topic, count, stream }),
@@ -183,3 +191,4 @@ export const aiApi = {
   getHistoryById: (id: string) => api.get(`/ai/history/${id}`),
   deleteHistory: (id: string) => api.delete(`/ai/history/${id}`),
 };
+

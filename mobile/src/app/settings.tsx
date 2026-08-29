@@ -3,8 +3,10 @@ import { View, Text, Image, StyleSheet, ScrollView, Pressable, Switch, TextInput
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight } from '@tabler/icons-react-native';
+import { IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight, IconSparkles, IconDeviceMobile } from '@tabler/icons-react-native';
 import { useAuthStore, DEFAULT_SETTINGS } from '@/store/auth.store';
+import { useAppReview } from '@/hooks/useAppReview';
+import { InReview, ReviewGuard } from '@/components/common/ReviewGuard';
 import { userApi } from '@/lib/api';
 import { fontFamilies, spacing } from '@/theme';
 import { ACCENT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
@@ -16,6 +18,7 @@ import * as haptics from '@/lib/haptics';
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { user, updateProfile, updateSettings, deleteAccount } = useAuthStore();
+  const { inReview, os, refresh } = useAppReview();
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [isSaving, setIsSaving] = useState(false);
@@ -94,6 +97,29 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader title="Settings" subtitle="Profile, alerts, and account." showBack />
+
+        <InReview>
+          <GlassSurface style={styles.reviewBanner} tintColor={TINT_GLASS}>
+            <View style={styles.reviewHeaderRow}>
+              <View style={styles.reviewBadge}>
+                <IconShieldCheck size={14} color="#D97706" />
+                <Text style={styles.reviewBadgeText}>{os.toUpperCase()} REVIEW MODE</Text>
+              </View>
+              <Pressable
+                onPress={() => {
+                  haptics.light();
+                  void refresh();
+                }}
+                hitSlop={8}
+              >
+                <Text style={styles.reviewRefreshText}>Sync Status</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.reviewBodyText}>
+              Review compliance mode is active for {os.toUpperCase()}. Testing and reviewer-safe components are currently displayed.
+            </Text>
+          </GlassSurface>
+        </InReview>
 
         <Pressable onPress={pickAvatar} style={styles.avatarWrap}>
           {user?.avatar ? (
@@ -197,6 +223,45 @@ function SettingRow({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing['4xl'] },
+  reviewBanner: {
+    borderRadius: 18,
+    padding: spacing.base,
+    marginBottom: spacing.lg,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,138,30,0.3)',
+    gap: spacing.xs,
+  },
+  reviewHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reviewBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,138,30,0.14)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  reviewBadgeText: {
+    fontSize: 10,
+    fontFamily: fontFamilies.sansBold,
+    color: '#D97706',
+    letterSpacing: 0.5,
+  },
+  reviewRefreshText: {
+    fontSize: 11,
+    fontFamily: fontFamilies.sansSemiBold,
+    color: ACCENT,
+  },
+  reviewBodyText: {
+    fontSize: 12,
+    fontFamily: fontFamilies.sans,
+    color: INK,
+    lineHeight: 16,
+  },
   avatarWrap: { alignSelf: 'center', marginBottom: spacing.xl },
   avatar: { width: 88, height: 88, borderRadius: 44 },
   avatarFallback: {

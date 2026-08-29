@@ -24,6 +24,7 @@ import blogRoutes from './routes/blog.route';
 import aiRoutes from './routes/ai.route';
 import chapterRoutes from './routes/chapter.route';
 import leaderboardRoutes from './routes/leaderboard.route';
+import appReviewRoutes from './routes/appReview.route';
 import { errorHandler } from './middlewares/error.middleware';
 import { startScheduler } from './jobs/scheduler';
 
@@ -77,6 +78,7 @@ app.use('/api/v1/search', searchRoutes);
 app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/blog', blogRoutes);
 app.use('/api/v1/ai', aiRoutes);
+app.use('/api/v1/app-review', appReviewRoutes);
 
 // Handle 404 routes
 app.use((req, res) => {

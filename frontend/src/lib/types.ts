@@ -342,3 +342,36 @@ export interface AiHistoryItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export type SupportedOS = 'ios' | 'android';
+
+export interface AppReviewConfig {
+  _id?: string;
+  os: SupportedOS;
+  inReview: boolean;
+  reviewVersion?: string;
+  minVersion?: string;
+  notes?: string;
+  hiddenComponents: string[];
+  customFlags: Record<string, boolean>;
+  updatedBy?: {
+    _id: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    avatar?: string;
+  } | string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface AppReviewStatusResponse {
+  os: string;
+  inReview: boolean;
+  reviewVersion?: string;
+  hiddenComponents: string[];
+  customFlags: Record<string, boolean>;
+  all: Record<SupportedOS, AppReviewConfig>;
+}
+

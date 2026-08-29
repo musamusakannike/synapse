@@ -137,6 +137,10 @@ export const paymentApi = {
 
 const AI_TIMEOUT_MS = 120000;
 
+export const appReviewApi = {
+  getStatus: (os?: string, version?: string) => api.get('/app-review/status', { params: { os, version } }),
+};
+
 export const aiApi = {
   summarize: (text: string, stream: boolean = false) =>
     api.post('/ai/summarize', { text, stream }, { timeout: AI_TIMEOUT_MS }),
@@ -150,3 +154,4 @@ export const aiApi = {
   getHistoryById: (id: string) => api.get(`/ai/history/${id}`),
   deleteHistory: (id: string) => api.delete(`/ai/history/${id}`),
 };
+

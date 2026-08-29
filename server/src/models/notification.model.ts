@@ -12,6 +12,7 @@ export type NotificationType = 'info' | 'success' | 'warning' | 'announcement';
 export type NotificationCategory =
   | 'welcome'
   | 'course'
+  | 'blog'
   | 'achievement'
   | 'streak'
   | 'reminder'
@@ -52,7 +53,7 @@ const NotificationSchema: Schema = new Schema<INotification>(
     },
     category: {
       type: String,
-      enum: ['welcome', 'course', 'achievement', 'streak', 'reminder', 'system', 'custom'],
+      enum: ['welcome', 'course', 'blog', 'achievement', 'streak', 'reminder', 'system', 'custom'],
       default: 'custom',
       index: true,
     },

@@ -1,7 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { Linking, Platform } from 'react-native';
 import api from './api';
 
 /**
@@ -13,7 +14,7 @@ import api from './api';
 const CHANNELS = [
   { id: 'reminders', name: 'Study reminders', description: 'Daily study nudges and streak alerts' },
   { id: 'achievements', name: 'Achievements', description: 'Streak milestones and course completions' },
-  { id: 'announcements', name: 'Announcements', description: 'New courses and platform updates' },
+  { id: 'announcements', name: 'Announcements', description: 'New courses, blog articles, and platform updates' },
 ] as const;
 
 /** Identifier for the locally scheduled daily reminder, so we can replace it. */
@@ -112,6 +113,44 @@ export async function registerForPushNotifications(): Promise<string | null> {
 }
 
 /**
+ * Checks whether a URL is an external web link or a full URL targeting the website.
+ */
+export function isWebUrl(url?: string | null): boolean {
+  if (!url) return false;
+  return (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('www.') ||
+    url.includes('sabilearn.online') ||
+    url.startsWith('/blog')
+  );
+}
+
+/**
+ * Opens a web URL in the in-app browser or external browser.
+ */
+export async function openWebUrl(url: string): Promise<void> {
+  let targetUrl = url;
+  if (targetUrl.startsWith('/blog')) {
+    targetUrl = `https://www.sabilearn.online${targetUrl}`;
+  } else if (targetUrl.startsWith('www.')) {
+    targetUrl = `https://${targetUrl}`;
+  } else if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+    targetUrl = `https://${targetUrl}`;
+  }
+
+  try {
+    await WebBrowser.openBrowserAsync(targetUrl);
+  } catch {
+    try {
+      await Linking.openURL(targetUrl);
+    } catch (err) {
+      console.warn('Failed to open web URL:', err);
+    }
+  }
+}
+
+/**
  * The backend serves both the web app and this mobile app, so push payload
  * `actionUrl` values are web paths (e.g. `/dashboard/courses`). This maps
  * known web paths to their mobile expo-router equivalents, falling back to
@@ -138,13 +177,30 @@ export function mapActionUrlToMobileRoute(url?: string | null): string {
 export function setupNotificationHandlers(
   onNotificationTap?: (mobileRoute: string, data: any) => void
 ) {
-  const subscription = Notifications.addNotificationResponseReceivedListener(
-    (response) => {
-      const data = response.notification.request.content.data as { actionUrl?: string } | undefined;
-      const mobileRoute = mapActionUrlToMobileRoute(data?.actionUrl);
-      onNotificationTap?.(mobileRoute, data);
+  const handleResponse = (response: Notifications.NotificationResponse) => {
+    const data = response.notification.request.content.data as
+      | { actionUrl?: string; url?: string; [key: string]: unknown }
+      | undefined;
+    const targetUrl = (typeof data?.url === 'string' ? data.url : '') || (typeof data?.actionUrl === 'string' ? data.actionUrl : '');
+
+    if (targetUrl && isWebUrl(targetUrl)) {
+      void openWebUrl(targetUrl);
+      return;
     }
-  );
+
+    const mobileRoute = mapActionUrlToMobileRoute(targetUrl);
+    onNotificationTap?.(mobileRoute, data);
+  };
+
+  // Listen for user taps on notifications while app is in foreground or background
+  const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+
+  // Check if app was cold-launched by tapping a push notification
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    if (response) {
+      handleResponse(response);
+    }
+  });
 
   return () => subscription.remove();
 }

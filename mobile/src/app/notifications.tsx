@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { IconBell, IconCircleCheck } from '@tabler/icons-react-native';
 import { notificationApi } from '@/lib/api';
 import { Notification } from '@/lib/types';
-import { mapActionUrlToMobileRoute, setBadgeCount } from '@/lib/notifications';
+import { isWebUrl, mapActionUrlToMobileRoute, openWebUrl, setBadgeCount } from '@/lib/notifications';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import GlassSurface from '@/components/ui/GlassSurface';
@@ -59,7 +59,11 @@ export default function NotificationsScreen() {
       }
     }
     if (n.actionUrl) {
-      router.push(mapActionUrlToMobileRoute(n.actionUrl) as any);
+      if (isWebUrl(n.actionUrl)) {
+        void openWebUrl(n.actionUrl);
+      } else {
+        router.push(mapActionUrlToMobileRoute(n.actionUrl) as any);
+      }
     }
   };
 

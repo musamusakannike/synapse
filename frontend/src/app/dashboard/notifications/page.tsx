@@ -88,11 +88,23 @@ export default function NotificationsPage() {
                     <span className="shrink-0 text-xs text-[var(--ink-300)]">{formatTime(n.createdAt)}</span>
                   </div>
                   <p className="mt-1 text-sm text-[var(--text-muted)]">{n.message}</p>
-                  {!n.isRead && (
-                    <button onClick={() => handleMarkAsRead(n._id)} className="mt-2 cursor-pointer text-xs text-[var(--brand-gold-600)] hover:opacity-80">
-                      Mark as read
-                    </button>
-                  )}
+                  <div className="mt-2 flex items-center gap-3">
+                    {!n.isRead && (
+                      <button onClick={() => handleMarkAsRead(n._id)} className="cursor-pointer text-xs font-medium text-[var(--brand-gold-600)] hover:opacity-80">
+                        Mark as read
+                      </button>
+                    )}
+                    {n.actionUrl && (
+                      <a
+                        href={n.actionUrl}
+                        target={n.actionUrl.startsWith('http') ? '_blank' : undefined}
+                        rel={n.actionUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        className="text-xs font-semibold text-[var(--brand-gold-600)] hover:underline"
+                      >
+                        View →
+                      </a>
+                    )}
+                  </div>
                 </div>
                 {!n.isRead && <div className="mt-2 size-2 shrink-0 rounded-full bg-[var(--brand-gold)]" />}
               </div>

@@ -5,6 +5,7 @@ import Notification, {
   NotificationType,
 } from '../models/notification.model';
 import { ICourse } from '../models/course.model';
+import { IBlogPost } from '../models/blog.model';
 import { IUser } from '../models/user.model';
 import { sendPushToUser, sendPushToAllUsers } from '../utils/push.util';
 
@@ -175,6 +176,31 @@ export async function broadcastCoursePublished(course: ICourse): Promise<void> {
     actionUrl: `/dashboard/courses/${course._id}`,
     data: { courseId: String(course._id) },
     dedupeKey: `course-published:${course._id}`,
+  });
+}
+
+/**
+ * "New Blog Post" — broadcast when an article is published on the blog.
+ * Keyed on the post ID so re-publishing never spams twice.
+ */
+export async function broadcastBlogPostPublished(
+  post: IBlogPost | { _id: mongoose.Types.ObjectId | string; title: string; excerpt?: string; slug: string }
+): Promise<void> {
+  const url = `https://www.sabilearn.online/blog/${post.slug}`;
+  await notify({
+    user: null,
+    type: 'announcement',
+    category: 'blog',
+    title: `New Article: ${post.title}`,
+    message: post.excerpt || `Read our latest article "${post.title}" on SabiLearn.`,
+    actionUrl: url,
+    data: {
+      blogId: String(post._id),
+      slug: post.slug,
+      url,
+      actionUrl: url,
+    },
+    dedupeKey: `blog-published:${post._id}`,
   });
 }
 

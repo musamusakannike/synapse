@@ -3,6 +3,7 @@ import BlogPost from '../models/blog.model';
 import { slugify, estimateReadingTime } from '../utils/slug.util';
 import { uploadToR2 } from '../utils/r2.util';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware';
+import { broadcastBlogPostPublished } from '../services/notification.service';
 
 interface MulterRequest extends AuthenticatedRequest {
   file?: Express.Multer.File;
@@ -152,6 +153,12 @@ export const createBlogPost = async (req: MulterRequest, res: Response, next: Ne
       seoDescription: seoDescription || '',
     });
 
+    if (published) {
+      broadcastBlogPostPublished(post).catch((err) => {
+        console.error('Failed to broadcast blog push notification:', err);
+      });
+    }
+
     res.status(201).json({ success: true, data: post });
   } catch (error) {
     next(error);
@@ -189,11 +196,13 @@ export const updateBlogPost = async (req: MulterRequest, res: Response, next: Ne
       updates.coverImage = await uploadToR2(req.file.buffer, fileKey, req.file.mimetype);
     }
 
+    let wasNewlyPublished = false;
     if (isPublished !== undefined) {
       const published = isPublished === 'true' || isPublished === true;
       updates.isPublished = published;
       if (published && !existing.isPublished) {
         updates.publishedAt = new Date();
+        wasNewlyPublished = true;
       }
     }
 
@@ -201,6 +210,12 @@ export const updateBlogPost = async (req: MulterRequest, res: Response, next: Ne
       new: true,
       runValidators: true,
     }).populate('author', 'name avatar');
+
+    if (wasNewlyPublished && post) {
+      broadcastBlogPostPublished(post).catch((err) => {
+        console.error('Failed to broadcast blog push notification:', err);
+      });
+    }
 
     res.status(200).json({ success: true, data: post });
   } catch (error) {

@@ -24,6 +24,7 @@ import {
 } from '@/lib/notifications';
 import { syncQueuedSessions } from '@/lib/offlineSync';
 import { Image as ExpoImage } from 'expo-image';
+import PaystackAppProvider from '@/components/payments/PaystackAppProvider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -150,6 +151,8 @@ function AppContent() {
           <Stack.Screen name="settings" />
           <Stack.Screen name="privacy" />
           <Stack.Screen name="terms" />
+          <Stack.Screen name="subscribe" />
+          <Stack.Screen name="payment-callback" />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -159,7 +162,9 @@ function AppContent() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <PaystackAppProvider>
+        <AppContent />
+      </PaystackAppProvider>
     </ThemeProvider>
   );
 }

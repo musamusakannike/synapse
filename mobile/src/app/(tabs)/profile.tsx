@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Alert, RefreshControl } 
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { IconUser, IconSettings, IconLogout, IconChevronRight } from '@tabler/icons-react-native';
+import { IconUser, IconSettings, IconLogout, IconChevronRight, IconSparkles } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
 import { fontFamilies, spacing } from '@/theme';
 import { ACCENT, INK, MUTED, TINT_GLASS, TINT_ORANGE } from '@/theme/brand';
@@ -11,6 +11,7 @@ import Badge from '@/components/ui/Badge';
 import GlassSurface from '@/components/ui/GlassSurface';
 import ScreenBackdrop from '@/components/common/ScreenBackdrop';
 import ScreenHeader from '@/components/common/ScreenHeader';
+import { NotInReview } from '@/components/common/ReviewGuard';
 import * as haptics from '@/lib/haptics';
 import type { ReactNode } from 'react';
 
@@ -84,6 +85,13 @@ export default function ProfileScreen() {
         </Pressable>
 
         <View style={styles.menu}>
+          <NotInReview>
+            <MenuRow
+              icon={<IconSparkles size={20} color={INK} />}
+              label="Subscription"
+              onPress={() => router.push('/subscribe')}
+            />
+          </NotInReview>
           <MenuRow icon={<IconSettings size={20} color={INK} />} label="Settings" onPress={() => router.push('/settings')} />
           <MenuRow icon={<IconLogout size={20} color="#E5484D" />} label="Sign out" danger onPress={handleLogout} />
         </View>

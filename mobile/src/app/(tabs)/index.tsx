@@ -25,6 +25,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import AIToolDialog, { AIToolKind } from '@/components/ai/AIToolDialogs';
 import OfflineBanner from '@/components/common/OfflineBanner';
+import { NotInReview } from '@/components/common/ReviewGuard';
 import OnboardingSpeechBubble from '@/components/auth/OnboardingSpeechBubble';
 import GlassSurface, { GlassCluster } from '@/components/ui/GlassSurface';
 import HomeBackdrop from '@/components/home/HomeBackdrop';
@@ -219,31 +220,33 @@ export default function DashboardHome() {
           </GlassCluster>
         </ScrollView>
 
-        <Pressable
-          onPress={() => {
-            haptics.light();
-            router.push('/playground' as any);
-          }}
-          style={({ pressed }) => [pressed && styles.pressed]}
-        >
-          <GlassSurface
-            style={styles.playgroundCard}
-            tintColor="rgba(255,138,30,0.22)"
-            isInteractive
-            fallbackStyle={styles.playgroundFallback}
+        <NotInReview>
+          <Pressable
+            onPress={() => {
+              haptics.light();
+              router.push('/playground' as any);
+            }}
+            style={({ pressed }) => [pressed && styles.pressed]}
           >
-            <View style={styles.playgroundIcon}>
-              <IconCode size={22} color={INK} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>Code Playground</Text>
-              <Text style={styles.cardSubtitle}>Write and run HTML, CSS, JavaScript and Python</Text>
-            </View>
-            <View style={styles.openPill}>
-              <Text style={styles.openPillText}>Open</Text>
-            </View>
-          </GlassSurface>
-        </Pressable>
+            <GlassSurface
+              style={styles.playgroundCard}
+              tintColor="rgba(255,138,30,0.22)"
+              isInteractive
+              fallbackStyle={styles.playgroundFallback}
+            >
+              <View style={styles.playgroundIcon}>
+                <IconCode size={22} color={INK} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>Code Playground</Text>
+                <Text style={styles.cardSubtitle}>Write and run HTML, CSS, JavaScript and Python</Text>
+              </View>
+              <View style={styles.openPill}>
+                <Text style={styles.openPillText}>Open</Text>
+              </View>
+            </GlassSurface>
+          </Pressable>
+        </NotInReview>
 
         {continueStudying.length > 0 && (
           <View style={styles.section}>

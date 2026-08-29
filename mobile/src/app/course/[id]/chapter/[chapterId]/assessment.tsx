@@ -9,6 +9,8 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import {
@@ -437,8 +439,8 @@ export default function ChapterAssessmentScreen() {
                 const isSelected = currentUserAns === option;
                 const letter = String.fromCharCode(65 + oIdx);
 
-                let optCardStyle = s.optionCard;
-                let optBadgeStyle = s.optionBadge;
+                let optCardStyle: StyleProp<ViewStyle> = s.optionCard;
+                let optBadgeStyle: StyleProp<ViewStyle> = s.optionBadge;
 
                 if (isSelected && !isCurrentChecked) {
                   optCardStyle = [s.optionCard, s.optionCardSelected];

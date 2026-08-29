@@ -133,7 +133,7 @@ export const completeTopic = async (req: AuthenticatedRequest, res: Response, ne
 export const submitExercise = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user!._id;
-    const { courseId, topicId, chapterId, answers } = req.body;
+    const { courseId, topicId, chapterId, answers, duration } = req.body;
     // answers: Array of { questionId: string, questionXp: number, isCorrect: boolean }
 
     if (!Array.isArray(answers) || answers.length === 0) {
@@ -190,6 +190,22 @@ export const submitExercise = async (req: AuthenticatedRequest, res: Response, n
 
     progress.lastStudiedAt = new Date();
     await progress.save();
+
+    // Record study session so accuracy and study metrics reflect exercise activity
+    try {
+      await StudySession.create({
+        user: userId,
+        course: courseId,
+        topic: topicId || null,
+        type: 'exercise',
+        mcqAnswered: answers.length,
+        mcqCorrect: correctCount,
+        duration: typeof duration === 'number' ? Math.max(0, Math.round(duration)) : 0,
+        score: scorePercent,
+      });
+    } catch (sessionErr) {
+      console.error('Failed to log exercise study session:', sessionErr);
+    }
 
     void awardStreakAchievements(userId);
 
@@ -258,13 +274,13 @@ export const getDashboard = async (req: AuthenticatedRequest, res: Response, nex
       { $group: { _id: null, total: { $sum: '$flashcardsStudied' } } },
     ]);
 
-    const mcqStats = await StudySession.aggregate([
-      { $match: { user: userId._id, type: 'mcq' } },
+    const accuracyStats = await StudySession.aggregate([
+      { $match: { user: userId._id, mcqAnswered: { $gt: 0 } } },
       { $group: { _id: null, totalAnswered: { $sum: '$mcqAnswered' }, totalCorrect: { $sum: '$mcqCorrect' } } },
     ]);
 
-    const avgAccuracy = mcqStats.length > 0 && mcqStats[0].totalAnswered > 0
-      ? Math.round((mcqStats[0].totalCorrect / mcqStats[0].totalAnswered) * 100)
+    const avgAccuracy = accuracyStats.length > 0 && accuracyStats[0].totalAnswered > 0
+      ? Math.round((accuracyStats[0].totalCorrect / accuracyStats[0].totalAnswered) * 100)
       : 0;
 
     const user = await User.findById(userId).select('currentStreak longestStreak totalXp');
@@ -309,10 +325,10 @@ export const getProgress = async (req: AuthenticatedRequest, res: Response, next
     const dailyGoalMinutes = user?.settings?.dailyGoalMinutes ?? 15;
 
     const totalFlashcards = sessions.reduce((sum, s) => sum + s.flashcardsStudied, 0);
-    const mcqSessions = sessions.filter((s) => s.type === 'mcq');
-    const totalMcqAnswered = mcqSessions.reduce((sum, s) => sum + s.mcqAnswered, 0);
-    const totalMcqCorrect = mcqSessions.reduce((sum, s) => sum + s.mcqCorrect, 0);
-    const avgAccuracy = totalMcqAnswered > 0 ? Math.round((totalMcqCorrect / totalMcqAnswered) * 100) : 0;
+    const questionSessions = sessions.filter((s) => s.mcqAnswered > 0);
+    const totalQuestionsAnswered = questionSessions.reduce((sum, s) => sum + s.mcqAnswered, 0);
+    const totalQuestionsCorrect = questionSessions.reduce((sum, s) => sum + s.mcqCorrect, 0);
+    const avgAccuracy = totalQuestionsAnswered > 0 ? Math.round((totalQuestionsCorrect / totalQuestionsAnswered) * 100) : 0;
 
     const todayStudyMinutes = Math.round(todayStudyTime / 60);
     const dailyGoalProgress = dailyGoalMinutes > 0 ? Math.min(100, Math.round((todayStudyMinutes / dailyGoalMinutes) * 100)) : 0;

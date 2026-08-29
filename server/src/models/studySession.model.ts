@@ -3,8 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IStudySession extends Document {
   user: mongoose.Types.ObjectId;
   course: mongoose.Types.ObjectId;
-  topic: mongoose.Types.ObjectId;
-  type: 'flashcard' | 'mcq';
+  topic?: mongoose.Types.ObjectId | null;
+  type: 'flashcard' | 'mcq' | 'exercise' | 'quiz';
   flashcardsStudied: number;
   mcqAnswered: number;
   mcqCorrect: number;
@@ -30,12 +30,12 @@ const StudySessionSchema: Schema = new Schema<IStudySession>(
     topic: {
       type: Schema.Types.ObjectId,
       ref: 'Topic',
-      required: true,
-      index: true,
+      required: false,
+      default: null,
     },
     type: {
       type: String,
-      enum: ['flashcard', 'mcq'],
+      enum: ['flashcard', 'mcq', 'exercise', 'quiz'],
       required: true,
     },
     flashcardsStudied: {

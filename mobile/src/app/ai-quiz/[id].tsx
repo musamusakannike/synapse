@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import {
   IconChevronLeft,
   IconAward,
 } from '@tabler/icons-react-native';
-import { aiApi } from '@/lib/api';
+import { aiApi, progressApi } from '@/lib/api';
 import { AiHistoryItem, AiQuizQuestion } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -42,6 +42,7 @@ export default function MobileAIQuizAttemptScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const startedAt = useRef(Date.now());
 
   const s = makeStyles(colors);
 
@@ -54,6 +55,7 @@ export default function MobileAIQuizAttemptScreen() {
       if (res.data?.success && res.data?.data) {
         const item = res.data.data;
         setQuizItem(item);
+        startedAt.current = Date.now();
 
         let parsedQuestions: AiQuizQuestion[] = [];
         if (Array.isArray(item.result)) {
@@ -109,18 +111,6 @@ export default function MobileAIQuizAttemptScreen() {
     }
   };
 
-  const handleSubmit = () => {
-    haptics.success();
-    setIsSubmitted(true);
-  };
-
-  const handleRetake = () => {
-    haptics.light();
-    setSelectedAnswers({});
-    setIsSubmitted(false);
-    setCurrentIndex(0);
-  };
-
   const calculateScore = () => {
     let correctCount = 0;
     questions.forEach((q, idx) => {
@@ -134,6 +124,33 @@ export default function MobileAIQuizAttemptScreen() {
       total: questions.length,
       percentage: Math.round((correctCount / questions.length) * 100),
     };
+  };
+
+  const handleSubmit = () => {
+    haptics.success();
+    setIsSubmitted(true);
+
+    const score = calculateScore();
+    const duration = Math.round((Date.now() - startedAt.current) / 1000);
+    const courseId = quizItem?.metadata?.courseId || quizItem?._id;
+
+    if (courseId && score.total > 0) {
+      progressApi.submitMcqSession({
+        course: courseId,
+        mcqAnswered: score.total,
+        mcqCorrect: score.correctCount,
+        duration,
+        score: score.percentage,
+      }).catch(() => {});
+    }
+  };
+
+  const handleRetake = () => {
+    haptics.light();
+    setSelectedAnswers({});
+    setIsSubmitted(false);
+    setCurrentIndex(0);
+    startedAt.current = Date.now();
   };
 
   if (loading) {

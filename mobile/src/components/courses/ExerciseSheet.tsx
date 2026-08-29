@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -54,6 +54,13 @@ export default function ExerciseSheet({
   const [resultScore, setResultScore] = useState<number>(0);
   const [isPassed, setIsPassed] = useState<boolean>(false);
   const [earnedXp, setEarnedXp] = useState<number>(0);
+  const startedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (open) {
+      startedAt.current = Date.now();
+    }
+  }, [open, exercise]);
 
   if (!open || !exercise || !exercise.questions || exercise.questions.length === 0) {
     return null;
@@ -122,11 +129,14 @@ export default function ExerciseSheet({
         };
       });
 
+      const duration = Math.round((Date.now() - startedAt.current) / 1000);
+
       const res = await progressApi.submitExercise({
         courseId,
         topicId,
         chapterId,
         answers: answersPayload,
+        duration,
       });
 
       if (res.data?.success) {

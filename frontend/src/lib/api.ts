@@ -108,7 +108,7 @@ export const progressApi = {
   continueStudying: () => api.get('/progress/continue'),
   needsImprovement: () => api.get('/progress/needs-improvement'),
   completeTopic: (data: { courseId: string; topicId: string }) => api.post('/progress/topic-complete', data),
-  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: unknown[] }) =>
+  submitExercise: (data: { courseId: string; topicId?: string; chapterId?: string; answers: unknown[]; duration?: number }) =>
     api.post('/progress/exercise-submit', data),
   savePosition: (data: { courseId: string; chapterId?: string; topicId?: string; contentIndex: number }) =>
     api.post('/progress/save-position', data),

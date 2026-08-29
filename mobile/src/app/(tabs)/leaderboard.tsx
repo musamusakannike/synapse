@@ -1,12 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconTrophy, IconFlame, IconBolt } from '@tabler/icons-react-native';
 import { leaderboardApi } from '@/lib/api';
 import { LeaderboardUser } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
+import { ACCENT, PAGE } from '@/theme/brand';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
+import ScreenHeader from '@/components/common/ScreenHeader';
 import * as haptics from '@/lib/haptics';
 
 type Timeframe = '24h' | '3d' | '1w' | '1m';
@@ -26,6 +29,7 @@ const TIMEFRAME_SHORT: Record<Timeframe, string> = {
 };
 
 export default function LeaderboardScreen() {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const [timeframe, setTimeframe] = useState<Timeframe>('24h');
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
@@ -61,20 +65,15 @@ export default function LeaderboardScreen() {
   const topThree = leaderboard.slice(0, 3);
 
   return (
-    <SafeAreaView style={s.container} edges={['top']}>
+    <View collapsable={false} style={s.container}>
+      <ScreenBackdrop />
       <ScrollView
-        contentContainerStyle={s.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
+        contentContainerStyle={[s.scroll, { paddingTop: insets.top + 8 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={s.header}>
-          <View style={s.headerIcon}>
-            <IconTrophy size={24} color={colors.brandPrimaryHover} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.title}>XP Leaderboard</Text>
-            <Text style={s.subtitle}>See top learners earning XP across SabiLearn.</Text>
-          </View>
+        <View style={{ paddingHorizontal: spacing.lg }}>
+          <ScreenHeader title="Leaderboard" subtitle="See top learners earning XP." />
         </View>
 
         {/* Timeframe Tabs */}
@@ -246,14 +245,14 @@ export default function LeaderboardScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 function makeStyles(c: any) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bgApp },
-    scroll: { paddingBottom: spacing['2xl'] },
+    container: { flex: 1, backgroundColor: PAGE },
+    scroll: { paddingBottom: spacing['4xl'] },
     header: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -290,11 +289,11 @@ function makeStyles(c: any) {
       alignItems: 'center',
     },
     tabActive: {
-      backgroundColor: c.surfaceCard,
+      backgroundColor: '#FFFFFF',
       ...shadows.xs,
     },
     tabText: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sansMedium, color: c.textTertiary },
-    tabTextActive: { color: c.textPrimary, fontFamily: fontFamilies.sansSemiBold },
+    tabTextActive: { color: ACCENT, fontFamily: fontFamilies.sansBold },
 
     // Podium
     podiumRow: {

@@ -9,7 +9,7 @@ import {
   Share,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   IconArrowLeft,
@@ -30,12 +30,30 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
-import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
+import { fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
+import { ACCENT, INK, PAGE, TINT_GLASS } from '@/theme/brand';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
+import GlassSurface from '@/components/ui/GlassSurface';
+import GlassIconButton from '@/components/common/GlassIconButton';
 import * as haptics from '@/lib/haptics';
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const colors = {
+    textPrimary: INK,
+    textSecondary: '#6B6B80',
+    textTertiary: '#8E8E9F',
+    brandPrimaryHover: ACCENT,
+    brandOnPrimary: INK,
+    brandPrimarySoft: 'rgba(255,138,30,0.16)',
+    success: '#1F9D55',
+    surfaceSunken: '#F4F4F6',
+    borderSubtle: '#E8E8EE',
+    bgApp: PAGE,
+    surfaceCard: PAGE,
+    brandPrimary: ACCENT,
+  } as const;
 
   const [course, setCourse] = useState<Course | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -144,37 +162,22 @@ export default function CourseDetailScreen() {
   const s = makeStyles(colors);
 
   return (
-    <SafeAreaView style={s.container} edges={['top']}>
+    <View collapsable={false} style={s.container}>
+      <ScreenBackdrop />
       <ScrollView
-        contentContainerStyle={s.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
+        contentContainerStyle={[s.scroll, { paddingTop: insets.top + 8 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />}
       >
-        {/* Back navigation & Share row */}
         <View style={s.navRow}>
-          <Pressable
-            onPress={() => {
-              haptics.light();
-              router.back();
-            }}
-            style={s.backBtn}
-            hitSlop={10}
-          >
-            <IconArrowLeft size={20} color={colors.textPrimary} />
-            <Text style={s.backText}>Courses</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleShare}
-            style={s.shareBtn}
-            hitSlop={10}
-          >
-            <IconShare size={16} color={colors.brandPrimaryHover} />
-            <Text style={s.shareText}>Share</Text>
-          </Pressable>
+          <GlassIconButton onPress={() => router.back()} accessibilityLabel="Back to courses">
+            <IconArrowLeft size={22} color={INK} />
+          </GlassIconButton>
+          <GlassIconButton onPress={handleShare} accessibilityLabel="Share course">
+            <IconShare size={18} color={INK} />
+          </GlassIconButton>
         </View>
 
-        {/* Hero Card */}
-        <View style={s.heroCard}>
+        <GlassSurface style={s.heroCard} tintColor={TINT_GLASS}>
           {course.banner ? (
             <Image source={{ uri: course.banner }} style={s.banner} resizeMode="cover" />
           ) : null}
@@ -261,7 +264,7 @@ export default function CourseDetailScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </GlassSurface>
 
         {/* 3 Collapsible Accordions */}
         <View style={s.accordionGroup}>
@@ -534,14 +537,14 @@ export default function CourseDetailScreen() {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 function makeStyles(c: any) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bgApp },
-    scroll: { paddingHorizontal: spacing.xl, paddingBottom: spacing['3xl'], gap: spacing.md },
+    container: { flex: 1, backgroundColor: PAGE },
+    scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing['3xl'], gap: spacing.md },
     navRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -575,13 +578,10 @@ function makeStyles(c: any) {
       color: c.textPrimary,
     },
     heroCard: {
-      backgroundColor: c.surfaceCard,
-      borderRadius: radii.xl,
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
+      borderRadius: 20,
       padding: spacing.base,
       gap: spacing.sm,
-      ...shadows.xs,
+      overflow: 'hidden',
     },
     banner: {
       width: '100%',
@@ -678,12 +678,11 @@ function makeStyles(c: any) {
       gap: spacing.xs,
     },
     accordionCard: {
-      backgroundColor: c.surfaceCard,
-      borderRadius: radii.lg,
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
+      backgroundColor: 'rgba(255,255,255,0.72)',
+      borderRadius: 18,
+      borderWidth: 1.5,
+      borderColor: '#E8E8EE',
       overflow: 'hidden',
-      ...shadows.xs,
     },
     accordionHeader: {
       flexDirection: 'row',
@@ -757,13 +756,12 @@ function makeStyles(c: any) {
       gap: spacing.md,
     },
     chapterCard: {
-      backgroundColor: c.surfaceCard,
-      borderRadius: radii.xl,
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
+      backgroundColor: 'rgba(255,255,255,0.72)',
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: '#E8E8EE',
       padding: spacing.base,
       gap: spacing.sm,
-      ...shadows.xs,
     },
     chapterLocked: {
       opacity: 0.7,

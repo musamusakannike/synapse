@@ -29,6 +29,7 @@ import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import OfflineBanner from '@/components/common/OfflineBanner';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
 import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
 import * as haptics from '@/lib/haptics';
 
@@ -117,6 +118,7 @@ export default function MobileAIQuizHubScreen() {
 
   return (
     <SafeAreaView style={s.container} edges={['top']}>
+      <ScreenBackdrop />
       <OfflineBanner />
 
       {/* Header */}
@@ -279,7 +281,7 @@ export default function MobileAIQuizHubScreen() {
 
 function makeStyles(c: any) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: c.bgApp },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -290,24 +292,24 @@ function makeStyles(c: any) {
       borderBottomColor: c.borderSubtle,
     },
     backBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: radii.full,
-      backgroundColor: c.surface,
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: '#FFFFFF',
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
+      borderWidth: 1.5,
+      borderColor: '#E8E8EE',
     },
     refreshBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: radii.full,
-      backgroundColor: c.surface,
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: '#FFFFFF',
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 1,
-      borderColor: c.borderSubtle,
+      borderWidth: 1.5,
+      borderColor: '#E8E8EE',
     },
     pageTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.displaySemiBold, color: c.textPrimary },
     pageSubtitle: { fontSize: fontSizes.xs, fontFamily: fontFamilies.sans, color: c.textSecondary },

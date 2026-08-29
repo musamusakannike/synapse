@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, TextInput, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { IconSearch, IconBook } from '@tabler/icons-react-native';
 import { courseApi } from '@/lib/api';
@@ -9,11 +9,15 @@ import { cacheCourses, getCachedCourses } from '@/lib/offlineSync';
 import CourseCard from '@/components/ui/CourseCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import EmptyState from '@/components/ui/EmptyState';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import GlassSurface from '@/components/ui/GlassSurface';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
+import ScreenHeader from '@/components/common/ScreenHeader';
+import { fontFamilies, spacing } from '@/theme';
+import { ACCENT, FAINT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
 import * as haptics from '@/lib/haptics';
 
 export default function CoursesScreen() {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [courses, setCourses] = useState<Course[]>([]);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +38,7 @@ export default function CoursesScreen() {
   }, []);
 
   useEffect(() => {
-    loadCourses();
+    void loadCourses();
   }, [loadCourses]);
 
   const onRefresh = useCallback(async () => {
@@ -49,42 +53,63 @@ export default function CoursesScreen() {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Courses</Text>
-        <View style={[styles.searchBar, { borderColor: colors.borderDefault, backgroundColor: colors.surfaceCard }]}>
-          <IconSearch size={16} color={colors.textTertiary} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search courses"
-            placeholderTextColor={colors.textTertiary}
-            style={[styles.searchInput, { color: colors.textPrimary }]}
-          />
-        </View>
-      </View>
+    <View collapsable={false} style={styles.container}>
+      <ScreenBackdrop />
       <FlatList
         data={filtered}
         keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.brandPrimary} colors={[colors.brandPrimary]} />}
+        contentContainerStyle={[styles.list, { paddingTop: insets.top + 8 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />}
+        ListHeaderComponent={
+          <View style={styles.headerBlock}>
+            <ScreenHeader title="Courses" subtitle="Pick a track and start building." />
+            <GlassSurface style={styles.searchBar} tintColor={TINT_GLASS} glassEffectStyle="clear">
+              <IconSearch size={18} color={MUTED} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Search courses"
+                placeholderTextColor={FAINT}
+                style={styles.searchInput}
+              />
+            </GlassSurface>
+          </View>
+        }
         renderItem={({ item }) => (
-          <CourseCard course={item} onPress={() => { haptics.light(); router.push(`/course/${item._id}` as any); }} />
+          <CourseCard
+            course={item}
+            onPress={() => {
+              haptics.light();
+              router.push(`/course/${item._id}` as any);
+            }}
+          />
         )}
         ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         ListEmptyComponent={
-          <EmptyState icon={<IconBook size={44} color={colors.textTertiary} />} title="No courses found" description="Try a different search, or check back later." />
+          <EmptyState icon={<IconBook size={44} color={FAINT} />} title="No courses found" description="Try a different search, or check back later." />
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.md, gap: spacing.md },
-  title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold },
-  searchBar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radii.sm, paddingHorizontal: spacing.base },
-  searchInput: { flex: 1, paddingVertical: spacing.sm, fontSize: fontSizes.sm, fontFamily: fontFamilies.sans },
-  list: { paddingHorizontal: spacing.xl, paddingBottom: spacing['2xl'] },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  headerBlock: { marginBottom: spacing.lg, gap: spacing.md },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: 18,
+    paddingHorizontal: spacing.base,
+    overflow: 'hidden',
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontFamily: fontFamilies.sans,
+    color: INK,
+  },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing['4xl'] },
 });

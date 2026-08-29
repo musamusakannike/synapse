@@ -1,52 +1,55 @@
 import { ReactNode } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
+import { fontFamilies, spacing } from '@/theme';
+import { INK, MUTED, TINT_GLASS } from '@/theme/brand';
+import GlassSurface from './GlassSurface';
 
 interface StatCardProps {
   icon?: ReactNode;
   label: string;
   value: string | number;
   accent?: string;
+  tintColor?: string;
 }
 
-export default function StatCard({ icon, label, value, accent }: StatCardProps) {
-  const { colors } = useTheme();
-
+export default function StatCard({ icon, label, value, accent, tintColor }: StatCardProps) {
   return (
-    <View style={[styles.card, { backgroundColor: colors.surfaceCard }, shadows.xs]}>
+    <GlassSurface style={styles.card} tintColor={tintColor ?? TINT_GLASS} glassEffectStyle="clear">
       {icon ? (
-        <View style={[styles.iconWrap, { backgroundColor: (accent ?? colors.brandPrimary) + '1A' }]}>
-          {icon}
-        </View>
+        <View style={[styles.iconWrap, { backgroundColor: (accent ?? '#FF8A1E') + '29' }]}>{icon}</View>
       ) : null}
-      <Text style={[styles.value, { color: colors.textPrimary }]}>{value}</Text>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
+      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.label}>{label}</Text>
+    </GlassSurface>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    borderRadius: radii.md,
+    minWidth: 140,
+    borderRadius: 20,
     padding: spacing.base,
-    minWidth: 120,
+    overflow: 'hidden',
   },
   iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: radii.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
   },
   value: {
-    fontSize: fontSizes.xl,
-    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: 22,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.4,
   },
   label: {
-    fontSize: fontSizes.xs,
-    fontFamily: fontFamilies.sans,
-    marginTop: spacing.xs / 2,
+    fontSize: 12,
+    fontFamily: fontFamilies.sansMedium,
+    color: MUTED,
+    marginTop: 2,
   },
 });

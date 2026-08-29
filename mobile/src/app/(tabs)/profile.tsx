@@ -1,14 +1,19 @@
 import { View, Text, Image, StyleSheet, Pressable, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { IconUser, IconSettings, IconLogout, IconChevronRight } from '@tabler/icons-react-native';
 import { useAuthStore } from '@/store/auth.store';
-import { useTheme, fontFamilies, fontSizes, radii, spacing, shadows } from '@/theme';
+import { fontFamilies, spacing } from '@/theme';
+import { ACCENT, INK, MUTED, TINT_GLASS, TINT_ORANGE } from '@/theme/brand';
 import Badge from '@/components/ui/Badge';
+import GlassSurface from '@/components/ui/GlassSurface';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
+import ScreenHeader from '@/components/common/ScreenHeader';
 import * as haptics from '@/lib/haptics';
+import type { ReactNode } from 'react';
 
 export default function ProfileScreen() {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -27,58 +32,95 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>Profile</Text>
+    <View collapsable={false} style={styles.container}>
+      <ScreenBackdrop />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]} showsVerticalScrollIndicator={false}>
+        <ScreenHeader title="Profile" subtitle="Your account and preferences." />
 
-        <View style={[styles.profileCard, { backgroundColor: colors.surfaceCard }, shadows.sm]}>
+        <GlassSurface style={styles.profileCard} tintColor={TINT_ORANGE}>
           {user?.avatar ? (
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: colors.brandPrimarySoft }]}>
-              <IconUser size={28} color={colors.brandPrimaryHover} />
+            <View style={styles.avatarFallback}>
+              <IconUser size={28} color={ACCENT} />
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text style={[styles.name, { color: colors.textPrimary }]}>{user?.name || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`}</Text>
-            <Text style={[styles.email, { color: colors.textSecondary }]}>{user?.email}</Text>
+            <Text style={styles.name}>{user?.name || `${user?.firstName ?? ''} ${user?.lastName ?? ''}`}</Text>
+            <Text style={styles.email}>{user?.email}</Text>
             {user?.level && <Badge variant={user.level}>{user.level}</Badge>}
           </View>
-        </View>
+        </GlassSurface>
 
         <View style={styles.menu}>
-          <MenuRow icon={<IconSettings size={18} color={colors.textSecondary} />} label="Settings" onPress={() => router.push('/settings')} />
-          <MenuRow icon={<IconLogout size={18} color={colors.danger} />} label="Sign out" labelColor={colors.danger} onPress={handleLogout} />
+          <MenuRow icon={<IconSettings size={20} color={INK} />} label="Settings" onPress={() => router.push('/settings')} />
+          <MenuRow icon={<IconLogout size={20} color="#E5484D" />} label="Sign out" danger onPress={handleLogout} />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function MenuRow({ icon, label, labelColor, onPress }: { icon: React.ReactNode; label: string; labelColor?: string; onPress: () => void }) {
-  const { colors } = useTheme();
+function MenuRow({
+  icon,
+  label,
+  danger,
+  onPress,
+}: {
+  icon: ReactNode;
+  label: string;
+  danger?: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
-      onPress={() => { haptics.light(); onPress(); }}
-      style={({ pressed }) => [styles.menuRow, { backgroundColor: colors.surfaceCard, opacity: pressed ? 0.9 : 1 }]}
+      onPress={() => {
+        haptics.light();
+        onPress();
+      }}
+      style={({ pressed }) => [pressed && styles.pressed]}
     >
-      {icon}
-      <Text style={[styles.menuLabel, { color: labelColor ?? colors.textPrimary }]}>{label}</Text>
-      <IconChevronRight size={16} color={colors.textTertiary} />
+      <GlassSurface style={styles.menuRow} isInteractive tintColor={TINT_GLASS}>
+        {icon}
+        <Text style={[styles.menuLabel, danger && { color: '#E5484D' }]}>{label}</Text>
+        <IconChevronRight size={16} color={MUTED} />
+      </GlassSurface>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing['2xl'], gap: spacing.xl },
-  title: { fontSize: fontSizes.xl, fontFamily: fontFamilies.displaySemiBold },
-  profileCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.base, padding: spacing.base, borderRadius: radii.lg },
-  avatar: { width: 56, height: 56, borderRadius: radii.full },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  name: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold, marginBottom: 2 },
-  email: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sans, marginBottom: spacing.xs },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing['4xl'] },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.base,
+    padding: spacing.base,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: spacing.xl,
+  },
+  avatar: { width: 64, height: 64, borderRadius: 32 },
+  avatarFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,138,30,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  name: { fontSize: 18, fontFamily: fontFamilies.sansBold, color: INK, letterSpacing: -0.2, marginBottom: 2 },
+  email: { fontSize: 14, fontFamily: fontFamilies.sans, color: MUTED, marginBottom: spacing.xs },
   menu: { gap: spacing.sm },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.base, borderRadius: radii.md },
-  menuLabel: { flex: 1, fontSize: fontSizes.base, fontFamily: fontFamilies.sansMedium },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.base,
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  menuLabel: { flex: 1, fontSize: 16, fontFamily: fontFamilies.sansMedium, color: INK },
+  pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
 });

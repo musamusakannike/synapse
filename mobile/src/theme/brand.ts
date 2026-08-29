@@ -1,0 +1,10 @@
+export const ACCENT = '#FF8A1E';
+export const AI = '#5B4FE8';
+export const INK = '#0E0E1A';
+export const MUTED = '#6B6B80';
+export const FAINT = '#8E8E9F';
+export const PAGE = '#FFFFFF';
+export const BORDER = '#E8E8EE';
+export const TINT_GLASS = 'rgba(255,255,255,0.38)';
+export const TINT_ORANGE = 'rgba(255,138,30,0.18)';
+export const TINT_AI = 'rgba(91,79,232,0.12)';

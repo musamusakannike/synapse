@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, Pressable, Switch, TextInput, Alert, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { IconArrowLeft, IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight } from '@tabler/icons-react-native';
+import { IconUser, IconCamera, IconShieldCheck, IconFileText, IconChevronRight } from '@tabler/icons-react-native';
 import { useAuthStore, DEFAULT_SETTINGS } from '@/store/auth.store';
 import { userApi } from '@/lib/api';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
-import Button from '@/components/ui/Button';
+import { fontFamilies, spacing } from '@/theme';
+import { ACCENT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
+import GlassSurface from '@/components/ui/GlassSurface';
+import ScreenBackdrop from '@/components/common/ScreenBackdrop';
+import ScreenHeader from '@/components/common/ScreenHeader';
 import * as haptics from '@/lib/haptics';
 
 export default function SettingsScreen() {
-  const { colors } = useTheme();
-  const { user, updateProfile, updateSettings, deleteAccount, logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const { user, updateProfile, updateSettings, deleteAccount } = useAuthStore();
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
 
   const settings = { ...DEFAULT_SETTINGS, ...user?.settings };
 
@@ -34,7 +37,6 @@ export default function SettingsScreen() {
     });
     if (result.canceled || !result.assets?.[0]) return;
 
-    setIsUploading(true);
     try {
       const asset = result.assets[0];
       const formData = new FormData();
@@ -48,8 +50,6 @@ export default function SettingsScreen() {
     } catch {
       haptics.error();
       Alert.alert('Upload failed', 'Could not upload your photo. Try again.');
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -86,114 +86,182 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgApp }]} edges={['top']}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10}>
-          <IconArrowLeft size={20} color={colors.textPrimary} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
-        <View style={{ width: 20 }} />
-      </View>
+    <View collapsable={false} style={styles.container}>
+      <ScreenBackdrop />
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <ScreenHeader title="Settings" subtitle="Profile, alerts, and account." showBack />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
         <Pressable onPress={pickAvatar} style={styles.avatarWrap}>
           {user?.avatar ? (
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatar, styles.avatarFallback, { backgroundColor: colors.brandPrimarySoft }]}>
-              <IconUser size={28} color={colors.brandPrimaryHover} />
+            <View style={styles.avatarFallback}>
+              <IconUser size={28} color={ACCENT} />
             </View>
           )}
-          <View style={[styles.cameraBadge, { backgroundColor: colors.brandPrimary }]}>
-            <IconCamera size={14} color={colors.brandOnPrimary} />
+          <View style={styles.cameraBadge}>
+            <IconCamera size={14} color={INK} />
           </View>
         </Pressable>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Profile</Text>
+        <Text style={styles.sectionTitle}>Profile</Text>
+        <GlassSurface style={styles.sectionCard} tintColor={TINT_GLASS}>
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>First name</Text>
+            <Text style={styles.label}>First name</Text>
             <TextInput
               value={firstName}
               onChangeText={setFirstName}
-              style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+              onFocus={() => setFocused('first')}
+              onBlur={() => setFocused(null)}
+              style={[styles.input, focused === 'first' && styles.inputFocused]}
             />
           </View>
           <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Last name</Text>
+            <Text style={styles.label}>Last name</Text>
             <TextInput
               value={lastName}
               onChangeText={setLastName}
-              style={[styles.input, { borderColor: colors.borderDefault, color: colors.textPrimary }]}
+              onFocus={() => setFocused('last')}
+              onBlur={() => setFocused(null)}
+              style={[styles.input, focused === 'last' && styles.inputFocused]}
             />
           </View>
-          <Button loading={isSaving} onPress={saveProfile}>Save changes</Button>
-        </View>
+          <Pressable
+            onPress={saveProfile}
+            disabled={isSaving}
+            style={({ pressed }) => [styles.primaryBtn, (pressed || isSaving) && { opacity: 0.85 }]}
+          >
+            <Text style={styles.primaryBtnText}>{isSaving ? 'Saving…' : 'Save changes'}</Text>
+          </Pressable>
+        </GlassSurface>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Notifications</Text>
+        <Text style={styles.sectionTitle}>Notifications</Text>
+        <GlassSurface style={styles.sectionCard} tintColor={TINT_GLASS}>
           <SettingRow label="Push notifications" value={!!settings.pushNotifications} onChange={toggleSetting('pushNotifications')} />
           <SettingRow label="Study reminders" value={!!settings.studyReminders} onChange={toggleSetting('studyReminders')} />
           <SettingRow label="Streak alerts" value={!!settings.streakAlerts} onChange={toggleSetting('streakAlerts')} />
           <SettingRow label="Email notifications" value={!!settings.emailNotifications} onChange={toggleSetting('emailNotifications')} />
-          <SettingRow label="Weekly progress email" value={!!settings.weeklyProgress} onChange={toggleSetting('weeklyProgress')} />
+          <SettingRow label="Weekly progress email" value={!!settings.weeklyProgress} onChange={toggleSetting('weeklyProgress')} last />
+        </GlassSurface>
+
+        <Text style={styles.sectionTitle}>Legal & Privacy</Text>
+        <View style={{ gap: spacing.sm }}>
+          <Pressable onPress={() => router.push('/privacy')} style={({ pressed }) => [pressed && styles.pressed]}>
+            <GlassSurface style={styles.linkRow} isInteractive tintColor={TINT_GLASS}>
+              <IconShieldCheck size={18} color={INK} />
+              <Text style={styles.linkLabel}>Privacy Policy</Text>
+              <IconChevronRight size={16} color={MUTED} />
+            </GlassSurface>
+          </Pressable>
+          <Pressable onPress={() => router.push('/terms')} style={({ pressed }) => [pressed && styles.pressed]}>
+            <GlassSurface style={styles.linkRow} isInteractive tintColor={TINT_GLASS}>
+              <IconFileText size={18} color={INK} />
+              <Text style={styles.linkLabel}>Terms of Service</Text>
+              <IconChevronRight size={16} color={MUTED} />
+            </GlassSurface>
+          </Pressable>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Legal & Privacy</Text>
-          <Pressable onPress={() => router.push('/privacy')} style={styles.linkRow}>
-            <IconShieldCheck size={18} color={colors.textSecondary} />
-            <Text style={[styles.settingLabel, { flex: 1, color: colors.textPrimary }]}>Privacy Policy</Text>
-            <IconChevronRight size={16} color={colors.textTertiary} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/terms')} style={styles.linkRow}>
-            <IconFileText size={18} color={colors.textSecondary} />
-            <Text style={[styles.settingLabel, { flex: 1, color: colors.textPrimary }]}>Terms of Service</Text>
-            <IconChevronRight size={16} color={colors.textTertiary} />
-          </Pressable>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.danger }]}>Danger zone</Text>
-          <Button variant="secondary" onPress={handleDeleteAccount} style={{ borderColor: colors.danger }}>
-            Delete account
-          </Button>
-        </View>
+        <Text style={[styles.sectionTitle, { color: '#E5484D' }]}>Danger zone</Text>
+        <Pressable onPress={handleDeleteAccount} style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.85 }]}>
+          <Text style={styles.deleteBtnText}>Delete account</Text>
+        </Pressable>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function SettingRow({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
-  const { colors } = useTheme();
+function SettingRow({
+  label,
+  value,
+  onChange,
+  last,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  last?: boolean;
+}) {
   return (
-    <View style={styles.settingRow}>
-      <Text style={[styles.settingLabel, { color: colors.textPrimary }]}>{label}</Text>
-      <Switch
-        value={value}
-        onValueChange={onChange}
-        trackColor={{ false: colors.borderDefault, true: colors.brandPrimary }}
-        thumbColor="#FFFFFF"
-      />
+    <View style={[styles.settingRow, !last && styles.settingRowBorder]}>
+      <Text style={styles.settingLabel}>{label}</Text>
+      <Switch value={value} onValueChange={onChange} trackColor={{ false: '#E8E8EE', true: ACCENT }} thumbColor="#FFFFFF" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.xl, paddingVertical: spacing.md },
-  headerTitle: { fontSize: fontSizes.base, fontFamily: fontFamilies.sansSemiBold },
-  scroll: { paddingHorizontal: spacing.xl, paddingBottom: spacing['2xl'], gap: spacing.xl },
-  avatarWrap: { alignSelf: 'center', marginTop: spacing.sm },
-  avatar: { width: 88, height: 88, borderRadius: radii.full },
-  avatarFallback: { alignItems: 'center', justifyContent: 'center' },
-  cameraBadge: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: radii.full, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#FFFFFF' },
-  section: { gap: spacing.sm },
-  sectionTitle: { fontSize: fontSizes.lg, fontFamily: fontFamilies.sansSemiBold, marginBottom: spacing.xs },
-  field: { gap: spacing.xs },
-  label: { fontSize: fontSizes.sm, fontFamily: fontFamilies.sansMedium },
-  input: { borderWidth: 1, borderRadius: radii.sm, paddingHorizontal: spacing.base, paddingVertical: spacing.md, fontSize: fontSizes.base, fontFamily: fontFamilies.sans },
-  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.sm },
-  settingLabel: { fontSize: fontSizes.base, fontFamily: fontFamilies.sans },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  scroll: { paddingHorizontal: spacing.lg, paddingBottom: spacing['4xl'] },
+  avatarWrap: { alignSelf: 'center', marginBottom: spacing.xl },
+  avatar: { width: 88, height: 88, borderRadius: 44 },
+  avatarFallback: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(255,138,30,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: ACCENT,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.3,
+    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+  },
+  sectionCard: { borderRadius: 20, padding: spacing.base, overflow: 'hidden', gap: spacing.md },
+  field: { gap: 6 },
+  label: { fontSize: 14, fontFamily: fontFamilies.sansBold, color: INK, letterSpacing: -0.2 },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E5EB',
+    borderRadius: 16,
+    paddingHorizontal: spacing.base,
+    paddingVertical: 14,
+    fontSize: 16,
+    fontFamily: fontFamilies.sans,
+    color: INK,
+  },
+  inputFocused: { borderColor: ACCENT },
+  primaryBtn: {
+    backgroundColor: ACCENT,
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  primaryBtnText: { fontSize: 17, fontFamily: fontFamilies.sansBold, color: INK, letterSpacing: -0.2 },
+  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+  settingRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E8E8EE' },
+  settingLabel: { fontSize: 16, fontFamily: fontFamilies.sans, color: INK, flex: 1, paddingRight: spacing.md },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.base, borderRadius: 18, overflow: 'hidden' },
+  linkLabel: { flex: 1, fontSize: 16, fontFamily: fontFamilies.sansMedium, color: INK },
+  deleteBtn: {
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E5484D',
+  },
+  deleteBtnText: { fontSize: 16, fontFamily: fontFamilies.sansBold, color: '#E5484D' },
+  pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
 });

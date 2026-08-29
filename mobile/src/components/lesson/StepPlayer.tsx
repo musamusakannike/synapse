@@ -279,6 +279,7 @@ export default function StepPlayer({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   headerRow: {
     flexDirection: 'row',

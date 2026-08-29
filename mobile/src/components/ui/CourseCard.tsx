@@ -1,9 +1,10 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
-import { IconBook2 } from '@tabler/icons-react-native';
-import { useTheme, fontFamilies, fontSizes, radii, spacing } from '@/theme';
+import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
+import { IconBook2, IconArrowRight } from '@tabler/icons-react-native';
+import { fontFamilies, fontSizes, spacing } from '@/theme';
+import { ACCENT, FAINT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
 import { Course } from '@/lib/types';
-import Card from './Card';
 import Badge from './Badge';
+import GlassSurface from './GlassSurface';
 
 interface CourseCardProps {
   course: Course;
@@ -11,39 +12,43 @@ interface CourseCardProps {
 }
 
 export default function CourseCard({ course, onPress }: CourseCardProps) {
-  const { colors } = useTheme();
-
   return (
-    <Card onPress={onPress} padded={false} style={styles.card}>
-      {course.banner ? (
-        <Image source={{ uri: course.banner }} style={styles.banner} resizeMode="cover" />
-      ) : (
-        <View style={[styles.banner, styles.bannerFallback, { backgroundColor: colors.surfaceSunken }]}>
-          <IconBook2 size={28} color={colors.textTertiary} />
-        </View>
-      )}
-      <View style={styles.body}>
-        <View style={styles.headerRow}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>{course.title}</Text>
-          <Badge variant={course.difficulty}>{course.difficulty}</Badge>
-        </View>
-        <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>
-          {course.description}
-        </Text>
-        <View style={styles.footerRow}>
-          <Text style={[styles.category, { color: colors.textTertiary }]}>{course.category}</Text>
-          <Text style={[styles.topicCount, { color: colors.textTertiary }]}>
-            {course.topicCount ?? 0} topics
+    <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
+      <GlassSurface style={styles.card} isInteractive tintColor={TINT_GLASS}>
+        {course.banner ? (
+          <Image source={{ uri: course.banner }} style={styles.banner} resizeMode="cover" />
+        ) : (
+          <View style={[styles.banner, styles.bannerFallback]}>
+            <IconBook2 size={28} color={FAINT} />
+          </View>
+        )}
+        <View style={styles.body}>
+          <View style={styles.headerRow}>
+            <Text style={styles.title} numberOfLines={1}>
+              {course.title}
+            </Text>
+            <Badge variant={course.difficulty}>{course.difficulty}</Badge>
+          </View>
+          <Text style={styles.description} numberOfLines={2}>
+            {course.description}
           </Text>
+          <View style={styles.footerRow}>
+            <Text style={styles.category}>{course.category}</Text>
+            <View style={styles.continueLink}>
+              <Text style={styles.continueLinkText}>{course.topicCount ?? 0} topics</Text>
+              <IconArrowRight size={14} color={ACCENT} />
+            </View>
+          </View>
         </View>
-      </View>
-    </Card>
+      </GlassSurface>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     overflow: 'hidden',
+    borderRadius: 20,
   },
   banner: {
     width: '100%',
@@ -52,6 +57,7 @@ const styles = StyleSheet.create({
   bannerFallback: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(14,14,26,0.04)',
   },
   body: {
     padding: spacing.base,
@@ -65,27 +71,42 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: fontSizes.base,
-    fontFamily: fontFamilies.sansSemiBold,
+    fontSize: 17,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+    letterSpacing: -0.2,
   },
   description: {
     fontSize: fontSizes.sm,
     fontFamily: fontFamilies.sans,
+    color: MUTED,
     lineHeight: fontSizes.sm * 1.5,
   },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.xs,
   },
   category: {
     fontSize: fontSizes.xs,
     fontFamily: fontFamilies.sansMedium,
+    color: ACCENT,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  topicCount: {
-    fontSize: fontSizes.xs,
-    fontFamily: fontFamilies.sans,
+  continueLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  continueLinkText: {
+    fontSize: fontSizes.sm,
+    fontFamily: fontFamilies.sansBold,
+    color: INK,
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
 });

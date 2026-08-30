@@ -1,15 +1,103 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Check, RotateCcw, X } from 'lucide-react';
-import ProgressBar from '@/components/ui/ProgressBar';
-import Button from '@/components/ui/Button';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Check, CheckCircle2, HelpCircle, RotateCcw, X, XCircle } from 'lucide-react';
 import { buildSession, GUEST_MAX_QUESTIONS, parseUnitParam, unitLabel } from '@/lib/swep';
-import type { SwepQuestion } from '@/lib/swep';
+import type { SwepOption, SwepQuestion } from '@/lib/swep';
 
 type Phase = 'quiz' | 'results';
+
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+function shuffleOptions(options: SwepOption[]): SwepOption[] {
+  const array = [...options];
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function QuizQuestion({
+  question,
+  options,
+  selected,
+  checked,
+  onSelect,
+}: {
+  question: SwepQuestion;
+  options: SwepOption[];
+  selected: number | null;
+  checked: boolean;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+          <HelpCircle className="size-3.5" />
+          <span>Quick Quiz</span>
+        </div>
+        <p className="text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">{question.unitName}</p>
+        <p className="text-xl leading-snug font-bold text-[var(--ink-900)] sm:text-2xl">{question.question}</p>
+      </div>
+
+      <div className="space-y-3">
+        {options.map((opt, i) => {
+          const isSelected = selected === i;
+          const isCorrect = opt.isCorrect;
+          const letter = OPTION_LETTERS[i] || String(i + 1);
+
+          let containerStyle = 'border-[var(--line)] bg-[var(--surface-card)] hover:border-slate-400';
+          let badgeStyle = 'bg-[var(--surface-sunken)] text-[var(--text-muted)]';
+
+          if (isSelected && !checked) {
+            containerStyle = 'border-2 border-sky-500 bg-sky-50/70 shadow-sm';
+            badgeStyle = 'bg-sky-500 text-white';
+          } else if (checked && isCorrect) {
+            containerStyle = 'border-2 border-emerald-500 bg-emerald-50/80 text-emerald-950 shadow-sm';
+            badgeStyle = 'bg-emerald-500 text-white';
+          } else if (checked && isSelected && !isCorrect) {
+            containerStyle = 'border-2 border-rose-500 bg-rose-50/80 text-rose-950 shadow-sm';
+            badgeStyle = 'bg-rose-500 text-white';
+          } else if (checked) {
+            containerStyle = 'border-[var(--line)] bg-[var(--surface-card)] opacity-50';
+          }
+
+          return (
+            <button
+              key={`${question.id}-${i}`}
+              type="button"
+              onClick={() => !checked && onSelect(i)}
+              disabled={checked}
+              className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border p-4 text-left transition-all active:scale-[0.99] sm:gap-4 sm:p-5 ${containerStyle}`}
+            >
+              <div className="flex flex-1 items-center gap-3">
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-colors ${badgeStyle}`}
+                >
+                  {letter}
+                </span>
+                <span className="text-sm font-semibold text-[var(--ink-900)] sm:text-base">{opt.text}</span>
+              </div>
+              {checked && isCorrect && <CheckCircle2 className="size-5 shrink-0 text-emerald-600" />}
+              {checked && isSelected && !isCorrect && <XCircle className="size-5 shrink-0 text-rose-600" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {checked && question.explanation && (
+        <div className="space-y-1.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4 animate-in fade-in slide-in-from-bottom-2 duration-300 sm:p-5">
+          <span className="text-xs font-bold tracking-wider text-[var(--text-muted)] uppercase">Explanation</span>
+          <p className="text-sm leading-relaxed text-[var(--ink-900)] sm:text-base">{question.explanation}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SwepQuiz({
   base,
@@ -18,6 +106,7 @@ export default function SwepQuiz({
   base: '/swep' | '/dashboard/swep';
   isAuthenticated: boolean;
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const unit = parseUnitParam(searchParams.get('unit'));
   const random = searchParams.get('random') !== '0';
@@ -32,38 +121,45 @@ export default function SwepQuiz({
   const [phase, setPhase] = useState<Phase>('quiz');
   const [currentQ, setCurrentQ] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [answers, setAnswers] = useState<{ id: number; correct: boolean; selected: number }[]>([]);
+  const [checked, setChecked] = useState(false);
+  const [answers, setAnswers] = useState<{ id: number; correct: boolean }[]>([]);
+  const mainRef = useRef<HTMLElement>(null);
 
-  if (questions.length === 0) {
-    return (
-      <div className="py-20 text-center">
-        <p className="mb-4 text-[var(--text-muted)]">No questions matched those filters.</p>
-        <Link href={`${base}/practice`} className="text-[var(--brand-gold-600)]">
-          Change filters
-        </Link>
-      </div>
-    );
-  }
+  const total = questions.length;
+  const mcq = questions[currentQ];
+  const isLast = currentQ === total - 1;
+  const usePills = total <= 20;
 
-  const mcq: SwepQuestion = questions[currentQ];
-  const options = mcq.formattedOptions || [];
+  // Memoize shuffled options for the current question
+  const currentOptions = useMemo(() => {
+    if (!mcq) return [];
+    return shuffleOptions(mcq.formattedOptions || []);
+  }, [mcq]);
 
-  const handleSelectOption = (idx: number) => {
-    if (showFeedback) return;
-    setSelectedOption(idx);
-    setShowFeedback(true);
-    const correct = Boolean(options[idx]?.isCorrect);
-    setAnswers((prev) => [...prev, { id: mcq.id, correct, selected: idx }]);
-  };
+  const close = () => router.push(`${base}/practice`);
 
-  const handleNext = () => {
-    if (currentQ < questions.length - 1) {
-      setCurrentQ((q) => q + 1);
-      setSelectedOption(null);
-      setShowFeedback(false);
+  const handleAction = () => {
+    if (!checked) {
+      if (selectedOption === null) return;
+      setChecked(true);
+      const isCorrect = !!currentOptions[selectedOption]?.isCorrect;
+      setAnswers((prev) => [...prev, { id: mcq.id, correct: isCorrect }]);
+
+      // Smooth scroll to explanation if available
+      if (mcq.explanation) {
+        setTimeout(() => {
+          mainRef.current?.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' });
+        }, 100);
+      }
     } else {
-      setPhase('results');
+      if (isLast) {
+        setPhase('results');
+      } else {
+        setCurrentQ((q) => q + 1);
+        setSelectedOption(null);
+        setChecked(false);
+        mainRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      }
     }
   };
 
@@ -71,106 +167,173 @@ export default function SwepQuiz({
     setPhase('quiz');
     setCurrentQ(0);
     setSelectedOption(null);
-    setShowFeedback(false);
+    setChecked(false);
     setAnswers([]);
+    mainRef.current?.scrollTo({ top: 0, behavior: 'instant' });
   };
 
-  if (phase === 'results') {
-    const correctCount = answers.filter((a) => a.correct).length;
-    const score = Math.round((correctCount / questions.length) * 100);
+  if (total === 0) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-8 text-center">
-          <p className="text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">SWEP practice</p>
-          <h1 className="mt-2 text-2xl font-bold text-[var(--ink-900)]">Session complete</h1>
-          <p className="mt-4 text-5xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">{score}%</p>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">
-            {correctCount} of {questions.length} correct · {unitLabel(unit)}
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button fullWidth onClick={retry}>
-              <RotateCcw className="size-4" /> Try again
-            </Button>
-            <Link href={`${base}/practice`} className="w-full">
-              <Button fullWidth variant="secondary">
-                Change filters
-              </Button>
-            </Link>
-          </div>
-          <Link href="/dashboard/courses" className="mt-6 inline-block text-sm font-semibold text-[var(--brand-gold-600)]">
-            Explore courses on SabiLearn
-          </Link>
-          {!isAuthenticated && (
-            <p className="mt-4 text-sm text-[var(--text-muted)]">
-              Create a free account to practice all 180 questions.{' '}
-              <Link href="/auth/register" className="font-semibold text-[var(--brand-gold-600)]">
-                Sign up
-              </Link>
-            </p>
-          )}
-        </div>
+      <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)] p-6">
+        <p className="font-medium text-[var(--text-muted)]">No questions matched those filters.</p>
+        <button
+          type="button"
+          onClick={close}
+          className="cursor-pointer rounded-2xl bg-[#FF8A00] px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-[#F07D00]"
+        >
+          Change filters
+        </button>
       </div>
     );
   }
 
-  const progress = ((currentQ + 1) / questions.length) * 100;
+  if (phase === 'results') {
+    const correctCount = answers.filter((a) => a.correct).length;
+    const score = Math.round((correctCount / total) * 100);
+    return (
+      <div className="fixed inset-0 z-[80] flex w-full flex-col overflow-hidden bg-[var(--surface-page)] text-[var(--ink-900)]">
+        <header className="shrink-0 border-b border-[var(--line)]/50 bg-[var(--surface-page)] p-4 sm:px-6">
+          <div className="mx-auto flex max-w-xl items-center justify-between">
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Close"
+              className="-ml-1.5 cursor-pointer rounded-full p-1.5 transition-colors hover:bg-[var(--surface-sunken)]"
+            >
+              <X className="size-6 stroke-[2.5]" />
+            </button>
+            <span className="text-sm font-bold text-[var(--text-muted)]">Session Results</span>
+            <div className="size-6" />
+          </div>
+        </header>
+
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6 touch-pan-y">
+          <div className="my-auto mx-auto flex min-h-full w-full max-w-xl flex-col items-center justify-center gap-6 py-6 text-center">
+            <div className="flex size-20 items-center justify-center rounded-full bg-emerald-100">
+              <Check className="size-10 text-emerald-600" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black tracking-tight text-[var(--ink-900)]">Session complete!</h1>
+              <p className="text-base leading-relaxed text-[var(--text-muted)]">
+                You scored <span className="font-semibold text-[var(--ink-900)]">{score}%</span> — {correctCount} of {total}{' '}
+                correct · {unitLabel(unit)}
+              </p>
+            </div>
+            {!isAuthenticated && (
+              <p className="text-sm text-[var(--text-muted)]">
+                Create a free account to practice all 180 questions.{' '}
+                <Link href="/auth/register" className="font-semibold text-[#FF8A00]">
+                  Sign up
+                </Link>
+              </p>
+            )}
+          </div>
+        </main>
+
+        <footer className="shrink-0 border-t border-[var(--line)]/50 bg-[var(--surface-page)] p-4 sm:px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto w-full max-w-xl space-y-2.5">
+            <button
+              type="button"
+              onClick={retry}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#FF8A00] px-8 py-3.5 text-base font-bold tracking-wide text-white shadow-lg shadow-orange-500/25 transition-all hover:bg-[#F07D00] active:scale-[0.98]"
+            >
+              <RotateCcw className="size-5" /> Try again
+            </button>
+            <button
+              type="button"
+              onClick={close}
+              className="flex w-full cursor-pointer items-center justify-center rounded-2xl border border-[var(--line)] bg-[var(--surface-card)] px-8 py-3 text-sm font-bold text-[var(--ink-900)] hover:bg-[var(--surface-sunken)]"
+            >
+              Change filters
+            </button>
+            <Link
+              href="/dashboard/courses"
+              className="block pt-1 text-center text-xs font-semibold text-[#FF8A00] hover:underline"
+            >
+              Explore courses on SabiLearn
+            </Link>
+          </div>
+        </footer>
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <Link
-        href={`${base}/practice`}
-        className="mb-4 inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--ink-900)]"
-      >
-        <ArrowLeft className="size-4" /> Filters
-      </Link>
-      <p className="mb-3 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">{mcq.unitName}</p>
-      <div className="mb-4">
-        <ProgressBar value={progress} label={`Question ${currentQ + 1} of ${questions.length}`} />
-      </div>
-      <div className="mb-4 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6">
-        <p className="mb-6 text-lg font-medium text-[var(--ink-900)]">{mcq.question}</p>
-        <div className="space-y-2">
-          {options.map((option, idx) => {
-            const isSelected = selectedOption === idx;
-            const isCorrect = option.isCorrect;
-            let cls = 'border-[var(--line)] text-[var(--ink-900)] hover:border-[var(--line-strong)]';
-            if (showFeedback) {
-              if (isCorrect) cls = 'border-[var(--success)] bg-[var(--success-100)] text-[var(--success)]';
-              else if (isSelected && !isCorrect) cls = 'border-[var(--danger)] bg-[var(--danger-100)] text-[var(--danger)]';
-              else cls = 'border-[var(--line)] text-[var(--text-muted)]';
-            } else if (isSelected) {
-              cls = 'border-[var(--brand-gold)] bg-[var(--brand-gold-100)] text-[var(--ink-900)]';
-            }
-            return (
-              <button
-                key={`${mcq.id}-${idx}`}
-                type="button"
-                onClick={() => handleSelectOption(idx)}
-                disabled={showFeedback}
-                className={`w-full rounded-[var(--radius-md)] border p-4 text-left transition-all ${cls} ${!showFeedback ? 'cursor-pointer' : ''}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm">{option.text}</span>
-                  {showFeedback && isCorrect && <Check className="size-4 shrink-0 text-[var(--success)]" />}
-                  {showFeedback && isSelected && !isCorrect && <X className="size-4 shrink-0 text-[var(--danger)]" />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="fixed inset-0 z-[80] flex w-full flex-col overflow-hidden bg-[var(--surface-page)] text-[var(--ink-900)]">
+      <header className="shrink-0 border-b border-[var(--line)]/50 bg-[var(--surface-page)] p-4 sm:px-6">
+        <div className="mx-auto flex max-w-xl items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Close quiz"
+            className="-ml-1.5 cursor-pointer rounded-full p-1.5 transition-colors hover:bg-[var(--surface-sunken)]"
+          >
+            <X className="size-6 stroke-[2.5]" />
+          </button>
 
-      {showFeedback && (
-        <>
-          <div className="mb-4 rounded-[var(--radius-md)] bg-[var(--surface-sunken)] p-4">
-            <p className="mb-1 text-xs text-[var(--text-muted)]">Explanation</p>
-            <p className="text-sm text-[var(--ink-900)]">{mcq.explanation || 'No explanation provided.'}</p>
-          </div>
-          <Button fullWidth onClick={handleNext}>
-            {currentQ < questions.length - 1 ? 'Next question' : 'See results'}
-          </Button>
-        </>
-      )}
+          {usePills ? (
+            <div className="mx-2 flex max-w-xs flex-1 items-center gap-1.5 sm:max-w-sm">
+              {questions.map((_, i) => {
+                const isActive = i === currentQ;
+                const isCompleted = i < currentQ;
+                return (
+                  <div
+                    key={i}
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      isActive ? 'flex-[2.5] bg-[#22C55E]' : isCompleted ? 'flex-1 bg-[#22C55E]' : 'flex-1 bg-slate-200'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mx-2 flex-1">
+              <div className="mb-1 flex justify-between text-[11px] font-semibold text-[var(--text-muted)]">
+                <span>
+                  Question {currentQ + 1} of {total}
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+                <div
+                  className="h-full rounded-full bg-[#22C55E] transition-all duration-300"
+                  style={{ width: `${((currentQ + 1) / total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <span className="min-w-[3ch] pl-1 text-right text-sm font-extrabold text-[var(--ink-900)]">
+            {currentQ + 1}/{total}
+          </span>
+        </div>
+      </header>
+
+      <main ref={mainRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y">
+        <div className="mx-auto w-full max-w-xl p-4 sm:p-6 pb-12 sm:pb-16">
+          <QuizQuestion
+            key={mcq.id}
+            question={mcq}
+            options={currentOptions}
+            selected={selectedOption}
+            checked={checked}
+            onSelect={(idx) => setSelectedOption(idx)}
+          />
+        </div>
+      </main>
+
+      <footer className="shrink-0 border-t border-[var(--line)]/50 bg-[var(--surface-page)]/95 backdrop-blur-xs p-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto flex max-w-xl items-center gap-3">
+          <button
+            type="button"
+            onClick={handleAction}
+            disabled={!checked && selectedOption === null}
+            className="flex flex-1 cursor-pointer items-center justify-center rounded-2xl bg-[#FF8A00] px-8 py-3.5 text-base font-bold tracking-wide text-white shadow-lg shadow-orange-500/20 transition-all hover:bg-[#F07D00] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 sm:py-4 sm:text-lg"
+          >
+            <span>{!checked ? 'Check Answer' : isLast ? 'Finish' : 'Continue'}</span>
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
+

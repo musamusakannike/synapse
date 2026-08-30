@@ -31,7 +31,7 @@ export default function SwepHub({
 
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="relative overflow-hidden rounded-[var(--radius-2xl)] border border-[var(--line)] bg-[var(--surface-card)] p-6 sm:p-8">
+      <div className="relative overflow-hidden p-6 sm:p-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end">
           <div className="flex size-28 shrink-0 items-end justify-center overflow-hidden rounded-3xl bg-[var(--brand-gold-100)] sm:size-32">
             {/* eslint-disable-next-line @next/next/no-img-element */}

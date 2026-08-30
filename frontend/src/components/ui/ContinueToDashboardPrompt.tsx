@@ -6,6 +6,7 @@ import { LayoutDashboard } from 'lucide-react';
 import Dialog from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
+import { SWEP_ENROLLMENT_EVENT, SWEP_ENROLLMENT_KEY, SWEP_SHEET_SESSION_KEY } from '@/lib/swep';
 
 export default function ContinueToDashboardPrompt() {
   const router = useRouter();
@@ -13,9 +14,21 @@ export default function ContinueToDashboardPrompt() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return;
+
+    const maybeOpen = () => {
+      const swep = localStorage.getItem(SWEP_ENROLLMENT_KEY);
+      const sheetDismissed = sessionStorage.getItem(SWEP_SHEET_SESSION_KEY) === '1';
+      if (!swep && !sheetDismissed) {
+        setOpen(false);
+        return;
+      }
       queueMicrotask(() => setOpen(true));
-    }
+    };
+
+    maybeOpen();
+    window.addEventListener(SWEP_ENROLLMENT_EVENT, maybeOpen);
+    return () => window.removeEventListener(SWEP_ENROLLMENT_EVENT, maybeOpen);
   }, [isAuthenticated]);
 
   return (

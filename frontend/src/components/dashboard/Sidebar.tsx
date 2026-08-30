@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, User, Bell, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy, Smartphone } from 'lucide-react';
+import { Home, BookOpen, User, Bell, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy, Smartphone, GraduationCap } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
-const navItems = [
+const navItems: { href: string; label: string; icon: typeof Home; bonus?: boolean }[] = [
   { href: '/dashboard', label: 'Home', icon: Home },
+  { href: '/dashboard/swep', label: 'SWEP', icon: GraduationCap, bonus: true },
   { href: '/dashboard/courses', label: 'Courses', icon: BookOpen },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/dashboard/playground', label: 'Playground', icon: Code2 },
@@ -65,7 +66,12 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                 }`}
               >
                 <Icon className="size-5 shrink-0" />
-                <span>{item.label}</span>
+                <span className="flex-1">{item.label}</span>
+                {'bonus' in item && item.bonus && (
+                  <span className="rounded-full bg-[var(--brand-gold)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--ink-900)] uppercase">
+                    Bonus
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -8,6 +8,7 @@ import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import CTASection from '@/components/landing/CTASection';
 import Footer from '@/components/ui/Footer';
 import ContinueToDashboardPrompt from '@/components/ui/ContinueToDashboardPrompt';
+import SwepChrome from '@/components/swep/SwepChrome';
 
 export const metadata: Metadata = {
   title: 'SabiLearn — Learn a skill. Sabi it for life.',
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 const navLinks = [
   { label: 'Features', href: '#features' },
   { label: 'Pricing', href: '#pricing' },
+  { label: 'SWEP', href: '/swep' },
   { label: 'Courses', href: '/dashboard/courses' },
   { label: 'AI tools', href: '#ai-tools' },
   { label: 'How it works', href: '#how-it-works' },
@@ -34,6 +36,7 @@ const navLinks = [
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--surface-page)]">
+      <SwepChrome />
       <ContinueToDashboardPrompt />
       <Navbar links={navLinks} />
 

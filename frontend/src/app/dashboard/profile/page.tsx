@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { userApi } from '@/lib/api';
@@ -11,6 +11,7 @@ import Badge from '@/components/ui/Badge';
 import Select from '@/components/ui/Select';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from 'sonner';
+import SettingsPanel from '@/components/dashboard/SettingsPanel';
 
 export default function ProfilePage() {
   const { user, updateProfile, fetchMe } = useAuthStore();
@@ -18,6 +19,12 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#settings') {
+      document.getElementById('settings')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -148,6 +155,8 @@ export default function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      <SettingsPanel />
     </div>
   );
 }

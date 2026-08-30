@@ -4,6 +4,7 @@ import { Sparkles, FileQuestion, MessageCircleQuestion, BookOpen, Users, Award, 
 import Navbar from '@/components/ui/Navbar';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
+import FeatureDetailSection from '@/components/landing/FeatureDetailSection';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
 import AIToolCard from '@/components/ui/AIToolCard';
@@ -53,6 +54,8 @@ export default function LandingPage() {
       <HeroSection />
 
       <FeaturesSection />
+
+      <FeatureDetailSection />
 
       <section className="border-y border-[var(--line)] bg-[var(--surface-card)] px-6 py-16 sm:px-8">
         <div className="mx-auto grid max-w-[var(--container-max)] grid-cols-2 gap-8 text-center sm:grid-cols-4">

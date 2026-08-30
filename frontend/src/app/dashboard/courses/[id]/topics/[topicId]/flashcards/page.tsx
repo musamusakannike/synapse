@@ -35,13 +35,17 @@ export default function FlashcardsPage() {
         const [fcRes, topicRes] = await Promise.all([flashcardApi.byTopic(topicId), topicApi.get(topicId)]);
         setFlashcards(fcRes.data.data || []);
         setTopic(topicRes.data.data);
-      } catch (e) {
-        console.error(e);
+      } catch (e: any) {
+        if (e.response?.status === 403) {
+          window.location.href = `/dashboard/courses/${courseId}?paywall=true`;
+        } else {
+          console.error(e);
+        }
       } finally {
         setIsLoading(false);
       }
     })();
-  }, [topicId]);
+  }, [topicId, courseId]);
 
   const handleComplete = async () => {
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);

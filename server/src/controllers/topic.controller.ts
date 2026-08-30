@@ -30,6 +30,7 @@ export const reorderTopics = async (req: Request, res: Response, next: NextFunct
 export const getTopicsByCourse = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const topics = await Topic.find({ course: req.params.courseId })
+      .select('-contents -exercise')
       .populate({ path: 'flashcardCount' })
       .populate({ path: 'mcqCount' })
       .sort({ order: 1, createdAt: 1 });

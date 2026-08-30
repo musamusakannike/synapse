@@ -69,10 +69,29 @@ export const requireCourseAccess = (
   };
 };
 
-export const resolveCourseIdFromParam = (paramName = 'courseId') => (req: AuthenticatedRequest) =>
-  (req.params[paramName] as string) || null;
+export const resolveCourseIdFromParam = (paramName = 'courseId') => (req: AuthenticatedRequest) => {
+  const value =
+    (req.params?.[paramName] as string) ||
+    (req.body?.[paramName] as string) ||
+    (req.query?.[paramName] as string) ||
+    (req.body?.courseId as string) ||
+    (req.body?.course as string) ||
+    (req.params?.id as string) ||
+    null;
+  return value;
+};
 
 export const resolveCourseIdFromTopicParam = (paramName = 'topicId') => async (req: AuthenticatedRequest) => {
-  const topic = await Topic.findById(req.params[paramName]).select('course');
+  const topicId =
+    (req.params?.[paramName] as string) ||
+    (req.body?.[paramName] as string) ||
+    (req.query?.[paramName] as string) ||
+    (req.body?.topicId as string) ||
+    (req.body?.topic as string) ||
+    (req.params?.id as string) ||
+    null;
+
+  if (!topicId || !mongoose.isValidObjectId(topicId)) return null;
+  const topic = await Topic.findById(topicId).select('course');
   return topic ? String(topic.course) : null;
 };

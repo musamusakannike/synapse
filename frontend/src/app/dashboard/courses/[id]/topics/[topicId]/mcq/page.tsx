@@ -39,13 +39,17 @@ export default function McqPage() {
         const [mcqRes, topicRes] = await Promise.all([mcqApi.byTopic(topicId), topicApi.get(topicId)]);
         setAllMcqs(mcqRes.data.data || []);
         setTopic(topicRes.data.data);
-      } catch (e) {
-        console.error(e);
+      } catch (e: any) {
+        if (e.response?.status === 403) {
+          window.location.href = `/dashboard/courses/${courseId}?paywall=true`;
+        } else {
+          console.error(e);
+        }
       } finally {
         setIsLoading(false);
       }
     })();
-  }, [topicId]);
+  }, [topicId, courseId]);
 
   const startQuiz = (count: number) => {
     const shuffled = [...allMcqs].sort(() => Math.random() - 0.5);

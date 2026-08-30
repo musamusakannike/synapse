@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   BookOpen,
   ArrowLeft,
@@ -15,17 +15,22 @@ import {
   ChevronUp,
   Play,
   Award,
+  CreditCard,
 } from 'lucide-react';
 import { courseApi, chapterApi, progressApi, paymentApi } from '@/lib/api';
 import { Course, Chapter, Topic, PaymentStatus, Exercise } from '@/lib/types';
+import { formatKobo } from '@/lib/money';
 import Badge from '@/components/ui/Badge';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ExerciseModal from '@/components/courses/ExerciseModal';
+import CoursePaywallModal from '@/components/courses/CoursePaywallModal';
+import CoursePaywallBanner from '@/components/courses/CoursePaywallBanner';
 
 export default function CourseDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -33,6 +38,7 @@ export default function CourseDetailsPage() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedToast, setCopiedToast] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   // Accordion toggle states
   const [accordionState, setAccordionState] = useState({
@@ -59,10 +65,24 @@ export default function CourseDetailsPage() {
         ]);
 
         if (!active) return;
-        setCourse(courseRes.data.data);
+        const courseData: Course = courseRes.data.data;
         const fetchedChapters: Chapter[] = chaptersRes.data.data || [];
+        const payStatus: PaymentStatus = paymentRes.data.data;
+
+        setCourse(courseData);
         setChapters(fetchedChapters);
-        setPaymentStatus(paymentRes.data.data);
+        setPaymentStatus(payStatus);
+
+        // Check if redirected from a locked lesson
+        const hasAccessRightNow =
+          !courseData ||
+          courseData.isFree ||
+          payStatus?.subscription?.status === 'active' ||
+          !!payStatus?.purchasedCourseIds?.includes(courseData._id);
+
+        if (!hasAccessRightNow && searchParams.get('paywall') === 'true') {
+          setIsPaywallOpen(true);
+        }
 
         // Default expand chapter 1
         if (fetchedChapters.length > 0) {
@@ -78,7 +98,7 @@ export default function CourseDetailsPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, searchParams]);
 
   const fetchCourseData = async () => {
     try {
@@ -120,7 +140,11 @@ export default function CourseDetailsPage() {
   };
 
   const handleOpenTopic = (chapter: Chapter, topic: Topic) => {
-    if (!hasAccess || !topic.isUnlocked) return;
+    if (!hasAccess) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    if (!topic.isUnlocked) return;
 
     // Save position asynchronously
     progressApi.savePosition({
@@ -187,14 +211,26 @@ export default function CourseDetailsPage() {
             {!course.isFree && <Badge tone={hasAccess ? 'success' : 'dark'}>{hasAccess ? 'Unlocked' : 'Premium'}</Badge>}
           </div>
 
-          {/* Share Button */}
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
-          >
-            <Share2 className="size-4 text-[var(--brand-gold-600)]" />
-            <span>Share Course</span>
-          </button>
+          <div className="flex items-center gap-3">
+            {!course.isFree && !hasAccess && (
+              <button
+                onClick={() => setIsPaywallOpen(true)}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
+              >
+                <Lock className="size-3.5" />
+                <span>Unlock ({formatKobo(course.price)})</span>
+              </button>
+            )}
+
+            {/* Share Button */}
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
+            >
+              <Share2 className="size-4 text-[var(--brand-gold-600)]" />
+              <span>Share Course</span>
+            </button>
+          </div>
         </div>
 
         {/* Title */}
@@ -271,6 +307,16 @@ export default function CourseDetailsPage() {
             <p className="text-lg font-extrabold text-amber-600">+{course.totalObtainableXp || 0}</p>
           </div>
         </div>
+
+        {/* Course Paywall Banner if user lacks access to premium course */}
+        {!course.isFree && !hasAccess && (
+          <div className="pt-2">
+            <CoursePaywallBanner
+              course={course}
+              onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+          </div>
+        )}
       </div>
 
       {/* 3 Collapsed Dropdowns (Accordion) */}
@@ -377,8 +423,8 @@ export default function CourseDetailsPage() {
                         <span className="text-xs font-bold tracking-wider text-[var(--brand-gold-600)] uppercase">
                           Chapter {cIdx + 1}
                         </span>
-                        <Badge tone={isCompleted ? 'success' : isLocked ? 'dark' : 'gold'}>
-                          {isCompleted ? 'Completed' : isLocked ? 'Locked' : 'In Progress'}
+                        <Badge tone={!hasAccess ? 'dark' : isCompleted ? 'success' : isLocked ? 'dark' : 'gold'}>
+                          {!hasAccess ? 'Premium' : isCompleted ? 'Completed' : isLocked ? 'Locked' : 'In Progress'}
                         </Badge>
                       </div>
 
@@ -393,7 +439,7 @@ export default function CourseDetailsPage() {
                       )}
 
                       {/* Progress Bar for In-Progress chapter */}
-                      {isInProgress && (
+                      {hasAccess && isInProgress && (
                         <div className="max-w-md pt-2">
                           <ProgressBar value={chapter.progressPercent || 0} label={`${chapter.progressPercent || 0}% Completed`} />
                         </div>
@@ -402,7 +448,15 @@ export default function CourseDetailsPage() {
 
                     {/* Action Button & Toggle Dropdown */}
                     <div className="flex shrink-0 items-center gap-3">
-                      {isLocked ? (
+                      {!hasAccess ? (
+                        <button
+                          onClick={() => setIsPaywallOpen(true)}
+                          className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
+                        >
+                          <Lock className="size-3.5" />
+                          <span>Unlock Chapter</span>
+                        </button>
+                      ) : isLocked ? (
                         <button disabled className="flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-400">
                           <Lock className="size-3.5" />
                           <span>Locked</span>
@@ -414,7 +468,7 @@ export default function CourseDetailsPage() {
                               handleOpenTopic(chapter, chapter.topics[0]);
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)]"
+                          className="flex items-center gap-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-2 text-xs font-semibold text-[var(--ink-900)] transition-colors hover:bg-[var(--line)] cursor-pointer"
                         >
                           <Play className="size-3.5 text-[var(--brand-gold-600)]" />
                           <span>Retake Chapter</span>
@@ -427,7 +481,7 @@ export default function CourseDetailsPage() {
                               handleOpenTopic(chapter, firstUnlocked);
                             }
                           }}
-                          className="flex items-center gap-1.5 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
+                          className="flex items-center gap-1.5 rounded-xl bg-[var(--brand-gold)] px-4 py-2 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105 cursor-pointer"
                         >
                           <Play className="size-3.5 fill-black" />
                           <span>Continue Chapter</span>
@@ -436,7 +490,7 @@ export default function CourseDetailsPage() {
 
                       <button
                         onClick={() => toggleChapterDropdown(chapter._id)}
-                        className="rounded-xl p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]"
+                        className="rounded-xl p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)] cursor-pointer"
                       >
                         {isOpen ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
                       </button>
@@ -453,9 +507,17 @@ export default function CourseDetailsPage() {
                         return (
                           <div
                             key={topic._id}
-                            onClick={() => tUnlocked && handleOpenTopic(chapter, topic)}
+                            onClick={() => {
+                              if (!hasAccess) {
+                                setIsPaywallOpen(true);
+                              } else if (tUnlocked) {
+                                handleOpenTopic(chapter, topic);
+                              }
+                            }}
                             className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
-                              !tUnlocked
+                              !hasAccess
+                                ? 'cursor-pointer border-[var(--line)] shadow-xs hover:border-[var(--brand-gold-400)] bg-[var(--surface-card)]'
+                                : !tUnlocked
                                 ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/30 opacity-60'
                                 : 'cursor-pointer border-[var(--line)] shadow-xs hover:border-[var(--brand-gold-400)]'
                             }`}
@@ -463,14 +525,16 @@ export default function CourseDetailsPage() {
                             <div className="flex min-w-0 items-center gap-3">
                               <span
                                 className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                                  tCompleted
+                                  !hasAccess
+                                    ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]'
+                                    : tCompleted
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : tUnlocked
                                     ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]'
                                     : 'bg-slate-200 text-slate-500'
                                 }`}
                               >
-                                {tCompleted ? '✓' : tIdx + 1}
+                                {!hasAccess ? <Lock className="size-3.5 text-amber-600" /> : tCompleted ? '✓' : tIdx + 1}
                               </span>
 
                               <div className="min-w-0">
@@ -492,7 +556,12 @@ export default function CourseDetailsPage() {
                                 +{topic.xp || 50} XP
                               </span>
 
-                              {!tUnlocked ? (
+                              {!hasAccess ? (
+                                <span className="flex items-center gap-1 text-xs font-bold text-amber-600">
+                                  <Lock className="size-3.5" />
+                                  <span>Unlock →</span>
+                                </span>
+                              ) : !tUnlocked ? (
                                 <Lock className="size-4 text-slate-400" />
                               ) : tCompleted ? (
                                 <CheckCircle2 className="size-4 text-emerald-500" />
@@ -508,12 +577,17 @@ export default function CourseDetailsPage() {
                       {chapter.exercise && chapter.exercise.questions && chapter.exercise.questions.length > 0 && (
                         <div
                           onClick={() => {
-                            if (!isLocked && hasAccess) {
-                              router.push(`/dashboard/courses/${id}/chapters/${chapter._id}/assessment`);
+                            if (!hasAccess) {
+                              setIsPaywallOpen(true);
+                              return;
                             }
+                            if (isLocked) return;
+                            router.push(`/dashboard/courses/${id}/chapters/${chapter._id}/assessment`);
                           }}
                           className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
-                            isLocked || !hasAccess
+                            !hasAccess
+                              ? 'cursor-pointer border-amber-300 bg-amber-500/10 shadow-xs hover:border-amber-400 hover:bg-amber-500/15'
+                              : isLocked
                               ? 'cursor-not-allowed border-[var(--line)] bg-[var(--surface-card)]/30 opacity-60'
                               : 'cursor-pointer border-amber-300 bg-amber-500/10 shadow-xs hover:border-amber-400 hover:bg-amber-500/15'
                           }`}
@@ -544,7 +618,12 @@ export default function CourseDetailsPage() {
                               +{chapter.exercise.questions.reduce((sum, q) => sum + (q.xp || 20), 0)} XP
                             </span>
 
-                            {isLocked || !hasAccess ? (
+                            {!hasAccess ? (
+                              <span className="flex items-center gap-1 text-xs font-bold text-amber-700">
+                                <Lock className="size-3.5" />
+                                <span>Unlock →</span>
+                              </span>
+                            ) : isLocked ? (
                               <Lock className="size-4 text-slate-400" />
                             ) : (
                               <span className="text-xs font-bold text-amber-700">Take Assessment →</span>
@@ -560,6 +639,15 @@ export default function CourseDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Course Paywall Modal */}
+      {course && (
+        <CoursePaywallModal
+          open={isPaywallOpen}
+          onClose={() => setIsPaywallOpen(false)}
+          course={course}
+        />
+      )}
     </div>
   );
 }

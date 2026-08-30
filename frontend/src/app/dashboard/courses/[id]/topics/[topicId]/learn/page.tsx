@@ -14,19 +14,25 @@ export default function LearnPage() {
   const topicId = params.topicId as string;
   const [topic, setTopic] = useState<Topic | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await topicApi.get(topicId);
         setTopic(res.data.data);
-      } catch (e) {
-        console.error(e);
+      } catch (e: any) {
+        if (e.response?.status === 403) {
+          setAccessDenied(true);
+          router.replace(`/dashboard/courses/${courseId}?paywall=true`);
+        } else {
+          console.error(e);
+        }
       } finally {
         setIsLoading(false);
       }
     })();
-  }, [topicId]);
+  }, [topicId, courseId, router]);
 
   const handleClose = () => router.push(`/dashboard/courses/${courseId}`);
 
@@ -38,12 +44,19 @@ export default function LearnPage() {
     );
   }
 
-  if (!topic) {
+  if (accessDenied || !topic) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)]">
-        <p className="text-[var(--text-muted)]">Topic not found.</p>
-        <button onClick={handleClose} className="cursor-pointer rounded-[var(--radius-sm)] bg-[var(--brand-gold)] px-4 py-2 text-sm font-semibold text-[var(--ink-900)]">
-          Go back
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-[var(--surface-page)] p-6 text-center">
+        <p className="text-[var(--text-muted)]">
+          {accessDenied
+            ? 'This lesson requires course purchase or an active subscription.'
+            : 'Topic not found.'}
+        </p>
+        <button
+          onClick={handleClose}
+          className="cursor-pointer rounded-xl bg-[var(--brand-gold)] px-5 py-2.5 text-sm font-bold text-slate-950 shadow-sm transition-all hover:brightness-105"
+        >
+          {accessDenied ? 'View Access Options' : 'Go back'}
         </button>
       </div>
     );

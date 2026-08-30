@@ -15,6 +15,7 @@ import {
   savePosition,
 } from '../controllers/progress.controller';
 import { protect } from '../middlewares/auth.middleware';
+import { requireCourseAccess, resolveCourseIdFromParam, resolveCourseIdFromTopicParam } from '../middlewares/access.middleware';
 import { validateFlashcardSession, validateMcqSession, validateContentPosition } from '../validations/progress.validation';
 
 const router = Router();
@@ -24,13 +25,13 @@ router.get('/dashboard-resumption', protect, getDashboardResumption);
 router.get('/stats', protect, getProgress);
 router.get('/continue', protect, getContinueStudying);
 router.get('/needs-improvement', protect, getNeedsImprovement);
-router.get('/course/:courseId', protect, getCourseProgress);
-router.get('/topic/:topicId', protect, getTopicProgress);
-router.post('/topic-complete', protect, completeTopic);
-router.post('/exercise-submit', protect, submitExercise);
-router.post('/save-position', protect, savePosition);
-router.post('/flashcard-session', protect, validateFlashcardSession, submitFlashcardSession);
-router.post('/mcq-session', protect, validateMcqSession, submitMcqSession);
-router.post('/content-position', protect, validateContentPosition, updateContentPosition);
+router.get('/course/:courseId', protect, requireCourseAccess(resolveCourseIdFromParam('courseId')), getCourseProgress);
+router.get('/topic/:topicId', protect, requireCourseAccess(resolveCourseIdFromTopicParam('topicId')), getTopicProgress);
+router.post('/topic-complete', protect, requireCourseAccess(resolveCourseIdFromParam('courseId')), completeTopic);
+router.post('/exercise-submit', protect, requireCourseAccess(resolveCourseIdFromParam('courseId')), submitExercise);
+router.post('/save-position', protect, requireCourseAccess(resolveCourseIdFromParam('courseId')), savePosition);
+router.post('/flashcard-session', protect, requireCourseAccess(resolveCourseIdFromParam('course')), validateFlashcardSession, submitFlashcardSession);
+router.post('/mcq-session', protect, requireCourseAccess(resolveCourseIdFromParam('course')), validateMcqSession, submitMcqSession);
+router.post('/content-position', protect, requireCourseAccess(resolveCourseIdFromParam('course')), validateContentPosition, updateContentPosition);
 
 export default router;

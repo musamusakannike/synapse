@@ -11,6 +11,7 @@ import {
   deleteHistory,
 } from '../controllers/ai.controller';
 import { protect } from '../middlewares/auth.middleware';
+import { requireCourseAccess, resolveCourseIdFromParam, resolveCourseIdFromTopicParam } from '../middlewares/access.middleware';
 import {
   validateSummarize,
   validateGenerateQuiz,
@@ -32,8 +33,8 @@ router.post('/generate-flashcards', validateGenerateFlashcards, generateFlashcar
 router.post('/qa', validateQA, qa);
 
 // Course & Topic Quiz Features
-router.post('/courses/:courseId/quiz', validateCourseQuiz, generateCourseQuiz);
-router.post('/topics/:topicId/quiz', validateTopicQuiz, generateTopicQuiz);
+router.post('/courses/:courseId/quiz', requireCourseAccess(resolveCourseIdFromParam('courseId')), validateCourseQuiz, generateCourseQuiz);
+router.post('/topics/:topicId/quiz', requireCourseAccess(resolveCourseIdFromTopicParam('topicId')), validateTopicQuiz, generateTopicQuiz);
 
 // Generation History Features
 router.get('/history', getHistory);

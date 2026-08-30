@@ -17,7 +17,7 @@ export const getChaptersByCourse = async (req: AuthRequest, res: Response, next:
     const userId = req.user?._id;
 
     const chapters = await Chapter.find({ course: courseId }).sort({ order: 1 });
-    const topics = await Topic.find({ course: courseId }).sort({ order: 1 });
+    const topics = await Topic.find({ course: courseId }).select('-contents').sort({ order: 1 });
 
     let userProgress = null;
     if (userId) {

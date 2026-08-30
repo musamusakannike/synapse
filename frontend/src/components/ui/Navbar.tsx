@@ -23,26 +23,8 @@ export default function Navbar({
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         {/* Left: Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <svg
-            className="size-7 shrink-0"
-            viewBox="0 0 28 28"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <linearGradient id="nav-brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#00D2FF" />
-                <stop offset="50%" stopColor="#3A7BD5" />
-                <stop offset="100%" stopColor="#7F00FF" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M5 21C5 21 8.5 21.5 13 17C17.5 12.5 18 5 18 5C18 5 21.5 9 21.5 14C21.5 19 18 22.5 13 22.5C8 22.5 5 21 5 21Z"
-              fill="url(#nav-brand-grad)"
-            />
-          </svg>
           <span className="font-[var(--font-display)] text-xl font-bold tracking-tight text-[#0E0E1A]">
-            SabiLearn
+            Sabi<span className="text-[#F8BE43]">Learn</span>
           </span>
         </Link>
 

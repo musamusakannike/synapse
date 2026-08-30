@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Sparkles, FileQuestion, MessageCircleQuestion, BookOpen, Users, Award, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import HeroSection from '@/components/landing/HeroSection';
+import FeaturesSection from '@/components/landing/FeaturesSection';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
 import AIToolCard from '@/components/ui/AIToolCard';
@@ -21,6 +22,7 @@ export const metadata: Metadata = {
 };
 
 const navLinks = [
+  { label: 'Features', href: '#features' },
   { label: 'Courses', href: '/dashboard/courses' },
   { label: 'AI tools', href: '#ai-tools' },
   { label: 'How it works', href: '#how-it-works' },
@@ -49,6 +51,8 @@ export default function LandingPage() {
       <Navbar links={navLinks} />
 
       <HeroSection />
+
+      <FeaturesSection />
 
       <section className="border-y border-[var(--line)] bg-[var(--surface-card)] px-6 py-16 sm:px-8">
         <div className="mx-auto grid max-w-[var(--container-max)] grid-cols-2 gap-8 text-center sm:grid-cols-4">

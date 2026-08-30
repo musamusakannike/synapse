@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard } from 'lucide-react';
 import Dialog from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
@@ -43,11 +42,14 @@ export default function ContinueToDashboardPrompt() {
         </>
       }
     >
-      <div className="flex items-start gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--brand-gold-100)]">
-          <LayoutDashboard className="size-5 text-[var(--brand-gold-600)]" />
-        </div>
-        <p className="pt-1 text-sm text-[var(--text-muted)]">
+      <div className="flex items-center gap-3.5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/mascot/tutor-mascot.webp"
+          alt="Tutor mascot"
+          className="size-12 shrink-0 object-contain"
+        />
+        <p className="text-sm leading-relaxed text-[var(--text-muted)]">
           {user?.firstName ? `Hi ${user.firstName}, you're` : "You're"} already signed in. Continue to your dashboard to pick up where you left off.
         </p>
       </div>

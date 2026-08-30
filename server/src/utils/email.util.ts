@@ -1,25 +1,30 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
-const DEFAULT_FROM = 'SabiLearn <noreply@sabilearn.online>';
+const DEFAULT_FROM = 'SabiLearn <noreply@contact.sabilearn.online>';
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+function getResendClient(): Resend | null {
+  return process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+}
 
-const transporter = process.env.SMTP_HOST
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: process.env.SMTP_USER
-        ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS || '',
-          }
-        : undefined,
-    })
-  : null;
+function getTransporter() {
+  return process.env.SMTP_HOST
+    ? nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: process.env.SMTP_USER
+          ? {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS || '',
+            }
+          : undefined,
+      })
+    : null;
+}
 
 export async function sendEmail({
   to,
@@ -31,6 +36,8 @@ export async function sendEmail({
   html: string;
 }): Promise<void> {
   const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || DEFAULT_FROM;
+  const resend = getResendClient();
+  const transporter = getTransporter();
 
   // Prefer Resend when configured.
   if (resend) {

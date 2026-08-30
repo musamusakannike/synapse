@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Sparkles, FileQuestion, MessageCircleQuestion, BookOpen, Users, Award, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
+import HeroSection from '@/components/landing/HeroSection';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
 import AIToolCard from '@/components/ui/AIToolCard';
@@ -24,6 +24,7 @@ const navLinks = [
   { label: 'Courses', href: '/dashboard/courses' },
   { label: 'AI tools', href: '#ai-tools' },
   { label: 'How it works', href: '#how-it-works' },
+  { label: 'Blog', href: '/blog' },
   { label: 'FAQ', href: '#faq' },
 ];
 
@@ -47,36 +48,7 @@ export default function LandingPage() {
       <ContinueToDashboardPrompt />
       <Navbar links={navLinks} />
 
-      <section className="relative overflow-hidden px-6 py-20 sm:px-8 sm:py-28">
-        <div className="mx-auto grid max-w-[var(--container-max)] grid-cols-1 items-stretch gap-12 lg:grid-cols-2">
-          <div>
-            <span className="mb-5 inline-block rounded-[var(--radius-full)] bg-[var(--brand-gold-100)] px-3 py-1 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">
-              For every Nigerian learner
-            </span>
-            <h1 className="mb-5 text-4xl leading-[var(--leading-tight)] font-[var(--font-display)] font-bold tracking-[var(--tracking-tight)] text-[var(--ink-900)] sm:text-5xl">
-              Learn a skill. <span className="text-[var(--brand-gold)]">Sabi</span> it for life.
-            </h1>
-            <p className="mb-8 max-w-lg text-lg leading-[var(--leading-relaxed)] text-[var(--text-muted)]">
-              Courses, interactive exercises, practice quizzes, and AI study tools — built for how you actually learn.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/register"><Button size="lg">Get started free</Button></Link>
-              <Link href="/dashboard/courses"><Button size="lg" variant="secondary">Browse courses</Button></Link>
-            </div>
-          </div>
-          <div className="relative h-full min-h-[350px] overflow-hidden rounded-[var(--radius-2xl)] shadow-[var(--shadow-xl)]">
-            <Image
-              src="/images/hero.webp"
-              alt="Nigerian students studying together on SabiLearn"
-              fill
-              priority
-              fetchPriority="high"
-              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 600px"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       <section className="border-y border-[var(--line)] bg-[var(--surface-card)] px-6 py-16 sm:px-8">
         <div className="mx-auto grid max-w-[var(--container-max)] grid-cols-2 gap-8 text-center sm:grid-cols-4">

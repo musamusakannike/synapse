@@ -1,41 +1,138 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { Menu, X } from 'lucide-react';
 
 interface NavLink {
   label: string;
   href: string;
 }
 
-export default function Navbar({ links = [], active }: { links?: NavLink[]; active?: string }) {
+export default function Navbar({
+  links = [],
+  active,
+}: {
+  links?: NavLink[];
+  active?: string;
+}) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-card)] px-6 py-4 font-[var(--font-body)] sm:px-8">
-      <Link href="/" className="text-lg font-[var(--font-display)] font-bold text-[var(--ink-900)]">
-        Sabi<span className="text-[var(--brand-gold)]">Learn</span>
-      </Link>
-      <nav className="hidden gap-7 md:flex">
-        {links.map((l) => (
-          <Link
-            key={l.label}
-            href={l.href}
-            className={`text-sm font-semibold no-underline transition-colors ${l.label === active ? 'text-[var(--brand-gold-600)]' : 'text-[var(--ink-700)] hover:text-[var(--ink-900)]'}`}
+    <header className="relative z-40 w-full bg-[var(--surface-page)] px-6 py-5 sm:px-8">
+      <div className="mx-auto flex max-w-7xl items-center justify-between">
+        {/* Left: Brand Logo */}
+        <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <svg
+            className="size-7 shrink-0"
+            viewBox="0 0 28 28"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            {l.label}
+            <defs>
+              <linearGradient id="nav-brand-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#00D2FF" />
+                <stop offset="50%" stopColor="#3A7BD5" />
+                <stop offset="100%" stopColor="#7F00FF" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M5 21C5 21 8.5 21.5 13 17C17.5 12.5 18 5 18 5C18 5 21.5 9 21.5 14C21.5 19 18 22.5 13 22.5C8 22.5 5 21 5 21Z"
+              fill="url(#nav-brand-grad)"
+            />
+          </svg>
+          <span className="font-[var(--font-display)] text-xl font-bold tracking-tight text-[#0E0E1A]">
+            SabiLearn
+          </span>
+        </Link>
+
+        {/* Center: Nav links (Desktop) */}
+        <nav className="hidden items-center gap-8 md:flex">
+          {links.map((l) => (
+            <Link
+              key={l.label}
+              href={l.href}
+              className={`text-[15px] font-medium transition-colors ${
+                l.label === active
+                  ? 'text-[#0E0E1A] font-bold'
+                  : 'text-[#2D2D3A] hover:text-[#0E0E1A]'
+              }`}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right: Auth CTAs (Desktop) */}
+        <div className="hidden items-center gap-6 sm:flex">
+          <Link
+            href="/auth/login"
+            className="text-[15px] font-semibold text-[#0E0E1A] transition-colors hover:text-[var(--brand-violet-600)]"
+          >
+            Login
           </Link>
-        ))}
-      </nav>
-      <div className="flex items-center gap-4">
-        <Link href="/auth/login" className="hidden text-sm font-semibold text-[var(--ink-700)] hover:text-[var(--ink-900)] sm:inline">
-          Log in
-        </Link>
-        <Link
-          href="/auth/register"
-          className="rounded-[var(--radius-md)] bg-[var(--ink-900)] px-5 py-2.5 text-sm font-[var(--font-display)] font-semibold text-white transition-opacity hover:opacity-90"
-        >
-          Get started
-        </Link>
+          <Link
+            href="/auth/register"
+            className="rounded-lg border-2 border-[#0E0E1A] bg-[#F8BE43] px-5 py-2.5 font-[var(--font-display)] text-sm font-bold text-[#0E0E1A] shadow-sm transition-all duration-150 hover:bg-[#f2b330] hover:shadow active:translate-y-0.5"
+          >
+            Get Started Free
+          </Link>
+        </div>
+
+        {/* Mobile Hamburger Button */}
+        <div className="flex items-center gap-2 sm:hidden">
+          <Link
+            href="/auth/register"
+            className="rounded-lg border-2 border-[#0E0E1A] bg-[#F8BE43] px-3.5 py-1.5 font-[var(--font-display)] text-xs font-bold text-[#0E0E1A]"
+          >
+            Get Started
+          </Link>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-1.5 text-[#0E0E1A]"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--surface-card)] p-5 shadow-lg md:hidden">
+          <nav className="flex flex-col gap-3">
+            {links.map((l) => (
+              <Link
+                key={l.label}
+                href={l.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={`py-1.5 text-base font-medium transition-colors ${
+                  l.label === active ? 'font-bold text-[#0E0E1A]' : 'text-[#2D2D3A]'
+                }`}
+              >
+                {l.label}
+              </Link>
+            ))}
+            <div className="my-2 border-t border-[var(--line)] pt-3 flex flex-col gap-3">
+              <Link
+                href="/auth/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1 text-base font-semibold text-[#0E0E1A]"
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg border-2 border-[#0E0E1A] bg-[#F8BE43] py-2.5 text-center font-[var(--font-display)] text-sm font-bold text-[#0E0E1A]"
+              >
+                Get Started Free
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

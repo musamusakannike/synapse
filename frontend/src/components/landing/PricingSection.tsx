@@ -143,7 +143,7 @@ export default function PricingSection() {
             return (
               <div
                 key={plan.name}
-                className={`relative flex flex-col justify-between rounded-2xl border-2 border-[#0E0E1A] bg-white p-6 sm:p-8 transition-shadow duration-200 hover:shadow-md ${
+                className={`relative flex flex-col justify-between rounded-2xl border-2 border-[#0E0E1A] bg-white p-6 transition-shadow duration-200 hover:shadow-md sm:p-8 ${
                   plan.isPopular ? 'ring-1 ring-[#0E0E1A]' : ''
                 }`}
               >

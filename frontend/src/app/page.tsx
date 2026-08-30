@@ -1,14 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Sparkles, FileQuestion, MessageCircleQuestion, BookOpen, Users, Award, ArrowRight } from 'lucide-react';
 import Navbar from '@/components/ui/Navbar';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import FeatureDetailSection from '@/components/landing/FeatureDetailSection';
+import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import PricingSection from '@/components/landing/PricingSection';
 import Footer from '@/components/ui/Footer';
 import Button from '@/components/ui/Button';
-import AIToolCard from '@/components/ui/AIToolCard';
 import ContinueToDashboardPrompt from '@/components/ui/ContinueToDashboardPrompt';
 
 export const metadata: Metadata = {
@@ -33,20 +32,6 @@ const navLinks = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-const steps = [
-  { title: 'Create your account', description: 'Sign up free in under a minute — no card required.' },
-  { title: 'Enroll in a course', description: 'Browse free and paid courses across web dev, design, business and more.' },
-  { title: 'Study your way', description: 'Read topics, take interactive exercises, pass quizzes, or lean on AI tools.' },
-  { title: 'Track your progress', description: 'See your streak, earned XP leaderboard, and course resumption cards.' },
-];
-
-const faqs = [
-  { q: 'Is SabiLearn free?', a: 'Many courses are free to enroll in. Some advanced courses carry a one-time fee, shown clearly in ₦ before you enroll.' },
-  { q: 'What are the AI tools?', a: 'Summarizer, quiz generator, and Q&A AI — built to help you study faster, not to replace studying.' },
-  { q: 'Can I study on my phone?', a: 'Yes — SabiLearn works fully in your mobile browser, no app download required.' },
-  { q: 'How do I track my progress?', a: 'Your dashboard shows your study streak, XP leaderboard, and course progress.' },
-];
-
 export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--surface-page)]">
@@ -60,6 +45,8 @@ export default function LandingPage() {
       <FeatureDetailSection />
 
       <PricingSection />
+
+      <TestimonialsSection />
 
       <section className="bg-[var(--ink-900)] px-6 py-20 text-center text-white sm:px-8">
         <div className="mx-auto max-w-2xl">

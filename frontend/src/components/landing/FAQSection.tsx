@@ -16,9 +16,6 @@ export default function FAQSection() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="text-center">
-          <span className="inline-block rounded-[var(--radius-full)] bg-[var(--brand-gold-100)] px-3.5 py-1 text-xs font-semibold tracking-wide text-[var(--brand-gold-600)] uppercase">
-            Frequently Asked Questions
-          </span>
           <h2 className="mt-4 text-3xl font-[var(--font-display)] font-bold tracking-tight text-[#0E0E1A] sm:text-4xl lg:text-[44px] lg:leading-[1.15]">
             Everything you need to know about SabiLearn
           </h2>

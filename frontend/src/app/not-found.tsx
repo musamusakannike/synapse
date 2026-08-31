@@ -9,6 +9,10 @@ import Button from '@/components/ui/Button';
 export const metadata: Metadata = {
   title: 'Page not found — SabiLearn',
   description: 'The page you were looking for could not be found.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const helpfulLinks = [

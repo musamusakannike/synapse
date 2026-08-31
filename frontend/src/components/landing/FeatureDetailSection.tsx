@@ -7,7 +7,7 @@ export default function FeatureDetailSection() {
     <section className="overflow-hidden bg-[var(--surface-page)] px-6 py-20 sm:px-8 lg:py-28">
       <div className="mx-auto flex max-w-6xl flex-col gap-24 lg:gap-32">
         {/* Feature Detail 1: AI Study Workspace */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
+        <div id="ai-tools" className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16 scroll-mt-24">
           {/* Left: Image Graphic */}
           <div className="flex justify-center lg:col-span-6">
             <div className="relative w-full max-w-[540px]">
@@ -56,7 +56,7 @@ export default function FeatureDetailSection() {
         </div>
 
         {/* Feature Detail 2: Course Modules & Practice */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
+        <div id="how-it-works" className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16 scroll-mt-24">
           {/* Left: Text Content (Order 2 on mobile, Order 1 on Desktop) */}
           <div className="order-2 flex flex-col items-start lg:order-1 lg:col-span-6">
             <h2 className="text-3xl font-[var(--font-display)] font-bold tracking-tight text-[#0E0E1A] sm:text-4xl lg:text-[42px] lg:leading-[1.15]">

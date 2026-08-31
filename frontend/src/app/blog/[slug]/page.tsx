@@ -39,24 +39,42 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const title = post.seoTitle || post.title;
   const description = post.seoDescription || post.excerpt;
   const url = `${SITE_URL}/blog/${post.slug}`;
+  const authorName = typeof post.author === 'object' && post.author ? post.author.name : 'SabiLearn';
+  const ogImage = post.coverImage || '/og-image.png';
 
   return {
     title: `${title} — SabiLearn Blog`,
     description,
+    keywords: post.tags.length > 0 ? post.tags : ['SabiLearn', 'study guide', post.category],
+    authors: [{ name: authorName }],
     alternates: { canonical: url },
     openGraph: {
       title,
       description,
       url,
+      siteName: 'SabiLearn',
+      locale: 'en_NG',
       type: 'article',
       publishedTime: post.publishedAt || undefined,
-      images: post.coverImage ? [{ url: post.coverImage }] : undefined,
+      modifiedTime: post.updatedAt || undefined,
+      authors: [authorName],
+      tags: post.tags,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: post.coverImage ? [post.coverImage] : undefined,
+      creator: '@sabilearn',
+      site: '@sabilearn',
+      images: [ogImage],
     },
   };
 }
@@ -72,17 +90,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { post, related } = result;
   const author = typeof post.author === 'object' ? post.author : null;
   const url = `${SITE_URL}/blog/${post.slug}`;
+  const wordCount = post.content ? post.content.split(/\s+/).filter(Boolean).length : undefined;
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.excerpt,
-    image: post.coverImage || undefined,
+    image: post.coverImage || `${SITE_URL}/og-image.png`,
     datePublished: post.publishedAt || undefined,
     dateModified: post.updatedAt,
+    inLanguage: 'en-NG',
+    articleSection: post.category,
+    keywords: post.tags.join(', '),
+    wordCount,
     author: author ? { '@type': 'Person', name: author.name } : { '@type': 'Organization', name: 'SabiLearn' },
-    publisher: { '@type': 'Organization', name: 'SabiLearn' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'SabiLearn',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   };
 

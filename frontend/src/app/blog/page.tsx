@@ -15,14 +15,42 @@ const navLinks = [
 ];
 
 export const metadata: Metadata = {
-  title: 'Blog — SabiLearn',
-  description: 'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
+  title: 'Blog — Study Guides, Learning Science & Tech Tutorials',
+  description:
+    'Practical study guides, learning techniques, and tech tutorials designed for Nigerian learners to study faster and sabi skills for life.',
+  keywords: [
+    'study techniques Nigeria',
+    'learning science',
+    'SabiLearn blog',
+    'tech tutorials Nigeria',
+    'study guides',
+    'exam preparation Nigeria',
+    'how to study smarter',
+  ],
   alternates: { canonical: `${SITE_URL}/blog` },
   openGraph: {
-    title: 'The SabiLearn Blog',
-    description: 'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
+    title: 'The SabiLearn Blog — Study Smarter, Learn Faster',
+    description:
+      'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
     url: `${SITE_URL}/blog`,
+    siteName: 'SabiLearn',
+    locale: 'en_NG',
     type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'The SabiLearn Blog',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'The SabiLearn Blog — Study Smarter, Learn Faster',
+    description:
+      'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
+    images: ['/og-image.png'],
   },
 };
 
@@ -50,16 +78,30 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Blog',
-    name: 'The SabiLearn Blog',
-    url: `${SITE_URL}/blog`,
-    description: 'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
-    blogPost: posts.map((post) => ({
-      '@type': 'BlogPosting',
-      headline: post.title,
-      url: `${SITE_URL}/blog/${post.slug}`,
-      datePublished: post.publishedAt || undefined,
-    })),
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blog` },
+        ],
+      },
+      {
+        '@type': 'Blog',
+        name: 'The SabiLearn Blog',
+        url: `${SITE_URL}/blog`,
+        description:
+          'Practical study guides, learning science, and how-tos to help you learn faster and sabi it for life.',
+        blogPost: posts.map((post) => ({
+          '@type': 'BlogPosting',
+          headline: post.title,
+          url: `${SITE_URL}/blog/${post.slug}`,
+          datePublished: post.publishedAt || undefined,
+          dateModified: post.updatedAt,
+          description: post.excerpt,
+        })),
+      },
+    ],
   };
 
   return (

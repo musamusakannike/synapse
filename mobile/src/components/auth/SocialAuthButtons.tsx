@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { IconBrandGoogleFilled, IconBrandApple } from '@tabler/icons-react-native';
+import { IconBrandGoogleFilled } from '@tabler/icons-react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { fontFamilies, spacing } from '@/theme';
 import { isAppleAuthAvailable } from '@/lib/firebase';
 import * as haptics from '@/lib/haptics';
@@ -19,11 +20,13 @@ export default function SocialAuthButtons({ onGoogle, onApple, loading }: Social
   }, []);
 
   const handlePressGoogle = () => {
+    if (loading) return;
     haptics.light();
     onGoogle();
   };
 
   const handlePressApple = () => {
+    if (loading) return;
     haptics.light();
     onApple();
   };
@@ -45,19 +48,15 @@ export default function SocialAuthButtons({ onGoogle, onApple, loading }: Social
       </Pressable>
 
       {appleAvailable && (
-        <Pressable
-          accessibilityRole="button"
-          disabled={loading}
-          onPress={handlePressApple}
-          style={({ pressed }) => [
-            styles.socialButton,
-            pressed && !loading && styles.socialButtonPressed,
-            loading && styles.disabledButton,
-          ]}
-        >
-          <IconBrandApple size={20} color="#0E0E1A" />
-          <Text style={styles.socialButtonText}>Continue with Apple</Text>
-        </Pressable>
+        <View style={loading && styles.disabledButton} pointerEvents={loading ? 'none' : 'auto'}>
+          <AppleAuthentication.AppleAuthenticationButton
+            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+            buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE_OUTLINE}
+            cornerRadius={18}
+            style={styles.appleButton}
+            onPress={handlePressApple}
+          />
+        </View>
       )}
     </View>
   );
@@ -78,6 +77,11 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
+    height: 52,
+  },
+  appleButton: {
+    width: '100%',
+    height: 52,
   },
   socialButtonPressed: {
     backgroundColor: '#F7F7F9',
@@ -93,4 +97,5 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
 });
+
 

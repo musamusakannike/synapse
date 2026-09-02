@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { View, Text, Image, StyleSheet, Pressable } from 'react-native';
-import { IconBook2, IconArrowRight } from '@tabler/icons-react-native';
-import { fontFamilies, fontSizes, spacing } from '@/theme';
-import { ACCENT, FAINT, INK, MUTED, TINT_GLASS } from '@/theme/brand';
-import { Course } from '@/lib/types';
-import { formatKobo } from '@/lib/money';
-import { NotInReview } from '@/components/common/ReviewGuard';
-import Badge from './Badge';
-import GlassSurface from './GlassSurface';
+import { useState } from "react";
+import { View, Text, Image, StyleSheet, Pressable } from "react-native";
+import { IconBook2, IconArrowRight } from "@tabler/icons-react-native";
+import { fontFamilies, fontSizes, spacing } from "@/theme";
+import { ACCENT, FAINT, INK, MUTED, TINT_GLASS } from "@/theme/brand";
+import { Course } from "@/lib/types";
+import { formatKobo } from "@/lib/money";
+import { NotInReview } from "@/components/common/ReviewGuard";
+import Badge from "./Badge";
+import GlassSurface from "./GlassSurface";
 
 interface CourseCardProps {
   course: Course;
@@ -19,7 +19,10 @@ export default function CourseCard({ course, onPress }: CourseCardProps) {
   const showImage = Boolean(course.banner) && !imgError;
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed && styles.pressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [pressed && styles.pressed]}
+    >
       <GlassSurface style={styles.card} isInteractive tintColor={TINT_GLASS}>
         <View style={styles.bannerContainer}>
           {showImage ? (
@@ -34,9 +37,6 @@ export default function CourseCard({ course, onPress }: CourseCardProps) {
               <IconBook2 size={36} color={FAINT} />
             </View>
           )}
-          <View style={styles.badgeOverlay}>
-            <Badge variant={course.difficulty}>{course.difficulty}</Badge>
-          </View>
         </View>
         <View style={styles.body}>
           <Text style={styles.title} numberOfLines={1}>
@@ -51,10 +51,14 @@ export default function CourseCard({ course, onPress }: CourseCardProps) {
             <Text style={styles.category}>{course.category}</Text>
             <View style={styles.continueLink}>
               <NotInReview
-                fallback={<Text style={styles.continueLinkText}>{course.topicCount ?? 0} topics</Text>}
+                fallback={
+                  <Text style={styles.continueLinkText}>
+                    {course.topicCount ?? 0} topics
+                  </Text>
+                }
               >
                 <Text style={styles.continueLinkText}>
-                  {course.isFree ? 'Free' : formatKobo(course.price)}
+                  {course.isFree ? "Free" : formatKobo(course.price)}
                 </Text>
               </NotInReview>
               <IconArrowRight size={14} color={ACCENT} />
@@ -68,27 +72,27 @@ export default function CourseCard({ course, onPress }: CourseCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    overflow: 'hidden',
+    overflow: "hidden",
     borderRadius: 20,
   },
   bannerContainer: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 16 / 9,
-    overflow: 'hidden',
-    position: 'relative',
-    backgroundColor: 'rgba(14,14,26,0.04)',
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "rgba(14,14,26,0.04)",
   },
   banner: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   bannerFallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(14,14,26,0.04)',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(14,14,26,0.04)",
   },
   badgeOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: spacing.sm,
     left: spacing.sm,
   },
@@ -109,21 +113,21 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.sm * 1.45,
   },
   footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: spacing.xs,
   },
   category: {
     fontSize: fontSizes.xs,
     fontFamily: fontFamilies.sansMedium,
     color: ACCENT,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.4,
   },
   continueLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   continueLinkText: {

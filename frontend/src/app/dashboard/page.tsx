@@ -303,7 +303,7 @@ export default function DashboardHome() {
               Continue studying
             </h2>
             <p className="text-xs text-[var(--text-muted)]">
-              Continue reading from where you left off
+              Pick up right where you left off
             </p>
           </div>
 
@@ -362,12 +362,12 @@ export default function DashboardHome() {
               return (
                 <Card
                   key={progress._id}
-                  className="flex flex-col justify-between rounded-[20px] border border-[var(--line)] p-5 transition-shadow hover:shadow-md"
+                  className="flex h-full flex-col justify-between gap-5 rounded-[20px] border border-[var(--line)] p-5 transition-shadow hover:shadow-md"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="mb-1 truncate text-xs font-bold tracking-wider text-[#FF8A1E] uppercase">
+                        <p className="mb-1 truncate text-xs text-[var(--text-muted)]">
                           {course?.category || "Course"}
                         </p>
                         <h3 className="line-clamp-1 text-lg font-bold text-[var(--ink-900)]">
@@ -377,15 +377,25 @@ export default function DashboardHome() {
                       {course && <Badge tone="gold">{course.difficulty}</Badge>}
                     </div>
 
+                    <p className="truncate text-sm text-[var(--text-muted)]">
+                      {chapter ? chapter.title : "Started chapter"}
+                      {topic && (
+                        <span className="text-[var(--ink-700)]">
+                          {" "}
+                          · {topic.title}
+                        </span>
+                      )}
+                    </p>
+
                     {authors.length > 0 && (
-                      <div className="flex items-center gap-2 pt-1">
+                      <div className="flex items-center gap-2">
                         <div className="flex shrink-0 -space-x-2 overflow-hidden">
                           {authors
                             .slice(0, isExpanded ? authors.length : 3)
                             .map((author, aIdx) => (
                               <div
                                 key={aIdx}
-                                className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[var(--brand-gold-100)] text-xs font-bold text-[var(--brand-gold-600)]"
+                                className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--surface-card)] bg-[var(--brand-gold-100)] text-[10px] font-bold text-[var(--brand-gold-600)]"
                                 title={author.name}
                               >
                                 {author.avatar ? (
@@ -402,62 +412,39 @@ export default function DashboardHome() {
                             ))}
                         </div>
 
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs text-[var(--text-muted)]">
-                            {isExpanded ? (
-                              authors.map((a) => a.name).join(", ")
-                            ) : (
-                              <>
-                                {authors[0].name}
-                                {authors.length > 1 && (
-                                  <button
-                                    onClick={() =>
-                                      toggleExpandAuthors(courseId)
-                                    }
-                                    className="ml-1 font-semibold text-[var(--brand-gold-600)] hover:underline"
-                                  >
-                                    +{authors.length - 1} more
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </p>
-                        </div>
+                        <p className="min-w-0 flex-1 truncate text-xs text-[var(--text-muted)]">
+                          {isExpanded ? (
+                            authors.map((a) => a.name).join(", ")
+                          ) : (
+                            <>
+                              {authors[0].name}
+                              {authors.length > 1 && (
+                                <button
+                                  onClick={() => toggleExpandAuthors(courseId)}
+                                  className="ml-1 font-semibold text-[var(--brand-gold-600)] hover:underline"
+                                >
+                                  +{authors.length - 1} more
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </p>
                       </div>
                     )}
 
-                    <div className="space-y-1.5 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                      <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                        <span className="truncate font-semibold text-[var(--ink-900)]">
-                          {chapter
-                            ? `Chapter: ${chapter.title}`
-                            : "Started Chapter"}
-                        </span>
-                        <span>Page {(progress.lastContentIndex || 0) + 1}</span>
-                      </div>
-                      {topic && (
-                        <p className="truncate text-xs font-medium text-[var(--ink-700)]">
-                          Topic: {topic.title}
-                        </p>
-                      )}
-                      <div className="pt-1">
-                        <ProgressBar
-                          value={progress.percentCompleted || 0}
-                          label={`${progress.percentCompleted || 0}% Complete`}
-                        />
-                      </div>
-                    </div>
+                    <ProgressBar
+                      value={progress.percentCompleted || 0}
+                      label={`${progress.percentCompleted || 0}% complete · Page ${(progress.lastContentIndex || 0) + 1}`}
+                    />
                   </div>
 
-                  <div className="pt-4">
-                    <Link
-                      href={`/dashboard/courses/${courseId}`}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-gold)] px-4 py-2.5 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
-                    >
-                      <Play className="size-3.5 fill-black" />
-                      <span>Continue Learning</span>
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/dashboard/courses/${courseId}`}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-gold)] px-4 py-2.5 text-xs font-bold text-slate-950 shadow-xs transition-all hover:brightness-105"
+                  >
+                    <Play className="size-3.5 fill-black" />
+                    <span>Continue learning</span>
+                  </Link>
                 </Card>
               );
             })}

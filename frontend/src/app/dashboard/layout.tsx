@@ -1,3 +1,4 @@
+// DashboardLayout.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -23,7 +24,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenuClick={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-x-hidden p-4 lg:p-6">{children}</main>
+          <main className="flex-1 overflow-x-hidden">
+            <div className="mx-auto max-w-6xl px-6 py-8 lg:px-10 lg:py-10">{children}</div>
+          </main>
         </div>
       </div>
     </AuthGuard>

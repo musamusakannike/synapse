@@ -1,3 +1,4 @@
+// Sidebar.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -39,12 +40,12 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={onClose} />}
       <aside
-        className={`fixed top-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-[var(--line)] bg-[var(--surface-card)] transition-transform duration-300 lg:sticky lg:z-30 ${
+        className={`fixed top-0 left-0 z-50 flex h-screen w-72 flex-col border-r border-[var(--line)] bg-[var(--surface-card)] transition-transform duration-300 lg:sticky lg:z-30 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--line)] px-5">
-          <Link href="/dashboard" onClick={onClose} className="text-xl font-[var(--font-display)] font-bold text-[var(--ink-900)]">
+        <div className="flex h-20 shrink-0 items-center justify-between px-6">
+          <Link href="/dashboard" onClick={onClose} className="text-xl font-[var(--font-display)] font-bold tracking-tight text-[var(--ink-900)]">
             Sabi<span className="text-[var(--brand-gold)]">Learn</span>
           </Link>
           <button onClick={onClose} className="text-[var(--ink-500)] hover:text-[var(--ink-900)] lg:hidden" aria-label="Close sidebar">
@@ -52,47 +53,48 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={`flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors ${
-                  active ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]' : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]'
-                }`}
-              >
-                <Icon className="size-5 shrink-0" />
-                <span className="flex-1">{item.label}</span>
-                {'bonus' in item && item.bonus && (
-                  <span className="rounded-full bg-[var(--brand-gold)] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[var(--ink-900)] uppercase">
-                    Bonus
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto px-4 pb-6">
+          <div className="space-y-0.5">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`group flex items-center gap-3 rounded-[var(--radius-md)] px-3.5 py-3 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-[var(--brand-gold-100)] text-[var(--brand-gold-600)]'
+                      : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]'
+                  }`}
+                >
+                  <Icon className="size-[18px] shrink-0" strokeWidth={2} />
+                  <span className="flex-1">{item.label}</span>
+                  {item.bonus && (
+                    <span className="rounded-full bg-[var(--brand-gold)] px-2 py-0.5 text-[10px] font-semibold text-[var(--ink-900)]">
+                      Bonus
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
           {isAdmin && (
-            <>
-              <div className="px-3 pt-4 pb-1">
-                <span className="text-xs font-semibold tracking-wide text-[var(--ink-300)] uppercase">Admin</span>
-              </div>
+            <div className="mt-8 border-t border-[var(--line)] pt-6">
               <button
                 onClick={() => setAdminExpanded(!adminExpanded)}
-                className={`flex w-full cursor-pointer items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium ${
+                className={`flex w-full cursor-pointer items-center gap-3 rounded-[var(--radius-md)] px-3.5 py-3 text-sm font-medium transition-colors ${
                   isAdminRoute ? 'text-[var(--brand-violet)]' : 'text-[var(--text-muted)] hover:text-[var(--ink-900)]'
                 }`}
               >
-                <Shield className="size-5 shrink-0" />
+                <Shield className="size-[18px] shrink-0" strokeWidth={2} />
                 <span className="flex-1 text-left">Admin</span>
-                <ChevronDown className={`size-4 transition-transform ${adminExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`size-4 text-[var(--ink-300)] transition-transform ${adminExpanded ? 'rotate-180' : ''}`} />
               </button>
               {adminExpanded && (
-                <div className="ml-3 space-y-1">
+                <div className="mt-1 space-y-0.5 pl-4">
                   {adminItems.map((item) => {
                     const Icon = item.icon;
                     const active = pathname === item.href;
@@ -101,23 +103,29 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose:
                         key={item.href}
                         href={item.href}
                         onClick={onClose}
-                        className={`flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium ${
-                          active ? 'bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)]' : 'text-[var(--text-muted)] hover:text-[var(--ink-900)]'
+                        className={`flex items-center gap-3 rounded-[var(--radius-md)] px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                          active
+                            ? 'bg-[var(--brand-violet-100)] text-[var(--brand-violet-600)]'
+                            : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]'
                         }`}
                       >
-                        <Icon className="size-4 shrink-0" />
+                        <Icon className="size-4 shrink-0" strokeWidth={2} />
                         <span>{item.label}</span>
                       </Link>
                     );
                   })}
                 </div>
               )}
-            </>
+            </div>
           )}
         </nav>
 
-        <Link href="/dashboard/profile" onClick={onClose} className="flex items-center gap-3 border-t border-[var(--line)] p-4 hover:bg-[var(--surface-sunken)]">
-          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-gold-100)] text-sm font-semibold text-[var(--brand-gold-600)]">
+        <Link
+          href="/dashboard/profile"
+          onClick={onClose}
+          className="flex items-center gap-3 border-t border-[var(--line)] px-6 py-5 transition-colors hover:bg-[var(--surface-sunken)]"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-gold-100)] text-sm font-semibold text-[var(--brand-gold-600)]">
             {user?.firstName?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="min-w-0">

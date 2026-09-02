@@ -6,7 +6,6 @@ import { ACCENT, FAINT, INK, MUTED, TINT_GLASS } from "@/theme/brand";
 import { Course } from "@/lib/types";
 import { formatKobo } from "@/lib/money";
 import { NotInReview } from "@/components/common/ReviewGuard";
-import Badge from "./Badge";
 import GlassSurface from "./GlassSurface";
 
 interface CourseCardProps {

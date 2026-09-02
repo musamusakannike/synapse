@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -27,9 +27,15 @@ export default function StepPlayer({
   const [finished, setFinished] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const { saveContentPosition, fetchTopicProgress } = useProgressStore();
   const total = steps.length;
+
+  // Scroll to top whenever step index changes (e.g. next/prev content)
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [index]);
 
   // Resume where the learner last left off
   useEffect(() => {
@@ -83,6 +89,7 @@ export default function StepPlayer({
     }
     setQuizAnswered(false);
     setIndex((i) => i + 1);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
   const handlePrev = () => {
@@ -90,6 +97,7 @@ export default function StepPlayer({
       haptics.light();
       setQuizAnswered(true);
       setIndex((i) => i - 1);
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
     }
   };
 
@@ -195,7 +203,11 @@ export default function StepPlayer({
       </View>
 
       {/* Main Content Scroll Area */}
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.body}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Step Title Row with '...' button */}
         <View style={styles.titleRow}>
           <Text style={[styles.stepTitle, { color: colors.textPrimary }]}>{displayTitle}</Text>

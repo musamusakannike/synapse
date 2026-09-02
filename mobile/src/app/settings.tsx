@@ -184,29 +184,6 @@ export default function SettingsScreen() {
       >
         <ScreenHeader title="Settings" subtitle="Profile, alerts, and account." showBack />
 
-        <InReview>
-          <GlassSurface style={styles.reviewBanner} tintColor={TINT_GLASS}>
-            <View style={styles.reviewHeaderRow}>
-              <View style={styles.reviewBadge}>
-                <IconShieldCheck size={14} color="#D97706" />
-                <Text style={styles.reviewBadgeText}>{os.toUpperCase()} REVIEW MODE</Text>
-              </View>
-              <Pressable
-                onPress={() => {
-                  haptics.light();
-                  void refresh();
-                }}
-                hitSlop={8}
-              >
-                <Text style={styles.reviewRefreshText}>Sync Status</Text>
-              </Pressable>
-            </View>
-            <Text style={styles.reviewBodyText}>
-              Review compliance mode is active for {os.toUpperCase()}. Testing and reviewer-safe components are currently displayed.
-            </Text>
-          </GlassSurface>
-        </InReview>
-
         <Pressable onPress={pickAvatar} disabled={isUploadingAvatar} style={styles.avatarWrap}>
           {user?.avatar ? (
             <Image

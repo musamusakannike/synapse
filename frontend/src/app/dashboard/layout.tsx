@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth.store';
 import AuthGuard from '@/components/auth/AuthGuard';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
+import NotificationDrawer from '@/components/dashboard/NotificationDrawer';
 import SwepChrome from '@/components/swep/SwepChrome';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex min-h-screen bg-[var(--surface-page)]">
         <SwepChrome />
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <NotificationDrawer />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header onMenuClick={() => setSidebarOpen(true)} />
           <main className="flex-1 overflow-x-hidden">

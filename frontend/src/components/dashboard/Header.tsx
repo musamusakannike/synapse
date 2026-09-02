@@ -1,23 +1,19 @@
 // Header.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Menu, Bell, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth.store';
-import { notificationApi } from '@/lib/api';
-import { Notification } from '@/lib/types';
+import { useNotificationStore } from '@/store/notification.store';
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { user } = useAuthStore();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { unreadCount, openDrawer, fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
-    notificationApi
-      .list()
-      .then((res) => setUnreadCount(res.data.data.filter((n: Notification) => !n.isRead).length))
-      .catch(() => {});
-  }, []);
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -50,14 +46,18 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         </div>
 
         <div className="flex items-center gap-5">
-          <Link href="/dashboard/notifications" className="relative text-[var(--ink-500)] hover:text-[var(--ink-900)]" aria-label="Notifications">
+          <button
+            onClick={openDrawer}
+            className="relative cursor-pointer rounded-full p-2 text-[var(--ink-500)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--ink-900)]"
+            aria-label="Open notifications"
+          >
             <Bell className="size-5" strokeWidth={2} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-[var(--brand-gold)] text-[10px] font-semibold text-[var(--ink-900)]">
+              <span className="absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--brand-gold)] text-[10px] font-bold text-[var(--ink-900)]">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </Link>
+          </button>
           <div className="h-6 w-px bg-[var(--line)]" />
           <Link href="/dashboard/profile" aria-label="Profile">
             <div className="flex size-9 items-center justify-center rounded-full bg-[var(--brand-gold-100)] text-sm font-semibold text-[var(--brand-gold-600)]">

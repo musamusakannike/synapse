@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, User, Bell, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy, Smartphone, GraduationCap } from 'lucide-react';
+import { Home, BookOpen, User, Shield, X, LayoutDashboard, Users, Activity, ChevronDown, Code2, Sparkles, Newspaper, Trophy, Smartphone, GraduationCap } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 
 const navItems: { href: string; label: string; icon: typeof Home; bonus?: boolean }[] = [
@@ -15,7 +15,6 @@ const navItems: { href: string; label: string; icon: typeof Home; bonus?: boolea
   { href: '/dashboard/playground', label: 'Playground', icon: Code2 },
   { href: '/dashboard/subscribe', label: 'Subscription', icon: Sparkles },
   { href: '/dashboard/profile', label: 'Profile', icon: User },
-  { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
 ];
 
 const adminItems = [

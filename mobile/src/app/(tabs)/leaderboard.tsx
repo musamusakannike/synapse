@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import PagerView, { PagerViewOnPageSelectedEvent } from 'react-native-pager-view';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, EdgeInsets } from 'react-native-safe-area-context';
 import { leaderboardApi } from '@/lib/api';
 import { LeaderboardUser } from '@/lib/types';
 import { useAuthStore } from '@/store/auth.store';
@@ -24,17 +25,30 @@ const TIMEFRAMES: { id: Timeframe; label: string }[] = [
 
 const RULE = 'rgba(20, 20, 26, 0.08)';
 
-export default function LeaderboardScreen() {
-  const insets = useSafeAreaInsets();
-  const { user: currentUser } = useAuthStore();
-  const [timeframe, setTimeframe] = useState<Timeframe>('24h');
+interface LeaderboardPageContentProps {
+  timeframe: Timeframe;
+  label: string;
+  currentUser: any;
+  insets: EdgeInsets;
+}
+
+function LeaderboardPageContent({
+  timeframe,
+  label,
+  currentUser,
+  insets,
+}: LeaderboardPageContentProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const hasFetched = useRef(false);
 
-  const fetchData = useCallback(async (tf: Timeframe) => {
+  const fetchData = useCallback(async (isRefresh = false) => {
+    if (!isRefresh && !hasFetched.current) {
+      setLoading(true);
+    }
     try {
-      const res = await leaderboardApi.get(tf);
+      const res = await leaderboardApi.get(timeframe);
       if (res.data?.success) {
         setLeaderboard(res.data.data || []);
       }
@@ -43,131 +57,193 @@ export default function LeaderboardScreen() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      hasFetched.current = true;
     }
-  }, []);
+  }, [timeframe]);
 
   useEffect(() => {
-    setLoading(true);
-    fetchData(timeframe);
-  }, [timeframe, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
   const onRefresh = useCallback(() => {
     haptics.light();
     setRefreshing(true);
-    fetchData(timeframe);
-  }, [timeframe, fetchData]);
+    fetchData(true);
+  }, [fetchData]);
 
   const currentUserRankIndex = useMemo(() => {
     if (!currentUser?._id) return -1;
     return leaderboard.findIndex((item) => item._id === currentUser._id);
   }, [leaderboard, currentUser]);
 
-  const currentUserData = currentUserRankIndex >= 0 ? leaderboard[currentUserRankIndex] : null;
+  return (
+    <ScrollView
+      contentContainerStyle={[
+        styles.scroll,
+        { paddingBottom: insets.bottom + spacing['4xl'] },
+      ]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={ACCENT}
+          colors={[ACCENT]}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+    >
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner />
+        </View>
+      ) : leaderboard.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <EmptyState
+            title="No XP earned yet"
+            description={`Be the first to complete a lesson and lead the ${label.toLowerCase()} ranking.`}
+          />
+        </View>
+      ) : (
+        <View style={styles.list}>
+          <View style={styles.listHeader}>
+            <Text style={styles.listHeaderText}>Rank</Text>
+            <Text style={[styles.listHeaderText, styles.listHeaderName]}>Learner</Text>
+            <Text style={[styles.listHeaderText, styles.listHeaderXp]}>XP</Text>
+          </View>
+
+          {leaderboard.map((user, idx) => {
+            const rank = idx + 1;
+            const isCurrent = currentUser?._id === user._id;
+
+            return (
+              <Pressable
+                key={user._id || idx}
+                onPress={() => haptics.light()}
+                style={({ pressed }) => [
+                  styles.row,
+                  isCurrent && styles.rowCurrent,
+                  idx === leaderboard.length - 1 && styles.rowLast,
+                  pressed && styles.rowPressed,
+                ]}
+              >
+                <Text style={[styles.rank, rank === 1 && styles.rankFirst]}>
+                  {String(rank).padStart(2, '0')}
+                </Text>
+
+                <View style={styles.avatarWrap}>
+                  {user.avatar ? (
+                    <Image
+                      source={{ uri: user.avatar }}
+                      style={styles.avatar}
+                      contentFit="cover"
+                      transition={150}
+                    />
+                  ) : (
+                    <View style={styles.avatarFallback}>
+                      <Text style={styles.avatarInitial}>
+                        {user.name?.charAt(0).toUpperCase() || '?'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.nameBlock}>
+                  <Text style={styles.name} numberOfLines={1}>
+                    {user.name}
+                    {isCurrent && <Text style={styles.youInline}>  you</Text>}
+                  </Text>
+                  <Text style={styles.meta} numberOfLines={1}>
+                    {user.currentStreak
+                      ? `${user.currentStreak}-day streak`
+                      : user.level || 'Learner'}
+                  </Text>
+                </View>
+
+                <Text style={styles.xp}>{user.periodXp.toLocaleString()}</Text>
+              </Pressable>
+            );
+          })}
+
+          {currentUser && currentUserRankIndex === -1 && (
+            <Text style={styles.unrankedNote}>
+              You haven't earned XP this period yet... complete a lesson to enter the ranking.
+            </Text>
+          )}
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+export default function LeaderboardScreen() {
+  const insets = useSafeAreaInsets();
+  const { user: currentUser } = useAuthStore();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const pagerRef = useRef<PagerView>(null);
+
+  const handleTabPress = useCallback((index: number) => {
+    haptics.selection();
+    setActiveIndex(index);
+    pagerRef.current?.setPage(index);
+  }, []);
+
+  const handlePageSelected = useCallback((e: PagerViewOnPageSelectedEvent) => {
+    setActiveIndex(e.nativeEvent.position);
+  }, []);
 
   return (
     <View collapsable={false} style={styles.container}>
       <ScreenBackdrop />
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 8 }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} colors={[ACCENT]} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <ScreenHeader title="Leaderboard" subtitle="Top learners earning XP and climbing ranks." />
 
-        {/* Timeframe tabs — plain text, underline on active, no pill container */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 8 }]}>
+        <ScreenHeader
+          title="Leaderboard"
+          subtitle="Top learners earning XP and climbing ranks."
+        />
+
+        {/* Timeframe tabs — plain text, underline on active */}
         <View style={styles.timeframeRow}>
-          {TIMEFRAMES.map((tf) => {
-            const isActive = timeframe === tf.id;
+          {TIMEFRAMES.map((tf, index) => {
+            const isActive = activeIndex === index;
             return (
               <Pressable
                 key={tf.id}
-                onPress={() => {
-                  haptics.selection();
-                  setTimeframe(tf.id);
-                }}
+                onPress={() => handleTabPress(index)}
                 style={styles.timeframeTab}
                 hitSlop={8}
               >
-                <Text style={[styles.timeframeText, isActive && styles.timeframeTextActive]}>{tf.label}</Text>
+                <Text
+                  style={[
+                    styles.timeframeText,
+                    isActive && styles.timeframeTextActive,
+                  ]}
+                >
+                  {tf.label}
+                </Text>
                 {isActive && <View style={styles.timeframeUnderline} />}
               </Pressable>
             );
           })}
         </View>
+      </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <LoadingSpinner />
-          </View>
-        ) : leaderboard.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <EmptyState
-              title="No XP earned yet"
-              description={`Be the first to complete a lesson and lead the ${TIMEFRAMES.find((t) => t.id === timeframe)?.label.toLowerCase()} ranking.`}
+      <PagerView
+        ref={pagerRef}
+        style={styles.pager}
+        initialPage={0}
+        onPageSelected={handlePageSelected}
+      >
+        {TIMEFRAMES.map((tf) => (
+          <View key={tf.id} collapsable={false} style={styles.page}>
+            <LeaderboardPageContent
+              timeframe={tf.id}
+              label={tf.label}
+              currentUser={currentUser}
+              insets={insets}
             />
           </View>
-        ) : (
-          <View style={styles.list}>
-            <View style={styles.listHeader}>
-              <Text style={styles.listHeaderText}>Rank</Text>
-              <Text style={[styles.listHeaderText, styles.listHeaderName]}>Learner</Text>
-              <Text style={[styles.listHeaderText, styles.listHeaderXp]}>XP</Text>
-            </View>
-
-            {leaderboard.map((user, idx) => {
-              const rank = idx + 1;
-              const isCurrent = currentUser?._id === user._id;
-
-              return (
-                <Pressable
-                  key={user._id || idx}
-                  onPress={() => haptics.light()}
-                  style={({ pressed }) => [
-                    styles.row,
-                    isCurrent && styles.rowCurrent,
-                    idx === leaderboard.length - 1 && styles.rowLast,
-                    pressed && styles.rowPressed,
-                  ]}
-                >
-                  <Text style={[styles.rank, rank === 1 && styles.rankFirst]}>
-                    {String(rank).padStart(2, '0')}
-                  </Text>
-
-                  <View style={styles.avatarWrap}>
-                    {user.avatar ? (
-                      <Image source={{ uri: user.avatar }} style={styles.avatar} contentFit="cover" transition={150} />
-                    ) : (
-                      <View style={styles.avatarFallback}>
-                        <Text style={styles.avatarInitial}>{user.name?.charAt(0).toUpperCase() || '?'}</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={styles.nameBlock}>
-                    <Text style={styles.name} numberOfLines={1}>
-                      {user.name}
-                      {isCurrent && <Text style={styles.youInline}>  you</Text>}
-                    </Text>
-                    <Text style={styles.meta} numberOfLines={1}>
-                      {user.currentStreak ? `${user.currentStreak}-day streak` : user.level || 'Learner'}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.xp}>{user.periodXp.toLocaleString()}</Text>
-                </Pressable>
-              );
-            })}
-
-            {currentUser && currentUserRankIndex === -1 && (
-              <Text style={styles.unrankedNote}>
-                You haven't earned XP this period yet... complete a lesson to enter the ranking.
-              </Text>
-            )}
-          </View>
-        )}
-      </ScrollView>
+        ))}
+      </PagerView>
     </View>
   );
 }
@@ -177,9 +253,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  headerContainer: {
+    paddingHorizontal: spacing.lg,
+  },
+  pager: {
+    flex: 1,
+  },
+  page: {
+    flex: 1,
+  },
   scroll: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing['4xl'],
   },
   loadingContainer: {
     paddingVertical: spacing['3xl'],
@@ -196,7 +280,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: RULE,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xs,
   },
   timeframeTab: {
     paddingBottom: 10,
